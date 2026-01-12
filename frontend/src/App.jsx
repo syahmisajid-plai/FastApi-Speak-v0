@@ -23,6 +23,30 @@ export default function SpeakingApp() {
     checkBackend();
   }, []);
 
+  const [micReady, setMicReady] = useState(false);
+  const [micError, setMicError] = useState(null);
+  const [isCanceled, setIsCanceled] = useState(false);
+  const toggleSuggestion = () => {
+    if (!showSuggestions) fetchSuggestions();
+    setShowSuggestions(!showSuggestions);
+  };
+
+  const requestMicPermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // hentikan stream, kita hanya butuh permission-nya
+      stream.getTracks().forEach((track) => track.stop());
+
+      setMicReady(true);
+      setMicError(null);
+      console.log("🎤 Microphone permission granted");
+    } catch (err) {
+      console.error("❌ Microphone permission denied", err);
+      setMicError("Microphone access is required to record voice.");
+    }
+  };
+
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -31,20 +55,39 @@ export default function SpeakingApp() {
   const transcriptRef = useRef("");
   const [liveTranscript, setLiveTranscript] = useState("");
 
+  const startRecording = () => {
+    transcriptRef.current = "";
+    setLiveTranscript("");
+    setIsCanceled(false);
+    recognitionRef.current?.start();
+    setIsRecording(true);
+  };
+
+  const stopRecording = () => {
+    setIsCanceled(false);
+    recognitionRef.current?.stop();
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const cancelRecording = () => {
+    setIsCanceled(true);
+    transcriptRef.current = "";
+    setLiveTranscript("");
+    recognitionRef.current?.stop();
+  };
+
   useEffect(() => {
-    if (!SpeechRecognition) {
-      console.error("Speech Recognition not supported");
-      return;
-    }
+    if (!SpeechRecognition) return;
 
     const recognition = new SpeechRecognition();
-    // recognition.lang = "id-ID";
     recognition.lang = "en-US";
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 3;
 
     recognition.onresult = (event) => {
+      if (isCanceled) return; // ⬅️ tambahkan ini
+
       let interim = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
@@ -58,16 +101,13 @@ export default function SpeakingApp() {
     };
 
     recognition.onend = () => {
-      // const finalText = transcriptRef.current.trim();
       const finalText = normalizeText(transcriptRef.current);
-
-      // ✅ bersihkan live transcript setelah stop
       setLiveTranscript("");
 
-      if (finalText) {
-        sendTextToBackend(finalText);
-      }
+      if (!isCanceled && finalText) sendTextToBackend(finalText);
 
+      transcriptRef.current = "";
+      setIsCanceled(false);
       setIsRecording(false);
     };
 
@@ -221,21 +261,12 @@ export default function SpeakingApp() {
 
           <ControlSection
             isRecording={isRecording}
-            toggleRecording={() => {
-              if (!isRecording) {
-                transcriptRef.current = "";
-                setLiveTranscript("");
-                recognitionRef.current?.start();
-                setIsRecording(true);
-              } else {
-                recognitionRef.current?.stop(); // ❗ jangan kirim di sini
-                bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-              }
-            }}
-            toggleSuggestion={() => {
-              if (!showSuggestions) fetchSuggestions(); // ambil saran AI sebelum tampil
-              setShowSuggestions(!showSuggestions);
-            }}
+            micReady={micReady}
+            startRecording={startRecording}
+            stopRecording={stopRecording}
+            cancelRecording={cancelRecording}
+            requestMicPermission={requestMicPermission}
+            toggleSuggestion={toggleSuggestion}
           />
         </div>
 

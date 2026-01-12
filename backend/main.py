@@ -52,20 +52,30 @@ class SpeechInput(BaseModel):
 def process_speech(data: SpeechInput):
     user_text = data.text
 
+    #     response = client.responses.create(
+    #         model="gpt-4o-mini",
+    #         input=f"""You are my English conversation partner. Your only task is to have casual conversations with me in English, like a friendly chat.
+    #                             ALWAYS REPLY IN ENGLISH.
+    #                             Talk about anything — daily life, hobbies, news, or random fun topics.
+    #                             prioritize short text only.
+    #                             If I respond in Indonesian, simply translate it into English and you must ask me to say it.
+    #                             Do not correct my grammar or vocabulary, even if it’s wrong — just keep the conversation going naturally.
+    #                             Use simple and clear English, like you’re talking to a complete beginner.
+    #                             Your main goal is to make me feel comfortable and enjoy speaking English without fear.
+
+    # User says:
+    # {user_text}
+    # """,
+    #         max_output_tokens=25,  # ⚡ batasi output
+    #     )
+
     response = client.responses.create(
         model="gpt-4o-mini",
-        input=f"""You are my English conversation partner. Your only task is to have casual conversations with me in English, like a friendly chat.
-                            ALWAYS REPLY IN ENGLISH.
-                            Talk about anything — daily life, hobbies, news, or random fun topics.
-                            prioritize short text only.
-                            If I respond in Indonesian, simply translate it into English and you must ask me to say it.
-                            Do not correct my grammar or vocabulary, even if it’s wrong — just keep the conversation going naturally.
-                            Use simple and clear English, like you’re talking to a complete beginner.
-                            Your main goal is to make me feel comfortable and enjoy speaking English without fear.
-
-User says:
-{user_text}
-""",
+        input=f"""You are my English conversation partner. Your only task is to have casual conversations with me in English, like a friendly chat. Don't answer too long
+ 
+        User says:
+        {user_text}
+        """,
         max_output_tokens=25,  # ⚡ batasi output
     )
 
