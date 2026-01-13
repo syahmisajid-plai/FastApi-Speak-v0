@@ -42,6 +42,135 @@ export default function SpeakingApp() {
     }, IDLE_TIMEOUT);
   };
 
+  const [isLupaKataActive, setIsLupaKataActive] = useState(false);
+  const [lupaKataResult, setLupaKataResult] = useState(null);
+  const lupaKataRecognitionRef = useRef(null);
+
+  const translateLupaKata = async (indoText) => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: indoText,
+          source_lang: "id",
+          target_lang: "en",
+        }),
+      });
+
+      const data = await res.json();
+
+      setChatHistory((prev) => [
+        ...prev.filter((c) => !(c.sender === "Helper" && c.type === "prompt")),
+        {
+          sender: "Helper",
+          type: "result",
+          indo: data.indo,
+          english: data.english,
+        },
+      ]);
+
+      setIsLupaKataActive(false);
+    } catch (err) {
+      console.error("❌ Translate error:", err);
+    }
+  };
+
+  const lupaKataHasResultRef = useRef(false);
+
+  const startLupaKata = () => {
+    recognitionRef.current?.stop();
+    setIsRecording(false);
+    setIsCanceled(true);
+
+    setIsLupaKataActive(true);
+    setLupaKataResult(null);
+
+    setChatHistory((prev) => [
+      ...prev.filter((c) => !(c.sender === "Helper" && c.type === "prompt")),
+      {
+        sender: "Helper",
+        message: "🎤 Ucapkan dalam Bahasa Indonesia ya…",
+        type: "prompt",
+      },
+    ]);
+
+    lupaKataHasResultRef.current = false;
+
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "id-ID";
+    recognition.interimResults = false;
+    recognition.continuous = false;
+
+    // 🔍 DEBUG MIC
+    recognition.onaudiostart = () => {
+      console.log("🎙️ Mic started (Lupa Kata)");
+    };
+
+    recognition.onspeechstart = () => {
+      console.log("🗣️ Speech detected");
+    };
+
+    recognition.onresult = (event) => {
+      console.log("🎯 RESULT:", event.results);
+
+      const result = event.results[event.results.length - 1];
+
+      if (!result.isFinal) return;
+
+      const text = result[0].transcript?.trim();
+
+      console.log("📝 TRANSCRIPT:", text);
+
+      if (!text) {
+        console.warn("⚠️ Transcript kosong");
+        return;
+      }
+
+      // ✅ tandai bahwa hasil benar-benar ada
+      lupaKataHasResultRef.current = true;
+
+      // ✅ lanjutkan proses
+      translateLupaKata(text);
+    };
+
+    recognition.onerror = (e) => {
+      console.error("❌ Lupa Kata STT error:", e.error);
+    };
+
+    recognition.onend = () => {
+      console.log("🛑 Lupa Kata STT ended");
+
+      if (!lupaKataHasResultRef.current) {
+        setChatHistory((prev) => [
+          ...prev.filter(
+            (c) => !(c.sender === "Helper" && c.type === "prompt")
+          ),
+          {
+            sender: "Helper",
+            type: "result",
+            indo: "—",
+            english: "❗ Tidak terdengar. Coba ucapkan lagi ya.",
+          },
+        ]);
+      }
+
+      setIsLupaKataActive(false);
+    };
+
+    // ⏳ delay kecil (PENTING)
+    setTimeout(() => {
+      recognition.start();
+    }, 300);
+
+    lupaKataRecognitionRef.current = recognition;
+  };
+
   const [micReady, setMicReady] = useState(false);
   const [micError, setMicError] = useState(null);
   const [isCanceled, setIsCanceled] = useState(false);
@@ -306,6 +435,7 @@ export default function SpeakingApp() {
             requestMicPermission={requestMicPermission}
             toggleSuggestion={toggleSuggestion}
             isIdle={isIdle}
+            openLupaKata={startLupaKata}
           />
         </div>
 

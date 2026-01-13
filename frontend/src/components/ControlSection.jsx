@@ -7,6 +7,7 @@ export default function ControlSection({
   cancelRecording,
   toggleSuggestion,
   isIdle,
+  openLupaKata,
 }) {
   return (
     <>
@@ -78,7 +79,7 @@ export default function ControlSection({
                 ? "bg-emerald-300"
                 : "bg-emerald-500 hover:bg-emerald-600"
             }`}
-            // onClick={toggleSuggestion}
+            onClick={!isRecording ? openLupaKata : undefined}
           >
             📖 Lupa Kata
           </div>

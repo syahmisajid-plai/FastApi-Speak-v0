@@ -56,6 +56,49 @@ export default function ChatBubble({ chat }) {
     }
   };
 
+  /* =====================================================
+     🟢 HELPER / LUPA KATA (INLINE CHAT)
+  ===================================================== */
+  if (chat.sender === "Helper") {
+    return (
+      <div className="flex justify-start">
+        <div className="max-w-[80%] p-3 rounded-lg bg-emerald-100 text-gray-900 shadow text-sm">
+          {/* PROMPT */}
+          {chat.type === "prompt" && (
+            <div className="italic">{chat.message}</div>
+          )}
+
+          {/* RESULT */}
+          {chat.type === "result" && (
+            <div className="space-y-1">
+              <div>🇮🇩 {chat.indo}</div>
+              <div className="font-semibold">🇬🇧 {chat.english}</div>
+
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => playAudio(chat.english)}
+                  className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+                >
+                  🔊 Play
+                </button>
+
+                <button
+                  onClick={() => {
+                    // opsional: masukkan ke chat sebagai user input
+                    console.log("Use this:", chat.english);
+                  }}
+                  className="text-xs bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600"
+                >
+                  ➕ Pakai
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`flex ${

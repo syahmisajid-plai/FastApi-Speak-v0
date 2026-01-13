@@ -161,3 +161,18 @@ async def get_suggestions(req: SuggestionRequest):
                 f"{last_reply} - Suggestion 3",
             ]
         }
+
+
+class TranslateRequest(BaseModel):
+    text: str
+    source_lang: str
+    target_lang: str
+
+
+@app.post("/translate")
+async def translate_id_en(payload: TranslateRequest):
+    translated = GoogleTranslator(
+        source=payload.source_lang, target=payload.target_lang
+    ).translate(payload.text)
+
+    return {"indo": payload.text, "english": translated}
