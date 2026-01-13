@@ -71,6 +71,21 @@ export default function SpeakingApp() {
       ]);
 
       setIsLupaKataActive(false);
+
+      // 🔊 Autoplay hasil terjemahan
+      // 🔊 Autoplay hasil terjemahan
+      if (data.english) {
+        const utterance = new SpeechSynthesisUtterance(data.english);
+        utterance.lang = "en-US";
+
+        // Pilih voice tertentu, misal Google US English
+        const voices = speechSynthesis.getVoices(); // <-- sini
+        const voice =
+          voices.find((v) => v.name === "Google US English") || voices[0];
+        utterance.voice = voice;
+
+        speechSynthesis.speak(utterance);
+      }
     } catch (err) {
       console.error("❌ Translate error:", err);
     }
