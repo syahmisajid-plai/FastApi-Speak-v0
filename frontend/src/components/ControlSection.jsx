@@ -84,7 +84,7 @@ export default function ControlSection({
                     ? "bg-emerald-300"
                     : "bg-emerald-500 hover:bg-emerald-600"
                 }`}
-                  onClick={!isRecording ? openLupaKata : undefined}
+                  onClick={openLupaKata}
                 >
                   <span>📖 Lupa Kata</span>
                   {isLupaKataActive && lupaKataResult && (

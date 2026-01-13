@@ -23,6 +23,9 @@ export default function SpeakingApp() {
     checkBackend();
   }, []);
 
+  const wasRecordingBeforeLupaKataRef = useRef(false);
+  const isPausedForLupaKataRef = useRef(false);
+
   const [isIdle, setIsIdle] = useState(true);
   const idleTimerRef = useRef(null);
 
@@ -94,13 +97,19 @@ export default function SpeakingApp() {
   const lupaKataHasResultRef = useRef(false);
 
   const startLupaKata = () => {
-    recognitionRef.current?.stop();
-    setIsRecording(false);
-    setIsCanceled(true);
+    // simpan status recording saat ini
+    wasRecordingBeforeLupaKataRef.current = isRecording;
 
+    // kalau sedang recording, pause STT utama
+    if (isRecording) {
+      isPausedForLupaKataRef.current = true;
+      recognitionRef.current?.stop(); // hentikan STT utama sementara
+      setIsRecording(false);
+    }
+
+    setIsCanceled(true);
     setIsLupaKataActive(true);
     setLupaKataResult(null);
-
     setChatHistory((prev) => [
       ...prev.filter((c) => !(c.sender === "Helper" && c.type === "prompt")),
       {
@@ -114,7 +123,6 @@ export default function SpeakingApp() {
 
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
-
     if (!SpeechRecognition) return;
 
     const recognition = new SpeechRecognition();
@@ -122,45 +130,16 @@ export default function SpeakingApp() {
     recognition.interimResults = false;
     recognition.continuous = false;
 
-    // 🔍 DEBUG MIC
-    recognition.onaudiostart = () => {
-      console.log("🎙️ Mic started (Lupa Kata)");
-    };
-
-    recognition.onspeechstart = () => {
-      console.log("🗣️ Speech detected");
-    };
-
     recognition.onresult = (event) => {
-      console.log("🎯 RESULT:", event.results);
-
       const result = event.results[event.results.length - 1];
-
       if (!result.isFinal) return;
-
       const text = result[0].transcript?.trim();
-
-      console.log("📝 TRANSCRIPT:", text);
-
-      if (!text) {
-        console.warn("⚠️ Transcript kosong");
-        return;
-      }
-
-      // ✅ tandai bahwa hasil benar-benar ada
+      if (!text) return;
       lupaKataHasResultRef.current = true;
-
-      // ✅ lanjutkan proses
       translateLupaKata(text);
     };
 
-    recognition.onerror = (e) => {
-      console.error("❌ Lupa Kata STT error:", e.error);
-    };
-
     recognition.onend = () => {
-      console.log("🛑 Lupa Kata STT ended");
-
       if (!lupaKataHasResultRef.current) {
         setChatHistory((prev) => [
           ...prev.filter(
@@ -174,11 +153,18 @@ export default function SpeakingApp() {
           },
         ]);
       }
-
       setIsLupaKataActive(false);
+
+      // resume main recording jika sebelumnya sedang merekam
+      if (wasRecordingBeforeLupaKataRef.current) {
+        setTimeout(() => {
+          isPausedForLupaKataRef.current = false; // reset pause
+          recognitionRef.current?.start(); // lanjutkan recording
+          setIsRecording(true);
+        }, 300);
+      }
     };
 
-    // ⏳ delay kecil (PENTING)
     setTimeout(() => {
       recognition.start();
     }, 300);
@@ -218,6 +204,12 @@ export default function SpeakingApp() {
 
   const transcriptRef = useRef("");
   const [liveTranscript, setLiveTranscript] = useState("");
+
+  // --- UseEffect untuk pause liveTranscript selama Lupa Kata ---
+  useEffect(() => {
+    if (isLupaKataActive) return; // jangan update liveTranscript selama Lupa Kata
+    setLiveTranscript(transcriptRef.current);
+  }, [liveTranscript, isLupaKataActive]);
 
   const startRecording = () => {
     resetIdle();
@@ -274,8 +266,17 @@ export default function SpeakingApp() {
     };
 
     recognition.onend = () => {
+      // jika sedang pause karena Lupa Kata, jangan kirim transcript
+      if (isPausedForLupaKataRef.current) {
+        console.log(
+          "⏸ Recording paused for Lupa Kata, transcript tidak dikirim"
+        );
+        return; // keluar saja
+      }
+
       const finalText = normalizeText(transcriptRef.current);
-      setLiveTranscript("");
+
+      setLiveTranscript(""); // kosongkan liveTranscript
 
       if (!isCanceled && finalText) sendTextToBackend(finalText);
 
@@ -283,7 +284,6 @@ export default function SpeakingApp() {
       setIsCanceled(false);
       setIsRecording(false);
 
-      // ⬅️ reset idle SETELAH semua selesai
       resetIdle();
     };
 
