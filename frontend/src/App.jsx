@@ -23,10 +23,30 @@ export default function SpeakingApp() {
     checkBackend();
   }, []);
 
+  const [isIdle, setIsIdle] = useState(true);
+  const idleTimerRef = useRef(null);
+
+  const IDLE_TIMEOUT = 15000; // 5 detik tanpa interaksi
+
+  const resetIdle = () => {
+    if (isRecording) return; // ⬅️ tambahan ini
+
+    setIsIdle(false);
+
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+    }
+
+    idleTimerRef.current = setTimeout(() => {
+      setIsIdle(true);
+    }, IDLE_TIMEOUT);
+  };
+
   const [micReady, setMicReady] = useState(false);
   const [micError, setMicError] = useState(null);
   const [isCanceled, setIsCanceled] = useState(false);
   const toggleSuggestion = () => {
+    resetIdle();
     if (!showSuggestions) fetchSuggestions();
     setShowSuggestions(!showSuggestions);
   };
@@ -56,6 +76,7 @@ export default function SpeakingApp() {
   const [liveTranscript, setLiveTranscript] = useState("");
 
   const startRecording = () => {
+    resetIdle();
     transcriptRef.current = "";
     setLiveTranscript("");
     setIsCanceled(false);
@@ -66,15 +87,23 @@ export default function SpeakingApp() {
   const stopRecording = () => {
     setIsCanceled(false);
     recognitionRef.current?.stop();
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const cancelRecording = () => {
+    resetIdle();
     setIsCanceled(true);
     transcriptRef.current = "";
     setLiveTranscript("");
     recognitionRef.current?.stop();
   };
+
+  useEffect(() => {
+    return () => {
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!SpeechRecognition) return;
@@ -109,6 +138,9 @@ export default function SpeakingApp() {
       transcriptRef.current = "";
       setIsCanceled(false);
       setIsRecording(false);
+
+      // ⬅️ reset idle SETELAH semua selesai
+      resetIdle();
     };
 
     recognition.onerror = (event) => {
@@ -150,6 +182,8 @@ export default function SpeakingApp() {
 
     source.onerror = () => {
       // streaming selesai → ubah AI-temp jadi AI final
+      resetIdle();
+
       setChatHistory((prev) =>
         prev.map((c) =>
           c.sender === "AI-temp" ? { sender: "AI", message: aiText } : c
@@ -240,8 +274,12 @@ export default function SpeakingApp() {
   }, [isRecording]);
 
   return (
-    <div className="min-h-screen w-11/12 lg:w-full flex justify-center bg-linear-to-b from-slate-900 to-blue-950 p-4">
-      <div className="w-full max-w-md space-y-6 flex flex-col">
+    <div className="min-h-screen lg:w-full flex justify-center bg-linear-to-b from-slate-900 to-blue-950 p-4">
+      <div
+        className="w-full max-w-md space-y-6 flex flex-col"
+        onClick={resetIdle}
+        onWheel={resetIdle}
+      >
         <Header />
         <Topic />
         <ChatSection
@@ -250,7 +288,7 @@ export default function SpeakingApp() {
           bottomRef={bottomRef}
         />
 
-        <div className="fixed bottom-20 lg:bottom-20 left-0 w-11/12 lg:w-full px-4 space-y-4">
+        <div className="fixed bottom-20 lg:bottom-20 left-0 lg:w-full px-4 space-y-4">
           {isRecording && <RecordingSection />}
           {showSuggestions && (
             <SuggestionSection
@@ -267,6 +305,7 @@ export default function SpeakingApp() {
             cancelRecording={cancelRecording}
             requestMicPermission={requestMicPermission}
             toggleSuggestion={toggleSuggestion}
+            isIdle={isIdle}
           />
         </div>
 

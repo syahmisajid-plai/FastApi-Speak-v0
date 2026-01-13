@@ -71,12 +71,12 @@ def process_speech(data: SpeechInput):
 
     response = client.responses.create(
         model="gpt-4o-mini",
-        input=f"""You are my English conversation partner. Your only task is to have casual conversations with me in English, like a friendly chat. Don't answer too long
- 
-        User says:
-        {user_text}
-        """,
-        max_output_tokens=25,  # ⚡ batasi output
+        input=f"""
+    You are my English conversation partner. Your only task is to have casual conversations with me in English. 
+    Answer in **one short sentence only**, max 10 words if possible.
+    User says: {user_text}
+    """,
+        max_output_tokens=15,  # ⚡ batas token
     )
 
     ai_reply = response.output[0].content[0].text
