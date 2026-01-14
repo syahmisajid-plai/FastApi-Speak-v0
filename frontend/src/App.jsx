@@ -76,7 +76,6 @@ export default function SpeakingApp() {
       setIsLupaKataActive(false);
 
       // 🔊 Autoplay hasil terjemahan
-      // 🔊 Autoplay hasil terjemahan
       if (data.english) {
         const utterance = new SpeechSynthesisUtterance(data.english);
         utterance.lang = "en-US";
@@ -206,10 +205,10 @@ export default function SpeakingApp() {
   const [liveTranscript, setLiveTranscript] = useState("");
 
   // --- UseEffect untuk pause liveTranscript selama Lupa Kata ---
-  useEffect(() => {
-    if (isLupaKataActive) return; // jangan update liveTranscript selama Lupa Kata
-    setLiveTranscript(transcriptRef.current);
-  }, [liveTranscript, isLupaKataActive]);
+  // useEffect(() => {
+  //   if (isLupaKataActive) return; // jangan update liveTranscript selama Lupa Kata
+  //   setLiveTranscript(transcriptRef.current);
+  // }, [liveTranscript, isLupaKataActive]);
 
   const startRecording = () => {
     resetIdle();
@@ -251,7 +250,7 @@ export default function SpeakingApp() {
     recognition.maxAlternatives = 3;
 
     recognition.onresult = (event) => {
-      if (isCanceled) return; // ⬅️ tambahkan ini
+      if (isCanceled || isLupaKataActive) return;
 
       let interim = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -389,18 +388,24 @@ export default function SpeakingApp() {
 
   // ⬅️ fungsi fetchSuggestions diletakkan di sini
   const fetchSuggestions = async () => {
+    const lastUser = [...chatHistory].reverse().find((c) => c.sender === "You");
     const lastAI = [...chatHistory].reverse().find((c) => c.sender === "AI");
-    if (!lastAI) return;
+
+    // pastikan minimal ada salah satu
+    if (!lastUser && !lastAI) return;
 
     try {
       const res = await fetch("http://127.0.0.1:8000/suggestions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ last_ai_reply: lastAI.message }),
+        body: JSON.stringify({
+          last_user_message: lastUser?.message || "",
+          last_ai_reply: lastAI?.message || "",
+        }),
       });
 
       const data = await res.json();
-      setSuggestions(data.suggestions); // update state
+      setSuggestions(data.suggestions);
     } catch (error) {
       console.error("Error fetching suggestions:", error);
     }
@@ -408,6 +413,13 @@ export default function SpeakingApp() {
 
   const playAudio = (text) => {
     const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+
+    // Pilih voice tertentu, misal Google US English
+    const voices = speechSynthesis.getVoices(); // <-- sini
+    const voice =
+      voices.find((v) => v.name === "Google US English") || voices[0];
+    utterance.voice = voice;
     speechSynthesis.speak(utterance);
   };
 

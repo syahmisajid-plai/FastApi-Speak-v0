@@ -10,6 +10,7 @@ import time
 
 # LangChain
 from langchain_openai import ChatOpenAI
+from langchain.schema import SystemMessage, HumanMessage
 
 load_dotenv()
 
@@ -48,51 +49,33 @@ class SpeechInput(BaseModel):
 #     return {"status": "ok", "received_text": data.text}
 
 
-@app.post("/speech")
-def process_speech(data: SpeechInput):
-    user_text = data.text
-
-    #     response = client.responses.create(
-    #         model="gpt-4o-mini",
-    #         input=f"""You are my English conversation partner. Your only task is to have casual conversations with me in English, like a friendly chat.
-    #                             ALWAYS REPLY IN ENGLISH.
-    #                             Talk about anything — daily life, hobbies, news, or random fun topics.
-    #                             prioritize short text only.
-    #                             If I respond in Indonesian, simply translate it into English and you must ask me to say it.
-    #                             Do not correct my grammar or vocabulary, even if it’s wrong — just keep the conversation going naturally.
-    #                             Use simple and clear English, like you’re talking to a complete beginner.
-    #                             Your main goal is to make me feel comfortable and enjoy speaking English without fear.
-
-    # User says:
-    # {user_text}
-    # """,
-    #         max_output_tokens=25,  # ⚡ batasi output
-    #     )
-
-    response = client.responses.create(
+def stream_from_openai(user_text: str):
+    llm = ChatOpenAI(
         model="gpt-4o-mini",
-        input=f"""
-    You are my English conversation partner. Your only task is to have casual conversations with me in English. 
-    Answer in **one short sentence only**, max 10 words if possible.
-    User says: {user_text}
-    """,
-        max_output_tokens=15,  # ⚡ batas token
+        streaming=True,
+        max_tokens=32,
+        temperature=0.7,
     )
 
-    ai_reply = response.output[0].content[0].text
+    messages = [
+        SystemMessage(
+            content=(
+                "You are my English conversation partner. Your only task is to have casual conversations with me in English, like a friendly chat."
+                "Talk about anything — daily life, hobbies, news, or random fun topics."
+                "Answer in one short sentence only, max 10 words."
+                "Use simple and clear English, like you’re talking to a complete beginner."
+                "Your main goal is to make me feel comfortable and enjoy speaking English without fear."
+            )
+        ),
+        HumanMessage(content=user_text),
+    ]
 
-    print("USER:", user_text)
-    print("AI:", ai_reply)
+    response = llm.stream(messages)
 
-    return {"user_text": user_text, "ai_reply": ai_reply}
-
-
-def stream_from_openai(query: str):
-    llm = ChatOpenAI(model="gpt-4o-mini", streaming=True)
-    response = llm.stream(query)
     for chunk in response:
-        # ❗ format SSE
-        yield f"data: {chunk.content}\n\n"
+        if chunk.content:
+            # SSE format
+            yield f"data: {chunk.content}\n\n"
 
 
 @app.get("/stream_answer")
@@ -126,39 +109,50 @@ async def translate_text(payload: TextPayload):
 
 
 class SuggestionRequest(BaseModel):
-    last_ai_reply: str
+    last_user_message: str = ""
+    last_ai_reply: str = ""
 
 
 @app.post("/suggestions")
 async def get_suggestions(req: SuggestionRequest):
-    last_reply = req.last_ai_reply
+    user_msg = req.last_user_message
+    ai_reply = req.last_ai_reply
 
-    # Prompt untuk AI agar buat 3 saran berbasis jawaban terakhir
     prompt = f"""
-        You are an AI assistant. Create **3 suggested sentences or additional topics** 
-        for the user based on the following sentence: "{last_reply}".
-        Provide **only in JSON list format**:
+        You are an English conversation assistant.
+
+        User said:
+        "{user_msg}"
+
+        AI replied:
+        "{ai_reply}"
+
+        Create **3 suggested sentences** that the USER can say next.
+        Use simple, casual English.
+        Each sentence max 10 words.
+
+        Return ONLY JSON list format:
         ["suggestion1", "suggestion2", "suggestion3"]
         Do not add any other text.
-    """
+        """
 
     try:
         response = client.responses.create(model="gpt-4o-mini", input=prompt)
 
-        # Ambil text dari output AI
-        ai_output = response.output_text  # ini akan berupa string JSON
+        ai_output = response.output_text
         import json
 
         suggestions = json.loads(ai_output)
+
         return {"suggestions": suggestions}
 
     except Exception as e:
         print("Error calling OpenAI:", e)
         return {
             "suggestions": [
-                f"{last_reply} - Suggestion 1",
-                f"{last_reply} - Suggestion 2",
-                f"{last_reply} - Suggestion 3",
+                "Can you tell me more?",
+                "That sounds interesting.",
+                "What should I do next?",
             ]
         }
 
