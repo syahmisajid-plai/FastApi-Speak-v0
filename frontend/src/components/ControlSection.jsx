@@ -11,6 +11,9 @@ export default function ControlSection({
 
   isLupaKataActive,
   lupaKataResult,
+
+  requestSpeakerPermission,
+  speakerReady,
 }) {
   return (
     <>
@@ -44,6 +47,14 @@ export default function ControlSection({
             onClick={requestMicPermission}
           >
             🎤 Enable Microphone
+          </div>
+        ) : !speakerReady ? (
+          // Setelah mic, enable speaker dulu
+          <div
+            className="col-span-4 h-16 w-full bg-purple-500 hover:bg-purple-600 text-white rounded-lg flex items-center justify-center cursor-pointer font-bold mt-2"
+            onClick={requestSpeakerPermission}
+          >
+            🔊 Enable Speaker
           </div>
         ) : (
           <>

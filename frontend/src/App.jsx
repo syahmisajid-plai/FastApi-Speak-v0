@@ -26,6 +26,23 @@ export default function SpeakingApp() {
   const wasRecordingBeforeLupaKataRef = useRef(false);
   const isPausedForLupaKataRef = useRef(false);
 
+  const [speakerReady, setSpeakerReady] = useState(false);
+
+  const requestSpeakerPermission = () => {
+    // buat dummy utterance untuk "mengaktifkan" speaker
+    const utterance = new SpeechSynthesisUtterance("Speaker enabled");
+    utterance.lang = "en-US";
+
+    const voices = speechSynthesis.getVoices();
+    const voice =
+      voices.find((v) => v.name === "Google US English") || voices[0];
+    utterance.voice = voice;
+
+    speechSynthesis.speak(utterance);
+    setSpeakerReady(true);
+    console.log("🔊 Speaker enabled");
+  };
+
   const [isIdle, setIsIdle] = useState(true);
   const idleTimerRef = useRef(null);
 
@@ -471,6 +488,8 @@ export default function SpeakingApp() {
             toggleSuggestion={toggleSuggestion}
             isIdle={isIdle}
             openLupaKata={startLupaKata}
+            requestSpeakerPermission={requestSpeakerPermission}
+            speakerReady={speakerReady}
           />
         </div>
 
