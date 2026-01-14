@@ -176,11 +176,14 @@ export default function SpeakingApp() {
 
       // resume main recording jika sebelumnya sedang merekam
       if (wasRecordingBeforeLupaKataRef.current) {
-        setTimeout(() => {
-          isPausedForLupaKataRef.current = false; // reset pause
-          recognitionRef.current?.start(); // lanjutkan recording
-          setIsRecording(true);
-        }, 300);
+        // setTimeout(() => {
+        //   isPausedForLupaKataRef.current = false; // reset pause
+        //   recognitionRef.current?.start(); // lanjutkan recording
+        //   setIsRecording(true);
+        // }, 300);
+        isPausedForLupaKataRef.current = false;
+        recognitionRef.current?.start();
+        setIsRecording(true);
       }
     };
 
