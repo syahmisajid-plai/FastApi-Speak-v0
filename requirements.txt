@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
+
+openai
+langchain
+langchain-openai
+
+deep-translator
