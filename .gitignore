@@ -1,5 +1,17 @@
-# env file
-backend/.env
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
 
-# optional (kalau ada env lain)
-backend/.env.*
+# Python env
+.env
+.venv/
+venv/
+
+# OS / Editor
+.DS_Store
+.vscode/
+
+# Node
+node_modules/
+dist/
