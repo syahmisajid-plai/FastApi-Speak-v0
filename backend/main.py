@@ -10,7 +10,7 @@ import time
 
 # LangChain
 from langchain_openai import ChatOpenAI
-from langchain.schema import SystemMessage, HumanMessage
+from langchain_core.messages import SystemMessage, HumanMessage
 
 load_dotenv()
 
