@@ -187,9 +187,7 @@ export default function SpeakingApp() {
       }
     };
 
-    setTimeout(() => {
-      recognition.start();
-    }, 300);
+    recognition.start();
 
     lupaKataRecognitionRef.current = recognition;
   };

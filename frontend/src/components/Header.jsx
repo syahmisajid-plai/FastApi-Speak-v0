@@ -4,7 +4,7 @@ export default function Header() {
       <h1 className="text-2xl font-bold text-amber-100">
         🦦 <br /> SpeakEasy
       </h1>
-      <p className="text-sm text-gray-400">Practice your English speaking</p>
+      <p className="text-sm text-gray-400">Practice your English speaking!</p>
     </header>
   );
 }
