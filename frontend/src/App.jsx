@@ -23,6 +23,21 @@ export default function SpeakingApp() {
     checkBackend();
   }, []);
 
+  useEffect(() => {
+    // Hanya pasang Eruda jika di browser (client-side)
+    if (typeof window !== "undefined") {
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/eruda";
+      script.async = true;
+      document.body.appendChild(script);
+
+      script.onload = () => {
+        window.eruda.init();
+        console.log("🛠️ Eruda Loaded! Klik ikon gear di kanan bawah.");
+      };
+    }
+  }, []);
+
   const wasRecordingBeforeLupaKataRef = useRef(false);
   const isPausedForLupaKataRef = useRef(false);
 
