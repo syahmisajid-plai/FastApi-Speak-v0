@@ -10,8 +10,6 @@ import "./App.css";
 import api from "./api"; // ⬅️ pakai axios instance
 
 export default function SpeakingApp() {
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
   useEffect(() => {
     const checkBackend = async () => {
       try {

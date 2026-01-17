@@ -16,6 +16,8 @@ export default function ControlSection({
   requestSpeakerPermission,
   speakerReady,
 }) {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
   const handleLupaKataClick = (e) => {
     e.preventDefault();
 
