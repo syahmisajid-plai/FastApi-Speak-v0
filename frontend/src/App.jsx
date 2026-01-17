@@ -10,6 +10,8 @@ import "./App.css";
 import api from "./api"; // ⬅️ pakai axios instance
 
 export default function SpeakingApp() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
   useEffect(() => {
     const checkBackend = async () => {
       try {
@@ -205,6 +207,47 @@ export default function SpeakingApp() {
     recognition.start();
 
     lupaKataRecognitionRef.current = recognition;
+  };
+
+  const startLupaKataIOS = () => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    // ⚠️ STOP TOTAL semua recognition dulu
+    recognitionRef.current?.abort();
+    recognitionRef.current = null;
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "id-ID";
+    recognition.interimResults = false;
+    recognition.continuous = false; // WAJIB false di iOS
+
+    let hasResult = false;
+
+    recognition.onresult = (event) => {
+      hasResult = true;
+      const text = event.results[0][0].transcript.trim();
+      translateLupaKata(text);
+    };
+
+    recognition.onend = () => {
+      if (!hasResult) {
+        setChatHistory((prev) => [
+          ...prev,
+          {
+            sender: "Helper",
+            type: "result",
+            indo: "—",
+            english: "❗ iOS tidak mendeteksi suara. Coba bicara lebih cepat.",
+          },
+        ]);
+      }
+      setIsLupaKataActive(false);
+    };
+
+    setIsLupaKataActive(true);
+    recognition.start(); // ⬅️ HARUS sinkron setelah tap
   };
 
   const [micReady, setMicReady] = useState(false);
@@ -506,6 +549,7 @@ export default function SpeakingApp() {
             openLupaKata={startLupaKata}
             requestSpeakerPermission={requestSpeakerPermission}
             speakerReady={speakerReady}
+            startLupaKataIOS={startLupaKataIOS}
           />
         </div>
 

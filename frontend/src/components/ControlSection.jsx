@@ -11,10 +11,21 @@ export default function ControlSection({
 
   isLupaKataActive,
   lupaKataResult,
+  startLupaKataIOS,
 
   requestSpeakerPermission,
   speakerReady,
 }) {
+  const handleLupaKataClick = (e) => {
+    e.preventDefault();
+
+    if (isIOS) {
+      startLupaKataIOS(); // versi iOS yang sederhana
+    } else {
+      openLupaKata(); // versi lama (Android / Chrome)
+    }
+  };
+
   return (
     <>
       {/* FLOATING SUGGEST BUTTON */}
@@ -95,7 +106,7 @@ export default function ControlSection({
                     ? "bg-emerald-300"
                     : "bg-emerald-500 hover:bg-emerald-600"
                 }`}
-                  onClick={openLupaKata}
+                  onClick={handleLupaKataClick}
                 >
                   <span>📖 Lupa Kata</span>
                   {isLupaKataActive && lupaKataResult && (
