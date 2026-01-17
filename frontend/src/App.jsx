@@ -161,8 +161,8 @@ export default function SpeakingApp() {
 
     const recognition = new SpeechRecognition();
     recognition.lang = "id-ID";
-    recognition.interimResults = false;
-    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.continuous = true;
 
     recognition.onresult = (event) => {
       const result = event.results[event.results.length - 1];
