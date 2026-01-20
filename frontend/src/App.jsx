@@ -83,15 +83,18 @@ export default function SpeakingApp() {
 
   const translateLupaKata = async (indoText) => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: indoText,
-          source_lang: "id",
-          target_lang: "en",
-        }),
-      });
+      const res = await fetch(
+        "https://fastapi-speak-v0-production.up.railway.app/translate",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: indoText,
+            source_lang: "id",
+            target_lang: "en",
+          }),
+        },
+      );
 
       const data = await res.json();
 
@@ -138,10 +141,13 @@ export default function SpeakingApp() {
     const formData = new FormData();
     formData.append("file", blob, "lupakata.webm");
 
-    const res = await fetch("http://127.0.0.1:8000/api/stt-whisper", {
-      method: "POST",
-      body: formData,
-    });
+    const res = await fetch(
+      "https://fastapi-speak-v0-production.up.railway.app/api/stt-whisper",
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
 
     if (!res.ok) {
       const text = await res.text();
@@ -347,7 +353,9 @@ export default function SpeakingApp() {
 
     // 2️⃣ buka EventSource ke endpoint streaming GET
     const source = new EventSource(
-      `http://127.0.0.1:8000/stream_answer?query=${encodeURIComponent(text)}`,
+      `https://fastapi-speak-v0-production.up.railway.app/stream_answer?query=${encodeURIComponent(
+        text,
+      )}`,
     );
 
     let aiText = "";
@@ -435,14 +443,17 @@ export default function SpeakingApp() {
     if (!lastUser && !lastAI) return;
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/suggestions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          last_user_message: lastUser?.message || "",
-          last_ai_reply: lastAI?.message || "",
-        }),
-      });
+      const res = await fetch(
+        "https://fastapi-speak-v0-production.up.railway.app/suggestions",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            last_user_message: lastUser?.message || "",
+            last_ai_reply: lastAI?.message || "",
+          }),
+        },
+      );
 
       const data = await res.json();
       setSuggestions(data.suggestions);
