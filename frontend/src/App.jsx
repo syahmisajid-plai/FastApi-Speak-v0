@@ -83,18 +83,15 @@ export default function SpeakingApp() {
 
   const translateLupaKata = async (indoText) => {
     try {
-      const res = await fetch(
-        "https://fastapi-speak-v0-production.up.railway.app/translate",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text: indoText,
-            source_lang: "id",
-            target_lang: "en",
-          }),
-        }
-      );
+      const res = await fetch("http://127.0.0.1:8000/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: indoText,
+          source_lang: "id",
+          target_lang: "en",
+        }),
+      });
 
       const data = await res.json();
 
@@ -136,36 +133,31 @@ export default function SpeakingApp() {
   };
 
   // const lupaKataHasResultRef = useRef(false);
-  
-  const sendAudioToWhisper = async (blob) => {
-  const formData = new FormData();
-  formData.append("file", blob, "lupakata.webm");
 
-  const res = await fetch(
-    "https://fastapi-speak-v0-production.up.railway.app/api/stt-whisper",
-    {
+  const sendAudioToWhisper = async (blob) => {
+    const formData = new FormData();
+    formData.append("file", blob, "lupakata.webm");
+
+    const res = await fetch("http://127.0.0.1:8000/api/stt-whisper", {
       method: "POST",
       body: formData,
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("❌ Whisper API error:", text);
+      return;
     }
-  );
 
-  if (!res.ok) {
-    const text = await res.text();
-    console.error("❌ Whisper API error:", text);
-    return;
-  }
+    const data = await res.json();
 
-  const data = await res.json();
+    if (!data.text) {
+      console.error("❌ Empty transcription");
+      return;
+    }
 
-
-  if (!data.text) {
-    console.error("❌ Empty transcription");
-    return;
-  }
-
-  translateLupaKata(data.text);
-};
-
+    translateLupaKata(data.text);
+  };
 
   const startLupaKata = async () => {
     console.log("▶️ startLupaKata (recording)");
@@ -211,10 +203,7 @@ export default function SpeakingApp() {
 
       await sendAudioToWhisper(blob);
     };
-
   };
-
-
 
   const [micReady, setMicReady] = useState(false);
   const [micError, setMicError] = useState(null);
@@ -310,15 +299,20 @@ export default function SpeakingApp() {
     };
 
     recognition.onend = () => {
+      console.log("🟥 ONEND FIRED");
+      console.log("paused?", isPausedForLupaKataRef.current);
+      // console.log("canceled?", isCanceledRef.current);
+      console.log("raw transcript:", transcriptRef.current);
       // jika sedang pause karena Lupa Kata, jangan kirim transcript
       if (isPausedForLupaKataRef.current) {
         console.log(
-          "⏸ Recording paused for Lupa Kata, transcript tidak dikirim"
+          "⏸ Recording paused for Lupa Kata, transcript tidak dikirim",
         );
         return; // keluar saja
       }
 
       const finalText = normalizeText(transcriptRef.current);
+      console.log("🟨 FINAL TEXT:", finalText);
 
       setLiveTranscript(""); // kosongkan liveTranscript
 
@@ -347,14 +341,13 @@ export default function SpeakingApp() {
   };
 
   const sendTextToBackend = (text) => {
+    console.log("🚀 SEND TO AI:", text);
     // 1️⃣ tampilkan user dulu
     setChatHistory((prev) => [...prev, { sender: "You", message: text }]);
 
     // 2️⃣ buka EventSource ke endpoint streaming GET
     const source = new EventSource(
-      `https://fastapi-speak-v0-production.up.railway.app/stream_answer?query=${encodeURIComponent(
-        text
-      )}`
+      `http://127.0.0.1:8000/stream_answer?query=${encodeURIComponent(text)}`,
     );
 
     let aiText = "";
@@ -376,8 +369,8 @@ export default function SpeakingApp() {
 
       setChatHistory((prev) =>
         prev.map((c) =>
-          c.sender === "AI-temp" ? { sender: "AI", message: aiText } : c
-        )
+          c.sender === "AI-temp" ? { sender: "AI", message: aiText } : c,
+        ),
       );
 
       // TTS baru diputar setelah semua jawaban selesai
@@ -398,7 +391,7 @@ export default function SpeakingApp() {
 
         const speakWithVoice = async (
           text,
-          voiceName = "Google US English"
+          voiceName = "Google US English",
         ) => {
           const voices = await getVoices();
           const voice = voices.find((v) => v.name === voiceName) || voices[0];
@@ -442,17 +435,14 @@ export default function SpeakingApp() {
     if (!lastUser && !lastAI) return;
 
     try {
-      const res = await fetch(
-        "https://fastapi-speak-v0-production.up.railway.app/suggestions",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            last_user_message: lastUser?.message || "",
-            last_ai_reply: lastAI?.message || "",
-          }),
-        }
-      );
+      const res = await fetch("http://127.0.0.1:8000/suggestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          last_user_message: lastUser?.message || "",
+          last_ai_reply: lastAI?.message || "",
+        }),
+      });
 
       const data = await res.json();
       setSuggestions(data.suggestions);
