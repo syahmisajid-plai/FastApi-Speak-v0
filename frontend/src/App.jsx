@@ -84,7 +84,7 @@ export default function SpeakingApp() {
   const translateLupaKata = async (indoText) => {
     try {
       const res = await fetch(
-        "http://127.0.0.1:8000/translate",
+        "https://fastapi-speak-v0-production.up.railway.app/translate",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -142,7 +142,7 @@ export default function SpeakingApp() {
   formData.append("file", blob, "lupakata.webm");
 
   const res = await fetch(
-    "http://127.0.0.1:8000/api/stt-whisper",
+    "https://fastapi-speak-v0-production.up.railway.app/api/stt-whisper",
     {
       method: "POST",
       body: formData,
@@ -352,7 +352,7 @@ export default function SpeakingApp() {
 
     // 2️⃣ buka EventSource ke endpoint streaming GET
     const source = new EventSource(
-      `http://127.0.0.1:8000/stream_answer?query=${encodeURIComponent(
+      `https://fastapi-speak-v0-production.up.railway.app/stream_answer?query=${encodeURIComponent(
         text
       )}`
     );
@@ -443,7 +443,7 @@ export default function SpeakingApp() {
 
     try {
       const res = await fetch(
-        "http://127.0.0.1:8000/suggestions",
+        "https://fastapi-speak-v0-production.up.railway.app/suggestions",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
