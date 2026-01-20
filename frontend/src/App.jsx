@@ -10,18 +10,19 @@ import "./App.css";
 import api from "./api"; // ⬅️ pakai axios instance
 
 export default function SpeakingApp() {
-  useEffect(() => {
-    const checkBackend = async () => {
-      try {
-        const response = await api.get("/api/ping");
-        console.log("✅ Backend connected:", response.data);
-      } catch (error) {
-        console.error("❌ Backend NOT connected:", error);
-      }
-    };
 
-    checkBackend();
-  }, []);
+  const initIOS = async () => {
+    await requestMicPermission();
+    await requestSpeakerPermission();
+
+    try {
+      const res = await api.get("https://fastapi-speak-v0-production.up.railway.app/api/ping");
+      console.log("✅ Backend connected:", res.data);
+    } catch (err) {
+      console.error("❌ Backend NOT connected:", err);
+    }
+  };
+
 
   useEffect(() => {
     // Hanya pasang Eruda jika di browser (client-side)
@@ -181,9 +182,13 @@ export default function SpeakingApp() {
 
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: "audio/webm;codecs=opus",
-    });
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    const mediaRecorder = new MediaRecorder(
+      stream,
+      isIOS ? {} : { mimeType: "audio/webm;codecs=opus" }
+    );
+
 
     const chunks = [];
 
@@ -200,17 +205,17 @@ export default function SpeakingApp() {
     mediaRecorder.onstop = async () => {
       stream.getTracks().forEach((t) => t.stop());
 
-      const blob = new Blob(chunks, { type: "audio/webm" });
+      const blob = new Blob(chunks, {
+        type: isIOS ? "audio/mp4" : "audio/webm",
+      });
 
-      console.log("🎧 Audio size:", blob.size);
+      if (blob.size === 0) return;
 
-      if (blob.size === 0) {
-        console.error("❌ Audio kosong");
-        return;
-      }
-
-      await sendAudioToWhisper(blob);
+      setTimeout(() => {
+        sendAudioToWhisper(blob);
+      }, 0);
     };
+
 
   };
 
@@ -504,6 +509,7 @@ export default function SpeakingApp() {
           )}
 
           <ControlSection
+            initIOS={initIOS}
             isRecording={isRecording}
             micReady={micReady}
             startRecording={startRecording}
