@@ -14,7 +14,6 @@ export default function ControlSection({
 
   requestSpeakerPermission,
   speakerReady,
-  initIOS
 }) {
   return (
     <>
@@ -45,7 +44,7 @@ export default function ControlSection({
           // Awal: Enable Microphone full-width
           <div
             className="col-span-4 h-16 w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center justify-center cursor-pointer font-bold"
-            onClick={initIOS}
+            onClick={requestMicPermission}
           >
             🎤 Enable Microphone
           </div>
