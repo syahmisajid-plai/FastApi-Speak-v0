@@ -38,7 +38,7 @@ export default function SpeakingApp() {
     }
   }, []);
 
-  const wasRecordingBeforeLupaKataRef = useRef(false);
+  // const wasRecordingBeforeLupaKataRef = useRef(false);
   const isPausedForLupaKataRef = useRef(false);
 
   const [speakerReady, setSpeakerReady] = useState(false);
@@ -64,7 +64,7 @@ export default function SpeakingApp() {
   const IDLE_TIMEOUT = 15000; // 5 detik tanpa interaksi
 
   const resetIdle = () => {
-    if (isRecording) return; // ⬅️ tambahan ini
+    if (isRecording || isLupaKataActive) return;
 
     setIsIdle(false);
 
@@ -78,13 +78,13 @@ export default function SpeakingApp() {
   };
 
   const [isLupaKataActive, setIsLupaKataActive] = useState(false);
-  const [lupaKataResult, setLupaKataResult] = useState(null);
-  const lupaKataRecognitionRef = useRef(null);
+  // const [lupaKataResult, setLupaKataResult] = useState(null);
+  // const lupaKataRecognitionRef = useRef(null);
 
   const translateLupaKata = async (indoText) => {
     try {
       const res = await fetch(
-        "https://fastapi-speak-v0-production.up.railway.app/translate",
+        "http://127.0.0.1:8000/translate",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -108,8 +108,6 @@ export default function SpeakingApp() {
         },
       ]);
 
-      setIsLupaKataActive(false);
-
       // 🔊 Autoplay hasil terjemahan
       if (data.english) {
         const utterance = new SpeechSynthesisUtterance(data.english);
@@ -126,86 +124,97 @@ export default function SpeakingApp() {
     } catch (err) {
       console.error("❌ Translate error:", err);
     }
+
+    setIsLupaKataActive(false);
+
+    // ▶️ RESUME SpeechRecognition jika tadi pause
+    if (isPausedForLupaKataRef.current) {
+      isPausedForLupaKataRef.current = false;
+      recognitionRef.current?.start();
+      setIsRecording(true);
+    }
   };
 
-  const lupaKataHasResultRef = useRef(false);
+  // const lupaKataHasResultRef = useRef(false);
+  
+  const sendAudioToWhisper = async (blob) => {
+  const formData = new FormData();
+  formData.append("file", blob, "lupakata.webm");
 
-  const startLupaKata = () => {
-    // simpan status recording saat ini
-    wasRecordingBeforeLupaKataRef.current = isRecording;
+  const res = await fetch(
+    "http://127.0.0.1:8000/api/stt-whisper",
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
 
-    // kalau sedang recording, pause STT utama
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("❌ Whisper API error:", text);
+    return;
+  }
+
+  const data = await res.json();
+
+
+  if (!data.text) {
+    console.error("❌ Empty transcription");
+    return;
+  }
+
+  translateLupaKata(data.text);
+};
+
+
+  const startLupaKata = async () => {
+    console.log("▶️ startLupaKata (recording)");
+
+    // ⛔ PAUSE SpeechRecognition utama
     if (isRecording) {
       isPausedForLupaKataRef.current = true;
-      recognitionRef.current?.stop(); // hentikan STT utama sementara
+      recognitionRef.current?.stop();
       setIsRecording(false);
     }
 
-    setIsCanceled(true);
     setIsLupaKataActive(true);
-    setLupaKataResult(null);
-    setChatHistory((prev) => [
-      ...prev.filter((c) => !(c.sender === "Helper" && c.type === "prompt")),
-      {
-        sender: "Helper",
-        message: "🎤 Ucapkan dalam Bahasa Indonesia ya…",
-        type: "prompt",
-      },
-    ]);
 
-    lupaKataHasResultRef.current = false;
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
+    const mediaRecorder = new MediaRecorder(stream, {
+      mimeType: "audio/webm;codecs=opus",
+    });
 
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-US"
-    recognition.interimResults = false;
-    recognition.continuous = false;
+    const chunks = [];
 
-    recognition.onresult = (event) => {
-      const result = event.results[event.results.length - 1];
-      if (!result.isFinal) return;
-      const text = result[0].transcript?.trim();
-      if (!text) return;
-      lupaKataHasResultRef.current = true;
-      translateLupaKata(text);
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunks.push(e.data);
     };
 
-    recognition.onend = () => {
-      if (!lupaKataHasResultRef.current) {
-        setChatHistory((prev) => [
-          ...prev.filter(
-            (c) => !(c.sender === "Helper" && c.type === "prompt")
-          ),
-          {
-            sender: "Helper",
-            type: "result",
-            indo: "—",
-            english: "❗ Tidak terdengar. Coba ucapkan lagi ya.",
-          },
-        ]);
-      }
-      setIsLupaKataActive(false);
+    mediaRecorder.start();
 
-      // resume main recording jika sebelumnya sedang merekam
-      if (wasRecordingBeforeLupaKataRef.current) {
-        // setTimeout(() => {
-        //   isPausedForLupaKataRef.current = false; // reset pause
-        //   recognitionRef.current?.start(); // lanjutkan recording
-        //   setIsRecording(true);
-        // }, 300);
-        isPausedForLupaKataRef.current = false;
-        recognitionRef.current?.start();
-        setIsRecording(true);
+    setTimeout(() => {
+      mediaRecorder.stop();
+    }, 4000); // ⏱️ 3–5 detik
+
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach((t) => t.stop());
+
+      const blob = new Blob(chunks, { type: "audio/webm" });
+
+      console.log("🎧 Audio size:", blob.size);
+
+      if (blob.size === 0) {
+        console.error("❌ Audio kosong");
+        return;
       }
+
+      await sendAudioToWhisper(blob);
     };
 
-    recognition.start();
-
-    lupaKataRecognitionRef.current = recognition;
   };
+
+
 
   const [micReady, setMicReady] = useState(false);
   const [micError, setMicError] = useState(null);
@@ -343,7 +352,7 @@ export default function SpeakingApp() {
 
     // 2️⃣ buka EventSource ke endpoint streaming GET
     const source = new EventSource(
-      `https://fastapi-speak-v0-production.up.railway.app/stream_answer?query=${encodeURIComponent(
+      `http://127.0.0.1:8000/stream_answer?query=${encodeURIComponent(
         text
       )}`
     );
@@ -434,7 +443,7 @@ export default function SpeakingApp() {
 
     try {
       const res = await fetch(
-        "https://fastapi-speak-v0-production.up.railway.app/suggestions",
+        "http://127.0.0.1:8000/suggestions",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

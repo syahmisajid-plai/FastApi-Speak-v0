@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -109,6 +109,17 @@ class TextPayload(BaseModel):
 async def translate_text(payload: TextPayload):
     translated = GoogleTranslator(source="en", target="id").translate(payload.text)
     return {"translated": translated}
+
+
+@app.post("/api/stt-whisper")
+async def stt_whisper(file: UploadFile):
+    audio_bytes = await file.read()
+
+    transcript = client.audio.transcriptions.create(
+        model="whisper-1", file=("audio.webm", audio_bytes), language="id"
+    )
+
+    return {"text": transcript.text}
 
 
 class SuggestionRequest(BaseModel):
