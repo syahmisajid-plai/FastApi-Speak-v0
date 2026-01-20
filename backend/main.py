@@ -10,7 +10,8 @@ import time
 
 # LangChain
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+from typing import List
 
 load_dotenv()
 
@@ -52,7 +53,13 @@ class SpeechInput(BaseModel):
 #     return {"status": "ok", "received_text": data.text}
 
 
-def stream_from_openai(user_text: str):
+class ChatHistory(BaseModel):
+    user_messages: List[str]
+    ai_messages: List[str]
+    current_query: str
+
+
+def stream_from_openai(history: ChatHistory):
     llm = ChatOpenAI(
         model="gpt-4o-mini",
         streaming=True,
@@ -69,23 +76,29 @@ def stream_from_openai(user_text: str):
                 "Use simple and clear English, like you’re talking to a complete beginner."
                 "Your main goal is to make me feel comfortable and enjoy speaking English without fear."
             )
-        ),
-        HumanMessage(content=user_text),
+        )
     ]
+
+    # Ambil 3 terakhir dari user dan AI
+    for u, a in zip(history.user_messages[-3:], history.ai_messages[-3:]):
+        messages.append(HumanMessage(content=u))
+        messages.append(AIMessage(content=a))
+
+    # Tambahkan query terbaru
+    messages.append(HumanMessage(content=history.current_query))
 
     response = llm.stream(messages)
 
     for chunk in response:
         if chunk.content:
-            # SSE format
             yield f"data: {chunk.content}\n\n"
 
 
-@app.get("/stream_answer")
-async def stream_answer(query: str):
+@app.post("/stream_answer")
+async def stream_answer(history: ChatHistory):
     return StreamingResponse(
-        stream_from_openai(query),
-        media_type="text/event-stream",  # ❗ SSE
+        stream_from_openai(history),
+        media_type="text/event-stream",
     )
 
 
