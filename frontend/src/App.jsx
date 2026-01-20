@@ -160,7 +160,7 @@ export default function SpeakingApp() {
     if (!SpeechRecognition) return;
 
     const recognition = new SpeechRecognition();
-    recognition.lang = "id-ID";
+    recognition.lang = "en-US"
     recognition.interimResults = false;
     recognition.continuous = false;
 
