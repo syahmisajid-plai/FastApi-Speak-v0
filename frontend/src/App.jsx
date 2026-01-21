@@ -347,8 +347,8 @@ export default function SpeakingApp() {
     text
       .replace(/\s+/g, " ")
       .replace(/\n+/g, ". ")
-      .replace(/([!?])+/g, ",") // 🔥 ubah ! dan ? jadi titik
-      .replace(/\.\s*\./g, ".")
+      // .replace(/([!?])+/g, ",") // 🔥 ubah ! dan ? jadi titik
+      // .replace(/\.\s*\./g, ".")
       .trim();
 
   const splitSentences = (text) => text.match(/[^.!?]+[.!?]+/g) || [text];
