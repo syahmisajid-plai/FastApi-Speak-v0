@@ -41,23 +41,6 @@ export default function SpeakingApp() {
   // const wasRecordingBeforeLupaKataRef = useRef(false);
   const isPausedForLupaKataRef = useRef(false);
 
-  const [speakerReady, setSpeakerReady] = useState(false);
-
-  const requestSpeakerPermission = () => {
-    // buat dummy utterance untuk "mengaktifkan" speaker
-    const utterance = new SpeechSynthesisUtterance("Speaker enabled");
-    utterance.lang = "en-US";
-
-    const voices = speechSynthesis.getVoices();
-    const voice =
-      voices.find((v) => v.name === "Google US English") || voices[0];
-    utterance.voice = voice;
-
-    speechSynthesis.speak(utterance);
-    setSpeakerReady(true);
-    console.log("🔊 Speaker enabled");
-  };
-
   const [isIdle, setIsIdle] = useState(true);
   const idleTimerRef = useRef(null);
 
@@ -207,26 +190,40 @@ export default function SpeakingApp() {
 
   const [micReady, setMicReady] = useState(false);
   const [micError, setMicError] = useState(null);
+  const [speakerReady, setSpeakerReady] = useState(false);
+  const [speakerError, setSpeakerError] = useState(null);
   const [isCanceled, setIsCanceled] = useState(false);
+
   const toggleSuggestion = () => {
     resetIdle();
     if (!showSuggestions) fetchSuggestions();
     setShowSuggestions(!showSuggestions);
   };
 
-  const requestMicPermission = async () => {
+  const requestAudioPermission = async () => {
     try {
+      // Request microphone
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // hentikan stream, kita hanya butuh permission-nya
       stream.getTracks().forEach((track) => track.stop());
-
       setMicReady(true);
       setMicError(null);
       console.log("🎤 Microphone permission granted");
     } catch (err) {
       console.error("❌ Microphone permission denied", err);
-      setMicError("Microphone access is required to record voice.");
+      setMicError("Microphone access is required to use this feature.");
+      return; // stop jika mic gagal
+    }
+
+    try {
+      // Request speaker (AudioContext)
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      await audioCtx.resume();
+      setSpeakerReady(true);
+      setSpeakerError(null);
+      console.log("🔊 Speaker permission granted");
+    } catch (err) {
+      console.error("❌ Speaker permission denied", err);
+      setSpeakerError("Speaker access is required to play sound.");
     }
   };
 
@@ -510,11 +507,10 @@ export default function SpeakingApp() {
             startRecording={startRecording}
             stopRecording={stopRecording}
             cancelRecording={cancelRecording}
-            requestMicPermission={requestMicPermission}
+            requestAudioPermission={requestAudioPermission}
             toggleSuggestion={toggleSuggestion}
             isIdle={isIdle}
             openLupaKata={startLupaKata}
-            requestSpeakerPermission={requestSpeakerPermission}
             speakerReady={speakerReady}
           />
         </div>

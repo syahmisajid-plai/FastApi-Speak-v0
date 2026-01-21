@@ -1,7 +1,7 @@
 export default function ControlSection({
   isRecording,
   micReady,
-  requestMicPermission,
+  requestAudioPermission,
   startRecording,
   stopRecording,
   cancelRecording,
@@ -12,7 +12,6 @@ export default function ControlSection({
   isLupaKataActive,
   lupaKataResult,
 
-  requestSpeakerPermission,
   speakerReady,
 }) {
   return (
@@ -39,22 +38,13 @@ export default function ControlSection({
 
       {/* MIC / RECORD & LUPA KATA */}
       <div className="grid grid-cols-4 gap-4 max-w-md mx-auto mt-2">
-        {/* Tombol Mic / Record */}
-        {!micReady ? (
-          // Awal: Enable Microphone full-width
+        {/* Tombol Enable Audio (Mic + Speaker) */}
+        {!(micReady && speakerReady) ? (
           <div
             className="col-span-4 h-16 w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center justify-center cursor-pointer font-bold"
-            onClick={requestMicPermission}
+            onClick={requestAudioPermission}
           >
-            🎤 Enable Microphone
-          </div>
-        ) : !speakerReady ? (
-          // Setelah mic, enable speaker dulu
-          <div
-            className="col-span-4 h-16 w-full bg-purple-500 hover:bg-purple-600 text-white rounded-lg flex items-center justify-center cursor-pointer font-bold mt-2"
-            onClick={requestSpeakerPermission}
-          >
-            🔊 Enable Speaker
+            🎤🔊 Enable Audio
           </div>
         ) : (
           <>
