@@ -83,18 +83,15 @@ export default function SpeakingApp() {
 
   const translateLupaKata = async (indoText) => {
     try {
-      const res = await fetch(
-        "https://fastapi-speak-v0-production.up.railway.app/translate",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text: indoText,
-            source_lang: "id",
-            target_lang: "en",
-          }),
-        },
-      );
+      const res = await fetch("http://127.0.0.1:8000/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: indoText,
+          source_lang: "id",
+          target_lang: "en",
+        }),
+      });
 
       const data = await res.json();
 
@@ -141,13 +138,10 @@ export default function SpeakingApp() {
     const formData = new FormData();
     formData.append("file", blob, "lupakata.webm");
 
-    const res = await fetch(
-      "https://fastapi-speak-v0-production.up.railway.app/api/stt-whisper",
-      {
-        method: "POST",
-        body: formData,
-      },
-    );
+    const res = await fetch("http://127.0.0.1:8000/api/stt-whisper", {
+      method: "POST",
+      body: formData,
+    });
 
     if (!res.ok) {
       const text = await res.text();
@@ -346,77 +340,98 @@ export default function SpeakingApp() {
       .trim();
   };
 
-  const sendTextToBackend = (text) => {
+  const normalizeForTTS = (text) =>
+    text
+      .replace(/\s+/g, " ")
+      .replace(/\n+/g, ". ")
+      .replace(/([!?])+/g, ",") // 🔥 ubah ! dan ? jadi titik
+      .replace(/\.\s*\./g, ".")
+      .trim();
+
+  const splitSentences = (text) => text.match(/[^.!?]+[.!?]+/g) || [text];
+
+  const waitForVoices = () =>
+    new Promise((resolve) => {
+      const voices = speechSynthesis.getVoices();
+      if (voices.length) return resolve(voices);
+      speechSynthesis.onvoiceschanged = () =>
+        resolve(speechSynthesis.getVoices());
+    });
+
+  const speakText = async (text) => {
+    if (!text) return;
+
+    // pastikan voices sudah siap
+    const voices = await waitForVoices();
+    const voice =
+      voices.find((v) => v.name === "Google US English") || voices[0];
+
+    await waitForVoices();
+
+    const sentences = splitSentences(normalizeForTTS(text));
+    speechSynthesis.cancel();
+
+    const speakNext = () => {
+      if (!sentences.length) return;
+
+      const u = new SpeechSynthesisUtterance(sentences.shift());
+      u.lang = voice.lang; // ambil dari voice
+      u.voice = voice;
+      u.rate = 0.95;
+      u.onend = speakNext;
+
+      speechSynthesis.speak(u);
+    };
+
+    speakNext();
+  };
+
+  const SESSION_ID = "user-123"; // HARUS konsisten
+
+  const sendTextToBackend = async (text) => {
     console.log("🚀 SEND TO AI:", text);
-    // 1️⃣ tampilkan user dulu
+
+    // 1️⃣ tampilkan user message
     setChatHistory((prev) => [...prev, { sender: "You", message: text }]);
 
-    // 2️⃣ buka EventSource ke endpoint streaming GET
-    const source = new EventSource(
-      `https://fastapi-speak-v0-production.up.railway.app/stream_answer?query=${encodeURIComponent(
-        text,
-      )}`,
-    );
+    // 2️⃣ POST streaming ke backend
+    const res = await fetch("http://127.0.0.1:8000/stream_answer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: SESSION_ID,
+        input: text,
+      }),
+    });
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
 
     let aiText = "";
 
-    source.onmessage = (event) => {
-      // setiap potongan AI dikirim, update aiText
-      aiText += event.data;
+    // 3️⃣ baca stream token demi token
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
 
-      // live update chat, gunakan AI-temp
+      const chunk = decoder.decode(value);
+      aiText += chunk.replace(/^data:\s*/gm, "");
+
       setChatHistory((prev) => {
-        const withoutAI = prev.filter((c) => c.sender !== "AI-temp");
-        return [...withoutAI, { sender: "AI-temp", message: aiText }];
+        const withoutTemp = prev.filter((c) => c.sender !== "AI-temp");
+        return [...withoutTemp, { sender: "AI-temp", message: aiText }];
       });
-    };
+    }
 
-    source.onerror = () => {
-      // streaming selesai → ubah AI-temp jadi AI final
-      resetIdle();
+    // 4️⃣ finalisasi pesan AI
+    setChatHistory((prev) =>
+      prev.map((c) =>
+        c.sender === "AI-temp" ? { sender: "AI", message: aiText } : c,
+      ),
+    );
 
-      setChatHistory((prev) =>
-        prev.map((c) =>
-          c.sender === "AI-temp" ? { sender: "AI", message: aiText } : c,
-        ),
-      );
-
-      // TTS baru diputar setelah semua jawaban selesai
-      if (aiText) {
-        const getVoices = () => {
-          return new Promise((resolve) => {
-            let voices = speechSynthesis.getVoices();
-            if (voices.length) {
-              resolve(voices);
-              return;
-            }
-            speechSynthesis.onvoiceschanged = () => {
-              voices = speechSynthesis.getVoices();
-              resolve(voices);
-            };
-          });
-        };
-
-        const speakWithVoice = async (
-          text,
-          voiceName = "Google US English",
-        ) => {
-          const voices = await getVoices();
-          const voice = voices.find((v) => v.name === voiceName) || voices[0];
-
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.lang = voice.lang; // language is taken from the voice
-          utterance.voice = voice;
-
-          speechSynthesis.speak(utterance);
-        };
-
-        // Example: use "Google US English" or "Alex"
-        speakWithVoice(aiText, "Google US English");
-      }
-
-      source.close();
-    };
+    // 5️⃣ TTS DIPANGGIL SEKALI (SETELAH STREAM SELESAI)
+    speakText(normalizeForTTS(aiText));
   };
 
   const [chatHistory, setChatHistory] = useState([]);
@@ -443,35 +458,20 @@ export default function SpeakingApp() {
     if (!lastUser && !lastAI) return;
 
     try {
-      const res = await fetch(
-        "https://fastapi-speak-v0-production.up.railway.app/suggestions",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            last_user_message: lastUser?.message || "",
-            last_ai_reply: lastAI?.message || "",
-          }),
-        },
-      );
+      const res = await fetch("http://127.0.0.1:8000/suggestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          last_user_message: lastUser?.message || "",
+          last_ai_reply: lastAI?.message || "",
+        }),
+      });
 
       const data = await res.json();
       setSuggestions(data.suggestions);
     } catch (error) {
       console.error("Error fetching suggestions:", error);
     }
-  };
-
-  const playAudio = (text) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-
-    // Pilih voice tertentu, misal Google US English
-    const voices = speechSynthesis.getVoices(); // <-- sini
-    const voice =
-      voices.find((v) => v.name === "Google US English") || voices[0];
-    utterance.voice = voice;
-    speechSynthesis.speak(utterance);
   };
 
   useEffect(() => {

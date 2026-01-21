@@ -5,55 +5,43 @@ export default function ChatBubble({ chat }) {
   const [translated, setTranslated] = useState(null);
   const utteranceRef = useRef(null); // ref untuk menyimpan utterance
 
+  const normalizeForTTS = (text) =>
+    text
+      .replace(/\s+/g, " ")
+      .replace(/\n+/g, ". ")
+      .replace(/([!?])+/g, ".")
+      .trim();
+
   const playAudio = (text) => {
-    // ❗ Jika sedang ada suara, hentikan TTS
-    if (speechSynthesis.speaking) {
-      speechSynthesis.cancel();
-      return; // berhenti di sini
-    }
+    if (!text) return;
 
-    const getVoices = () => {
-      return new Promise((resolve) => {
-        let voices = speechSynthesis.getVoices();
-        if (voices.length) {
-          resolve(voices);
-          return;
-        }
-        speechSynthesis.onvoiceschanged = () => {
-          voices = speechSynthesis.getVoices();
-          resolve(voices);
-        };
+    // ❗ stop suara sebelumnya
+    speechSynthesis.cancel();
+
+    const getVoices = () =>
+      new Promise((resolve) => {
+        const voices = speechSynthesis.getVoices();
+        if (voices.length) return resolve(voices);
+        speechSynthesis.onvoiceschanged = () =>
+          resolve(speechSynthesis.getVoices());
       });
-    };
 
-    const speakWithVoice = async (text, voiceName = "Google US English") => {
+    const speakWithVoice = async () => {
       const voices = await getVoices();
-      const voice = voices.find((v) => v.name === voiceName) || voices[0];
+      const voice =
+        voices.find((v) => v.name === "Google US English") || voices[0];
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = voice.lang; // language is taken from the voice
+      const utterance = new SpeechSynthesisUtterance(normalizeForTTS(text));
+
+      utterance.lang = voice.lang;
       utterance.voice = voice;
+      utterance.rate = 0.95;
 
       utteranceRef.current = utterance;
       speechSynthesis.speak(utterance);
     };
 
-    // Example: use "Google US English" or "Alex"
-    speakWithVoice(text, "Google US English");
-  };
-
-  const toggleTranslate = async (text) => {
-    if (translated) {
-      // kalau sudah ada terjemahan, klik lagi untuk tutup
-      setTranslated(null);
-    } else {
-      try {
-        const res = await api.post("/api/translate", { text });
-        setTranslated(res.data.translated);
-      } catch (err) {
-        console.error("Translate error:", err);
-      }
-    }
+    speakWithVoice();
   };
 
   /* =====================================================

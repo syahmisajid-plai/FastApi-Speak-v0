@@ -2,6 +2,8 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import List
+
 
 from openai import OpenAI
 import os
@@ -10,7 +12,17 @@ import time
 
 # LangChain
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    SystemMessagePromptTemplate,
+    HumanMessagePromptTemplate,
+    MessagesPlaceholder,
+)
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables.history import RunnableWithMessageHistory
+
+from langchain_community.chat_message_histories import SQLChatMessageHistory
+
 
 load_dotenv()
 
@@ -18,6 +30,13 @@ app = FastAPI()
 
 # OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+
+def get_session_history(session_id: str):
+    return SQLChatMessageHistory(
+        session_id=session_id, connection_string="sqlite:///chat_history.db"
+    )
+
 
 # CORS agar React (Vite) boleh akses FastAPI
 app.add_middleware(
@@ -52,42 +71,66 @@ class SpeechInput(BaseModel):
 #     return {"status": "ok", "received_text": data.text}
 
 
-def stream_from_openai(user_text: str):
-    llm = ChatOpenAI(
-        model="gpt-4o-mini",
-        streaming=True,
-        max_tokens=32,
-        temperature=0.7,
+class StreamRequest(BaseModel):
+    session_id: str
+    input: str
+
+
+def get_session_history(session_id: str):
+    return SQLChatMessageHistory(
+        session_id=session_id, connection_string="sqlite:///chat_history.db"
     )
 
-    messages = [
-        SystemMessage(
-            content=(
-                "You are my English conversation partner. Your only task is to have casual conversations with me in English, like a friendly chat."
-                "Talk about anything — daily life, hobbies, news, or random fun topics."
-                "Answer in one short sentence only, max 10 words."
-                "Use simple and clear English, like you’re talking to a complete beginner."
-                "Your main goal is to make me feel comfortable and enjoy speaking English without fear."
-            )
-        ),
-        HumanMessage(content=user_text),
+
+llm = ChatOpenAI(
+    model="gpt-4o-mini",
+    streaming=True,
+    max_tokens=32,
+    temperature=0.7,
+)
+
+system_prompt = SystemMessagePromptTemplate.from_template(
+    "You are my English conversation partner. Your only task is to have casual conversations with me in English, like a friendly chat."
+    "Talk about anything — daily life, hobbies, news, or random fun topics."
+    "Answer in one short sentence only, max 10 words."
+    "Use simple and clear English, like you’re talking to a complete beginner."
+    "Your main goal is to make me feel comfortable and enjoy speaking English without fear."
+)
+
+human_prompt = HumanMessagePromptTemplate.from_template("{input}")
+
+prompt = ChatPromptTemplate.from_messages(
+    [
+        system_prompt,
+        MessagesPlaceholder(variable_name="history"),
+        human_prompt,
     ]
+)
 
-    response = llm.stream(messages)
+chain = prompt | llm | StrOutputParser()
 
-    for chunk in response:
-        if chunk.content:
-            # SSE format
-            yield f"data: {chunk.content}\n\n"
+runnable = RunnableWithMessageHistory(
+    chain,
+    get_session_history,
+    input_messages_key="input",
+    history_messages_key="history",
+)
 
 
-@app.get("/stream_answer")
-async def stream_answer(query: str):
-    print("🔥 STREAM ANSWER CALLED:", query)
-    return StreamingResponse(
-        stream_from_openai(query),
-        media_type="text/event-stream",
-    )
+@app.post("/stream_answer")
+async def stream_answer(req: StreamRequest):
+    print("🔥 STREAM ANSWER CALLED")
+    print("🧠 SESSION:", req.session_id)
+    print("💬 INPUT:", req.input)
+
+    def event_stream():
+        for chunk in runnable.stream(
+            {"input": req.input},
+            config={"configurable": {"session_id": req.session_id}},
+        ):
+            yield f"data: {chunk}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 # from deep_translator import GoogleTranslator
