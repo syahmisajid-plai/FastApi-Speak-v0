@@ -269,7 +269,9 @@ export default function SpeakingApp() {
   const requestAudioPermission = async () => {
     try {
       // 🎤 Request microphone
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
       stream.getTracks().forEach((track) => track.stop());
       setMicReady(true);
       setMicError(null);
@@ -280,25 +282,22 @@ export default function SpeakingApp() {
       return;
     }
 
+    // 🔊 AudioContext unlock & TTS langsung di click
     try {
-      // 🔊 Unlock AudioContext
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      await audioCtx.resume();
+      await audioCtx.resume(); // ini harus tetap await
+
       setSpeakerReady(true);
       setSpeakerError(null);
       console.log("🔊 Speaker ready");
 
-      // 🗣️ TTS: SPEAKER ENABLE
+      // 🗣️ TTS langsung
       const utterance = new SpeechSynthesisUtterance("speaker enable");
       utterance.lang = "en-US";
-      utterance.volume = 1;
-      utterance.rate = 1;
-      utterance.pitch = 1;
-
       window.speechSynthesis.speak(utterance);
     } catch (err) {
       console.error("❌ Speaker error", err);
-      setSpeakerError("Speaker access is required to play sound.");
+      setSpeakerError("Speaker access is required.");
     }
   };
 
