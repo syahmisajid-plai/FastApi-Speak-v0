@@ -267,8 +267,10 @@ export default function SpeakingApp() {
   };
 
   const requestAudioPermission = async () => {
+    // ======================
+    // 🎤 MICROPHONE (AMAN)
+    // ======================
     try {
-      // 🎤 Request microphone
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((track) => track.stop());
       setMicReady(true);
@@ -276,32 +278,43 @@ export default function SpeakingApp() {
       console.log("🎤 Microphone permission granted");
     } catch (err) {
       console.error("❌ Microphone permission denied", err);
-      setMicError("Microphone access is required to use this feature.");
+      setMicError("Microphone access is required.");
       return;
     }
 
+    // ======================
+    // 🔊 SPEAKER (FIX)
+    // ======================
     try {
-      // 🔊 Unlock AudioContext
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      await audioCtx.resume();
+      const voices = await new Promise((resolve) => {
+        let v = speechSynthesis.getVoices();
+        if (v.length) resolve(v);
+        else
+          speechSynthesis.onvoiceschanged = () =>
+            resolve(speechSynthesis.getVoices());
+      });
+
+      const voice =
+        voices.find((v) => v.name === "Google US English") ||
+        voices.find((v) => v.lang === "en-US") ||
+        voices[0];
+
+      const utterance = new SpeechSynthesisUtterance("Speaker enabled");
+      utterance.lang = voice.lang;
+      utterance.voice = voice;
+
+      speechSynthesis.cancel(); // penting
+      speechSynthesis.speak(utterance);
+
       setSpeakerReady(true);
       setSpeakerError(null);
-      console.log("🔊 Speaker ready");
-
-      // 🗣️ TTS: SPEAKER ENABLE
-      const utterance = new SpeechSynthesisUtterance("speaker enable");
-      utterance.lang = "en-US";
-      utterance.volume = 1;
-      utterance.rate = 1;
-      utterance.pitch = 1;
-
-      speechSynthesis.speak(utterance);
-      console.log("🔊 Speaker ready2");
+      console.log("🔊 Speaker enabled");
     } catch (err) {
       console.error("❌ Speaker error", err);
       setSpeakerError("Speaker access is required to play sound.");
     }
   };
+
   // ==
 
   const SpeechRecognition =
