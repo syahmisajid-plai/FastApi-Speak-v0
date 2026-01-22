@@ -38,6 +38,46 @@ export default function SpeakingApp() {
     }
   }, []);
 
+  const normalizeForTTS = (text) =>
+    text
+      .replace(/\s+/g, " ")
+      .replace(/\n+/g, ". ")
+      // .replace(/([!?])+/g, ",") // 🔥 ubah ! dan ? jadi titik
+      // .replace(/\.\s*\./g, ".")
+      .trim();
+
+  const playAudio = (text) => {
+    if (!text) return;
+
+    // ❗ stop suara sebelumnya
+    speechSynthesis.cancel();
+
+    const getVoices = () =>
+      new Promise((resolve) => {
+        const voices = speechSynthesis.getVoices();
+        if (voices.length) return resolve(voices);
+        speechSynthesis.onvoiceschanged = () =>
+          resolve(speechSynthesis.getVoices());
+      });
+
+    const speakWithVoice = async () => {
+      const voices = await getVoices();
+      const voice =
+        voices.find((v) => v.name === "Google US English") || voices[0];
+
+      const utterance = new SpeechSynthesisUtterance(normalizeForTTS(text));
+
+      utterance.lang = voice.lang;
+      utterance.voice = voice;
+      utterance.rate = 0.95;
+
+      utteranceRef.current = utterance;
+      speechSynthesis.speak(utterance);
+    };
+
+    speakWithVoice();
+  };
+
   // const wasRecordingBeforeLupaKataRef = useRef(false);
   const isPausedForLupaKataRef = useRef(false);
 
@@ -60,6 +100,9 @@ export default function SpeakingApp() {
     }, IDLE_TIMEOUT);
   };
 
+  const [isProcessingLupaKata, setIsProcessingLupaKata] = useState(false);
+
+  const [lupaKataHeardText, setLupaKataHeardText] = useState("");
   const [isLupaKataActive, setIsLupaKataActive] = useState(false);
   // const [lupaKataResult, setLupaKataResult] = useState(null);
   // const lupaKataRecognitionRef = useRef(null);
@@ -108,6 +151,7 @@ export default function SpeakingApp() {
       console.error("❌ Translate error:", err);
     }
 
+    setIsProcessingLupaKata(false);
     setIsLupaKataActive(false);
 
     // ▶️ RESUME SpeechRecognition jika tadi pause
@@ -135,6 +179,9 @@ export default function SpeakingApp() {
     if (!res.ok) {
       const text = await res.text();
       console.error("❌ Whisper API error:", text);
+
+      setIsProcessingLupaKata(false);
+      setIsLupaKataActive(false);
       return;
     }
 
@@ -145,11 +192,20 @@ export default function SpeakingApp() {
       return;
     }
 
-    translateLupaKata(data.text);
+    // 📝 tampilkan teks yang terdengar (LANGSUNG)
+    setLupaKataHeardText(data.text);
+
+    // ⏳ beri delay kecil biar user sempat baca
+    setTimeout(() => {
+      translateLupaKata(data.text);
+    }, 800);
   };
 
   const startLupaKata = async () => {
     console.log("▶️ startLupaKata (recording)");
+
+    // 🧹 reset teks lupa kata sebelumnya
+    setLupaKataHeardText("");
 
     // ⛔ PAUSE SpeechRecognition utama
     if (isRecording) {
@@ -158,6 +214,7 @@ export default function SpeakingApp() {
       setIsRecording(false);
     }
 
+    // 🟡 aktifkan UI Lupa Kata
     setIsLupaKataActive(true);
 
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -190,6 +247,9 @@ export default function SpeakingApp() {
         return;
       }
 
+      // ✅ AUDIO SUDAH TERTANGKAP
+      setIsProcessingLupaKata(true);
+
       await sendAudioToWhisper(blob);
     };
   };
@@ -208,7 +268,7 @@ export default function SpeakingApp() {
 
   const requestAudioPermission = async () => {
     try {
-      // Request microphone
+      // 🎤 Request microphone
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((track) => track.stop());
       setMicReady(true);
@@ -217,18 +277,27 @@ export default function SpeakingApp() {
     } catch (err) {
       console.error("❌ Microphone permission denied", err);
       setMicError("Microphone access is required to use this feature.");
-      return; // stop jika mic gagal
+      return;
     }
 
     try {
-      // Request speaker (AudioContext)
+      // 🔊 Unlock AudioContext
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       await audioCtx.resume();
       setSpeakerReady(true);
       setSpeakerError(null);
-      console.log("🔊 Speaker permission granted");
+      console.log("🔊 Speaker ready");
+
+      // 🗣️ TTS: SPEAKER ENABLE
+      const utterance = new SpeechSynthesisUtterance("speaker enable");
+      utterance.lang = "en-US";
+      utterance.volume = 1;
+      utterance.rate = 1;
+      utterance.pitch = 1;
+
+      window.speechSynthesis.speak(utterance);
     } catch (err) {
-      console.error("❌ Speaker permission denied", err);
+      console.error("❌ Speaker error", err);
       setSpeakerError("Speaker access is required to play sound.");
     }
   };
@@ -342,14 +411,6 @@ export default function SpeakingApp() {
       .replace(/\s+/g, " ")
       .trim();
   };
-
-  const normalizeForTTS = (text) =>
-    text
-      .replace(/\s+/g, " ")
-      .replace(/\n+/g, ". ")
-      // .replace(/([!?])+/g, ",") // 🔥 ubah ! dan ? jadi titik
-      // .replace(/\.\s*\./g, ".")
-      .trim();
 
   const splitSentences = (text) => text.match(/[^.!?]+[.!?]+/g) || [text];
 
@@ -505,6 +566,33 @@ export default function SpeakingApp() {
         />
 
         <div className="fixed bottom-20 lg:bottom-20 left-0 lg:w-full px-4 space-y-4">
+          {isLupaKataActive && (
+            <div className="fixed bottom-70 left-0 w-full flex justify-center z-50">
+              <div className="w-full max-w-md px-4">
+                <div className="bg-yellow-500/90 text-black rounded-xl px-4 py-3 text-center shadow-lg space-y-1">
+                  {!isProcessingLupaKata ? (
+                    <>
+                      <div className="font-semibold animate-pulse">
+                        🎧 Suara tertangkap, sedang mendengarkan
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="font-semibold flex items-center justify-center gap-2">
+                        ⏳ Memproses suara
+                        <span className="animate-spin">🔄</span>
+                      </div>
+                    </>
+                  )}
+
+                  {lupaKataHeardText && (
+                    <div className="text-sm italic">“{lupaKataHeardText}”</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {isRecording && <RecordingSection />}
           {showSuggestions && (
             <SuggestionSection
