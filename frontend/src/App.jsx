@@ -578,9 +578,18 @@ export default function SpeakingApp() {
                     </>
                   ) : (
                     <>
-                      <div className="font-semibold flex items-center justify-center gap-2">
-                        ⏳ Memproses suara
-                        <span className="animate-spin">🔄</span>
+                      <div className="space-y-1">
+                        <div className="font-semibold">⏳ Memproses suara</div>
+
+                        <div className="flex justify-center text-xl font-bold tracking-widest">
+                          <span className="dot">•</span>
+                          <span className="dot">•</span>
+                          <span className="dot">•</span>
+                        </div>
+
+                        <div className="text-xs opacity-80">
+                          Using AI to recognize your speech…
+                        </div>
                       </div>
                     </>
                   )}
@@ -632,6 +641,25 @@ export default function SpeakingApp() {
           .delay-400 { animation-delay: 0.4s; }
           .delay-600 { animation-delay: 0.6s; }
           .delay-800 { animation-delay: 0.8s; }
+
+          @keyframes typing {
+            0% { opacity: 0.2; }
+            20% { opacity: 1; }
+            100% { opacity: 0.2; }
+          }
+
+          .dot {
+            animation: typing 1.4s infinite;
+          }
+
+          .dot:nth-child(2) {
+            animation-delay: 0.2s;
+          }
+
+          .dot:nth-child(3) {
+            animation-delay: 0.4s;
+          }
+
         `}
       </style>
     </div>
