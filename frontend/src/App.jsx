@@ -268,6 +268,19 @@ export default function SpeakingApp() {
 
   const requestAudioPermission = async () => {
     try {
+      // 🎤 Request microphone
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => track.stop());
+      setMicReady(true);
+      setMicError(null);
+      console.log("🎤 Microphone permission granted");
+    } catch (err) {
+      console.error("❌ Microphone permission denied", err);
+      setMicError("Microphone access is required to use this feature.");
+      return;
+    }
+
+    try {
       // 🔊 Unlock AudioContext
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       await audioCtx.resume();
