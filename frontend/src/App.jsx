@@ -286,34 +286,37 @@ export default function SpeakingApp() {
     // 🔊 SPEAKER (FIX)
     // ======================
     try {
-      const voices = await new Promise((resolve) => {
-        let v = speechSynthesis.getVoices();
-        if (v.length) resolve(v);
-        else
-          speechSynthesis.onvoiceschanged = () =>
-            resolve(speechSynthesis.getVoices());
-      });
-
-      const voice =
-        voices.find((v) => v.name === "Google US English") ||
-        voices.find((v) => v.lang === "en-US") ||
-        voices[0];
-
       const utterance = new SpeechSynthesisUtterance("Speaker enabled");
-      utterance.lang = voice.lang;
+      utterance.lang = "en-US";
+
+      const voices = speechSynthesis.getVoices();
+      const voice =
+        voices.find((v) => v.name === "Google US English") || voices[0];
       utterance.voice = voice;
 
-      speechSynthesis.cancel(); // penting
       speechSynthesis.speak(utterance);
-
       setSpeakerReady(true);
-      setSpeakerError(null);
       console.log("🔊 Speaker enabled");
     } catch (err) {
       console.error("❌ Speaker error", err);
       setSpeakerError("Speaker access is required to play sound.");
     }
   };
+
+  // const requestSpeakerPermission = () => {
+  //   // buat dummy utterance untuk "mengaktifkan" speaker
+  //   const utterance = new SpeechSynthesisUtterance("Speaker enabled");
+  //   utterance.lang = "en-US";
+
+  //   const voices = speechSynthesis.getVoices();
+  //   const voice =
+  //     voices.find((v) => v.name === "Google US English") || voices[0];
+  //   utterance.voice = voice;
+
+  //   speechSynthesis.speak(utterance);
+  //   setSpeakerReady(true);
+  //   console.log("🔊 Speaker enabled");
+  // };
 
   // ==
 
