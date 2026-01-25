@@ -2,15 +2,12 @@ import { useState, useRef } from "react";
 
 export default function useLupaKata({
   stopMainRecording,
-  resumeMainRecording,
   setChatHistory,
   onLupaKataResult,
 }) {
   const [isLupaKataActive, setIsLupaKataActive] = useState(false);
   const [isProcessingLupaKata, setIsProcessingLupaKata] = useState(false);
   const [lupaKataHeardText, setLupaKataHeardText] = useState("");
-
-  const wasRecordingRef = useRef(false);
 
   /* ================= TRANSLATE ================= */
   const translateLupaKata = async (indoText) => {
@@ -49,11 +46,6 @@ export default function useLupaKata({
 
     setIsProcessingLupaKata(false);
     setIsLupaKataActive(false);
-
-    if (wasRecordingRef.current) {
-      wasRecordingRef.current = false;
-      resumeMainRecording?.();
-    }
   };
 
   /* ================= WHISPER ================= */
@@ -90,7 +82,6 @@ export default function useLupaKata({
     setLupaKataHeardText("");
 
     if (isMainRecording) {
-      wasRecordingRef.current = true;
       stopMainRecording?.();
     }
 

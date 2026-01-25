@@ -87,13 +87,8 @@ export default function SpeakingApp() {
   const lupaKata = useLupaKata({
     stopMainRecording: () => {
       shouldSendOnEndRef.current = false;
-      recognitionRef.current?.stop();
+      recognitionRef.current?.abort();
       setIsRecording(false);
-    },
-
-    resumeMainRecording: () => {
-      recognitionRef.current?.start();
-      setIsRecording(true);
     },
 
     setChatHistory, // update riwayat chat langsung
