@@ -39,7 +39,7 @@ export default function SpeakingApp() {
   } = useAudioPermission(); // 🎤 Hook audio permission
 
   // ================== HOOKS ==================
-  const { speakText } = useTTS({ speakerReady }); // 🗣️ Text-to-Speech
+  const { speakText } = useTTS(); // 🗣️ Text-to-Speech
   const { suggestions, fetchSuggestions } = useSuggestions(chatHistory); // 💡 Saran dari chat history
   const { isIdle, resetIdle } = useIdle(15000); // ⏱️ Deteksi idle user (15 detik)
 
