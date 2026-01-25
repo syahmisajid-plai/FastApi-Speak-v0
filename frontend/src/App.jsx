@@ -2,566 +2,127 @@ import { useEffect, useState, useRef } from "react";
 import Header from "./components/Header";
 import Topic from "./components/Topic";
 import ChatSection from "./components/ChatSection";
-import RecordingSection from "./components/RecordingSection";
-import SuggestionSection from "./components/SuggestionSection";
-import ControlSection from "./components/ControlSection";
+import BottomActions from "./components/BottomActions";
 import "./App.css";
 
-import api from "./api"; // ⬅️ pakai axios instance
+import useLupaKata from "./hooks/useLupaKata";
+import useSpeechRecognition from "./hooks/useSpeechRecognition";
+import useAudioPermission from "./hooks/useAudioPermission";
+import useIdle from "./hooks/useIdle";
+
+import useTTS from "./hooks/useTTS";
+import useSuggestions from "./hooks/useSuggestions";
+import useEruda from "./hooks/useEruda";
+import useBackendPing from "./hooks/useBackendPing";
+import { streamChat } from "./services/chatService";
+
+import { normalizeForTTS } from "./utils/ttsUtils";
 
 export default function SpeakingApp() {
-  useEffect(() => {
-    const checkBackend = async () => {
-      try {
-        const response = await api.get("/api/ping");
-        console.log("✅ Backend connected:", response.data);
-      } catch (error) {
-        console.error("❌ Backend NOT connected:", error);
-      }
-    };
+  // ================== STATE ==================
+  const [isRecording, setIsRecording] = useState(false); // 🔴 Status perekaman
+  const [chatHistory, setChatHistory] = useState([]); // 🔴 Riwayat chat
+  const [showSuggestions, setShowSuggestions] = useState(false); // 🔴 Tampilkan saran
 
-    checkBackend();
-  }, []);
+  // ================== REF ==================
+  const bottomRef = useRef(null); // 🔵 Scroll ke bawah chat
+  const recognitionRef = useRef(null); // 🔵 Referensi untuk SpeechRecognition
+  const shouldSendOnEndRef = useRef(false); // 🔵 Flag untuk mengirim teks otomatis
 
-  useEffect(() => {
-    // Hanya pasang Eruda jika di browser (client-side)
-    if (typeof window !== "undefined") {
-      const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/eruda";
-      script.async = true;
-      document.body.appendChild(script);
+  // ================== AUDIO PERMISSION ==================
+  const {
+    micReady,
+    micError,
+    speakerReady,
+    speakerError,
+    requestAudioPermission,
+  } = useAudioPermission(); // 🎤 Hook audio permission
 
-      script.onload = () => {
-        window.eruda.init();
-        console.log("🛠️ Eruda Loaded! Klik ikon gear di kanan bawah.");
-      };
-    }
-  }, []);
+  // ================== HOOKS ==================
+  const { speakText } = useTTS({ speakerReady }); // 🗣️ Text-to-Speech
+  const { suggestions, fetchSuggestions } = useSuggestions(chatHistory); // 💡 Saran dari chat history
+  const { isIdle, resetIdle } = useIdle(15000); // ⏱️ Deteksi idle user (15 detik)
 
-  const normalizeForTTS = (text) =>
-    text
-      .replace(/\s+/g, " ")
-      .replace(/\n+/g, ". ")
-      // .replace(/([!?])+/g, ",") // 🔥 ubah ! dan ? jadi titik
-      // .replace(/\.\s*\./g, ".")
-      .trim();
+  // ================== DEV TOOL ==================
+  useEruda(); // 🛠️ Console dev tool untuk mobile
 
-  const playAudio = (text) => {
-    if (!text) return;
+  // ================== BACKEND ==================
+  useBackendPing(); // 🔗 Check backend connection
 
-    // ❗ stop suara sebelumnya
-    speechSynthesis.cancel();
+  const SESSION_ID = "user-123"; // 🆔 Session harus konsisten
 
-    const getVoices = () =>
-      new Promise((resolve) => {
-        const voices = speechSynthesis.getVoices();
-        if (voices.length) return resolve(voices);
-        speechSynthesis.onvoiceschanged = () =>
-          resolve(speechSynthesis.getVoices());
-      });
+  // ================== SEND TEXT TO BACKEND ==================
+  const sendTextToBackend = async (text) => {
+    await streamChat({
+      text,
+      sessionId: SESSION_ID,
 
-    const speakWithVoice = async () => {
-      const voices = await getVoices();
-      const voice =
-        voices.find((v) => v.name === "Google US English") || voices[0];
-
-      const utterance = new SpeechSynthesisUtterance(normalizeForTTS(text));
-
-      utterance.lang = voice.lang;
-      utterance.voice = voice;
-      utterance.rate = 0.95;
-
-      utteranceRef.current = utterance;
-      speechSynthesis.speak(utterance);
-    };
-
-    speakWithVoice();
-  };
-
-  // const wasRecordingBeforeLupaKataRef = useRef(false);
-  const isPausedForLupaKataRef = useRef(false);
-
-  const [isIdle, setIsIdle] = useState(true);
-  const idleTimerRef = useRef(null);
-
-  const IDLE_TIMEOUT = 15000; // 5 detik tanpa interaksi
-
-  const resetIdle = () => {
-    if (isRecording || isLupaKataActive) return;
-
-    setIsIdle(false);
-
-    if (idleTimerRef.current) {
-      clearTimeout(idleTimerRef.current);
-    }
-
-    idleTimerRef.current = setTimeout(() => {
-      setIsIdle(true);
-    }, IDLE_TIMEOUT);
-  };
-
-  const [isProcessingLupaKata, setIsProcessingLupaKata] = useState(false);
-
-  const [lupaKataHeardText, setLupaKataHeardText] = useState("");
-  const [isLupaKataActive, setIsLupaKataActive] = useState(false);
-  // const [lupaKataResult, setLupaKataResult] = useState(null);
-  // const lupaKataRecognitionRef = useRef(null);
-
-  const translateLupaKata = async (indoText) => {
-    try {
-      const res = await fetch(
-        "https://fastapi-speak-v0-production.up.railway.app/translate",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text: indoText,
-            source_lang: "id",
-            target_lang: "en",
-          }),
-        },
-      );
-
-      const data = await res.json();
-
-      setChatHistory((prev) => [
-        ...prev.filter((c) => !(c.sender === "Helper" && c.type === "prompt")),
-        {
-          sender: "Helper",
-          type: "result",
-          indo: data.indo,
-          english: data.english,
-        },
-      ]);
-
-      // 🔊 Autoplay hasil terjemahan
-      if (data.english) {
-        const utterance = new SpeechSynthesisUtterance(data.english);
-        utterance.lang = "en-US";
-
-        // Pilih voice tertentu, misal Google US English
-        const voices = speechSynthesis.getVoices(); // <-- sini
-        const voice =
-          voices.find((v) => v.name === "Google US English") || voices[0];
-        utterance.voice = voice;
-
-        speechSynthesis.speak(utterance);
-      }
-    } catch (err) {
-      console.error("❌ Translate error:", err);
-    }
-
-    setIsProcessingLupaKata(false);
-    setIsLupaKataActive(false);
-
-    // ▶️ RESUME SpeechRecognition jika tadi pause
-    if (isPausedForLupaKataRef.current) {
-      isPausedForLupaKataRef.current = false;
-      recognitionRef.current?.start();
-      setIsRecording(true);
-    }
-  };
-
-  // const lupaKataHasResultRef = useRef(false);
-
-  const sendAudioToWhisper = async (blob) => {
-    const formData = new FormData();
-    formData.append("file", blob, "lupakata.webm");
-
-    const res = await fetch(
-      "https://fastapi-speak-v0-production.up.railway.app/api/stt-whisper",
-      {
-        method: "POST",
-        body: formData,
+      // ===== Saat user mengirim pesan =====
+      onUserMessage: (msg) => {
+        setChatHistory((prev) => [...prev, { sender: "You", message: msg }]);
       },
-    );
 
-    if (!res.ok) {
-      const text = await res.text();
-      console.error("❌ Whisper API error:", text);
+      // ===== Saat AI streaming jawaban =====
+      onStreamUpdate: (aiText) => {
+        setChatHistory((prev) => {
+          const withoutTemp = prev.filter((c) => c.sender !== "AI-temp");
+          return [...withoutTemp, { sender: "AI-temp", message: aiText }];
+        });
+      },
 
-      setIsProcessingLupaKata(false);
-      setIsLupaKataActive(false);
-      return;
-    }
+      // ===== Saat AI selesai streaming =====
+      onStreamEnd: (finalText) => {
+        setChatHistory((prev) =>
+          prev.map((c) =>
+            c.sender === "AI-temp" ? { sender: "AI", message: finalText } : c,
+          ),
+        );
 
-    const data = await res.json();
-
-    if (!data.text) {
-      console.error("❌ Empty transcription");
-      return;
-    }
-
-    // 📝 tampilkan teks yang terdengar (LANGSUNG)
-    setLupaKataHeardText(data.text);
-
-    // ⏳ beri delay kecil biar user sempat baca
-    setTimeout(() => {
-      translateLupaKata(data.text);
-    }, 800);
+        speakText(normalizeForTTS(finalText)); // 🗣️ AI speak
+      },
+    });
   };
 
-  const startLupaKata = async () => {
-    console.log("▶️ startLupaKata (recording)");
-
-    // 🧹 reset teks lupa kata sebelumnya
-    setLupaKataHeardText("");
-
-    // ⛔ PAUSE SpeechRecognition utama
-    if (isRecording) {
-      isPausedForLupaKataRef.current = true;
+  // ================== 1️⃣ LUPA KATA ==================
+  const lupaKata = useLupaKata({
+    stopMainRecording: () => {
+      shouldSendOnEndRef.current = false;
       recognitionRef.current?.stop();
       setIsRecording(false);
-    }
+    },
 
-    // 🟡 aktifkan UI Lupa Kata
-    setIsLupaKataActive(true);
+    resumeMainRecording: () => {
+      recognitionRef.current?.start();
+      setIsRecording(true);
+    },
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    setChatHistory, // update riwayat chat langsung
 
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: "audio/webm;codecs=opus",
-    });
+    onLupaKataResult: speakText, // ✅ Hasil lupa kata langsung dibacakan
+  });
 
-    const chunks = [];
+  // ================== 2️⃣ SPEECH RECOGNITION ==================
+  const speech = useSpeechRecognition({
+    recognitionRef,
+    setIsRecording,
+    shouldSendOnEndRef,
+    onFinalResult: sendTextToBackend, // Hasil final dikirim ke backend
+    onResetIdle: resetIdle, // Reset idle jika user bicara
+    isLupaKataActive: lupaKata.isLupaKataActive, // Jangan rekam utama saat lupa kata aktif
+  });
 
-    mediaRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunks.push(e.data);
-    };
+  // ================== DESTRUCTURING SPEECH ==================
+  const { liveTranscript, startRecording, stopRecording, cancelRecording } =
+    speech;
 
-    mediaRecorder.start();
-
-    setTimeout(() => {
-      mediaRecorder.stop();
-    }, 4000); // ⏱️ 3–5 detik
-
-    mediaRecorder.onstop = async () => {
-      stream.getTracks().forEach((t) => t.stop());
-
-      const blob = new Blob(chunks, { type: "audio/webm" });
-
-      console.log("🎧 Audio size:", blob.size);
-
-      if (blob.size === 0) {
-        console.error("❌ Audio kosong");
-        return;
-      }
-
-      // ✅ AUDIO SUDAH TERTANGKAP
-      setIsProcessingLupaKata(true);
-
-      await sendAudioToWhisper(blob);
-    };
-  };
-
-  const [micReady, setMicReady] = useState(false);
-  const [micError, setMicError] = useState(null);
-  const [speakerReady, setSpeakerReady] = useState(false);
-  const [speakerError, setSpeakerError] = useState(null);
-  const [isCanceled, setIsCanceled] = useState(false);
-
+  // ================== TOGGLE SUGGESTION ==================
   const toggleSuggestion = () => {
     resetIdle();
     if (!showSuggestions) fetchSuggestions();
     setShowSuggestions(!showSuggestions);
   };
 
-  const requestAudioPermission = async () => {
-    // ======================
-    // 🎤 MICROPHONE (AMAN)
-    // ======================
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach((track) => track.stop());
-      setMicReady(true);
-      setMicError(null);
-      console.log("🎤 Microphone permission granted");
-    } catch (err) {
-      console.error("❌ Microphone permission denied", err);
-      setMicError("Microphone access is required.");
-      return;
-    }
-
-    // ======================
-    // 🔊 SPEAKER (FIX)
-    // ======================
-    try {
-      const utterance = new SpeechSynthesisUtterance("Speaker enabled");
-      utterance.lang = "en-US";
-
-      const voices = speechSynthesis.getVoices();
-      const voice =
-        voices.find((v) => v.name === "Google US English") || voices[0];
-      utterance.voice = voice;
-
-      speechSynthesis.speak(utterance);
-      setSpeakerReady(true);
-      console.log("🔊 Speaker enabled");
-    } catch (err) {
-      console.error("❌ Speaker error", err);
-      setSpeakerError("Speaker access is required to play sound.");
-    }
-  };
-
-  // const requestSpeakerPermission = () => {
-  //   // buat dummy utterance untuk "mengaktifkan" speaker
-  //   const utterance = new SpeechSynthesisUtterance("Speaker enabled");
-  //   utterance.lang = "en-US";
-
-  //   const voices = speechSynthesis.getVoices();
-  //   const voice =
-  //     voices.find((v) => v.name === "Google US English") || voices[0];
-  //   utterance.voice = voice;
-
-  //   speechSynthesis.speak(utterance);
-  //   setSpeakerReady(true);
-  //   console.log("🔊 Speaker enabled");
-  // };
-
-  // ==
-
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
-
-  const recognitionRef = useRef(null);
-
-  const transcriptRef = useRef("");
-  const [liveTranscript, setLiveTranscript] = useState("");
-
-  // --- UseEffect untuk pause liveTranscript selama Lupa Kata ---
-  // useEffect(() => {
-  //   if (isLupaKataActive) return; // jangan update liveTranscript selama Lupa Kata
-  //   setLiveTranscript(transcriptRef.current);
-  // }, [liveTranscript, isLupaKataActive]);
-
-  const startRecording = () => {
-    resetIdle();
-    transcriptRef.current = "";
-    setLiveTranscript("");
-    setIsCanceled(false);
-    recognitionRef.current?.start();
-    setIsRecording(true);
-  };
-
-  const stopRecording = () => {
-    setIsCanceled(false);
-    recognitionRef.current?.stop();
-  };
-
-  const cancelRecording = () => {
-    resetIdle();
-    setIsCanceled(true);
-    transcriptRef.current = "";
-    setLiveTranscript("");
-    recognitionRef.current?.stop();
-  };
-
-  useEffect(() => {
-    return () => {
-      if (idleTimerRef.current) {
-        clearTimeout(idleTimerRef.current);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!SpeechRecognition) return;
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 3;
-
-    recognition.onresult = (event) => {
-      if (isCanceled || isLupaKataActive) return;
-
-      let interim = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          transcriptRef.current += transcript + " ";
-        } else {
-          interim += transcript;
-        }
-      }
-      setLiveTranscript(transcriptRef.current + interim);
-    };
-
-    recognition.onend = () => {
-      console.log("🟥 ONEND FIRED");
-      console.log("paused?", isPausedForLupaKataRef.current);
-      // console.log("canceled?", isCanceledRef.current);
-      console.log("raw transcript:", transcriptRef.current);
-      // jika sedang pause karena Lupa Kata, jangan kirim transcript
-      if (isPausedForLupaKataRef.current) {
-        console.log(
-          "⏸ Recording paused for Lupa Kata, transcript tidak dikirim",
-        );
-        return; // keluar saja
-      }
-
-      const finalText = normalizeText(transcriptRef.current);
-      console.log("🟨 FINAL TEXT:", finalText);
-
-      setLiveTranscript(""); // kosongkan liveTranscript
-
-      if (!isCanceled && finalText) sendTextToBackend(finalText);
-
-      transcriptRef.current = "";
-      setIsCanceled(false);
-      setIsRecording(false);
-
-      resetIdle();
-    };
-
-    recognition.onerror = (event) => {
-      console.error("STT error:", event.error);
-    };
-
-    recognitionRef.current = recognition;
-  }, []);
-
-  const normalizeText = (text) => {
-    return text
-      .toLowerCase()
-      .replace(/[.,!?]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-  };
-
-  const splitSentences = (text) => text.match(/[^.!?]+[.!?]+/g) || [text];
-
-  const waitForVoices = () =>
-    new Promise((resolve) => {
-      const voices = speechSynthesis.getVoices();
-      if (voices.length) return resolve(voices);
-      speechSynthesis.onvoiceschanged = () =>
-        resolve(speechSynthesis.getVoices());
-    });
-
-  const speakText = async (text) => {
-    if (!text) return;
-
-    // pastikan voices sudah siap
-    const voices = await waitForVoices();
-    const voice =
-      voices.find((v) => v.name === "Google US English") || voices[0];
-
-    await waitForVoices();
-
-    const sentences = splitSentences(normalizeForTTS(text));
-    speechSynthesis.cancel();
-
-    const speakNext = () => {
-      if (!sentences.length) return;
-
-      const u = new SpeechSynthesisUtterance(sentences.shift());
-      u.lang = voice.lang; // ambil dari voice
-      u.voice = voice;
-      u.rate = 0.95;
-      u.onend = speakNext;
-
-      speechSynthesis.speak(u);
-    };
-
-    speakNext();
-  };
-
-  const SESSION_ID = "user-123"; // HARUS konsisten
-
-  const sendTextToBackend = async (text) => {
-    console.log("🚀 SEND TO AI:", text);
-
-    // 1️⃣ tampilkan user message
-    setChatHistory((prev) => [...prev, { sender: "You", message: text }]);
-
-    // 2️⃣ POST streaming ke backend
-    const res = await fetch(
-      "https://fastapi-speak-v0-production.up.railway.app/stream_answer",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session_id: SESSION_ID,
-          input: text,
-        }),
-      },
-    );
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-
-    let aiText = "";
-
-    // 3️⃣ baca stream token demi token
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value);
-      aiText += chunk.replace(/^data:\s*/gm, "");
-
-      setChatHistory((prev) => {
-        const withoutTemp = prev.filter((c) => c.sender !== "AI-temp");
-        return [...withoutTemp, { sender: "AI-temp", message: aiText }];
-      });
-    }
-
-    // 4️⃣ finalisasi pesan AI
-    setChatHistory((prev) =>
-      prev.map((c) =>
-        c.sender === "AI-temp" ? { sender: "AI", message: aiText } : c,
-      ),
-    );
-
-    // 5️⃣ TTS DIPANGGIL SEKALI (SETELAH STREAM SELESAI)
-    speakText(normalizeForTTS(aiText));
-  };
-
-  const [chatHistory, setChatHistory] = useState([]);
-
-  // const suggestions = [
-  //   "I really enjoyed the local food during my holiday.",
-  //   "The weather was perfect for outdoor activities.",
-  //   "I visited some amazing historical sites.",
-  // ];
-
-  const [isRecording, setIsRecording] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-
-  const [suggestions, setSuggestions] = useState([]);
-
-  const bottomRef = useRef(null);
-
-  // ⬅️ fungsi fetchSuggestions diletakkan di sini
-  const fetchSuggestions = async () => {
-    const lastUser = [...chatHistory].reverse().find((c) => c.sender === "You");
-    const lastAI = [...chatHistory].reverse().find((c) => c.sender === "AI");
-
-    // pastikan minimal ada salah satu
-    if (!lastUser && !lastAI) return;
-
-    try {
-      const res = await fetch(
-        "https://fastapi-speak-v0-production.up.railway.app/suggestions",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            last_user_message: lastUser?.message || "",
-            last_ai_reply: lastAI?.message || "",
-          }),
-        },
-      );
-
-      const data = await res.json();
-      setSuggestions(data.suggestions);
-    } catch (error) {
-      console.error("Error fetching suggestions:", error);
-    }
-  };
-
+  // ================== AUTO SCROLL ==================
   useEffect(() => {
     if (isRecording) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -582,104 +143,32 @@ export default function SpeakingApp() {
           liveTranscript={liveTranscript}
           bottomRef={bottomRef}
         />
+        {/* Semua action yang fixed di bawah digabung ke BottomActions */}
+        <BottomActions
+          isRecording={isRecording}
+          showSuggestions={showSuggestions}
+          suggestions={suggestions}
+          speakText={speakText}
+          lupaKata={lupaKata}
+          controlProps={{
+            isRecording,
+            micReady,
+            requestAudioPermission,
+            startRecording,
+            stopRecording,
+            cancelRecording,
+            toggleSuggestion,
+            isIdle,
+            openLupaKata: () => lupaKata.startLupaKata(isRecording),
 
-        <div className="fixed bottom-20 lg:bottom-20 left-0 lg:w-full px-4 space-y-4">
-          {isLupaKataActive && (
-            <div className="fixed bottom-70 left-0 w-full flex justify-center z-50">
-              <div className="w-full max-w-md px-4">
-                <div className="bg-yellow-500/90 text-black rounded-xl px-4 py-3 text-center shadow-lg space-y-1">
-                  {!isProcessingLupaKata ? (
-                    <>
-                      <div className="font-semibold animate-pulse">
-                        🎧 Suara tertangkap, sedang mendengarkan
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="space-y-1">
-                        <div className="font-semibold">⏳ Memproses suara</div>
-
-                        <div className="flex justify-center text-xl font-bold tracking-widest">
-                          <span className="dot">•</span>
-                          <span className="dot">•</span>
-                          <span className="dot">•</span>
-                        </div>
-
-                        <div className="text-xs opacity-80">
-                          Using AI to recognize your speech…
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {lupaKataHeardText && (
-                    <div className="text-sm italic">“{lupaKataHeardText}”</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {isRecording && <RecordingSection />}
-          {showSuggestions && (
-            <SuggestionSection
-              suggestions={suggestions}
-              playAudio={playAudio}
-            />
-          )}
-
-          <ControlSection
-            isRecording={isRecording}
-            micReady={micReady}
-            startRecording={startRecording}
-            stopRecording={stopRecording}
-            cancelRecording={cancelRecording}
-            requestAudioPermission={requestAudioPermission}
-            toggleSuggestion={toggleSuggestion}
-            isIdle={isIdle}
-            openLupaKata={startLupaKata}
-            speakerReady={speakerReady}
-          />
-        </div>
-
-        <div className="mb-48"></div>
+            // 🔥 INI YANG TADI HILANG
+            isLupaKataActive: lupaKata.isLupaKataActive,
+            lupaKataResult: lupaKata.lupaKataResult,
+            speakerReady,
+          }}
+        />
+        <div className="mb-48" /> {/* spacer */}
       </div>
-
-      {/* ⚠️ STYLE TIDAK DIUBAH */}
-      <style>
-        {`
-          @keyframes wave {
-            0%, 100% { height: 0.25rem; }
-            50% { height: 1.5rem; }
-          }
-          .animate-wave {
-            animation: wave 1s infinite ease-in-out;
-          }
-          .delay-200 { animation-delay: 0.2s; }
-          .delay-400 { animation-delay: 0.4s; }
-          .delay-600 { animation-delay: 0.6s; }
-          .delay-800 { animation-delay: 0.8s; }
-
-          @keyframes typing {
-            0% { opacity: 0.2; }
-            20% { opacity: 1; }
-            100% { opacity: 0.2; }
-          }
-
-          .dot {
-            animation: typing 1.4s infinite;
-          }
-
-          .dot:nth-child(2) {
-            animation-delay: 0.2s;
-          }
-
-          .dot:nth-child(3) {
-            animation-delay: 0.4s;
-          }
-
-        `}
-      </style>
     </div>
   );
 }
