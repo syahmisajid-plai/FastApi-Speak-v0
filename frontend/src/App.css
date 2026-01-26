@@ -67,6 +67,14 @@ button {
   animation-delay: 0.4s;
 }
 
+.clip-closed {
+  clip-path: circle(120px at 50% 50%);
+}
+
+.clip-open {
+  clip-path: circle(150% at 50% 50%);
+}
+
 /* 
 #root {
   max-width: 1280px;

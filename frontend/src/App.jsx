@@ -3,6 +3,7 @@ import Header from "./components/Header";
 import Topic from "./components/Topic";
 import ChatSection from "./components/ChatSection";
 import BottomActions from "./components/BottomActions";
+import AudioUnlockOverlay from "./components/AudioUnlockOverlay";
 import "./App.css";
 
 import useLupaKata from "./hooks/useLupaKata";
@@ -23,6 +24,7 @@ export default function SpeakingApp() {
   const [isRecording, setIsRecording] = useState(false); // 🔴 Status perekaman
   const [chatHistory, setChatHistory] = useState([]); // 🔴 Riwayat chat
   const [showSuggestions, setShowSuggestions] = useState(false); // 🔴 Tampilkan saran
+  const [showOverlay, setShowOverlay] = useState(true); // 🔑 SATU-SATUNYA GATE
 
   // ================== REF ==================
   const bottomRef = useRef(null); // 🔵 Scroll ke bawah chat
@@ -45,6 +47,16 @@ export default function SpeakingApp() {
 
   // ================== DEV TOOL ==================
   useEruda(); // 🛠️ Console dev tool untuk mobile
+
+  // ================== Unlock Screen ==================
+  const handleUnlock = async () => {
+    await requestAudioPermission();
+
+    // ⏳ tunggu animasi overlay selesai
+    setTimeout(() => {
+      setShowOverlay(false);
+    }, 700);
+  };
 
   // ================== BACKEND ==================
   useBackendPing(); // 🔗 Check backend connection
@@ -79,9 +91,47 @@ export default function SpeakingApp() {
         );
 
         speakText(normalizeForTTS(finalText)); // 🗣️ AI speak
+
+        fetchStreak();
       },
     });
   };
+
+  // ================== Update Streak ==================
+
+  const updateStreak = async () => {
+    try {
+      await fetch("http://localhost:8000/user/update-streak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: SESSION_ID }),
+      });
+    } catch (err) {
+      console.error("Failed update streak", err);
+    }
+  };
+
+  const [streak, setStreak] = useState({
+    current_streak: 0,
+    longest_streak: 0,
+    chat_count: 0,
+  });
+
+  const fetchStreak = async () => {
+    try {
+      const res = await fetch(
+        `http://localhost:8000/user/streak/${SESSION_ID}`,
+      );
+      const data = await res.json();
+      setStreak(data);
+    } catch (err) {
+      console.error("Failed to fetch streak:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchStreak();
+  }, []);
 
   // ================== 1️⃣ LUPA KATA ==================
   const lupaKata = useLupaKata({
@@ -107,8 +157,17 @@ export default function SpeakingApp() {
   });
 
   // ================== DESTRUCTURING SPEECH ==================
-  const { liveTranscript, startRecording, stopRecording, cancelRecording } =
-    speech;
+  const {
+    liveTranscript,
+    startRecording: rawStartRecording,
+    stopRecording,
+    cancelRecording,
+  } = speech;
+
+  const startRecording = async () => {
+    await updateStreak(); // 🔥 streak naik di sini
+    rawStartRecording(); // 🎤 mulai rekam
+  };
 
   // ================== TOGGLE SUGGESTION ==================
   const toggleSuggestion = () => {
@@ -125,45 +184,52 @@ export default function SpeakingApp() {
   }, [isRecording]);
 
   return (
-    <div className="min-h-screen lg:w-full flex justify-center bg-linear-to-b from-slate-900 to-blue-950 p-4">
-      <div
-        className="w-full max-w-md space-y-6 flex flex-col"
-        onClick={resetIdle}
-        onWheel={resetIdle}
-      >
-        <Header />
-        <Topic />
-        <ChatSection
-          chatHistory={chatHistory}
-          liveTranscript={liveTranscript}
-          bottomRef={bottomRef}
-        />
-        {/* Semua action yang fixed di bawah digabung ke BottomActions */}
-        <BottomActions
-          isRecording={isRecording}
-          showSuggestions={showSuggestions}
-          suggestions={suggestions}
-          speakText={speakText}
-          lupaKata={lupaKata}
-          controlProps={{
-            isRecording,
-            micReady,
-            requestAudioPermission,
-            startRecording,
-            stopRecording,
-            cancelRecording,
-            toggleSuggestion,
-            isIdle,
-            openLupaKata: () => lupaKata.startLupaKata(isRecording),
+    <>
+      {/* 🔥 MAIN APP — SELALU RENDER */}
+      <div className="min-h-screen lg:w-full flex justify-center bg-linear-to-b from-slate-900 to-blue-950 p-4">
+        <div
+          className="w-full max-w-md space-y-6 flex flex-col"
+          onClick={resetIdle}
+          onWheel={resetIdle}
+        >
+          <Header streak={streak} />
 
-            // 🔥 INI YANG TADI HILANG
-            isLupaKataActive: lupaKata.isLupaKataActive,
-            lupaKataResult: lupaKata.lupaKataResult,
-            speakerReady,
-          }}
-        />
-        <div className="mb-48" /> {/* spacer */}
+          <Topic />
+
+          <ChatSection
+            chatHistory={chatHistory}
+            liveTranscript={liveTranscript}
+            bottomRef={bottomRef}
+          />
+
+          <BottomActions
+            isRecording={isRecording}
+            showSuggestions={showSuggestions}
+            suggestions={suggestions}
+            speakText={speakText}
+            lupaKata={lupaKata}
+            controlProps={{
+              isRecording,
+              micReady,
+              speakerReady,
+              requestAudioPermission,
+              startRecording,
+              stopRecording,
+              cancelRecording,
+              toggleSuggestion,
+              isIdle,
+              openLupaKata: () => lupaKata.startLupaKata(isRecording),
+              isLupaKataActive: lupaKata.isLupaKataActive,
+              lupaKataResult: lupaKata.lupaKataResult,
+            }}
+          />
+
+          <div className="mb-48" />
+        </div>
       </div>
-    </div>
+
+      {/* 🧱 OVERLAY — DI ATAS MAIN APP */}
+      {showOverlay && <AudioUnlockOverlay onUnlock={handleUnlock} />}
+    </>
   );
 }

@@ -23,6 +23,8 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 
 from langchain_community.chat_message_histories import SQLChatMessageHistory
 
+from streak import update_streak
+
 
 load_dotenv()
 
@@ -76,12 +78,6 @@ class StreamRequest(BaseModel):
     input: str
 
 
-def get_session_history(session_id: str):
-    return SQLChatMessageHistory(
-        session_id=session_id, connection_string="sqlite:///chat_history.db"
-    )
-
-
 llm = ChatOpenAI(
     model="gpt-4o-mini",
     streaming=True,
@@ -119,6 +115,7 @@ runnable = RunnableWithMessageHistory(
 
 @app.post("/stream_answer")
 async def stream_answer(req: StreamRequest):
+
     print("🔥 STREAM ANSWER CALLED")
     print("🧠 SESSION:", req.session_id)
     print("💬 INPUT:", req.input)
@@ -131,6 +128,45 @@ async def stream_answer(req: StreamRequest):
             yield f"data: {chunk}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+class UpdateStreakRequest(BaseModel):
+    session_id: str
+
+
+@app.get("/user/streak/{session_id}")
+def get_streak(session_id: str):
+    import sqlite3
+
+    conn = sqlite3.connect("chat_history.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT current_streak, longest_streak, chat_count FROM user_streak WHERE user_id=?",
+        (session_id,),
+    )
+    row = cursor.fetchone()
+    conn.close()
+
+    if row is None:
+        return {
+            "current_streak": 0,
+            "longest_streak": 0,
+            "chat_count": 0,
+        }
+
+    return {
+        "current_streak": row[0],
+        "longest_streak": row[1],
+        "chat_count": row[2],
+    }
+
+
+@app.post("/user/update-streak")
+def update_user_streak(req: UpdateStreakRequest):
+    print("🔥 UPDATE STREAK:", req.session_id)
+    update_streak(req.session_id)
+    return {"status": "ok"}
 
 
 # from deep_translator import GoogleTranslator
