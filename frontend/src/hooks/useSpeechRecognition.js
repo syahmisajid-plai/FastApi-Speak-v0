@@ -52,7 +52,8 @@ export default function useSpeechRecognition({
     if (!SpeechRecognition || recognitionRef.current) return;
 
     const recognition = new SpeechRecognition();
-    recognition.lang = "en-GB";
+    // recognition.lang = "en-GB";
+    recognition.lang = "id-ID";
     recognition.continuous = true;
     recognition.interimResults = true;
 
