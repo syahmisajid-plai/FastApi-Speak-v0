@@ -29,7 +29,7 @@ export default function LupaKataOverlay() {
           <span className="w-2 bg-emerald-400 rounded animate-wave delay-800"></span>
         </div>
 
-        <p className="text-white font-semibold mt-2">🤔 Lupa Kata...</p>
+        <p className="text-white font-semibold mt-2">🤔 Translate Instan...</p>
         <p className="text-sm text-emerald-200">
           Sebutkan kata dalam Bahasa Indonesia
         </p>

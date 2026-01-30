@@ -96,10 +96,10 @@ export default function ControlSection({
                   onClick={!isRecording ? openLupaKata : undefined}
                 >
                   {isRecording
-                    ? "🔒 Lupa Kata Locked"
+                    ? "🔒 Translate Locked"
                     : isLupaKataActive
                       ? "⏹ Stop"
-                      : "📖 Lupa Kata"}
+                      : "📖 Translate"}
                 </div>
               </div>
             )}
