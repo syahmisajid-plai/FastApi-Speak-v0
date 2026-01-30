@@ -67,10 +67,16 @@ export default function ControlSection({
                 </div>
               ) : (
                 <div
-                  className="w-full h-full bg-red-500 hover:bg-red-600 text-white rounded-lg flex items-center justify-center cursor-pointer"
-                  onClick={startRecording}
+                  className={`w-full h-full rounded-lg flex items-center justify-center font-bold
+                  ${
+                    isLupaKataActive
+                      ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                      : "bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+                  }
+                `}
+                  onClick={!isLupaKataActive ? startRecording : undefined}
                 >
-                  🔴 Record
+                  {isLupaKataActive ? "🔒 Recording Locked" : "🔴 Record"}
                 </div>
               )}
             </div>
@@ -79,18 +85,21 @@ export default function ControlSection({
             {micReady && (
               <div className="col-span-1 h-16 rounded-lg transition relative">
                 <div
-                  className={`w-full h-full flex flex-col items-center justify-center text-white text-sm font-medium rounded-lg cursor-pointer text-center
-                ${
-                  isLupaKataActive
-                    ? "bg-emerald-300"
-                    : "bg-emerald-500 hover:bg-emerald-600"
-                }`}
-                  onClick={openLupaKata}
+                  className={`w-full h-full flex items-center justify-center text-white text-sm font-bold rounded-lg text-center
+                  ${
+                    isRecording
+                      ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                      : isLupaKataActive
+                        ? "bg-emerald-300"
+                        : "bg-emerald-500 hover:bg-emerald-600 cursor-pointer"
+                  }`}
+                  onClick={!isRecording ? openLupaKata : undefined}
                 >
-                  <span>📖 Lupa Kata</span>
-                  {isLupaKataActive && lupaKataResult && (
-                    <span className="text-xs mt-1">{lupaKataResult}</span>
-                  )}
+                  {isRecording
+                    ? "🔒 Lupa Kata Locked"
+                    : isLupaKataActive
+                      ? "⏹ Stop"
+                      : "📖 Lupa Kata"}
                 </div>
               </div>
             )}

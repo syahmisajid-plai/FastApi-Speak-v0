@@ -214,7 +214,7 @@ export default function SpeakingApp() {
               cancelRecording,
               toggleSuggestion,
               isIdle,
-              openLupaKata: () => lupaKata.startLupaKata(isRecording),
+              openLupaKata: () => lupaKata.toggleLupaKata(isRecording),
               isLupaKataActive: lupaKata.isLupaKataActive,
               lupaKataResult: lupaKata.lupaKataResult,
             }}
