@@ -192,6 +192,7 @@ export default function SpeakingApp() {
           <Topic />
 
           <ChatSection
+            lupaKata={lupaKata}
             chatHistory={chatHistory}
             liveTranscript={liveTranscript}
             bottomRef={bottomRef}

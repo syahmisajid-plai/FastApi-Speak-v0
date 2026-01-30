@@ -3,6 +3,7 @@ import ChatBubble from "./ChatBubble";
 export default function ChatSection({
   chatHistory,
   liveTranscript,
+  lupaKata, // ⬅️ TAMBAH INI
   bottomRef,
 }) {
   return (
@@ -12,11 +13,20 @@ export default function ChatSection({
         <ChatBubble key={idx} chat={chat} />
       ))}
 
-      {/* Live transcript sementara */}
+      {/* Live transcript (recording biasa) */}
       {liveTranscript && (
         <div className="flex justify-end">
           <div className="max-w-[75%] p-3 rounded-lg bg-yellow-100 text-gray-900 italic">
             🎤 {liveTranscript}
+          </div>
+        </div>
+      )}
+
+      {/* ⬇️ LUPA KATA transcript MASUK CHAT */}
+      {lupaKata.lupaKataHeardText && (
+        <div className="flex justify-end">
+          <div className="max-w-[75%] p-3 rounded-lg bg-orange-100 text-gray-900 italic">
+            🤔 “{lupaKata.lupaKataHeardText}”
           </div>
         </div>
       )}
