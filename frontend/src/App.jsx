@@ -51,11 +51,6 @@ export default function SpeakingApp() {
   // ================== Unlock Screen ==================
   const handleUnlock = async () => {
     await requestAudioPermission();
-
-    // ⏳ tunggu animasi overlay selesai
-    setTimeout(() => {
-      setShowOverlay(false);
-    }, 700);
   };
 
   // ================== BACKEND ==================
@@ -229,7 +224,12 @@ export default function SpeakingApp() {
       </div>
 
       {/* 🧱 OVERLAY — DI ATAS MAIN APP */}
-      {showOverlay && <AudioUnlockOverlay onUnlock={handleUnlock} />}
+      {showOverlay && (
+        <AudioUnlockOverlay
+          onUnlock={handleUnlock}
+          onFinish={() => setShowOverlay(false)}
+        />
+      )}
     </>
   );
 }

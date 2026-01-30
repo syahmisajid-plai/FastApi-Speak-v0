@@ -8,9 +8,6 @@ export default function useSpeechRecognition({
   onResetIdle,
   isLupaKataActive,
 }) {
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
-
   const transcriptRef = useRef("");
   const [liveTranscript, setLiveTranscript] = useState("");
   const [isCanceled, setIsCanceled] = useState(false);
@@ -22,7 +19,13 @@ export default function useSpeechRecognition({
       .replace(/\s+/g, " ")
       .trim();
 
+  const getSpeechRecognition = () =>
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
   const startRecording = () => {
+    const SpeechRecognition = getSpeechRecognition();
+    if (!SpeechRecognition || isLupaKataActive) return;
+
     onResetIdle?.();
     transcriptRef.current = "";
     setLiveTranscript("");
@@ -34,7 +37,7 @@ export default function useSpeechRecognition({
   };
 
   const stopRecording = () => {
-    if (isLupaKataActive) return; // ⬅️ GUARD
+    if (isLupaKataActive) return;
     shouldSendOnEndRef.current = true;
     recognitionRef.current?.stop();
   };
@@ -49,10 +52,10 @@ export default function useSpeechRecognition({
   };
 
   useEffect(() => {
+    const SpeechRecognition = getSpeechRecognition();
     if (!SpeechRecognition || recognitionRef.current) return;
 
     const recognition = new SpeechRecognition();
-    // recognition.lang = "en-GB";
     recognition.lang = "id-ID";
     recognition.continuous = true;
     recognition.interimResults = true;
@@ -85,7 +88,6 @@ export default function useSpeechRecognition({
       setIsCanceled(false);
       setIsRecording(false);
       shouldSendOnEndRef.current = false;
-
       onResetIdle?.();
     };
 
@@ -94,7 +96,7 @@ export default function useSpeechRecognition({
     };
 
     recognitionRef.current = recognition;
-  }, []);
+  }, [isLupaKataActive]);
 
   return {
     liveTranscript,

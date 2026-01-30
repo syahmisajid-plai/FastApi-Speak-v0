@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 export default function useLupaKata({
   stopMainRecording,
@@ -8,6 +8,10 @@ export default function useLupaKata({
   const [isLupaKataActive, setIsLupaKataActive] = useState(false);
   const [isProcessingLupaKata, setIsProcessingLupaKata] = useState(false);
   const [lupaKataHeardText, setLupaKataHeardText] = useState("");
+
+  const recognitionRef = useRef(null);
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
 
   /* ================= TRANSLATE ================= */
   const translateLupaKata = async (indoText) => {
@@ -48,36 +52,9 @@ export default function useLupaKata({
     setIsLupaKataActive(false);
   };
 
-  /* ================= WHISPER ================= */
-  const sendAudioToWhisper = async (blob) => {
-    const formData = new FormData();
-    formData.append("file", blob, "lupakata.webm");
-
-    const res = await fetch(
-      "https://fastapi-speak-v0-production.up.railway.app/api/stt-whisper",
-      {
-        method: "POST",
-        body: formData,
-      },
-    );
-
-    if (!res.ok) {
-      setIsProcessingLupaKata(false);
-      setIsLupaKataActive(false);
-      return;
-    }
-
-    const data = await res.json();
-    if (!data.text) return;
-
-    setLupaKataHeardText(data.text);
-
-    setTimeout(() => translateLupaKata(data.text), 800);
-  };
-
-  /* ================= START ================= */
+  /* ================= START LUPA KATA ================= */
   const startLupaKata = async (isMainRecording) => {
-    if (isLupaKataActive) return; // 🛑 GUARD
+    if (isLupaKataActive) return;
 
     setLupaKataHeardText("");
 
@@ -85,31 +62,50 @@ export default function useLupaKata({
       stopMainRecording?.();
     }
 
-    setIsLupaKataActive(true);
+    if (!SpeechRecognition) {
+      alert("SpeechRecognition not supported");
+      return;
+    }
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: "audio/webm;codecs=opus",
-    });
+    const recognition = new SpeechRecognition();
+    recognition.lang = "id-ID";
+    recognition.continuous = false;
+    recognition.interimResults = true;
 
-    const chunks = [];
+    let finalText = "";
 
-    mediaRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunks.push(e.data);
+    recognition.onresult = (event) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const t = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalText += t;
+        } else {
+          interim += t;
+        }
+      }
+
+      setLupaKataHeardText(finalText + interim);
     };
 
-    mediaRecorder.start();
-    setTimeout(() => mediaRecorder.stop(), 4000);
-
-    mediaRecorder.onstop = async () => {
-      stream.getTracks().forEach((t) => t.stop());
-
-      const blob = new Blob(chunks, { type: "audio/webm" });
-      if (!blob.size) return;
+    recognition.onend = () => {
+      if (!finalText.trim()) {
+        setIsLupaKataActive(false);
+        return;
+      }
 
       setIsProcessingLupaKata(true);
-      await sendAudioToWhisper(blob);
+      translateLupaKata(finalText);
     };
+
+    recognition.onerror = (e) => {
+      console.error("LupaKata STT error:", e.error);
+      setIsLupaKataActive(false);
+    };
+
+    recognitionRef.current = recognition;
+    setIsLupaKataActive(true);
+    recognition.start();
   };
 
   return {
