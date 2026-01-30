@@ -56,7 +56,7 @@ export default function SpeakingApp() {
   // ================== BACKEND ==================
   useBackendPing(); // 🔗 Check backend connection
 
-  const SESSION_ID = "user-123"; // 🆔 Session harus konsisten
+  const SESSION_ID = "user-131"; // 🆔 Session harus konsisten
 
   // ================== SEND TEXT TO BACKEND ==================
   const sendTextToBackend = async (text) => {
@@ -96,11 +96,14 @@ export default function SpeakingApp() {
 
   const updateStreak = async () => {
     try {
-      await fetch("http://localhost:8000/user/update-streak", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: SESSION_ID }),
-      });
+      await fetch(
+        "https://fastapi-speak-v0-production.up.railway.app/user/update-streak",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: SESSION_ID }),
+        },
+      );
     } catch (err) {
       console.error("Failed update streak", err);
     }
@@ -115,7 +118,7 @@ export default function SpeakingApp() {
   const fetchStreak = async () => {
     try {
       const res = await fetch(
-        `http://localhost:8000/user/streak/${SESSION_ID}`,
+        `https://fastapi-speak-v0-production.up.railway.app/user/streak/${SESSION_ID}`,
       );
       const data = await res.json();
       setStreak(data);

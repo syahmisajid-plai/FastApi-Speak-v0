@@ -85,13 +85,7 @@ llm = ChatOpenAI(
     temperature=0.7,
 )
 
-system_prompt = SystemMessagePromptTemplate.from_template(
-    "You are my English conversation partner. Your only task is to have casual conversations with me in English, like a friendly chat."
-    "Talk about anything — daily life, hobbies, news, or random fun topics."
-    "Answer in one short sentence only, max 10 words."
-    "Use simple and clear English, like you’re talking to a complete beginner."
-    "Your main goal is to make me feel comfortable and enjoy speaking English without fear."
-)
+system_prompt = SystemMessagePromptTemplate.from_template("You are SUPERMAN")
 
 human_prompt = HumanMessagePromptTemplate.from_template("{input}")
 
@@ -119,6 +113,11 @@ async def stream_answer(req: StreamRequest):
     print("🔥 STREAM ANSWER CALLED")
     print("🧠 SESSION:", req.session_id)
     print("💬 INPUT:", req.input)
+
+    # ========== DEBUG HISTORY ==========
+    history = get_session_history(req.session_id)
+    print("📜 HISTORY:", [msg.content for msg in history.messages])
+    # ==================================
 
     def event_stream():
         for chunk in runnable.stream(
