@@ -12,3 +12,4 @@ langchain-community
 
 deep-translator
 
+psycopg2-binary

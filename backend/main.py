@@ -7,6 +7,8 @@ from typing import List
 
 from openai import OpenAI
 import os
+import sqlite3
+import psycopg2
 from dotenv import load_dotenv
 import time
 
@@ -28,16 +30,65 @@ from streak import update_streak
 
 load_dotenv()
 
-app = FastAPI()
-
 # OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+
+# def get_session_history(session_id: str):
+#     return SQLChatMessageHistory(
+#         session_id=session_id, connection_string="sqlite:///chat_history.db"
+#     )
+
+
+def init_db():
+    if DATABASE_URL:
+        print("🚀 Using PostgreSQL")
+        conn = psycopg2.connect(DATABASE_URL)
+    else:
+        print("💻 Using SQLite")
+        conn = sqlite3.connect("chat_history.db")
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+    CREATE TABLE IF NOT EXISTS user_streak (
+        user_id TEXT PRIMARY KEY,
+        current_streak INTEGER,
+        longest_streak INTEGER,
+        last_activity_date TEXT,
+        chat_count INTEGER
+    )
+    """
+    )
+
+    conn.commit()
+    conn.close()
+
+
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 🟢 Startup: init database
+    init_db()
+    yield
+    # 🔴 Shutdown: bisa ditambahkan cleanup jika perlu
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 def get_session_history(session_id: str):
-    return SQLChatMessageHistory(
-        session_id=session_id, connection_string="sqlite:///chat_history.db"
-    )
+    if DATABASE_URL:
+        conn = DATABASE_URL
+    else:
+        conn = "sqlite:///chat_history.db"
+
+    return SQLChatMessageHistory(session_id=session_id, connection_string=conn)
 
 
 # CORS agar React (Vite) boleh akses FastAPI
@@ -143,15 +194,22 @@ class UpdateStreakRequest(BaseModel):
 
 @app.get("/user/streak/{session_id}")
 def get_streak(session_id: str):
-    import sqlite3
+    if DATABASE_URL:
+        conn = psycopg2.connect(DATABASE_URL)
+    else:
+        conn = sqlite3.connect("chat_history.db")
 
-    conn = sqlite3.connect("chat_history.db")
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT current_streak, longest_streak, chat_count FROM user_streak WHERE user_id=?",
+        (
+            "SELECT current_streak, longest_streak, chat_count FROM user_streak WHERE user_id=%s"
+            if DATABASE_URL
+            else "SELECT current_streak, longest_streak, chat_count FROM user_streak WHERE user_id=?"
+        ),
         (session_id,),
     )
+
     row = cursor.fetchone()
     conn.close()
 

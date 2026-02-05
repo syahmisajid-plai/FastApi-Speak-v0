@@ -12,6 +12,8 @@ export default function useSpeechRecognition({
   const [liveTranscript, setLiveTranscript] = useState("");
   const [isCanceled, setIsCanceled] = useState(false);
 
+  const lastInterimRef = useRef("");
+
   const normalizeText = (text) =>
     text
       .toLowerCase()
@@ -38,8 +40,16 @@ export default function useSpeechRecognition({
 
   const stopRecording = () => {
     if (isLupaKataActive) return;
+
     shouldSendOnEndRef.current = true;
-    recognitionRef.current?.stop();
+
+    // 🔥 masukkan kata terakhir yang masih interim
+    transcriptRef.current += lastInterimRef.current;
+
+    // 🔥 kasih delay supaya final chunk masuk
+    setTimeout(() => {
+      recognitionRef.current?.stop();
+    }, 300);
   };
 
   const cancelRecording = () => {
@@ -73,6 +83,7 @@ export default function useSpeechRecognition({
         }
       }
 
+      lastInterimRef.current = interim; // 🔥 simpan interim terakhir
       setLiveTranscript(transcriptRef.current + interim);
     };
 

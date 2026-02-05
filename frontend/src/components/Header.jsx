@@ -15,7 +15,7 @@ export default function Header({ streak }) {
       {/* ⏳ PROGRESS */}
       <p className="text-sm text-gray-300">
         ⏳ Progress:{" "}
-        {streak.chat_count >= 5 ? "Completed ✅" : `${streak.chat_count} / 5`}
+        {streak.chat_count >= 2 ? "Completed ✅" : `${streak.chat_count} / 2`}
       </p>
     </header>
   );

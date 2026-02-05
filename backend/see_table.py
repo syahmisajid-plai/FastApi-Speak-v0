@@ -1,0 +1,1 @@
+# python -c "import sqlite3; conn=sqlite3.connect('chat_history.db'); cur=conn.cursor(); cols=[c[1] for c in cur.execute('PRAGMA table_info(user_streak)')]; rows=cur.execute('SELECT * FROM user_streak').fetchall(); print(cols); [print(r) for r in rows]"

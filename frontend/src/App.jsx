@@ -56,7 +56,7 @@ export default function SpeakingApp() {
   // ================== BACKEND ==================
   useBackendPing(); // 🔗 Check backend connection
 
-  const SESSION_ID = "user-131"; // 🆔 Session harus konsisten
+  const SESSION_ID = "user-99"; // 🆔 Session harus konsisten
 
   // ================== SEND TEXT TO BACKEND ==================
   const sendTextToBackend = async (text) => {
