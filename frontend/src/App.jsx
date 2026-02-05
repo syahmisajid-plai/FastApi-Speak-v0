@@ -182,6 +182,7 @@ export default function SpeakingApp() {
     }
   }, [isRecording]);
 
+  // =
   return (
     <>
       {/* 🔥 MAIN APP — SELALU RENDER */}
