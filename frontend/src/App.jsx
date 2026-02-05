@@ -63,7 +63,7 @@ export default function SpeakingApp() {
   const sendTextToBackend = async (text) => {
     await streamChat({
       text,
-      sessionId,
+      sessionId: sessionIdRef.current, // pakai ref terbaru
 
       // ===== Saat user mengirim pesan =====
       onUserMessage: (msg) => {
@@ -128,7 +128,11 @@ export default function SpeakingApp() {
     }
   };
 
+  const sessionIdRef = useRef(sessionId);
+
   useEffect(() => {
+    sessionIdRef.current = sessionId;
+    setChatHistory([]); // reset chat history saat ganti session
     fetchStreak();
   }, [sessionId]); // ✅ Update saat sessionId berubah
 
