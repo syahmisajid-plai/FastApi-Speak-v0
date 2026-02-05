@@ -33,7 +33,6 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-
 # def get_session_history(session_id: str):
 #     return SQLChatMessageHistory(
 #         session_id=session_id, connection_string="sqlite:///chat_history.db"
