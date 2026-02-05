@@ -56,13 +56,14 @@ export default function SpeakingApp() {
   // ================== BACKEND ==================
   useBackendPing(); // 🔗 Check backend connection
 
-  const SESSION_ID = "user-99"; // 🆔 Session harus konsisten
+  // ================== SESSION ==================
+  const [sessionId, setSessionId] = useState("ninda"); // 🆔 Sekarang bisa diedit
 
   // ================== SEND TEXT TO BACKEND ==================
   const sendTextToBackend = async (text) => {
     await streamChat({
       text,
-      sessionId: SESSION_ID,
+      sessionId,
 
       // ===== Saat user mengirim pesan =====
       onUserMessage: (msg) => {
@@ -101,7 +102,7 @@ export default function SpeakingApp() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ session_id: SESSION_ID }),
+          body: JSON.stringify({ session_id: sessionId }),
         },
       );
     } catch (err) {
@@ -118,7 +119,7 @@ export default function SpeakingApp() {
   const fetchStreak = async () => {
     try {
       const res = await fetch(
-        `https://fastapi-speak-v0-production.up.railway.app/user/streak/${SESSION_ID}`,
+        `https://fastapi-speak-v0-production.up.railway.app/user/streak/${sessionId}`,
       );
       const data = await res.json();
       setStreak(data);
@@ -129,7 +130,7 @@ export default function SpeakingApp() {
 
   useEffect(() => {
     fetchStreak();
-  }, []);
+  }, [sessionId]); // ✅ Update saat sessionId berubah
 
   // ================== 1️⃣ LUPA KATA ==================
   const lupaKata = useLupaKata({
@@ -191,6 +192,20 @@ export default function SpeakingApp() {
           onWheel={resetIdle}
         >
           <Header streak={streak} />
+
+          {/* SESSION ID INPUT */}
+          <div className="flex items-center space-x-2 text-white">
+            <label htmlFor="sessionId">Session ID:</label>
+            <select
+              id="sessionId"
+              className="p-1 rounded text-white bg-gray-700"
+              value={sessionId}
+              onChange={(e) => setSessionId(e.target.value)}
+            >
+              <option value="ninda">ninda</option>
+              <option value="syahmi">syahmi</option>
+            </select>
+          </div>
 
           <Topic />
 
