@@ -27,7 +27,6 @@ from langchain_community.chat_message_histories import SQLChatMessageHistory
 
 from streak import update_streak
 
-
 load_dotenv()
 
 # OpenAI client
