@@ -5,7 +5,7 @@ from datetime import date, timedelta
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 DB_PATH = "chat_history.db"
-MIN_CHAT_FOR_STREAK = 2
+MIN_CHAT_FOR_STREAK = 10
 
 
 def db_connect():

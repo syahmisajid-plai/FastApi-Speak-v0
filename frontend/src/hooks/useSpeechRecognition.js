@@ -41,12 +41,10 @@ export default function useSpeechRecognition({
   const stopRecording = () => {
     if (isLupaKataActive) return;
 
+    // 🔒 pastikan final result hanya dikirim sekali
     shouldSendOnEndRef.current = true;
 
-    // 🔥 masukkan kata terakhir yang masih interim
-    transcriptRef.current += lastInterimRef.current;
-
-    // 🔥 kasih delay supaya final chunk masuk
+    // stop rekaman, onend akan otomatis memanggil onFinalResult
     setTimeout(() => {
       recognitionRef.current?.stop();
     }, 300);
@@ -88,17 +86,24 @@ export default function useSpeechRecognition({
     };
 
     recognition.onend = () => {
-      const finalText = normalizeText(transcriptRef.current);
+      if (isCanceled) return;
 
-      if (shouldSendOnEndRef.current && !isCanceled && finalText) {
+      // final text + last interim
+      const finalText = normalizeText(
+        transcriptRef.current + lastInterimRef.current,
+      );
+
+      // 🔒 kirim hanya sekali
+      if (shouldSendOnEndRef.current && finalText) {
         onFinalResult?.(finalText);
+        shouldSendOnEndRef.current = false; // lock supaya tidak dikirim lagi
       }
 
       transcriptRef.current = "";
+      lastInterimRef.current = "";
       setLiveTranscript("");
       setIsCanceled(false);
       setIsRecording(false);
-      shouldSendOnEndRef.current = false;
       onResetIdle?.();
     };
 
