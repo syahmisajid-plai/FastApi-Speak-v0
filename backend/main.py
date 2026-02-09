@@ -155,7 +155,7 @@ async def tts_stream(payload: TextPayload):
     # 3️⃣ Konfigurasi audio
     audio_config = texttospeech.AudioConfig(
         audio_encoding=texttospeech.AudioEncoding.MP3,
-        effects_profile_id=["small-bluetooth-speaker-class-device"],
+        # effects_profile_id=["small-bluetooth-speaker-class-device"],
         speaking_rate=1,
         pitch=1,
     )
