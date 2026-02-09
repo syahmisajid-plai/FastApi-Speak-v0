@@ -126,7 +126,7 @@ def ping():
 
 # Set path ke service account GCP
 # Ambil JSON dari env
-gcp_json = os.getenv("GOOGLE_CREDENTIALS")
+gcp_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
 # Tulis sementara ke file
 with open("gcp_temp.json", "w") as f:
