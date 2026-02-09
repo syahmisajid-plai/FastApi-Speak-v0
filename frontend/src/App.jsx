@@ -11,7 +11,8 @@ import useSpeechRecognition from "./hooks/useSpeechRecognition";
 import useAudioPermission from "./hooks/useAudioPermission";
 import useIdle from "./hooks/useIdle";
 
-import useTTS from "./hooks/useTTS";
+// import useTTS from "./hooks/useTTS";
+import useTTS_Google from "./hooks/useTTS_Google";
 import useSuggestions from "./hooks/useSuggestions";
 import useEruda from "./hooks/useEruda";
 import useBackendPing from "./hooks/useBackendPing";
@@ -41,7 +42,7 @@ export default function SpeakingApp() {
   } = useAudioPermission(); // 🎤 Hook audio permission
 
   // ================== HOOKS ==================
-  const { speakText } = useTTS(); // 🗣️ Text-to-Speech
+  const { speakText } = useTTS_Google(); // 🗣️ Text-to-Speech
   const { suggestions, fetchSuggestions } = useSuggestions(chatHistory); // 💡 Saran dari chat history
   const { isIdle, resetIdle } = useIdle(15000); // ⏱️ Deteksi idle user (15 detik)
 
@@ -86,7 +87,7 @@ export default function SpeakingApp() {
           ),
         );
 
-        speakText(normalizeForTTS(finalText)); // 🗣️ AI speak
+        speakText(finalText); // 🔊 sekarang pakai backend TTS
 
         fetchStreak();
       },
@@ -97,14 +98,11 @@ export default function SpeakingApp() {
 
   const updateStreak = async () => {
     try {
-      await fetch(
-        "https://fastapi-speak-v0-production.up.railway.app/user/update-streak",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ session_id: sessionId }),
-        },
-      );
+      await fetch("http://127.0.0.1:8000/user/update-streak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
     } catch (err) {
       console.error("Failed update streak", err);
     }
@@ -118,9 +116,7 @@ export default function SpeakingApp() {
 
   const fetchStreak = async () => {
     try {
-      const res = await fetch(
-        `https://fastapi-speak-v0-production.up.railway.app/user/streak/${sessionId}`,
-      );
+      const res = await fetch(`http://127.0.0.1:8000/user/streak/${sessionId}`);
       const data = await res.json();
       setStreak(data);
     } catch (err) {

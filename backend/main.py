@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, File
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
@@ -7,10 +7,13 @@ from typing import List
 
 from openai import OpenAI
 import os
+from io import BytesIO
 import sqlite3
 import psycopg2
 from dotenv import load_dotenv
 import time
+
+from google.cloud import texttospeech
 
 # LangChain
 from langchain_openai import ChatOpenAI
@@ -119,6 +122,50 @@ def root():
 @app.get("/api/ping")
 def ping():
     return {"status": "success", "message": "FastAPI connected to React!"}
+
+
+# Set path ke service account GCP
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "apptts2026-gcp-3d9e40e0cff8.json"
+
+client_tts = texttospeech.TextToSpeechClient()
+
+
+class TextPayload(BaseModel):
+    text: str
+
+
+@app.post("/tts-stream")
+async def tts_stream(payload: TextPayload):
+    # 1️⃣ Siapkan input TTS
+    synthesis_input = texttospeech.SynthesisInput(text=payload.text)
+
+    # 2️⃣ Pilih suara
+    voice = texttospeech.VoiceSelectionParams(
+        language_code="en-US", name="en-US-Standard-F"
+    )
+
+    # 3️⃣ Konfigurasi audio
+    audio_config = texttospeech.AudioConfig(
+        audio_encoding=texttospeech.AudioEncoding.MP3,
+        effects_profile_id=["small-bluetooth-speaker-class-device"],
+        speaking_rate=1,
+        pitch=1,
+    )
+
+    # 4️⃣ Generate audio
+    response = client_tts.synthesize_speech(
+        input=synthesis_input, voice=voice, audio_config=audio_config
+    )
+
+    # 5️⃣ Simpan hasil ke memory
+    audio_stream = BytesIO(response.audio_content)
+
+    # 6️⃣ Kirim sebagai streaming response
+    return StreamingResponse(
+        audio_stream,
+        media_type="audio/mpeg",
+        headers={"Content-Disposition": "inline; filename=output.mp3"},
+    )
 
 
 class SpeechInput(BaseModel):
