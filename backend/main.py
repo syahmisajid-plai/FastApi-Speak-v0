@@ -125,7 +125,15 @@ def ping():
 
 
 # Set path ke service account GCP
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "apptts2026-gcp-3d9e40e0cff8.json"
+# Ambil JSON dari env
+gcp_json = os.getenv("GOOGLE_CREDENTIALS")
+
+# Tulis sementara ke file
+with open("gcp_temp.json", "w") as f:
+    f.write(gcp_json)
+
+# Set path environment variable untuk SDK
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "gcp_temp.json"
 
 client_tts = texttospeech.TextToSpeechClient()
 

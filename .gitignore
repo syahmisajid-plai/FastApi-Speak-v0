@@ -17,3 +17,4 @@ node_modules/
 dist/
 
 backend/apptts2026-gcp-3d9e40e0cff8.json
+backend/gcp_temp.json
