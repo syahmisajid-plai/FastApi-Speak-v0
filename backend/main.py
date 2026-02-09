@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 
+import re
 
 from openai import OpenAI
 import os
@@ -145,11 +146,25 @@ class TextPayload(BaseModel):
 @app.post("/tts-stream")
 async def tts_stream(payload: TextPayload):
     print("📥 Received text:", repr(payload.text))
-    print("📏 Length:", len(payload.text))
-    print("🔎 Characters:", [ord(c) for c in payload.text[:50]])  # cek karakter pertama
+
+    # Bersihkan teks
+    clean_text = " ".join(payload.text.split())
+
+    # Ganti apostrophe Unicode ke ASCII
+    clean_text = clean_text.replace("’", "'")
+
+    # Gabungkan It 's -> It's, He 's -> He's, dsb
+    clean_text = re.sub(
+        r"\b(I|i|You|you|He|he|She|she|It|it|We|we|They|they) 's\b", r"\1's", clean_text
+    )
+
+    # Hapus tanda kutip literal (optional)
+    clean_text = clean_text.replace('"', "")
+
+    print("📤 Cleaned text:", repr(clean_text))
 
     # 1️⃣ Siapkan input TTS
-    synthesis_input = texttospeech.SynthesisInput(text=payload.text)
+    synthesis_input = texttospeech.SynthesisInput(text=clean_text)
 
     # 2️⃣ Pilih suara
     voice = texttospeech.VoiceSelectionParams(

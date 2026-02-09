@@ -12,14 +12,11 @@ export default function useTTS() {
 
     try {
       // 1️⃣ Request TTS dari backend
-      const res = await fetch(
-        "https://fastapi-speak-v0-production.up.railway.app/tts-stream",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text }),
-        },
-      );
+      const res = await fetch("http://127.0.0.1:8000/tts-stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
 
       if (!res.ok) {
         console.error("❌ TTS backend failed:", res.statusText);
