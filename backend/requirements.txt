@@ -13,3 +13,5 @@ langchain-community
 deep-translator
 
 psycopg2-binary
+
+google-cloud-texttospeech
