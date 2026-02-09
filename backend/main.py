@@ -144,6 +144,10 @@ class TextPayload(BaseModel):
 
 @app.post("/tts-stream")
 async def tts_stream(payload: TextPayload):
+    print("📥 Received text:", repr(payload.text))
+    print("📏 Length:", len(payload.text))
+    print("🔎 Characters:", [ord(c) for c in payload.text[:50]])  # cek karakter pertama
+
     # 1️⃣ Siapkan input TTS
     synthesis_input = texttospeech.SynthesisInput(text=payload.text)
 
@@ -155,7 +159,7 @@ async def tts_stream(payload: TextPayload):
     # 3️⃣ Konfigurasi audio
     audio_config = texttospeech.AudioConfig(
         audio_encoding=texttospeech.AudioEncoding.MP3,
-        # effects_profile_id=["small-bluetooth-speaker-class-device"],
+        effects_profile_id=["small-bluetooth-speaker-class-device"],
         speaking_rate=1,
         pitch=1,
     )
