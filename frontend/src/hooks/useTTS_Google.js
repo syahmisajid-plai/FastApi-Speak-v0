@@ -1,43 +1,39 @@
-export default function useTTS() {
-  const speakText = async (text) => {
-    console.log("🔊 speakText (backend TTS) called:", {
-      text,
-      textLength: text?.length,
-    });
+import { useRef } from "react";
 
-    if (!text) {
-      console.warn("⛔ speakText aborted: NO_TEXT");
+export default function useTTS_Google() {
+  // Map untuk menyimpan audio per teks
+  const audioCache = useRef(new Map());
+
+  const speakText = async (text) => {
+    if (!text) return;
+
+    // Jika sudah ada di cache, langsung mainkan
+    if (audioCache.current.has(text)) {
+      audioCache.current.get(text).play();
       return;
     }
 
     try {
-      // 1️⃣ Request TTS dari backend
-      const res = await fetch(
-        "https://fastapi-speak-v0-production.up.railway.app/tts-stream",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text }),
-        },
-      );
+      // Request TTS dari backend
+      const res = await fetch("http://127.0.0.1:8000/tts-stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
 
-      if (!res.ok) {
-        console.error("❌ TTS backend failed:", res.statusText);
-        return;
-      }
+      if (!res.ok) throw new Error(res.statusText);
 
-      // 2️⃣ Convert response ke blob
       const audioBlob = await res.blob();
-
-      // 3️⃣ Buat object URL
       const audioUrl = URL.createObjectURL(audioBlob);
-
-      // 4️⃣ Play audio
       const audio = new Audio(audioUrl);
-      audio.play();
 
-      // 5️⃣ Cleanup object URL setelah selesai
+      // Cleanup object URL saat audio selesai
       audio.onended = () => URL.revokeObjectURL(audioUrl);
+
+      // Simpan audio ke cache
+      audioCache.current.set(text, audio);
+
+      audio.play();
     } catch (err) {
       console.error("❌ speakText error:", err);
     }
