@@ -99,11 +99,14 @@ export default function SpeakingApp() {
 
   const updateStreak = async () => {
     try {
-      await fetch("http://127.0.0.1:8000/user/update-streak", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId }),
-      });
+      await fetch(
+        "https://fastapi-speak-v0-production.up.railway.app/user/update-streak",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: sessionId }),
+        },
+      );
     } catch (err) {
       console.error("Failed update streak", err);
     }
@@ -117,7 +120,9 @@ export default function SpeakingApp() {
 
   const fetchStreak = async () => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/user/streak/${sessionId}`);
+      const res = await fetch(
+        `https://fastapi-speak-v0-production.up.railway.app/user/streak/${sessionId}`,
+      );
       const data = await res.json();
       setStreak(data);
     } catch (err) {

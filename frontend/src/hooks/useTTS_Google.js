@@ -15,11 +15,14 @@ export default function useTTS_Google() {
 
     try {
       // Request TTS dari backend
-      const res = await fetch("http://127.0.0.1:8000/tts-stream", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
+      const res = await fetch(
+        "https://fastapi-speak-v0-production.up.railway.app/tts-stream",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        },
+      );
 
       if (!res.ok) throw new Error(res.statusText);
 
