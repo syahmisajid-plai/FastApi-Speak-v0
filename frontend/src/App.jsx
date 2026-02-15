@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef } from "react";
 import Header from "./components/Header";
-import Scenario from "./components/Scenario";
 import ChatSection from "./components/ChatSection";
 import BottomActions from "./components/BottomActions";
 import AudioUnlockOverlay from "./components/AudioUnlockOverlay";
-import RoleplayToggle from "./components/RoleplayToggle";
+// import RoleplayToggle from "./components/RoleplayToggle";
+import RoleplayToggle from "./components/RoleplayToggleSwipe";
+import Testcard_swipe from "./components/testcard_swipe";
 import "./App.css";
 
 import useLupaKata from "./hooks/useLupaKata";
@@ -99,14 +100,11 @@ export default function SpeakingApp() {
 
   const updateStreak = async () => {
     try {
-      await fetch(
-        "https://fastapi-speak-v0-production.up.railway.app/user/update-streak",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ session_id: sessionId }),
-        },
-      );
+      await fetch("http://127.0.0.1:8000/user/update-streak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
     } catch (err) {
       console.error("Failed update streak", err);
     }
@@ -120,9 +118,7 @@ export default function SpeakingApp() {
 
   const fetchStreak = async () => {
     try {
-      const res = await fetch(
-        `https://fastapi-speak-v0-production.up.railway.app/user/streak/${sessionId}`,
-      );
+      const res = await fetch(`http://127.0.0.1:8000/user/streak/${sessionId}`);
       const data = await res.json();
       setStreak(data);
     } catch (err) {
@@ -221,8 +217,6 @@ export default function SpeakingApp() {
               <option value="syahmi">syahmi</option>
             </select>
           </div>
-
-          <Scenario />
 
           <ChatSection
             lupaKata={lupaKata}

@@ -69,6 +69,7 @@ export default function useSpeechRecognition({
     recognition.interimResults = true;
 
     recognition.onresult = (event) => {
+      console.log("[STT result]", event);
       if (isCanceled || isLupaKataActive) return;
 
       let interim = "";
@@ -83,9 +84,12 @@ export default function useSpeechRecognition({
 
       lastInterimRef.current = interim; // 🔥 simpan interim terakhir
       setLiveTranscript(transcriptRef.current + interim);
+
+      console.log("Interim:", interim);
     };
 
     recognition.onend = () => {
+      console.log("[STT ended]");
       if (isCanceled) return;
 
       // final text + last interim
