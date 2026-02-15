@@ -1,5 +1,9 @@
 import { useState } from "react";
 import bgTree from "../assets/bg_tree.jpg";
+import airport from "../assets/airport.png";
+import interview from "../assets/interview.jpg";
+import orderFood from "../assets/order_food.png";
+import shopping from "../assets/shopping.jpg";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { EffectCards } from "swiper/modules";
@@ -12,14 +16,14 @@ export default function RoleplayToggleSwipe({ onScenarioSelect }) {
   const [selectedScenario, setSelectedScenario] = useState(null);
 
   const scenarios = [
-    { id: 1, name: "Ordering at a Restaurant" },
-    { id: 2, name: "Job Interview" },
-    { id: 3, name: "Traveling at the Airport" },
-    { id: 4, name: "Shopping in a Mall" },
-    { id: 5, name: "Visiting a Doctor" },
-    { id: 6, name: "Asking Directions" },
-    { id: 7, name: "Hotel Check-in" },
-    { id: 8, name: "Bank Transaction" },
+    { id: 1, name: "Ordering at a Restaurant", image: orderFood },
+    { id: 2, name: "Job Interview", image: interview },
+    { id: 3, name: "Traveling at the Airport", image: airport },
+    { id: 4, name: "Shopping in a Mall", image: shopping },
+    // { id: 5, name: "Visiting a Doctor", image: bgTree },
+    // { id: 6, name: "Asking Directions", image: bgTree },
+    // { id: 7, name: "Hotel Check-in", image: bgTree },
+    // { id: 8, name: "Bank Transaction", image: bgTree },
   ];
 
   const handleSelect = (scenario) => {
@@ -85,7 +89,7 @@ export default function RoleplayToggleSwipe({ onScenarioSelect }) {
                   <div
                     className="w-full h-full rounded-xl flex items-center justify-center text-xl font-semibold shadow-2xl cursor-pointer"
                     style={{
-                      backgroundImage: `url(${bgTree})`,
+                      backgroundImage: `url(${s.image})`,
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                       color: "white",
