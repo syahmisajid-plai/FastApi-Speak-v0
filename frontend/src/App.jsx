@@ -20,6 +20,8 @@ import useEruda from "./hooks/useEruda";
 import useBackendPing from "./hooks/useBackendPing";
 import { streamChat } from "./services/chatService";
 
+import { linkBackend } from "./config";
+
 import { normalizeForTTS } from "./utils/ttsUtils";
 
 export default function SpeakingApp() {
@@ -30,10 +32,15 @@ export default function SpeakingApp() {
   const [showOverlay, setShowOverlay] = useState(true); // 🔑 SATU-SATUNYA GATE
   const [selectedScenario, setSelectedScenario] = useState(null);
 
+  useEffect(() => {
+    scenarioRef.current = selectedScenario;
+  }, [selectedScenario]);
+
   // ================== REF ==================
   const bottomRef = useRef(null); // 🔵 Scroll ke bawah chat
   const recognitionRef = useRef(null); // 🔵 Referensi untuk SpeechRecognition
   const shouldSendOnEndRef = useRef(false); // 🔵 Flag untuk mengirim teks otomatis
+  const scenarioRef = useRef(null);
 
   // ================== AUDIO PERMISSION ==================
   const {
@@ -68,7 +75,7 @@ export default function SpeakingApp() {
     await streamChat({
       text,
       sessionId: sessionIdRef.current,
-      scenarioId: selectedScenario?.id ?? 0,
+      scenarioId: scenarioRef.current?.id ?? 0,
 
       // ===== Saat user mengirim pesan =====
       onUserMessage: (msg) => {
@@ -102,7 +109,7 @@ export default function SpeakingApp() {
 
   const updateStreak = async () => {
     try {
-      await fetch("http://127.0.0.1:8000/user/update-streak", {
+      await fetch(`${linkBackend}/user/update-streak`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ session_id: sessionId }),
@@ -120,7 +127,7 @@ export default function SpeakingApp() {
 
   const fetchStreak = async () => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/user/streak/${sessionId}`);
+      const res = await fetch(`${linkBackend}/user/streak/${sessionId}`);
       const data = await res.json();
       setStreak(data);
     } catch (err) {

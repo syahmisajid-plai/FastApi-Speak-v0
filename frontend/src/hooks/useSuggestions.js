@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { linkBackend } from "../config";
 
 export default function useSuggestions(chatHistory) {
   const [suggestions, setSuggestions] = useState([]);
@@ -9,17 +10,14 @@ export default function useSuggestions(chatHistory) {
 
     if (!lastUser && !lastAI) return;
 
-    const res = await fetch(
-      "https://fastapi-speak-v0-production.up.railway.app/suggestions",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          last_user_message: lastUser?.message || "",
-          last_ai_reply: lastAI?.message || "",
-        }),
-      },
-    );
+    const res = await fetch(`${linkBackend}/suggestions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        last_user_message: lastUser?.message || "",
+        last_ai_reply: lastAI?.message || "",
+      }),
+    });
 
     const data = await res.json();
     setSuggestions(data.suggestions);

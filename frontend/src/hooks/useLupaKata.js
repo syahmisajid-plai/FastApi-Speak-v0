@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { linkBackend } from "../config";
 
 export default function useLupaKata({
   stopMainRecording,
@@ -17,18 +18,15 @@ export default function useLupaKata({
   /* ================= TRANSLATE ================= */
   const translateLupaKata = async (indoText) => {
     try {
-      const res = await fetch(
-        "https://fastapi-speak-v0-production.up.railway.app/translate",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text: indoText,
-            source_lang: "id",
-            target_lang: "en",
-          }),
-        },
-      );
+      const res = await fetch(`${linkBackend}/translate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: indoText,
+          source_lang: "id",
+          target_lang: "en",
+        }),
+      });
 
       const data = await res.json();
 

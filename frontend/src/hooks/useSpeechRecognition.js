@@ -85,7 +85,7 @@ export default function useSpeechRecognition({
       lastInterimRef.current = interim; // 🔥 simpan interim terakhir
       setLiveTranscript(transcriptRef.current + interim);
 
-      console.log("Interim:", interim);
+      // console.log("Interim:", interim);
     };
 
     recognition.onend = () => {

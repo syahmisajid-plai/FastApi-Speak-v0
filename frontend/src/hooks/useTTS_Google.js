@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { linkBackend } from "../config";
 
 export default function useTTS_Google() {
   // Map untuk menyimpan audio per teks
@@ -15,7 +16,7 @@ export default function useTTS_Google() {
 
     try {
       // Request TTS dari backend
-      const res = await fetch("http://127.0.0.1:8000/tts-stream", {
+      const res = await fetch(`${linkBackend}/tts-stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),

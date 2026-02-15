@@ -1,3 +1,5 @@
+import { linkBackend } from "../config";
+
 export async function streamChat({
   text,
   sessionId,
@@ -12,18 +14,15 @@ export async function streamChat({
   onUserMessage(text);
 
   // 2️⃣ POST streaming ke backend
-  const res = await fetch(
-    "https://fastapi-speak-v0-production.up.railway.app/stream_answer",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        session_id: sessionId,
-        input: text,
-        scenario_id: scenarioId, // 🔥 INI YANG PENTING
-      }),
-    },
-  );
+  const res = await fetch(`${linkBackend}/stream_answer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      session_id: sessionId,
+      input: text,
+      scenario_id: scenarioId, // 🔥 INI YANG PENTING
+    }),
+  });
 
   if (!res.body) {
     throw new Error("No response body from server");
