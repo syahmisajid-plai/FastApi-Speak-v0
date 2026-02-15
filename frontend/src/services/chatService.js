@@ -1,6 +1,7 @@
 export async function streamChat({
   text,
   sessionId,
+  scenarioId = 0, // 👈 tambah ini
   onUserMessage,
   onStreamUpdate,
   onStreamEnd,
@@ -19,6 +20,7 @@ export async function streamChat({
       body: JSON.stringify({
         session_id: sessionId,
         input: text,
+        scenario_id: scenarioId, // 🔥 INI YANG PENTING
       }),
     },
   );

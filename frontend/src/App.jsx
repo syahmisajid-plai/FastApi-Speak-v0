@@ -28,6 +28,7 @@ export default function SpeakingApp() {
   const [chatHistory, setChatHistory] = useState([]); // 🔴 Riwayat chat
   const [showSuggestions, setShowSuggestions] = useState(false); // 🔴 Tampilkan saran
   const [showOverlay, setShowOverlay] = useState(true); // 🔑 SATU-SATUNYA GATE
+  const [selectedScenario, setSelectedScenario] = useState(null);
 
   // ================== REF ==================
   const bottomRef = useRef(null); // 🔵 Scroll ke bawah chat
@@ -66,7 +67,8 @@ export default function SpeakingApp() {
   const sendTextToBackend = async (text) => {
     await streamChat({
       text,
-      sessionId: sessionIdRef.current, // pakai ref terbaru
+      sessionId: sessionIdRef.current,
+      scenarioId: selectedScenario?.id ?? 0,
 
       // ===== Saat user mengirim pesan =====
       onUserMessage: (msg) => {
@@ -198,9 +200,9 @@ export default function SpeakingApp() {
 
           <RoleplayToggle
             onScenarioSelect={(scenario) => {
-              console.log("Selected scenario:", scenario.name);
-              // Bisa simpan ke state parent atau kirim ke backend nanti
-              // misal setSelectedScenario(scenario) di parent
+              console.log("Selected scenario:", scenario?.name || "Main");
+              setChatHistory([]); // reset UI
+              setSelectedScenario(scenario ?? null);
             }}
           />
 

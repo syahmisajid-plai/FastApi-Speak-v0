@@ -204,10 +204,56 @@ class SpeechInput(BaseModel):
 #     print("Text dari frontend:", data.text)
 #     return {"status": "ok", "received_text": data.text}
 
+SCENARIO_PROMPTS = {
+    0: """
+You are my English conversation partner for speaking practice.
+Encourage friendly casual conversation.
+Use simple English for beginners.
+Short sentences max 15 words.
+Correct mistakes gently.
+Make user relaxed and confident.
+Always END WITH A ONE-SENTENCE QUESTION.
+""",
+    1: """
+You are a waiter in a restaurant.
+Talk to user ordering food.
+Simple English.
+Friendly tone.
+Short sentences max 15 words.
+Correct mistakes gently.
+Always END WITH A ONE-SENTENCE QUESTION.
+""",
+    2: """
+You are a job interviewer.
+Ask interview questions.
+Help user practice answers.
+Correct grammar politely.
+Short sentences max 15 words.
+Always END WITH A ONE-SENTENCE QUESTION.
+""",
+    3: """
+You are airport staff.
+Help with travel and boarding.
+Simple English.
+Friendly tone.
+Short sentences max 15 words.
+Always END WITH A ONE-SENTENCE QUESTION.
+""",
+    4: """
+You are a shop assistant in a mall.
+Help user buy things.
+Simple English.
+Friendly tone.
+Short sentences max 15 words.
+Always END WITH A ONE-SENTENCE QUESTION.
+""",
+}
+
 
 class StreamRequest(BaseModel):
     session_id: str
     input: str
+    scenario_id: int = 0  # default main scenario
 
 
 llm = ChatOpenAI(
@@ -217,52 +263,42 @@ llm = ChatOpenAI(
     temperature=0.7,
 )
 
-system_prompt = SystemMessagePromptTemplate.from_template(
-    "You are my English conversation partner for speaking practice."
-    "Encourage me to have a friendly and casual conversation about everyday life, hobbies, or fun topics."
-    "Use simple and clear English, suitable for beginners."
-    "Answer in short sentences (15 words maximum)."
-    "If I make a mistake, correct me gently and politely in a simple way."
-    "Your goal is to make me feel relaxed, confident, and enjoy speaking English."
-    "Always END WITH A ONE-SENTENCE QUESTION"
-)
-
-human_prompt = HumanMessagePromptTemplate.from_template("{input}")
-
-prompt = ChatPromptTemplate.from_messages(
-    [
-        system_prompt,
-        MessagesPlaceholder(variable_name="history"),
-        human_prompt,
-    ]
-)
-
-chain = prompt | llm | StrOutputParser()
-
-runnable = RunnableWithMessageHistory(
-    chain,
-    get_session_history,
-    input_messages_key="input",
-    history_messages_key="history",
-)
-
 
 @app.post("/stream_answer")
 async def stream_answer(req: StreamRequest):
 
-    print("🔥 STREAM ANSWER CALLED")
-    print("🧠 SESSION:", req.session_id)
-    print("💬 INPUT:", req.input)
+    print("🔥 STREAM")
+    print("SESSION:", req.session_id)
+    print("SCENARIO:", req.scenario_id)
 
-    # ========== DEBUG HISTORY ==========
-    history = get_session_history(req.session_id)
-    print("📜 HISTORY:", [msg.content for msg in history.messages])
-    # ==================================
+    scenario_text = SCENARIO_PROMPTS.get(req.scenario_id, SCENARIO_PROMPTS[0])
+
+    system_prompt = SystemMessagePromptTemplate.from_template(scenario_text)
+
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            system_prompt,
+            MessagesPlaceholder(variable_name="history"),
+            HumanMessagePromptTemplate.from_template("{input}"),
+        ]
+    )
+
+    chain = prompt | llm | StrOutputParser()
+
+    # 🔑 memory per scenario
+    session_key = f"{req.session_id}_sc{req.scenario_id}"
+
+    runnable = RunnableWithMessageHistory(
+        chain,
+        get_session_history,
+        input_messages_key="input",
+        history_messages_key="history",
+    )
 
     def event_stream():
         for chunk in runnable.stream(
             {"input": req.input},
-            config={"configurable": {"session_id": req.session_id}},
+            config={"configurable": {"session_id": session_key}},
         ):
             yield f"data: {chunk}\n\n"
 

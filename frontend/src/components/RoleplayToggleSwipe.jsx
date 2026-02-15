@@ -45,7 +45,10 @@ export default function RoleplayToggleSwipe({ onScenarioSelect }) {
       {selectedScenario && (
         <button
           className="absolute top-4 right-4 px-3 py-1 rounded-lg text-white font-bold"
-          onClick={() => setSelectedScenario(null)}
+          onClick={() => {
+            setSelectedScenario(null);
+            if (onScenarioSelect) onScenarioSelect(null); // 🔥 penting
+          }}
         >
           ❌
         </button>
