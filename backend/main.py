@@ -143,6 +143,76 @@ class TextPayload(BaseModel):
     text: str
 
 
+class ClearRoleplayRequest(BaseModel):
+    session_id: str
+    scenario_id: int
+
+
+@app.post("/roleplay/clear")
+def clear_roleplay(req: ClearRoleplayRequest):
+
+    session_key = f"{req.session_id}_sc{req.scenario_id}"
+
+    if DATABASE_URL:
+        conn_str = DATABASE_URL
+    else:
+        conn_str = "sqlite:///chat_history.db"
+
+    history = SQLChatMessageHistory(
+        session_id=session_key,
+        connection_string=conn_str,
+    )
+
+    history.clear()
+
+    print("🧹 Cleared roleplay history:", session_key)
+
+    return {"status": "cleared"}
+
+
+class ClearAllUserHistoryRequest(BaseModel):
+    session_id: str
+
+
+@app.post("/history/clear-all")
+def clear_all_user_history(req: ClearAllUserHistoryRequest):
+    user_prefix = f"{req.session_id}_"
+
+    if DATABASE_URL:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "DELETE FROM message_store WHERE session_id LIKE %s",
+            (user_prefix + "%",),
+        )
+
+        deleted = cursor.rowcount
+        conn.commit()
+        conn.close()
+
+    else:
+        conn = sqlite3.connect("chat_history.db")
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "DELETE FROM message_store WHERE session_id LIKE ?",
+            (user_prefix + "%",),
+        )
+
+        deleted = cursor.rowcount
+        conn.commit()
+        conn.close()
+
+    print(f"🧹 Cleared ALL history for user: {req.session_id} ({deleted} rows)")
+
+    return {
+        "status": "cleared",
+        "deleted_rows": deleted,
+        "user": req.session_id,
+    }
+
+
 @app.post("/tts-stream")
 async def tts_stream(payload: TextPayload):
     print("📥 Received text:", repr(payload.text))

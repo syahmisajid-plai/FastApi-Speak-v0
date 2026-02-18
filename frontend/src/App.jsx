@@ -108,6 +108,30 @@ export default function SpeakingApp() {
     });
   };
 
+  // ===== clearAllHistory =====
+  const clearAllHistory = async () => {
+    const confirmClear = window.confirm(
+      "Hapus SEMUA chat history user ini? (main + semua roleplay)",
+    );
+
+    if (!confirmClear) return;
+
+    try {
+      await fetch(`${linkBackend}/history/clear-all`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sessionIdRef.current,
+        }),
+      });
+
+      setChatHistory([]); // reset UI
+      console.log("🧹 ALL history cleared");
+    } catch (err) {
+      console.error("Failed clear all history", err);
+    }
+  };
+
   // ================== Update Streak ==================
 
   const updateStreak = async () => {
@@ -208,9 +232,32 @@ export default function SpeakingApp() {
           <Header streak={streak} />
 
           <RoleplayToggle
-            onScenarioSelect={(scenario) => {
-              console.log("Selected scenario:", scenario?.name || "Main");
-              setChatHistory([]); // reset UI
+            onScenarioSelect={async (scenario) => {
+              const prevScenario = scenarioRef.current;
+
+              // 🧹 Jika user keluar roleplay (klik ❌)
+              if (scenario === null && prevScenario) {
+                try {
+                  await fetch(`${linkBackend}/roleplay/clear`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      session_id: sessionIdRef.current,
+                      scenario_id: prevScenario.id,
+                    }),
+                  });
+
+                  console.log(
+                    "🧹 Roleplay history cleared:",
+                    prevScenario.name,
+                  );
+                } catch (err) {
+                  console.error("Failed clear roleplay:", err);
+                }
+              }
+
+              // reset UI
+              setChatHistory([]);
               setSelectedScenario(scenario ?? null);
             }}
           />
@@ -228,6 +275,15 @@ export default function SpeakingApp() {
               <option value="syahmi">syahmi</option>
             </select>
           </div>
+
+          {/* 🧹 CLEAR BUTTON */}
+          <button
+            onClick={clearAllHistory}
+            title="Clear all history"
+            className="text-[10px] bg-red-500/80 hover:bg-red-600 px-2 py-1 rounded-md ml-2"
+          >
+            🧹
+          </button>
 
           <ChatSection
             lupaKata={lupaKata}
