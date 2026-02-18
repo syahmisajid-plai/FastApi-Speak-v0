@@ -231,6 +231,27 @@ export default function SpeakingApp() {
         >
           <Header streak={streak} />
 
+          <div className="relative">
+            {/* konten lain */}
+
+            {/* 🧹 CLEAR BUTTON */}
+            <button
+              onClick={clearAllHistory}
+              title="Clear all history"
+              className="
+                absolute 
+                bottom-2 right-2 
+                text-[10px]
+                bg-red-500/80 hover:bg-red-600
+                px-2 py-1
+                rounded-md
+                shadow-md
+    "
+            >
+              🧹
+            </button>
+          </div>
+
           <RoleplayToggle
             onScenarioSelect={async (scenario) => {
               const prevScenario = scenarioRef.current;
@@ -275,15 +296,6 @@ export default function SpeakingApp() {
               <option value="syahmi">syahmi</option>
             </select>
           </div>
-
-          {/* 🧹 CLEAR BUTTON */}
-          <button
-            onClick={clearAllHistory}
-            title="Clear all history"
-            className="text-[10px] bg-red-500/80 hover:bg-red-600 px-2 py-1 rounded-md ml-2"
-          >
-            🧹
-          </button>
 
           <ChatSection
             lupaKata={lupaKata}
