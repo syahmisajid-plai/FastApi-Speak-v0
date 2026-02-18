@@ -98,7 +98,10 @@ export default function SpeakingApp() {
           ),
         );
 
-        speakText(finalText); // 🔊 sekarang pakai backend TTS
+        speakText(finalText);
+
+        // 🔥 UPDATE STREAK DI SINI
+        updateStreak().catch(() => {});
 
         fetchStreak();
       },
@@ -174,9 +177,8 @@ export default function SpeakingApp() {
     cancelRecording,
   } = speech;
 
-  const startRecording = async () => {
-    await updateStreak(); // 🔥 streak naik di sini
-    rawStartRecording(); // 🎤 mulai rekam
+  const startRecording = () => {
+    rawStartRecording(); // 🎤 langsung start
   };
 
   // ================== TOGGLE SUGGESTION ==================
