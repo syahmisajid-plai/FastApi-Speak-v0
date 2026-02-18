@@ -1,13 +1,20 @@
+# backend/streak.py
 import sqlite3
 import os
 import psycopg2
 from datetime import date, timedelta
 
+# -----------------------------
+# CONFIG
+# -----------------------------
 DATABASE_URL = os.getenv("DATABASE_URL")
 DB_PATH = "chat_history.db"
 MIN_CHAT_FOR_STREAK = 10
 
 
+# -----------------------------
+# HELPERS
+# -----------------------------
 def db_connect():
     if DATABASE_URL:
         return psycopg2.connect(DATABASE_URL)

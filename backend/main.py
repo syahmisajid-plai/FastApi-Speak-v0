@@ -1,85 +1,36 @@
-from fastapi import FastAPI, UploadFile, File
-from fastapi.responses import StreamingResponse, FileResponse
+# main.py
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List
 
-import re
+from db import init_db  # fungsi init_db dari db.py
+from config import DATABASE_URL
 
-from openai import OpenAI
-import os
-from io import BytesIO
-import sqlite3
-import psycopg2
-from dotenv import load_dotenv
-import time
-
-from google.cloud import texttospeech
-
-# LangChain
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import (
-    ChatPromptTemplate,
-    SystemMessagePromptTemplate,
-    HumanMessagePromptTemplate,
-    MessagesPlaceholder,
+# -----------------------------
+# ROUTERS
+# -----------------------------
+from routers import (
+    history,
+    roleplay,
+    streak,
+    stt,
+    suggestion,
+    translate,
+    tts,
 )
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables.history import RunnableWithMessageHistory
 
-from langchain_community.chat_message_histories import SQLChatMessageHistory
-
-from streak import update_streak
-
-load_dotenv()
 
 # OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-DATABASE_URL = os.getenv("DATABASE_URL")
+
 
 # def get_session_history(session_id: str):
 #     return SQLChatMessageHistory(
 #         session_id=session_id, connection_string="sqlite:///chat_history.db"
 #     )
 
-
-def init_db():
-    max_attempts = 5
-    attempt = 0
-    while attempt < max_attempts:
-        try:
-            if DATABASE_URL:
-                print("🚀 Using PostgreSQL")
-                conn = psycopg2.connect(DATABASE_URL)
-            else:
-                print("💻 Using SQLite")
-                conn = sqlite3.connect("chat_history.db")
-            break
-        except psycopg2.OperationalError as e:
-            print(f"Database not ready, retrying... ({attempt+1}/{max_attempts})", e)
-            attempt += 1
-            time.sleep(5)
-    else:
-        raise Exception("Cannot connect to the database")
-
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS user_streak (
-            user_id TEXT PRIMARY KEY,
-            current_streak INTEGER,
-            longest_streak INTEGER,
-            last_activity_date TEXT,
-            chat_count INTEGER
-        )
-        """
-    )
-    conn.commit()
-    conn.close()
-
-
+# -----------------------------
+# LIFESPAN: startup/shutdown
+# -----------------------------
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
 
 
 @asynccontextmanager
@@ -90,18 +41,14 @@ async def lifespan(app: FastAPI):
     # 🔴 Shutdown: bisa ditambahkan cleanup jika perlu
 
 
+# -----------------------------
+# FASTAPI APP
+# -----------------------------
 app = FastAPI(lifespan=lifespan)
 
-
-def get_session_history(session_id: str):
-    if DATABASE_URL:
-        conn = DATABASE_URL
-    else:
-        conn = "sqlite:///chat_history.db"
-
-    return SQLChatMessageHistory(session_id=session_id, connection_string=conn)
-
-
+# -----------------------------
+# CORS
+# -----------------------------
 # CORS agar React (Vite) boleh akses FastAPI
 app.add_middleware(
     CORSMiddleware,
@@ -115,6 +62,9 @@ app.add_middleware(
 )
 
 
+# -----------------------------
+# BASIC ENDPOINTS
+# -----------------------------
 @app.get("/")
 def root():
     return {"message": "FastAPI is running"}
@@ -125,300 +75,30 @@ def ping():
     return {"status": "success", "message": "FastAPI connected to React!"}
 
 
+# -----------------------------
+# REGISTER ROUTERS
+# -----------------------------
+app.include_router(history.router)
+app.include_router(roleplay.router)
+app.include_router(streak.router)
+app.include_router(stt.router)
+app.include_router(suggestion.router)
+app.include_router(translate.router)
+app.include_router(tts.router)
+
+
 # Set path ke service account GCP
 # Ambil JSON dari env
-gcp_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-
-# Tulis sementara ke file
-with open("gcp_temp.json", "w") as f:
-    f.write(gcp_json)
-
-# Set path environment variable untuk SDK
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "gcp_temp.json"
-
-client_tts = texttospeech.TextToSpeechClient()
 
 
-class TextPayload(BaseModel):
-    text: str
-
-
-class ClearRoleplayRequest(BaseModel):
-    session_id: str
-    scenario_id: int
-
-
-@app.post("/roleplay/clear")
-def clear_roleplay(req: ClearRoleplayRequest):
-
-    session_key = f"{req.session_id}_sc{req.scenario_id}"
-
-    if DATABASE_URL:
-        conn_str = DATABASE_URL
-    else:
-        conn_str = "sqlite:///chat_history.db"
-
-    history = SQLChatMessageHistory(
-        session_id=session_key,
-        connection_string=conn_str,
-    )
-
-    history.clear()
-
-    print("🧹 Cleared roleplay history:", session_key)
-
-    return {"status": "cleared"}
-
-
-class ClearAllUserHistoryRequest(BaseModel):
-    session_id: str
-
-
-@app.post("/history/clear-all")
-def clear_all_user_history(req: ClearAllUserHistoryRequest):
-    user_prefix = f"{req.session_id}_"
-
-    if DATABASE_URL:
-        conn = psycopg2.connect(DATABASE_URL)
-        cursor = conn.cursor()
-
-        cursor.execute(
-            "DELETE FROM message_store WHERE session_id LIKE %s",
-            (user_prefix + "%",),
-        )
-
-        deleted = cursor.rowcount
-        conn.commit()
-        conn.close()
-
-    else:
-        conn = sqlite3.connect("chat_history.db")
-        cursor = conn.cursor()
-
-        cursor.execute(
-            "DELETE FROM message_store WHERE session_id LIKE ?",
-            (user_prefix + "%",),
-        )
-
-        deleted = cursor.rowcount
-        conn.commit()
-        conn.close()
-
-    print(f"🧹 Cleared ALL history for user: {req.session_id} ({deleted} rows)")
-
-    return {
-        "status": "cleared",
-        "deleted_rows": deleted,
-        "user": req.session_id,
-    }
-
-
-@app.post("/tts-stream")
-async def tts_stream(payload: TextPayload):
-    print("📥 Received text:", repr(payload.text))
-
-    # Bersihkan teks
-    clean_text = " ".join(payload.text.split())
-
-    # Ganti apostrophe Unicode ke ASCII
-    clean_text = clean_text.replace("’", "'")
-
-    # Gabungkan It 's -> It's, He 's -> He's, dsb
-    clean_text = re.sub(
-        r"\b(I|i|You|you|He|he|She|she|It|it|We|we|They|they) 's\b", r"\1's", clean_text
-    )
-
-    # Hapus tanda kutip literal (optional)
-    clean_text = clean_text.replace('"', "")
-
-    print("📤 Cleaned text:", repr(clean_text))
-
-    # 1️⃣ Siapkan input TTS
-    synthesis_input = texttospeech.SynthesisInput(text=clean_text)
-
-    # 2️⃣ Pilih suara
-    voice = texttospeech.VoiceSelectionParams(
-        language_code="en-US", name="en-US-Standard-F"
-    )
-
-    # 3️⃣ Konfigurasi audio
-    audio_config = texttospeech.AudioConfig(
-        audio_encoding=texttospeech.AudioEncoding.MP3,
-        effects_profile_id=["small-bluetooth-speaker-class-device"],
-        speaking_rate=1,
-        pitch=1,
-    )
-
-    # 4️⃣ Generate audio
-    response = client_tts.synthesize_speech(
-        input=synthesis_input, voice=voice, audio_config=audio_config
-    )
-
-    # 5️⃣ Simpan hasil ke memory
-    audio_stream = BytesIO(response.audio_content)
-
-    # 6️⃣ Kirim sebagai streaming response
-    return StreamingResponse(
-        audio_stream,
-        media_type="audio/mpeg",
-        headers={"Content-Disposition": "inline; filename=output.mp3"},
-    )
-
-
-class SpeechInput(BaseModel):
-    text: str
+# class SpeechInput(BaseModel):
+#     text: str
 
 
 # @app.post("/speech")
 # def receive_speech(data: SpeechInput):
 #     print("Text dari frontend:", data.text)
 #     return {"status": "ok", "received_text": data.text}
-
-SCENARIO_PROMPTS = {
-    0: """
-You are my English conversation partner for speaking practice.
-Encourage friendly casual conversation.
-Use simple English for beginners.
-Short sentences max 15 words.
-Correct mistakes gently.
-Make user relaxed and confident.
-Always END WITH A ONE-SENTENCE QUESTION.
-""",
-    1: """
-You are a waiter in a restaurant.
-Talk to user ordering food.
-Simple English.
-Friendly tone.
-Short sentences max 15 words.
-Correct mistakes gently.
-Always END WITH A ONE-SENTENCE QUESTION.
-""",
-    2: """
-You are a job interviewer.
-Ask interview questions.
-Help user practice answers.
-Correct grammar politely.
-Short sentences max 15 words.
-Always END WITH A ONE-SENTENCE QUESTION.
-""",
-    3: """
-You are airport staff.
-Help with travel and boarding.
-Simple English.
-Friendly tone.
-Short sentences max 15 words.
-Always END WITH A ONE-SENTENCE QUESTION.
-""",
-    4: """
-You are a shop assistant in a mall.
-Help user buy things.
-Simple English.
-Friendly tone.
-Short sentences max 15 words.
-Always END WITH A ONE-SENTENCE QUESTION.
-""",
-}
-
-
-class StreamRequest(BaseModel):
-    session_id: str
-    input: str
-    scenario_id: int = 0  # default main scenario
-
-
-llm = ChatOpenAI(
-    model="gpt-4o-mini",
-    streaming=True,
-    max_tokens=32,
-    temperature=0.7,
-)
-
-
-@app.post("/stream_answer")
-async def stream_answer(req: StreamRequest):
-
-    print("🔥 STREAM")
-    print("SESSION:", req.session_id)
-    print("SCENARIO:", req.scenario_id)
-
-    scenario_text = SCENARIO_PROMPTS.get(req.scenario_id, SCENARIO_PROMPTS[0])
-
-    system_prompt = SystemMessagePromptTemplate.from_template(scenario_text)
-
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            system_prompt,
-            MessagesPlaceholder(variable_name="history"),
-            HumanMessagePromptTemplate.from_template("{input}"),
-        ]
-    )
-
-    chain = prompt | llm | StrOutputParser()
-
-    # 🔑 memory per scenario
-    session_key = f"{req.session_id}_sc{req.scenario_id}"
-
-    runnable = RunnableWithMessageHistory(
-        chain,
-        get_session_history,
-        input_messages_key="input",
-        history_messages_key="history",
-    )
-
-    def event_stream():
-        for chunk in runnable.stream(
-            {"input": req.input},
-            config={"configurable": {"session_id": session_key}},
-        ):
-            yield f"data: {chunk}\n\n"
-
-    return StreamingResponse(event_stream(), media_type="text/event-stream")
-
-
-class UpdateStreakRequest(BaseModel):
-    session_id: str
-
-
-@app.get("/user/streak/{session_id}")
-def get_streak(session_id: str):
-    if DATABASE_URL:
-        conn = psycopg2.connect(DATABASE_URL)
-    else:
-        conn = sqlite3.connect("chat_history.db")
-
-    cursor = conn.cursor()
-
-    cursor.execute(
-        (
-            "SELECT current_streak, longest_streak, chat_count FROM user_streak WHERE user_id=%s"
-            if DATABASE_URL
-            else "SELECT current_streak, longest_streak, chat_count FROM user_streak WHERE user_id=?"
-        ),
-        (session_id,),
-    )
-
-    row = cursor.fetchone()
-    conn.close()
-
-    if row is None:
-        return {
-            "current_streak": 0,
-            "longest_streak": 0,
-            "chat_count": 0,
-        }
-
-    return {
-        "current_streak": row[0],
-        "longest_streak": row[1],
-        "chat_count": row[2],
-    }
-
-
-@app.post("/user/update-streak")
-def update_user_streak(req: UpdateStreakRequest):
-    print("🔥 UPDATE STREAK:", req.session_id)
-    update_streak(req.session_id)
-    return {"status": "ok"}
 
 
 # from deep_translator import GoogleTranslator
@@ -430,89 +110,4 @@ def update_user_streak(req: UpdateStreakRequest):
 #     translated = GoogleTranslator(source="en", target="id").translate(text)
 #     return {"translated": translated}
 
-from deep_translator import GoogleTranslator
-
-
-class TextPayload(BaseModel):
-    text: str
-
-
-@app.post("/api/translate")
-async def translate_text(payload: TextPayload):
-    translated = GoogleTranslator(source="en", target="id").translate(payload.text)
-    return {"translated": translated}
-
-
-@app.post("/api/stt-whisper")
-async def stt_whisper(file: UploadFile):
-    audio_bytes = await file.read()
-
-    transcript = client.audio.transcriptions.create(
-        model="whisper-1", file=("audio.webm", audio_bytes), language="id"
-    )
-
-    return {"text": transcript.text}
-
-
-class SuggestionRequest(BaseModel):
-    last_user_message: str = ""
-    last_ai_reply: str = ""
-
-
-@app.post("/suggestions")
-async def get_suggestions(req: SuggestionRequest):
-    user_msg = req.last_user_message
-    ai_reply = req.last_ai_reply
-
-    prompt = f"""
-        You are an English conversation assistant.
-
-        User said:
-        "{user_msg}"
-
-        AI replied:
-        "{ai_reply}"
-
-        Create **3 suggested sentences** that the USER can say next.
-        Use simple, casual English.
-        Each sentence max 10 words.
-
-        Return ONLY JSON list format:
-        ["suggestion1", "suggestion2", "suggestion3"]
-        Do not add any other text.
-        """
-
-    try:
-        response = client.responses.create(model="gpt-4o-mini", input=prompt)
-
-        ai_output = response.output_text
-        import json
-
-        suggestions = json.loads(ai_output)
-
-        return {"suggestions": suggestions}
-
-    except Exception as e:
-        print("Error calling OpenAI:", e)
-        return {
-            "suggestions": [
-                "Can you tell me more?",
-                "That sounds interesting.",
-                "What should I do next?",
-            ]
-        }
-
-
-class TranslateRequest(BaseModel):
-    text: str
-    source_lang: str
-    target_lang: str
-
-
-@app.post("/translate")
-async def translate_id_en(payload: TranslateRequest):
-    translated = GoogleTranslator(
-        source=payload.source_lang, target=payload.target_lang
-    ).translate(payload.text)
-
-    return {"indo": payload.text, "english": translated}
+# from deep_translator import GoogleTranslator
