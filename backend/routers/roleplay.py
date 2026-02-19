@@ -20,7 +20,9 @@ from db import (
     get_session_history,
     create_roleplay_session,
     get_roleplay_session,
+    increment_turn,  # 🔥 WAJIB
 )
+
 
 # fungsi dari db.py
 
@@ -201,10 +203,21 @@ async def stream_answer(req: StreamRequest):
     )
 
     def event_stream():
+        full_text = ""
+
         for chunk in runnable.stream(
             {"input": req.input},
             config={"configurable": {"session_id": session_key}},
         ):
+            full_text += chunk
             yield f"data: {chunk}\n\n"
+
+        # 🔥 AI SELESAI → TAMBAH TURN
+        increment_turn(session_key)
+
+        session_data = get_roleplay_session(session_key)
+
+        if session_data:
+            print(f"TURN {session_data['current_turn']}/{session_data['target_turn']}")
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
