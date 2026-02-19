@@ -195,6 +195,10 @@ async def stream_answer(req: StreamRequest):
     # 🔑 memory per scenario
     session_key = f"{req.session_id}_sc{req.scenario_id}"
 
+    print("💾 TRY INCREMENT")
+    increment_turn(session_key)
+    print("✅ TURN UPDATED")
+
     runnable = RunnableWithMessageHistory(
         chain,
         get_session_history,
@@ -211,10 +215,6 @@ async def stream_answer(req: StreamRequest):
         ):
             full_text += chunk
             yield f"data: {chunk}\n\n"
-
-        print("💾 TRY INCREMENT")
-        increment_turn(session_key)
-        print("✅ TURN UPDATED")
 
         session_data = get_roleplay_session(session_key)
 
