@@ -256,28 +256,36 @@ export default function SpeakingApp() {
             onScenarioSelect={async (scenario) => {
               const prevScenario = scenarioRef.current;
 
-              // 🧹 Jika user keluar roleplay (klik ❌)
+              // 🧹 jika keluar roleplay
               if (scenario === null && prevScenario) {
+                await fetch(`${linkBackend}/roleplay/clear`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    session_id: sessionIdRef.current,
+                    scenario_id: prevScenario.id,
+                  }),
+                });
+              }
+
+              // ⭐ jika masuk roleplay baru
+              if (scenario) {
                 try {
-                  await fetch(`${linkBackend}/roleplay/clear`, {
+                  await fetch(`${linkBackend}/roleplay/start`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                       session_id: sessionIdRef.current,
-                      scenario_id: prevScenario.id,
+                      scenario_id: scenario.id,
                     }),
                   });
 
-                  console.log(
-                    "🧹 Roleplay history cleared:",
-                    prevScenario.name,
-                  );
+                  console.log("🎯 Roleplay started:", scenario.name);
                 } catch (err) {
-                  console.error("Failed clear roleplay:", err);
+                  console.error("Failed start roleplay:", err);
                 }
               }
 
-              // reset UI
               setChatHistory([]);
               setSelectedScenario(scenario ?? null);
             }}

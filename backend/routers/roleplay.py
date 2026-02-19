@@ -16,7 +16,13 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_community.chat_message_histories import SQLChatMessageHistory
 
-from db import get_session_history  # fungsi dari db.py
+from db import (
+    get_session_history,
+    create_roleplay_session,
+    get_roleplay_session,
+)
+
+# fungsi dari db.py
 
 router = APIRouter()
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -70,6 +76,14 @@ Always END WITH A ONE-SENTENCE QUESTION.
 """,
 }
 
+SCENARIO_GOALS = {
+    0: ("Have a casual conversation", 6),
+    1: ("Order food and pay the bill", 6),
+    2: ("Answer job interview questions", 8),
+    3: ("Check in and board a flight", 6),
+    4: ("Buy an item in a mall", 6),
+}
+
 
 # -----------------------------
 # MODELS
@@ -83,6 +97,11 @@ class StreamRequest(BaseModel):
     session_id: str
     input: str
     scenario_id: int = 0  # default main scenario
+
+
+class StartRoleplayRequest(BaseModel):
+    session_id: str
+    scenario_id: int
 
 
 # -----------------------------
@@ -119,6 +138,35 @@ def clear_roleplay(req: ClearRoleplayRequest):
     print("🧹 Cleared roleplay history:", session_key)
 
     return {"status": "cleared"}
+
+
+@router.post("/roleplay/start")
+def start_roleplay(req: StartRoleplayRequest):
+
+    session_key = f"{req.session_id}_sc{req.scenario_id}"
+
+    # ambil goal
+    goal, target_turn = SCENARIO_GOALS.get(req.scenario_id, ("Have a conversation", 6))
+
+    # reset chat history
+    history = get_session_history(session_key)
+    history.clear()
+
+    # buat roleplay session state
+    create_roleplay_session(
+        session_key=session_key,
+        scenario_id=req.scenario_id,
+        goal=goal,
+        target_turn=target_turn,
+    )
+
+    print("🎯 START ROLEPLAY:", session_key, goal)
+
+    return {
+        "status": "started",
+        "goal": goal,
+        "target_turn": target_turn,
+    }
 
 
 @router.post("/stream_answer")

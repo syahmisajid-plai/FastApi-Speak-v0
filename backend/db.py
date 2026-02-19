@@ -38,6 +38,21 @@ def init_db():
         )
         """
     )
+
+    cursor.execute(
+        """
+    CREATE TABLE IF NOT EXISTS roleplay_sessions (
+        session_key TEXT PRIMARY KEY,
+        scenario_id INTEGER,
+        goal TEXT,
+        target_turn INTEGER,
+        current_turn INTEGER,
+        status TEXT,
+        summary_sent INTEGER
+    )
+    """
+    )
+
     conn.commit()
     conn.close()
 
@@ -49,3 +64,106 @@ def get_session_history(session_id: str):
         conn = "sqlite:///chat_history.db"
 
     return SQLChatMessageHistory(session_id=session_id, connection_string=conn)
+
+
+def get_db_connection():
+    if DATABASE_URL:
+        return psycopg2.connect(DATABASE_URL)
+    else:
+        return sqlite3.connect("chat_history.db")
+
+
+def create_roleplay_session(session_key, scenario_id, goal, target_turn):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    if DATABASE_URL:
+        # PostgreSQL
+        cursor.execute(
+            """
+            INSERT INTO roleplay_sessions
+            (session_key, scenario_id, goal, target_turn, current_turn, status, summary_sent)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (session_key)
+            DO UPDATE SET
+                scenario_id = EXCLUDED.scenario_id,
+                goal = EXCLUDED.goal,
+                target_turn = EXCLUDED.target_turn,
+                current_turn = 0,
+                status = 'ongoing',
+                summary_sent = 0
+            """,
+            (session_key, scenario_id, goal, target_turn, 0, "ongoing", 0),
+        )
+    else:
+        # SQLite
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO roleplay_sessions
+            (session_key, scenario_id, goal, target_turn, current_turn, status, summary_sent)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (session_key, scenario_id, goal, target_turn, 0, "ongoing", 0),
+        )
+
+    conn.commit()
+    conn.close()
+
+
+def get_roleplay_session(session_key):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    if DATABASE_URL:
+        cursor.execute(
+            "SELECT * FROM roleplay_sessions WHERE session_key=%s",
+            (session_key,),
+        )
+    else:
+        cursor.execute(
+            "SELECT * FROM roleplay_sessions WHERE session_key=?",
+            (session_key,),
+        )
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return None
+
+    return {
+        "session_key": row[0],
+        "scenario_id": row[1],
+        "goal": row[2],
+        "target_turn": row[3],
+        "current_turn": row[4],
+        "status": row[5],
+        "summary_sent": row[6],
+    }
+
+
+def increment_turn(session_key):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    if DATABASE_URL:
+        cursor.execute(
+            """
+            UPDATE roleplay_sessions
+            SET current_turn = current_turn + 1
+            WHERE session_key=%s
+            """,
+            (session_key,),
+        )
+    else:
+        cursor.execute(
+            """
+            UPDATE roleplay_sessions
+            SET current_turn = current_turn + 1
+            WHERE session_key=?
+            """,
+            (session_key,),
+        )
+
+    conn.commit()
+    conn.close()
