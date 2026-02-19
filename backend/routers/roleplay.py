@@ -21,6 +21,7 @@ from db import (
     create_roleplay_session,
     get_roleplay_session,
     increment_turn,  # 🔥 WAJIB
+    complete_roleplay,
 )
 
 
@@ -195,9 +196,12 @@ async def stream_answer(req: StreamRequest):
     # 🔑 memory per scenario
     session_key = f"{req.session_id}_sc{req.scenario_id}"
 
-    print("💾 TRY INCREMENT")
-    increment_turn(session_key)
-    print("✅ TURN UPDATED")
+    session_data = get_roleplay_session(session_key)
+
+    if session_data:
+        if session_data["current_turn"] >= session_data["target_turn"]:
+            complete_roleplay(session_key)
+            print("🏁 ROLEPLAY COMPLETED")
 
     runnable = RunnableWithMessageHistory(
         chain,
@@ -216,9 +220,12 @@ async def stream_answer(req: StreamRequest):
             full_text += chunk
             yield f"data: {chunk}\n\n"
 
+        increment_turn(session_key)
+
         session_data = get_roleplay_session(session_key)
 
-        if session_data:
-            print(f"TURN {session_data['current_turn']}/{session_data['target_turn']}")
+        if session_data and session_data["current_turn"] >= session_data["target_turn"]:
+            complete_roleplay(session_key)
+            yield "data: __ROLEPLAY_END__\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")

@@ -168,3 +168,30 @@ def increment_turn(session_key):
 
     conn.commit()
     conn.close()
+
+
+def complete_roleplay(session_key):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    if DATABASE_URL:
+        cursor.execute(
+            """
+            UPDATE roleplay_sessions
+            SET status='completed'
+            WHERE session_key=%s
+            """,
+            (session_key,),
+        )
+    else:
+        cursor.execute(
+            """
+            UPDATE roleplay_sessions
+            SET status='completed'
+            WHERE session_key=?
+            """,
+            (session_key,),
+        )
+
+    conn.commit()
+    conn.close()

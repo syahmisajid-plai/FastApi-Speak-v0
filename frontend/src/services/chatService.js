@@ -38,9 +38,18 @@ export async function streamChat({
     if (done) break;
 
     const chunk = decoder.decode(value);
+
+    // 🔥 cek end signal dulu
+    if (chunk.includes("__ROLEPLAY_END__")) {
+      await reader.cancel();
+      reader.releaseLock();
+
+      onStreamEnd(aiText, { completed: true });
+      return;
+    }
+
     aiText += chunk.replace(/^data:\s*/gm, "");
 
-    // kirim update stream ke caller
     onStreamUpdate(aiText);
   }
 
