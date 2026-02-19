@@ -44,6 +44,10 @@ export async function streamChat({
     onStreamUpdate(aiText);
   }
 
+  // 🔥 PENTING BANGET
+  await reader.cancel();
+  reader.releaseLock();
+
   // 4️⃣ kirim hasil final ke caller
   onStreamEnd(aiText);
 }

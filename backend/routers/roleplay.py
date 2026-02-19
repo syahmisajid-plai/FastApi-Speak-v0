@@ -212,8 +212,9 @@ async def stream_answer(req: StreamRequest):
             full_text += chunk
             yield f"data: {chunk}\n\n"
 
-        # 🔥 AI SELESAI → TAMBAH TURN
+        print("💾 TRY INCREMENT")
         increment_turn(session_key)
+        print("✅ TURN UPDATED")
 
         session_data = get_roleplay_session(session_key)
 
