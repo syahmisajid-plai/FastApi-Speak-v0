@@ -11,23 +11,20 @@ import { EffectCards } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/effect-cards";
 
-export default function RoleplayToggleSwipe({ onScenarioSelect }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedScenario, setSelectedScenario] = useState(null);
+export default function RoleplayToggleSwipe({
+  selectedScenario,
+  onScenarioSelect,
+}) {
+  const [isOpen, setIsOpen] = useState(false); // modal open only
 
   const scenarios = [
     { id: 1, name: "Ordering at a Restaurant", image: orderFood },
     { id: 2, name: "Job Interview", image: interview },
     { id: 3, name: "Traveling at the Airport", image: airport },
     { id: 4, name: "Shopping in a Mall", image: shopping },
-    // { id: 5, name: "Visiting a Doctor", image: bgTree },
-    // { id: 6, name: "Asking Directions", image: bgTree },
-    // { id: 7, name: "Hotel Check-in", image: bgTree },
-    // { id: 8, name: "Bank Transaction", image: bgTree },
   ];
 
   const handleSelect = (scenario) => {
-    setSelectedScenario(scenario);
     setIsOpen(false);
     if (onScenarioSelect) onScenarioSelect(scenario);
   };
@@ -35,19 +32,18 @@ export default function RoleplayToggleSwipe({ onScenarioSelect }) {
   return (
     <section
       className={`relative rounded-xl p-4 shadow transition-colors duration-500
-      ${
-        selectedScenario
-          ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
-          : "bg-white text-gray-900"
-      }`}
+        ${
+          selectedScenario
+            ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
+            : "bg-white text-gray-900"
+        }`}
     >
-      {/* CLOSE */}
+      {/* ❌ CLOSE BUTTON */}
       {selectedScenario && (
         <button
           className="absolute top-4 right-4 px-3 py-1 rounded-lg text-white font-bold"
           onClick={() => {
-            setSelectedScenario(null);
-            if (onScenarioSelect) onScenarioSelect(null); // 🔥 penting
+            if (onScenarioSelect) onScenarioSelect(null);
           }}
         >
           ❌
@@ -64,7 +60,7 @@ export default function RoleplayToggleSwipe({ onScenarioSelect }) {
           : "Main Scenario"}
       </p>
 
-      {/* tombol buka */}
+      {/* tombol buka modal */}
       {!selectedScenario && (
         <div className="absolute right-4 bottom-4">
           <div

@@ -31,60 +31,56 @@ router = APIRouter()
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 # -----------------------------
-# SCENARIO PROMPTS
+# SCENARIO IDENTITY PROMPTS
 # -----------------------------
 
 SCENARIO_PROMPTS = {
     0: """
-You are my English conversation partner for speaking practice.
+You are an English conversation partner for speaking practice.
 Encourage friendly casual conversation.
-Use simple English for beginners.
-Short sentences max 15 words.
-Correct mistakes gently.
-Make user relaxed and confident.
-Always END WITH A ONE-SENTENCE QUESTION.
+Make the user relaxed and confident.
 """,
     1: """
 You are a waiter in a restaurant.
-Talk to user ordering food.
-Simple English.
-Friendly tone.
-Short sentences max 15 words.
-Correct mistakes gently.
-Always END WITH A ONE-SENTENCE QUESTION.
+Help the customer order food and pay the bill.
+Be friendly and professional.
 """,
     2: """
 You are a job interviewer.
-Ask interview questions.
-Help user practice answers.
-Correct grammar politely.
-Short sentences max 15 words.
-Always END WITH A ONE-SENTENCE QUESTION.
+Conduct a professional interview.
+Ask relevant questions about experience and skills.
 """,
     3: """
 You are airport staff.
-Help with travel and boarding.
-Simple English.
-Friendly tone.
-Short sentences max 15 words.
-Always END WITH A ONE-SENTENCE QUESTION.
+Help passengers with check-in and boarding.
+Be clear and helpful.
 """,
     4: """
 You are a shop assistant in a mall.
-Help user buy things.
-Simple English.
-Friendly tone.
-Short sentences max 15 words.
-Always END WITH A ONE-SENTENCE QUESTION.
+Help customers find and buy items.
+Be friendly and helpful.
 """,
 }
 
+# -----------------------------
+# GLOBAL STYLE RULES
+# -----------------------------
+
+GLOBAL_STYLE_RULES = """
+GENERAL RULES:
+- Use simple English.
+- Short sentences, maximum 15 words.
+- Correct grammar politely.
+- Be natural and conversational.
+- Do not give long explanations.
+"""
+
 SCENARIO_GOALS = {
-    0: ("Have a casual conversation", 6),
-    1: ("Order food and pay the bill", 6),
-    2: ("Answer job interview questions", 8),
-    3: ("Check in and board a flight", 6),
-    4: ("Buy an item in a mall", 6),
+    0: ("Have a casual conversation", 3),
+    1: ("Order food and pay the bill", 3),
+    2: ("Answer job interview questions", 3),
+    3: ("Check in and board a flight", 3),
+    4: ("Buy an item in a mall", 3),
 }
 
 
@@ -174,50 +170,108 @@ def start_roleplay(req: StartRoleplayRequest):
 
 @router.post("/stream_answer")
 async def stream_answer(req: StreamRequest):
-
     print("🔥 STREAM")
     print("SESSION:", req.session_id)
     print("SCENARIO:", req.scenario_id)
 
+    # -----------------------------
+    # SESSION KEY & LOAD SESSION
+    # -----------------------------
     session_key = f"{req.session_id}_sc{req.scenario_id}"
-
-    # 🔹 1. Load session
     session_data = get_roleplay_session(session_key)
-    if not session_data:
+
+    # ❌ Cek session hanya untuk roleplay (id > 0)
+    if req.scenario_id > 0 and not session_data:
         return {"error": "Roleplay not started"}
 
-    # 🔹 2. Check if already finished
-    if session_data["status"] == "done":
+    # ❌ Stop final hanya untuk roleplay
+    if req.scenario_id > 0 and session_data.get("status") == "done":
+        print("⛔ Session already completed")
         return {"message": "Session finished. Start new roleplay."}
 
-    # 🔹 3. Increment turn di awal (PENTING)
-    increment_turn(session_key)
-    session_data = get_roleplay_session(session_key)
+    # -----------------------------
+    # TURN INFO
+    # -----------------------------
+    if req.scenario_id == 0:
+        # main scenario: unlimited
+        current_turn = 0
+        next_turn = 0
+        target_turn = None
+        is_final_turn = False
+    else:
+        current_turn = session_data["current_turn"]
+        target_turn = session_data["target_turn"]
+        next_turn = current_turn + 1
+        is_final_turn = next_turn >= target_turn
 
-    current_turn = session_data["current_turn"]
-    target_turn = session_data["target_turn"]
-    goal = session_data["goal"]
+    goal = session_data["goal"] if session_data else SCENARIO_PROMPTS[0]
 
-    # 🔹 4. Base scenario prompt
+    print("CURRENT TURN:", current_turn)
+    print("NEXT TURN:", next_turn)
+    print("TARGET TURN:", target_turn)
+    print("IS FINAL TURN:", is_final_turn)
+
+    # -----------------------------
+    # BEHAVIOR RULES
+    # -----------------------------
+    if req.scenario_id == 0:
+        behavior_rule = """
+        MAIN SCENARIO:
+        - Free conversation.
+        - No forced goodbye or ending.
+        - Short, casual, friendly English.
+        """
+    else:
+        remaining_turn = target_turn - next_turn
+        if remaining_turn <= 0:
+            behavior_rule = """
+            FINAL TURN:
+            - This is the last message.
+            - You MUST finish the interaction.
+            - You MUST say a polite goodbye.
+            - You MUST NOT ask any question.
+            - Do NOT offer further help.
+            - Do NOT continue the shopping process.
+            - End with a closing sentence like:
+            "Thank you for visiting. Have a nice day."
+            """
+        elif remaining_turn == 1:
+            behavior_rule = """
+            NEAR FINAL TURN:
+            - Start wrapping up the topic.
+            - Ask one light closing question.
+            - Prepare to finish the conversation soon.
+            """
+        else:
+            behavior_rule = """
+            NORMAL TURN:
+            - Continue the conversation.
+            - End with ONE short question.
+            """
+
+    # -----------------------------
+    # SYSTEM PROMPT
+    # -----------------------------
     base_prompt = SCENARIO_PROMPTS.get(req.scenario_id, SCENARIO_PROMPTS[0])
-
-    # 🔥 5. Inject Goal + Turn Awareness
     enriched_prompt = f"""
     {base_prompt}
+
+    {GLOBAL_STYLE_RULES}
 
     ROLEPLAY GOAL:
     {goal}
 
-    CURRENT TURN: {current_turn}
-    TARGET TURN: {target_turn}
+    TURN INFO:
+    Current Turn: {next_turn}
+    Target Turn: {target_turn}
 
-    If CURRENT TURN equals TARGET TURN,
-    you must naturally close the conversation politely.
-    Do not ask a new open topic.
+    {behavior_rule}
     """
+    print("\n================ FINAL SYSTEM PROMPT ================")
+    print(enriched_prompt)
+    print("=====================================================\n")
 
     system_prompt = SystemMessagePromptTemplate.from_template(enriched_prompt)
-
     prompt = ChatPromptTemplate.from_messages(
         [
             system_prompt,
@@ -227,7 +281,6 @@ async def stream_answer(req: StreamRequest):
     )
 
     chain = prompt | llm | StrOutputParser()
-
     runnable = RunnableWithMessageHistory(
         chain,
         get_session_history,
@@ -235,6 +288,9 @@ async def stream_answer(req: StreamRequest):
         history_messages_key="history",
     )
 
+    # -----------------------------
+    # STREAM RESPONSE
+    # -----------------------------
     def event_stream():
         full_text = ""
 
@@ -245,10 +301,15 @@ async def stream_answer(req: StreamRequest):
             full_text += chunk
             yield f"data: {chunk}\n\n"
 
-        # 🔹 6. If final turn → mark complete
-        if current_turn >= target_turn:
-            complete_roleplay(session_key)
-            print("🏁 ROLEPLAY COMPLETED")
-            yield "data: __ROLEPLAY_END__\n\n"
+        # -----------------------------
+        # INCREMENT TURN & COMPLETE ROLEPLAY
+        # -----------------------------
+        if req.scenario_id > 0:
+            increment_turn(session_key)
+
+            if is_final_turn:
+                complete_roleplay(session_key)
+                print("🏁 ROLEPLAY COMPLETED")
+                yield "data: __ROLEPLAY_END__\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")

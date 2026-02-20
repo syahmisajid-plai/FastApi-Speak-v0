@@ -39,18 +39,18 @@ export async function streamChat({
 
     const chunk = decoder.decode(value);
 
-    // 🔥 cek end signal dulu
-    if (chunk.includes("__ROLEPLAY_END__")) {
+    const cleanChunk = chunk.replace(/^data:\s*/gm, "");
+
+    if (cleanChunk.includes("__ROLEPLAY_END__")) {
       await reader.cancel();
       reader.releaseLock();
 
-      onStreamEnd(aiText, { completed: true });
+      onStreamEnd(aiText.trim(), { completed: true });
       return;
     }
 
-    aiText += chunk.replace(/^data:\s*/gm, "");
-
-    onStreamUpdate(aiText);
+    aiText += cleanChunk;
+    onStreamUpdate(aiText.trim());
   }
 
   // 🔥 PENTING BANGET

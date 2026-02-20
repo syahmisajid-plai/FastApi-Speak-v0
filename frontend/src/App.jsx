@@ -5,6 +5,7 @@ import BottomActions from "./components/BottomActions";
 import AudioUnlockOverlay from "./components/AudioUnlockOverlay";
 // import RoleplayToggle from "./components/RoleplayToggle";
 import RoleplayToggle from "./components/RoleplayToggleSwipe";
+import RoleplaySummaryCard from "./components/RoleplaySummaryCard";
 import Testcard_swipe from "./components/testcard_swipe";
 import "./App.css";
 
@@ -31,6 +32,9 @@ export default function SpeakingApp() {
   const [showSuggestions, setShowSuggestions] = useState(false); // 🔴 Tampilkan saran
   const [showOverlay, setShowOverlay] = useState(true); // 🔑 SATU-SATUNYA GATE
   const [selectedScenario, setSelectedScenario] = useState(null);
+
+  const [showSummary, setShowSummary] = useState(false);
+  const [summaryData, setSummaryData] = useState(null); // Bisa berisi info skor, highlights, AI response, dll
 
   useEffect(() => {
     scenarioRef.current = selectedScenario;
@@ -90,8 +94,8 @@ export default function SpeakingApp() {
         });
       },
 
-      // ===== Saat AI selesai streaming =====
-      onStreamEnd: (finalText) => {
+      onStreamEnd: async (finalText, meta) => {
+        // Update AI final message
         setChatHistory((prev) =>
           prev.map((c) =>
             c.sender === "AI-temp" ? { sender: "AI", message: finalText } : c,
@@ -99,11 +103,43 @@ export default function SpeakingApp() {
         );
 
         speakText(finalText);
-
-        // 🔥 UPDATE STREAK DI SINI
         updateStreak().catch(() => {});
-
         fetchStreak();
+
+        // Hanya Roleplay >0 yang auto-clear
+        if (meta?.completed && scenarioRef.current?.id > 0) {
+          console.log("🏁 Roleplay finished → Show summary");
+
+          const totalTurns =
+            chatHistory.filter((c) => c.sender === "You").length + 1;
+
+          setSummaryData({
+            totalTurns,
+            lastMessage: finalText,
+            duration: "5m 12s",
+          });
+
+          setShowSummary(true);
+
+          // Clear frontend history & reset scenario
+          setChatHistory([]);
+          setSelectedScenario(null);
+
+          // Clear backend roleplay history
+          try {
+            await fetch(`${linkBackend}/roleplay/clear`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                session_id: sessionIdRef.current,
+                scenario_id: scenarioRef.current.id,
+              }),
+            });
+            console.log("🧹 Backend roleplay history cleared");
+          } catch (err) {
+            console.error("❌ Failed to clear backend roleplay history", err);
+          }
+        }
       },
     });
   };
@@ -219,6 +255,10 @@ export default function SpeakingApp() {
     }
   }, [isRecording]);
 
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatHistory]);
+
   // =
   return (
     <>
@@ -230,6 +270,30 @@ export default function SpeakingApp() {
           onWheel={resetIdle}
         >
           <Header streak={streak} />
+
+          {/* SUMMARY CARD */}
+          {showSummary && summaryData && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+              <RoleplaySummaryCard
+                data={summaryData}
+                onClose={async () => {
+                  setShowSummary(false); // sembunyikan card
+                  setChatHistory([]); // reset chat
+                  setSelectedScenario(null); // keluar roleplay
+
+                  // clear backend history
+                  await fetch(`${linkBackend}/roleplay/clear`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      session_id: sessionIdRef.current,
+                      scenario_id: scenarioRef.current?.id ?? 0,
+                    }),
+                  });
+                }}
+              />
+            </div>
+          )}
 
           <div className="relative">
             {/* konten lain */}
@@ -253,24 +317,28 @@ export default function SpeakingApp() {
           </div>
 
           <RoleplayToggle
+            key={selectedScenario?.id ?? "main"} // 🔥 force remount saat keluar
+            selectedScenario={selectedScenario} // 🔥 controlled component
             onScenarioSelect={async (scenario) => {
               const prevScenario = scenarioRef.current;
 
-              // 🧹 jika keluar roleplay
-              if (scenario === null && prevScenario) {
-                await fetch(`${linkBackend}/roleplay/clear`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    session_id: sessionIdRef.current,
-                    scenario_id: prevScenario.id,
-                  }),
-                });
-              }
+              try {
+                // 🧹 1️⃣ Jika keluar roleplay
+                if (scenario === null && prevScenario) {
+                  await fetch(`${linkBackend}/roleplay/clear`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      session_id: sessionIdRef.current,
+                      scenario_id: prevScenario.id,
+                    }),
+                  });
 
-              // ⭐ jika masuk roleplay baru
-              if (scenario) {
-                try {
+                  console.log("🧹 Roleplay cleared");
+                }
+
+                // ⭐ 2️⃣ Jika masuk roleplay baru
+                if (scenario) {
                   await fetch(`${linkBackend}/roleplay/start`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -281,13 +349,14 @@ export default function SpeakingApp() {
                   });
 
                   console.log("🎯 Roleplay started:", scenario.name);
-                } catch (err) {
-                  console.error("Failed start roleplay:", err);
                 }
-              }
 
-              setChatHistory([]);
-              setSelectedScenario(scenario ?? null);
+                // 🧼 3️⃣ RESET UI STATE
+                setChatHistory([]); // bersihkan chat
+                setSelectedScenario(scenario ?? null); // reset scenario
+              } catch (err) {
+                console.error("❌ Roleplay error:", err);
+              }
             }}
           />
 
