@@ -179,9 +179,44 @@ async def stream_answer(req: StreamRequest):
     print("SESSION:", req.session_id)
     print("SCENARIO:", req.scenario_id)
 
-    scenario_text = SCENARIO_PROMPTS.get(req.scenario_id, SCENARIO_PROMPTS[0])
+    session_key = f"{req.session_id}_sc{req.scenario_id}"
 
-    system_prompt = SystemMessagePromptTemplate.from_template(scenario_text)
+    # 🔹 1. Load session
+    session_data = get_roleplay_session(session_key)
+    if not session_data:
+        return {"error": "Roleplay not started"}
+
+    # 🔹 2. Check if already finished
+    if session_data["status"] == "done":
+        return {"message": "Session finished. Start new roleplay."}
+
+    # 🔹 3. Increment turn di awal (PENTING)
+    increment_turn(session_key)
+    session_data = get_roleplay_session(session_key)
+
+    current_turn = session_data["current_turn"]
+    target_turn = session_data["target_turn"]
+    goal = session_data["goal"]
+
+    # 🔹 4. Base scenario prompt
+    base_prompt = SCENARIO_PROMPTS.get(req.scenario_id, SCENARIO_PROMPTS[0])
+
+    # 🔥 5. Inject Goal + Turn Awareness
+    enriched_prompt = f"""
+    {base_prompt}
+
+    ROLEPLAY GOAL:
+    {goal}
+
+    CURRENT TURN: {current_turn}
+    TARGET TURN: {target_turn}
+
+    If CURRENT TURN equals TARGET TURN,
+    you must naturally close the conversation politely.
+    Do not ask a new open topic.
+    """
+
+    system_prompt = SystemMessagePromptTemplate.from_template(enriched_prompt)
 
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -192,16 +227,6 @@ async def stream_answer(req: StreamRequest):
     )
 
     chain = prompt | llm | StrOutputParser()
-
-    # 🔑 memory per scenario
-    session_key = f"{req.session_id}_sc{req.scenario_id}"
-
-    session_data = get_roleplay_session(session_key)
-
-    if session_data:
-        if session_data["current_turn"] >= session_data["target_turn"]:
-            complete_roleplay(session_key)
-            print("🏁 ROLEPLAY COMPLETED")
 
     runnable = RunnableWithMessageHistory(
         chain,
@@ -220,12 +245,10 @@ async def stream_answer(req: StreamRequest):
             full_text += chunk
             yield f"data: {chunk}\n\n"
 
-        increment_turn(session_key)
-
-        session_data = get_roleplay_session(session_key)
-
-        if session_data and session_data["current_turn"] >= session_data["target_turn"]:
+        # 🔹 6. If final turn → mark complete
+        if current_turn >= target_turn:
             complete_roleplay(session_key)
+            print("🏁 ROLEPLAY COMPLETED")
             yield "data: __ROLEPLAY_END__\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
