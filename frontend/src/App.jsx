@@ -56,7 +56,7 @@ export default function SpeakingApp() {
   } = useAudioPermission(); // 🎤 Hook audio permission
 
   // ================== HOOKS ==================
-  const { speakText } = useTTS_Google(); // 🗣️ Text-to-Speech
+  const { speakText, isSpeaking, forceStop } = useTTS_Google(); // 🗣️ Text-to-Speech
   const { suggestions, fetchSuggestions } = useSuggestions(chatHistory); // 💡 Saran dari chat history
   const { isIdle, resetIdle } = useIdle(15000); // ⏱️ Deteksi idle user (15 detik)
 
@@ -238,7 +238,15 @@ export default function SpeakingApp() {
   } = speech;
 
   const startRecording = () => {
-    rawStartRecording(); // 🎤 langsung start
+    console.log("🎤 Mic button pressed");
+
+    // 🔴 1. Paksa stop TTS
+    forceStop();
+
+    // 🔥 2. iOS release delay kecil
+    setTimeout(() => {
+      rawStartRecording();
+    }, 180); // 150–200ms sweet spot
   };
 
   // ================== TOGGLE SUGGESTION ==================
