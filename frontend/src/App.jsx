@@ -403,6 +403,8 @@ export default function SpeakingApp() {
             lupaKata={lupaKata}
             controlProps={{
               isRecording,
+              isSpeaking, // ✅ TAMBAHKAN
+              forceStop, // ✅ TAMBAHKAN
               micReady,
               speakerReady,
               requestAudioPermission,

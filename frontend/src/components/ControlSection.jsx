@@ -1,5 +1,6 @@
 export default function ControlSection({
   isRecording,
+  isSpeaking, // ✅ TAMBAHKAN
   micReady,
   requestAudioPermission,
   startRecording,
@@ -8,11 +9,10 @@ export default function ControlSection({
   toggleSuggestion,
   isIdle,
   openLupaKata,
-
   isLupaKataActive,
   lupaKataResult,
-
   speakerReady,
+  forceStop, // ✅ TAMBAHKAN
 }) {
   return (
     <>
@@ -68,15 +68,33 @@ export default function ControlSection({
               ) : (
                 <div
                   className={`w-full h-full rounded-lg flex items-center justify-center font-bold
-                  ${
-                    isLupaKataActive
-                      ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                      : "bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+                    ${
+                      isLupaKataActive
+                        ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                        : isSpeaking
+                          ? "bg-orange-400 hover:bg-orange-500 text-white cursor-pointer"
+                          : "bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+                    }
+                  `}
+                  onClick={
+                    !isLupaKataActive
+                      ? () => {
+                          if (isSpeaking) {
+                            console.log("🛑 Interrupting TTS first");
+                            forceStop(); // tap pertama cuma stop audio
+                            return;
+                          }
+
+                          startRecording(); // baru record kalau tidak speaking
+                        }
+                      : undefined
                   }
-                `}
-                  onClick={!isLupaKataActive ? startRecording : undefined}
                 >
-                  {isLupaKataActive ? "🔒 Recording Locked" : "🔴 Record"}
+                  {isLupaKataActive
+                    ? "🔒 Recording Locked"
+                    : isSpeaking
+                      ? "⏹ Stop AI"
+                      : "🔴 Record"}
                 </div>
               )}
             </div>
