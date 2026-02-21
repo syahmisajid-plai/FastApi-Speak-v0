@@ -153,18 +153,34 @@ export default function SpeakingApp() {
     if (!confirmClear) return;
 
     try {
+      console.log("🧹 Clearing history for:", sessionId);
+
+      // ✅ 1. clear main chat
       await fetch(`${linkBackend}/history/clear-all`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          session_id: sessionIdRef.current,
+          session_id: sessionId, // ✅ langsung dari state
         }),
       });
 
-      setChatHistory([]); // reset UI
-      console.log("🧹 ALL history cleared");
+      // ✅ 2. clear ALL roleplay juga
+      await fetch(`${linkBackend}/roleplay/clear`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sessionId,
+          scenario_id: 0, // backend treat 0 = semua
+        }),
+      });
+
+      // ✅ 3. reset frontend state
+      setChatHistory([]);
+      setSelectedScenario(null);
+
+      console.log("✅ ALL history cleared");
     } catch (err) {
-      console.error("Failed clear all history", err);
+      console.error("❌ Failed clear all history", err);
     }
   };
 

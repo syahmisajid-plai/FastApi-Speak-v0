@@ -15,7 +15,7 @@ class ClearAllUserHistoryRequest(BaseModel):
 
 @router.post("/history/clear-all")
 def clear_all_user_history(req: ClearAllUserHistoryRequest):
-    user_prefix = f"{req.session_id}_"
+    user_prefix = f"{req.session_id}"
 
     if DATABASE_URL:
         conn = psycopg2.connect(DATABASE_URL)
