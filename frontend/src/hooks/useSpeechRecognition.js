@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function useSpeechRecognition({
   recognitionRef,
@@ -9,11 +9,12 @@ export default function useSpeechRecognition({
   isLupaKataActive,
 }) {
   const transcriptRef = useRef("");
+  const [liveTranscript, setLiveTranscript] = useState("");
+  const [isCanceled, setIsCanceled] = useState(false);
+
   const lastInterimRef = useRef("");
   const isListeningRef = useRef(false);
-  const isCanceledRef = useRef(false);
-
-  const [liveTranscript, setLiveTranscript] = useState("");
+  const lastStopTimeRef = useRef(null);
 
   const normalizeText = (text) =>
     text
@@ -25,12 +26,104 @@ export default function useSpeechRecognition({
   const getSpeechRecognition = () =>
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  const attachHandlers = (recognition) => {
+  const startRecording = () => {
+    const SpeechRecognition = getSpeechRecognition();
+
+    console.log("=== START RECORDING CALLED ===");
+    console.log("isListeningRef:", isListeningRef.current);
+    console.log("lastStopTime:", lastStopTimeRef.current);
+    console.log(
+      "time since last stop:",
+      lastStopTimeRef.current
+        ? Date.now() - lastStopTimeRef.current
+        : "never stopped",
+    );
+
+    if (!SpeechRecognition) {
+      console.log("❌ SpeechRecognition not supported");
+      return;
+    }
+
+    if (isLupaKataActive) {
+      console.log("❌ Blocked by isLupaKataActive");
+      return;
+    }
+
+    try {
+      onResetIdle?.();
+      transcriptRef.current = "";
+      lastInterimRef.current = "";
+      setLiveTranscript("");
+      setIsCanceled(false);
+      shouldSendOnEndRef.current = true;
+
+      recognitionRef.current?.start();
+
+      isListeningRef.current = true;
+      setIsRecording(true);
+
+      console.log("✅ recognition.start() called");
+    } catch (err) {
+      console.error("🔥 START ERROR:", err);
+    }
+  };
+
+  const stopRecording = () => {
+    console.log("=== STOP RECORDING CALLED ===");
+    console.log("isListeningRef:", isListeningRef.current);
+
+    if (isLupaKataActive) {
+      console.log("❌ Blocked by isLupaKataActive");
+      return;
+    }
+
+    shouldSendOnEndRef.current = true;
+
+    setTimeout(() => {
+      try {
+        recognitionRef.current?.stop();
+        console.log("✅ recognition.stop() called");
+      } catch (err) {
+        console.error("🔥 STOP ERROR:", err);
+      }
+    }, 300);
+  };
+
+  const cancelRecording = () => {
+    console.log("=== CANCEL RECORDING ===");
+
+    onResetIdle?.();
+    shouldSendOnEndRef.current = false;
+    setIsCanceled(true);
+    transcriptRef.current = "";
+    setLiveTranscript("");
+
+    try {
+      recognitionRef.current?.stop();
+      console.log("✅ recognition.stop() called (cancel)");
+    } catch (err) {
+      console.error("🔥 CANCEL STOP ERROR:", err);
+    }
+  };
+
+  useEffect(() => {
+    const SpeechRecognition = getSpeechRecognition();
+    if (!SpeechRecognition || recognitionRef.current) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onstart = () => {
+      console.log("🎤 STT onstart fired");
+    };
+
     recognition.onresult = (event) => {
-      if (isCanceledRef.current || isLupaKataActive) return;
+      console.log("📝 STT onresult fired");
+      if (isCanceled || isLupaKataActive) return;
 
       let interim = "";
-
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const t = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
@@ -45,85 +138,44 @@ export default function useSpeechRecognition({
     };
 
     recognition.onend = () => {
-      if (isCanceledRef.current) {
-        cleanup();
-        return;
-      }
+      console.log("🔚 STT onend fired");
+      console.log(
+        "time between stop and onend:",
+        lastStopTimeRef.current
+          ? Date.now() - lastStopTimeRef.current
+          : "unknown",
+      );
+
+      isListeningRef.current = false;
+      lastStopTimeRef.current = Date.now();
+
+      if (isCanceled) return;
 
       const finalText = normalizeText(
         transcriptRef.current + lastInterimRef.current,
       );
 
       if (shouldSendOnEndRef.current && finalText) {
+        console.log("📤 Sending final result:", finalText);
         onFinalResult?.(finalText);
         shouldSendOnEndRef.current = false;
       }
 
-      cleanup();
+      transcriptRef.current = "";
+      lastInterimRef.current = "";
+      setLiveTranscript("");
+      setIsCanceled(false);
+      setIsRecording(false);
+      onResetIdle?.();
     };
 
     recognition.onerror = (e) => {
-      console.error("STT error:", e.error);
-      cleanup();
+      console.error("🔥 STT error event:", e.error);
+      console.log("isListeningRef at error:", isListeningRef.current);
     };
-  };
-
-  const cleanup = () => {
-    transcriptRef.current = "";
-    lastInterimRef.current = "";
-    setLiveTranscript("");
-    setIsRecording(false);
-    isListeningRef.current = false;
-    isCanceledRef.current = false;
-    recognitionRef.current = null;
-    onResetIdle?.();
-  };
-
-  const startRecording = () => {
-    const SpeechRecognition = getSpeechRecognition();
-    if (!SpeechRecognition || isLupaKataActive) return;
-    if (isListeningRef.current) return;
-
-    onResetIdle?.();
-
-    transcriptRef.current = "";
-    lastInterimRef.current = "";
-    setLiveTranscript("");
-
-    isCanceledRef.current = false;
-    shouldSendOnEndRef.current = true;
-
-    // 🔥 CREATE NEW INSTANCE EVERY TIME
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.continuous = true;
-    recognition.interimResults = true;
-
-    attachHandlers(recognition);
 
     recognitionRef.current = recognition;
-
-    recognition.start();
-    isListeningRef.current = true;
-    setIsRecording(true);
-  };
-
-  const stopRecording = () => {
-    if (!recognitionRef.current) return;
-    if (!isListeningRef.current) return;
-
-    shouldSendOnEndRef.current = true;
-    recognitionRef.current.stop();
-  };
-
-  const cancelRecording = () => {
-    if (!recognitionRef.current) return;
-
-    shouldSendOnEndRef.current = false;
-    isCanceledRef.current = true;
-
-    recognitionRef.current.stop();
-  };
+  }, [isLupaKataActive]);
 
   return {
     liveTranscript,
