@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 export default function useSpeechRecognition({
   recognitionRef,
@@ -9,10 +9,11 @@ export default function useSpeechRecognition({
   isLupaKataActive,
 }) {
   const transcriptRef = useRef("");
-  const [liveTranscript, setLiveTranscript] = useState("");
-  const [isCanceled, setIsCanceled] = useState(false);
-
   const lastInterimRef = useRef("");
+  const isListeningRef = useRef(false);
+  const isCanceledRef = useRef(false);
+
+  const [liveTranscript, setLiveTranscript] = useState("");
 
   const normalizeText = (text) =>
     text
@@ -24,55 +25,12 @@ export default function useSpeechRecognition({
   const getSpeechRecognition = () =>
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  const startRecording = () => {
-    const SpeechRecognition = getSpeechRecognition();
-    if (!SpeechRecognition || isLupaKataActive) return;
-
-    onResetIdle?.();
-    transcriptRef.current = "";
-    setLiveTranscript("");
-    setIsCanceled(false);
-    shouldSendOnEndRef.current = true;
-
-    recognitionRef.current?.start();
-    setIsRecording(true);
-  };
-
-  const stopRecording = () => {
-    if (isLupaKataActive) return;
-
-    // 🔒 pastikan final result hanya dikirim sekali
-    shouldSendOnEndRef.current = true;
-
-    // stop rekaman, onend akan otomatis memanggil onFinalResult
-    setTimeout(() => {
-      recognitionRef.current?.stop();
-    }, 300);
-  };
-
-  const cancelRecording = () => {
-    onResetIdle?.();
-    shouldSendOnEndRef.current = false;
-    setIsCanceled(true);
-    transcriptRef.current = "";
-    setLiveTranscript("");
-    recognitionRef.current?.stop();
-  };
-
-  useEffect(() => {
-    const SpeechRecognition = getSpeechRecognition();
-    if (!SpeechRecognition || recognitionRef.current) return;
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.continuous = true;
-    recognition.interimResults = true;
-
+  const attachHandlers = (recognition) => {
     recognition.onresult = (event) => {
-      console.log("[STT result]", event);
-      if (isCanceled || isLupaKataActive) return;
+      if (isCanceledRef.current || isLupaKataActive) return;
 
       let interim = "";
+
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const t = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
@@ -82,41 +40,90 @@ export default function useSpeechRecognition({
         }
       }
 
-      lastInterimRef.current = interim; // 🔥 simpan interim terakhir
+      lastInterimRef.current = interim;
       setLiveTranscript(transcriptRef.current + interim);
-
-      // console.log("Interim:", interim);
     };
 
     recognition.onend = () => {
-      console.log("[STT ended]");
-      if (isCanceled) return;
+      if (isCanceledRef.current) {
+        cleanup();
+        return;
+      }
 
-      // final text + last interim
       const finalText = normalizeText(
         transcriptRef.current + lastInterimRef.current,
       );
 
-      // 🔒 kirim hanya sekali
       if (shouldSendOnEndRef.current && finalText) {
         onFinalResult?.(finalText);
-        shouldSendOnEndRef.current = false; // lock supaya tidak dikirim lagi
+        shouldSendOnEndRef.current = false;
       }
 
-      transcriptRef.current = "";
-      lastInterimRef.current = "";
-      setLiveTranscript("");
-      setIsCanceled(false);
-      setIsRecording(false);
-      onResetIdle?.();
+      cleanup();
     };
 
     recognition.onerror = (e) => {
       console.error("STT error:", e.error);
+      cleanup();
     };
+  };
+
+  const cleanup = () => {
+    transcriptRef.current = "";
+    lastInterimRef.current = "";
+    setLiveTranscript("");
+    setIsRecording(false);
+    isListeningRef.current = false;
+    isCanceledRef.current = false;
+    recognitionRef.current = null;
+    onResetIdle?.();
+  };
+
+  const startRecording = () => {
+    const SpeechRecognition = getSpeechRecognition();
+    if (!SpeechRecognition || isLupaKataActive) return;
+    if (isListeningRef.current) return;
+
+    onResetIdle?.();
+
+    transcriptRef.current = "";
+    lastInterimRef.current = "";
+    setLiveTranscript("");
+
+    isCanceledRef.current = false;
+    shouldSendOnEndRef.current = true;
+
+    // 🔥 CREATE NEW INSTANCE EVERY TIME
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    attachHandlers(recognition);
 
     recognitionRef.current = recognition;
-  }, [isLupaKataActive]);
+
+    recognition.start();
+    isListeningRef.current = true;
+    setIsRecording(true);
+  };
+
+  const stopRecording = () => {
+    if (!recognitionRef.current) return;
+    if (!isListeningRef.current) return;
+
+    shouldSendOnEndRef.current = true;
+    recognitionRef.current.stop();
+  };
+
+  const cancelRecording = () => {
+    if (!recognitionRef.current) return;
+
+    shouldSendOnEndRef.current = false;
+    isCanceledRef.current = true;
+
+    recognitionRef.current.stop();
+  };
 
   return {
     liveTranscript,
