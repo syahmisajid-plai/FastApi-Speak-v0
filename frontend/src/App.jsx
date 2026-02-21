@@ -237,16 +237,22 @@ export default function SpeakingApp() {
     cancelRecording,
   } = speech;
 
-  const startRecording = () => {
+  const startRecording = async () => {
     console.log("🎤 Mic button pressed");
 
-    // 🔴 1. Paksa stop TTS
+    // 1️⃣ Force stop TTS
     forceStop();
 
-    // 🔥 2. iOS release delay kecil
+    // 2️⃣ Tunggu 1 animation frame
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    // 3️⃣ Tunggu 1 microtask
+    await Promise.resolve();
+
+    // 4️⃣ Tambah sedikit delay
     setTimeout(() => {
       rawStartRecording();
-    }, 180); // 150–200ms sweet spot
+    }, 120);
   };
 
   // ================== TOGGLE SUGGESTION ==================
