@@ -6,7 +6,7 @@ export default function useTTS_Google() {
   const currentAudioRef = useRef(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
-  const MUTE_TTS = true; // 👈 ganti false kalau mau hidupkan lagi
+  const MUTE_TTS = false; // 👈 ganti false kalau mau hidupkan lagi
 
   const cleanupAudio = (audio) => {
     if (!audio) {
