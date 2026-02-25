@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react";
 
+import speakerSound from "../assets/speaker_enable.mp3";
+
 export default function useAudioPermission() {
   const [micReady, setMicReady] = useState(false);
   const [micError, setMicError] = useState(null);
@@ -23,20 +25,17 @@ export default function useAudioPermission() {
 
     // ================= Speaker =================
     try {
-      const utterance = new SpeechSynthesisUtterance("Speaker enabled");
-      utterance.lang = "en-US";
+      const audio = new Audio(speakerSound);
 
-      const voices = speechSynthesis.getVoices();
-      const voice =
-        voices.find((v) => v.name === "Google US English") || voices[0];
-      utterance.voice = voice;
+      await audio.play(); // unlock audio system
 
-      speechSynthesis.speak(utterance);
       setSpeakerReady(true);
-      console.log("🔊 Speaker enabled");
+      setSpeakerError(null);
+
+      console.log("🔊 Speaker enabled (audio test)");
     } catch (err) {
       console.error("❌ Speaker error", err);
-      setSpeakerError("Speaker access is required to play sound.");
+      setSpeakerError("Speaker failed to play audio.");
     }
   }, []);
 

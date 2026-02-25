@@ -6,6 +6,8 @@ export default function useTTS_Google() {
   const currentAudioRef = useRef(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
+  const MUTE_TTS = true; // 👈 ganti false kalau mau hidupkan lagi
+
   const cleanupAudio = (audio) => {
     if (!audio) {
       console.log("🧹 cleanupAudio called but no audio");
@@ -67,14 +69,6 @@ export default function useTTS_Google() {
       currentAudioRef.current = audio;
       setIsSpeaking(true);
 
-      console.log("▶️ About to play audio");
-      console.log("   paused:", audio.paused);
-      console.log("   readyState:", audio.readyState);
-
-      audio.onplay = () => {
-        console.log("🎧 audio onplay fired");
-      };
-
       audio.onended = () => {
         console.log("🔚 audio onended fired");
         cleanupAudio(audio);
@@ -84,14 +78,23 @@ export default function useTTS_Google() {
 
       audio.onerror = (e) => {
         console.error("🔥 audio error:", e);
+        setIsSpeaking(false);
       };
 
-      audio.onpause = () => {
-        console.log("⏸ audio paused");
-      };
+      // 🚫 MODE TEST: JANGAN PLAY AUDIO
+      if (MUTE_TTS) {
+        console.log("🔇 TTS MUTED (testing mode), skipping audio.play()");
 
+        // simulasi audio selesai
+        setTimeout(() => {
+          audio.onended && audio.onended();
+        }, 500);
+
+        return;
+      }
+
+      console.log("▶️ About to play audio");
       await audio.play();
-
       console.log("✅ audio.play resolved");
     } catch (err) {
       console.error("❌ speakText error:", err);
