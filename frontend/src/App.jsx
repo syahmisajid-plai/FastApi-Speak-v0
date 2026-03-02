@@ -24,6 +24,7 @@ import { streamChat } from "./services/chatService";
 import { linkBackend } from "./config";
 
 import { normalizeForTTS } from "./utils/ttsUtils";
+import useMicMonitor from "./utils/useMicMonitor";
 
 export default function SpeakingApp() {
   // ================== STATE ==================
@@ -54,6 +55,9 @@ export default function SpeakingApp() {
     speakerError,
     requestAudioPermission,
   } = useAudioPermission(); // 🎤 Hook audio permission
+
+  // ================== Check Mic ==================
+  const { volume, showPopup } = useMicMonitor();
 
   // ================== HOOKS ==================
   const { speakText, isSpeaking, forceStop } = useTTS_Google(); // 🗣️ Text-to-Speech
@@ -353,7 +357,17 @@ export default function SpeakingApp() {
           onWheel={resetIdle}
         >
           <Header streak={streak} />
-          <div className="flex space-x-2 text-xs">
+          <div className="text-white">
+            <p>Mic Volume: {volume}</p>
+
+            {showPopup && (
+              <div className="fixed top-5 right-5 bg-red-500 text-white px-4 py-3 rounded shadow-lg">
+                ⚠️ Mikrofon tidak terdeteksi suara!
+              </div>
+            )}
+          </div>
+
+          <div className="flex space-x-2 text-xs text-white">
             <button
               onClick={testMicRaw}
               className="bg-gray-700 px-2 py-1 rounded"
