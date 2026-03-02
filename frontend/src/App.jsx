@@ -188,59 +188,6 @@ export default function SpeakingApp() {
     }
   };
 
-  // ================== 🔬 DIAGNOSIS AUDIO ==================
-  async function testMicRaw() {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const track = stream.getAudioTracks()[0];
-
-    console.log("🎤 mic label:", track.label);
-    console.log("🎤 mic enabled:", track.enabled);
-    console.log("🎤 mic readyState:", track.readyState); // "live" = OK
-  }
-
-  async function testMicSignal() {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const ctx = new AudioContext();
-    const source = ctx.createMediaStreamSource(stream);
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 512;
-    source.connect(analyser);
-
-    const data = new Uint8Array(analyser.frequencyBinCount);
-
-    console.log("🎤 Test Mic Signal START (5 detik)...");
-
-    let running = true;
-
-    function loop() {
-      if (!running) return;
-
-      analyser.getByteFrequencyData(data);
-      const volume = data.reduce((a, b) => a + b, 0);
-      console.log("🔊 mic volume:", volume);
-
-      requestAnimationFrame(loop);
-    }
-
-    loop();
-
-    // ⏱️ stop setelah 5 detik
-    setTimeout(() => {
-      running = false;
-      stream.getTracks().forEach((t) => t.stop());
-      ctx.close();
-      console.log("⏹️ Test Mic Signal STOP (5 detik selesai)");
-    }, 3000);
-  }
-
-  function testSpeakerPure() {
-    const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    osc.connect(ctx.destination);
-    osc.start();
-    setTimeout(() => osc.stop(), 300);
-  }
-
   // ================== Update Streak ==================
 
   const updateStreak = async () => {
@@ -365,27 +312,6 @@ export default function SpeakingApp() {
                 ⚠️ Mikrofon tidak terdeteksi suara!
               </div>
             )}
-          </div>
-
-          <div className="flex space-x-2 text-xs text-white">
-            <button
-              onClick={testMicRaw}
-              className="bg-gray-700 px-2 py-1 rounded"
-            >
-              Test Mic Device
-            </button>
-            <button
-              onClick={testMicSignal}
-              className="bg-gray-700 px-2 py-1 rounded"
-            >
-              Test Mic Signal
-            </button>
-            <button
-              onClick={testSpeakerPure}
-              className="bg-gray-700 px-2 py-1 rounded"
-            >
-              Test Speaker
-            </button>
           </div>
 
           {/* SUMMARY CARD */}

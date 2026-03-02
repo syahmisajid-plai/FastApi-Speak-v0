@@ -6,6 +6,7 @@ export default function useMicMonitor() {
 
   const silenceStart = useRef(null);
   const running = useRef(false);
+  const lastUpdate = useRef(0);
 
   useEffect(() => {
     let ctx;
@@ -13,21 +14,28 @@ export default function useMicMonitor() {
     let analyser;
     let data;
 
+    const SILENCE_THRESHOLD = 5; // noise filter
+    const UI_UPDATE_MS = 150; // update UI tiap 150ms
+
     async function startMic() {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      ctx = new AudioContext();
-      const source = ctx.createMediaStreamSource(stream);
+        ctx = new AudioContext();
+        const source = ctx.createMediaStreamSource(stream);
 
-      analyser = ctx.createAnalyser();
-      analyser.fftSize = 512;
+        analyser = ctx.createAnalyser();
+        analyser.fftSize = 512;
 
-      source.connect(analyser);
+        source.connect(analyser);
 
-      data = new Uint8Array(analyser.frequencyBinCount);
+        data = new Uint8Array(analyser.frequencyBinCount);
 
-      running.current = true;
-      loop();
+        running.current = true;
+        loop();
+      } catch (err) {
+        console.error("Mic permission denied:", err);
+      }
     }
 
     function loop() {
@@ -36,21 +44,27 @@ export default function useMicMonitor() {
       analyser.getByteFrequencyData(data);
 
       const vol = data.reduce((a, b) => a + b, 0);
-      setVolume(vol);
-
       const now = Date.now();
 
-      // 🔊 jika ada suara
-      if (vol > 0) {
+      /* ======================
+         THROTTLE REACT UPDATE
+      ====================== */
+      if (now - lastUpdate.current > UI_UPDATE_MS) {
+        setVolume(vol);
+        lastUpdate.current = now;
+      }
+
+      /* ======================
+         SILENCE DETECTION
+      ====================== */
+      if (vol > SILENCE_THRESHOLD) {
         silenceStart.current = null;
         setShowPopup(false);
       } else {
-        // mulai hitung silent
         if (!silenceStart.current) {
           silenceStart.current = now;
         }
 
-        // jika silent > 3 detik
         if (now - silenceStart.current > 3000) {
           setShowPopup(true);
         }
