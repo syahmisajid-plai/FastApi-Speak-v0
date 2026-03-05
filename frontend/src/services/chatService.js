@@ -1,4 +1,4 @@
-// /services/chatService.js
+// services/chatService.js
 import { linkBackend } from "../config";
 
 export async function streamChat({
@@ -6,9 +6,11 @@ export async function streamChat({
   sessionId,
   scenarioId = 0,
   mode = "roleplay",
+
   onUserMessage,
   onStreamUpdate,
   onStreamEnd,
+  onMeta, // ⭐ NEW
 }) {
   console.log("🚀 SEND TO AI:", text);
 
@@ -36,25 +38,52 @@ export async function streamChat({
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
+
   let aiText = "";
+  let buffer = "";
 
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
 
-    const chunk = decoder.decode(value);
-    const cleanChunk = chunk.replace(/^data:\s*/gm, "");
+    buffer += decoder.decode(value);
 
-    if (cleanChunk.includes("__ROLEPLAY_END__")) {
-      await reader.cancel();
-      reader.releaseLock();
+    const events = buffer.split("\n\n");
+    buffer = events.pop(); // sisa event belum selesai
 
-      onStreamEnd(aiText.trim(), { completed: true });
-      return;
+    for (const event of events) {
+      // =====================
+      // META EVENT
+      // =====================
+      if (event.includes("event: meta")) {
+        const json = event.split("data: ")[1];
+
+        try {
+          const meta = JSON.parse(json);
+          onMeta?.(meta);
+        } catch (e) {
+          console.error("Meta parse error:", e);
+        }
+
+        continue;
+      }
+
+      // =====================
+      // NORMAL TOKEN STREAM
+      // =====================
+      const cleanChunk = event.replace(/^data:\s*/gm, "");
+
+      if (cleanChunk.includes("__ROLEPLAY_END__")) {
+        await reader.cancel();
+        reader.releaseLock();
+
+        onStreamEnd(aiText.trim(), { completed: true });
+        return;
+      }
+
+      aiText += cleanChunk;
+      onStreamUpdate(aiText.trim());
     }
-
-    aiText += cleanChunk;
-    onStreamUpdate(aiText.trim());
   }
 
   await reader.cancel();

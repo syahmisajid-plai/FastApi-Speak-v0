@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export default function DailyStoryIndicator({ dailyStory, onToggle }) {
+export default function DailyStoryIndicator({ dailyStory }) {
   const phases = [
     { key: "morning", label: "Morning", emoji: "🌅" },
     { key: "afternoon", label: "Afternoon", emoji: "☀️" },
@@ -40,13 +40,12 @@ export default function DailyStoryIndicator({ dailyStory, onToggle }) {
           </span>
         </div>
 
-        {/* Clock */}
         <div className="text-sm font-mono bg-white/10 px-2 py-1 rounded-md">
           {time}
         </div>
       </div>
 
-      {/* Progress bar */}
+      {/* Progress */}
       <div className="w-full h-2 bg-white/10 rounded-full mb-4 overflow-hidden">
         <div
           className="h-full bg-gradient-to-r from-green-400 to-green-500 transition-all duration-500"
@@ -54,34 +53,27 @@ export default function DailyStoryIndicator({ dailyStory, onToggle }) {
         />
       </div>
 
-      {/* Phase buttons */}
+      {/* Phase Indicator */}
       <div className="grid grid-cols-4 gap-2">
         {phases.map((p) => {
-          const active = dailyStory[p.key];
+          const done = dailyStory[p.key];
 
           return (
-            <button
+            <div
               key={p.key}
-              onClick={() => onToggle(p.key)}
               className={`
                 flex flex-col items-center justify-center
                 rounded-xl py-3
-                transition-all duration-200
-                ${
-                  active
-                    ? "bg-green-500/80 shadow-lg"
-                    : "bg-white/5 hover:bg-white/15"
-                }
+                transition-all
+                ${done ? "bg-green-500/80 shadow-lg" : "bg-white/5 opacity-70"}
               `}
             >
-              <div className="text-lg">{p.emoji}</div>
-
-              <div className="text-xs mt-1 opacity-80">{p.label}</div>
-
-              <div className="text-[10px] mt-1 opacity-70">
-                {active ? "Done" : "Pending"}
+              <div className="text-lg">
+                {p.emoji} {done && "✅"}
               </div>
-            </button>
+
+              <div className="text-xs mt-1">{p.label}</div>
+            </div>
           );
         })}
       </div>

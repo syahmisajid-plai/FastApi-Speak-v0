@@ -1,6 +1,7 @@
 # routers/daily_story.py
 
 import os
+import json
 from datetime import datetime
 
 from fastapi import APIRouter
@@ -32,6 +33,31 @@ class StreamRequest(BaseModel):
 
 
 # -----------------------------
+# SESSION PROGRESS TRACKING
+# -----------------------------
+session_progress = {}
+
+
+def get_progress(session_id):
+
+    if session_id not in session_progress:
+        session_progress[session_id] = {"turns": 0, "words": 0, "transcript": ""}
+
+    return session_progress[session_id]
+
+
+# -----------------------------
+# COMPLETION CHECK
+# -----------------------------
+def check_completion(progress):
+
+    if progress["turns"] >= 2 and progress["words"] >= 10:
+        return True
+
+    return False
+
+
+# -----------------------------
 # TIME DETECTION
 # -----------------------------
 def detect_phase():
@@ -56,52 +82,60 @@ def detect_phase():
 # -----------------------------
 DAILY_PROMPTS = {
     "morning": """
-You are testing time awareness.
+You are an English speaking partner helping the user start the day.
 
-Say:
-"Good morning!"
+Ask about:
+- morning plans
+- sleep quality
+- today's activities
 
-Then mention the current time you received.
-
-Example:
-Good morning! It is currently 08:00.
-How is your morning so far?
+Rules:
+- use simple English
+- max 15 words
+- friendly tone
+- ask one short question
 """,
     "afternoon": """
-You are testing time awareness.
+You are an English speaking partner helping the user reflect on the day.
 
-Say:
-"Good afternoon!"
+Ask about:
+- morning activities
+- lunch
+- afternoon plans
 
-Then mention the current time you received.
-
-Example:
-Good afternoon! It is currently 14:00.
-What did you do this morning?
+Rules:
+- simple English
+- max 15 words
+- casual tone
+- ask one short question
 """,
     "evening": """
-You are testing time awareness.
+You are an English speaking partner helping the user reflect on the day.
 
-Say:
-"Good evening!"
+Ask about:
+- what they did today
+- interesting moments
+- dinner plans
 
-Then mention the current time you received.
-
-Example:
-Good evening! It is currently 18:30.
-How was your afternoon?
+Rules:
+- simple English
+- max 15 words
+- friendly tone
+- ask one short question
 """,
     "night": """
-You are testing time awareness.
+You are an English speaking partner helping the user reflect on their whole day.
 
-Say:
-"Good evening!"
+Ask about:
+- what happened today
+- best moment today
+- what they learned
 
-Then mention the current time you received.
-
-Example:
-Good evening! It is currently 21:00.
-What was the best moment today?
+Rules:
+- simple English
+- max 15 words
+- calm friendly tone
+- ask one short question
 """,
 }
 
@@ -125,8 +159,23 @@ async def stream_daily_story(req: StreamRequest):
 
     session_key = f"{req.session_id}_daily"
 
-    # detect time phase
+    # -----------------------------
+    # UPDATE PROGRESS
+    # -----------------------------
+    progress = get_progress(session_key)
+
+    progress["turns"] += 1
+    progress["words"] += len(req.input.split())
+    progress["transcript"] += " " + req.input
+
+    # -----------------------------
+    # DETECT PHASE
+    # -----------------------------
     phase = detect_phase()
+
+    print("🌤 DAILY STORY PHASE:", phase)
+    print("📊 TURNS:", progress["turns"])
+    print("📝 WORDS:", progress["words"])
 
     base_prompt = DAILY_PROMPTS.get(phase)
 
@@ -149,7 +198,10 @@ async def stream_daily_story(req: StreamRequest):
         history_messages_key="history",
     )
 
-    print("🌤 DAILY STORY PHASE:", phase)
+    # -----------------------------
+    # CHECK COMPLETION
+    # -----------------------------
+    completed = check_completion(progress)
 
     # -----------------------------
     # STREAM RESPONSE
@@ -161,5 +213,10 @@ async def stream_daily_story(req: StreamRequest):
             config={"configurable": {"session_id": session_key}},
         ):
             yield f"data: {chunk}\n\n"
+
+        # send meta event after streaming
+        meta = {"completed": completed, "phase": phase}
+
+        yield f"event: meta\ndata: {json.dumps(meta)}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")

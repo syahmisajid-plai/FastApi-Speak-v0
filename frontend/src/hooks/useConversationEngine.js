@@ -1,26 +1,33 @@
+// hooks/useConversationEngine.js
 import { streamChat } from "../services/chatService";
 
 export default function useConversationEngine({
   sessionIdRef,
   scenarioRef,
-  modeRef, // ⭐ NEW
+  modeRef,
   setChatHistory,
   speakText,
+
   onRoleplayCompleted,
+  onPhaseCompleted, // ⭐ NEW
 }) {
   const sendTextToBackend = async (text) => {
     await streamChat({
       text,
       sessionId: sessionIdRef.current,
       scenarioId: scenarioRef.current?.id ?? 0,
-      mode: modeRef.current, // ⭐ penting
+      mode: modeRef.current,
 
-      // ===== user message =====
+      // =========================
+      // USER MESSAGE
+      // =========================
       onUserMessage: (msg) => {
         setChatHistory((prev) => [...prev, { sender: "You", message: msg }]);
       },
 
-      // ===== streaming =====
+      // =========================
+      // STREAMING TOKEN
+      // =========================
       onStreamUpdate: (aiText) => {
         setChatHistory((prev) => {
           const withoutTemp = prev.filter((c) => c.sender !== "AI-temp");
@@ -29,7 +36,18 @@ export default function useConversationEngine({
         });
       },
 
-      // ===== final answer =====
+      // =========================
+      // META EVENT (Daily Story)
+      // =========================
+      onMeta: (meta) => {
+        if (meta?.completed) {
+          onPhaseCompleted?.(meta.phase);
+        }
+      },
+
+      // =========================
+      // FINAL ANSWER
+      // =========================
       onStreamEnd: async (finalText, meta) => {
         setChatHistory((prev) =>
           prev.map((c) =>

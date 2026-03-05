@@ -76,6 +76,9 @@ Feature tambahan:
   const [showSuggestions, setShowSuggestions] = useState(false); // 🔴 Tampilkan saran
   const [showOverlay, setShowOverlay] = useState(true); // 🔑 SATU-SATUNYA GATE
 
+  const [pendingMode, setPendingMode] = useState(null);
+  const [showModeConfirm, setShowModeConfirm] = useState(false);
+
   // ================== Set Mode ==================
   const [mode, setMode] = useState("freeTalk");
   const modeRef = useRef(mode);
@@ -83,6 +86,11 @@ Feature tambahan:
 
   useEffect(() => {
     modeRef.current = mode;
+
+    // ⭐ CLEAR CHAT SAAT MODE BERUBAH
+    setChatHistory([]);
+
+    console.log("🔄 MODE CHANGED:", mode);
   }, [mode]);
 
   // ================== SESSION MANAGEMENT ==================
@@ -105,6 +113,16 @@ Feature tambahan:
   const recognitionRef = useRef(null); // 🔵 Referensi untuk SpeechRecognition
   const shouldSendOnEndRef = useRef(false); // 🔵 Flag untuk mengirim teks otomatis
 
+  // ================== PopUp Change Mode ==================
+  const handleModeChange = (newMode) => {
+    if (chatHistory.length > 0) {
+      setPendingMode(newMode);
+      setShowModeConfirm(true);
+      return;
+    }
+
+    setMode(newMode);
+  };
   // ================== AUDIO PERMISSION ==================
   const {
     micReady,
@@ -139,10 +157,17 @@ Feature tambahan:
   const { sendTextToBackend } = useConversationEngine({
     sessionIdRef,
     scenarioRef,
-    modeRef, // ⭐ tambah ini
+    modeRef,
     setChatHistory,
     speakText,
+
     onRoleplayCompleted: handleRoleplayCompleted,
+
+    // ⭐ TAMBAHKAN INI
+    onPhaseCompleted: (phase) => {
+      console.log("🌅 DAILY PHASE COMPLETED:", phase);
+      markPhaseComplete(phase);
+    },
   });
 
   // ================== SUGGESTIONS ==================
@@ -280,10 +305,7 @@ Feature tambahan:
           </div>
 
           {mode === "dailyStory" && (
-            <DailyStoryIndicator
-              dailyStory={dailyStory}
-              onToggle={toggleDailyPhase}
-            />
+            <DailyStoryIndicator dailyStory={dailyStory} />
           )}
 
           {mode !== "dailyStory" && (
@@ -294,7 +316,43 @@ Feature tambahan:
             />
           )}
 
-          <ModeSelector mode={mode} setMode={setMode} />
+          <ModeSelector mode={mode} setMode={handleModeChange} />
+
+          {showModeConfirm && (
+            <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+              <div className="bg-white text-black rounded-xl p-6 w-[300px] text-center space-y-4">
+                <h2 className="text-lg font-semibold">Change Mode?</h2>
+
+                <p className="text-sm text-gray-600">
+                  Chat history will be cleared. Continue?
+                </p>
+
+                <div className="flex justify-center gap-4 pt-2">
+                  <button
+                    className="px-4 py-2 bg-gray-300 rounded-lg"
+                    onClick={() => {
+                      setShowModeConfirm(false);
+                      setPendingMode(null);
+                    }}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    className="px-4 py-2 bg-red-500  rounded-lg"
+                    onClick={() => {
+                      setMode(pendingMode);
+                      setChatHistory([]);
+                      setPendingMode(null);
+                      setShowModeConfirm(false);
+                    }}
+                  >
+                    Yes
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* SESSION ID INPUT */}
           <div className="flex items-center space-x-2 text-white">
