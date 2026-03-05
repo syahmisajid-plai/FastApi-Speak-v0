@@ -120,7 +120,7 @@ llm = ChatOpenAI(
 # -----------------------------
 # STREAM DAILY STORY
 # -----------------------------
-@router.post("/stream")
+@router.post("/stream_answer")
 async def stream_daily_story(req: StreamRequest):
 
     session_key = f"{req.session_id}_daily"

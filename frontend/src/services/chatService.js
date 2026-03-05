@@ -16,9 +16,9 @@ export async function streamChat({
 
   let endpoint = "";
 
-  if (mode === "roleplay") endpoint = "/roleplay/stream";
-  if (mode === "dailyStory") endpoint = "/daily-story/stream";
-  if (mode === "freeTalk") endpoint = "/roleplay/stream";
+  if (mode === "roleplay") endpoint = "/roleplay/stream_answer";
+  if (mode === "dailyStory") endpoint = "/daily-story/stream_answer";
+  if (mode === "freeTalk") endpoint = "/roleplay/stream_answer";
 
   const res = await fetch(`${linkBackend}${endpoint}`, {
     method: "POST",
