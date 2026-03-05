@@ -1,51 +1,101 @@
+// ================== REACT CORE ==================
 import { useEffect, useState, useRef } from "react";
+
+// ================== UI COMPONENTS ==================
 import Header from "./components/Header";
 import ChatSection from "./components/ChatSection";
 import BottomActions from "./components/BottomActions";
 import AudioUnlockOverlay from "./components/AudioUnlockOverlay";
-// import RoleplayToggle from "./components/RoleplayToggle";
 import RoleplayToggle from "./components/RoleplayToggleSwipe";
 import RoleplaySummaryCard from "./components/RoleplaySummaryCard";
+import DailyStoryIndicator from "./components/DailyStoryIndicator";
 import Testcard_swipe from "./components/testcard_swipe";
+import ModeSelector from "./components/ModeSelector";
+
+// ================== STYLES ==================
 import "./App.css";
 
-import useLupaKata from "./hooks/useLupaKata";
+// ================== CORE HOOKS ==================
 import useSpeechRecognition from "./hooks/useSpeechRecognition";
 import useAudioPermission from "./hooks/useAudioPermission";
-import useIdle from "./hooks/useIdle";
+import useMicController from "./hooks/useMicController";
 
-// import useTTS from "./hooks/useTTS";
-import useTTS_Google from "./hooks/useTTS_Google";
+// ================== FEATURE HOOKS ==================
+import useLupaKata from "./hooks/useLupaKata";
 import useSuggestions from "./hooks/useSuggestions";
-import useEruda from "./hooks/useEruda";
-import useBackendPing from "./hooks/useBackendPing";
-import { streamChat } from "./services/chatService";
+import useIdle from "./hooks/useIdle";
+import useConversationEngine from "./hooks/useConversationEngine";
+import useRoleplay from "./hooks/useRoleplay";
+import useDailyStory from "./hooks/useDailyStory";
+import useHistoryManager from "./hooks/useHistoryManager";
+import useStreak from "./hooks/useStreak";
 
-import { linkBackend } from "./config";
-
-import { normalizeForTTS } from "./utils/ttsUtils";
+// ================== AUDIO ==================
+import useTTS_Google from "./hooks/useTTS_Google";
 import useMicMonitor from "./utils/useMicMonitor";
 
+// ================== DEV / DEBUG ==================
+import useEruda from "./hooks/useEruda";
+import useBackendPing from "./hooks/useBackendPing";
+
+// ================== UTILITIES ==================
+import { normalizeForTTS } from "./utils/ttsUtils";
+import { linkBackend } from "./config";
+
 export default function SpeakingApp() {
-  // ================== STATE ==================
+  /*
+========================================================
+                SPEAKING APP (MAIN APP)
+--------------------------------------------------------
+Orchestrator utama aplikasi speaking AI.
+
+Flow utama aplikasi:
+
+User Speech
+   ↓
+SpeechRecognition (STT)
+   ↓
+ConversationEngine (AI Response)
+   ↓
+Text To Speech (TTS)
+   ↓
+Chat UI Update
+
+Feature tambahan:
+- Roleplay scenario
+- Daily story
+- Suggestion helper
+- Lupa kata helper
+- Idle detection
+========================================================
+*/
+
+  // ================== UI STATE ==================
   const [isRecording, setIsRecording] = useState(false); // 🔴 Status perekaman
-  const [chatHistory, setChatHistory] = useState([]); // 🔴 Riwayat chat
   const [showSuggestions, setShowSuggestions] = useState(false); // 🔴 Tampilkan saran
   const [showOverlay, setShowOverlay] = useState(true); // 🔑 SATU-SATUNYA GATE
-  const [selectedScenario, setSelectedScenario] = useState(null);
 
-  const [showSummary, setShowSummary] = useState(false);
-  const [summaryData, setSummaryData] = useState(null); // Bisa berisi info skor, highlights, AI response, dll
+  // ================== Set Mode ==================
+  const [mode, setMode] = useState("freeTalk");
+  // freeTalk | dailyStory | roleplay
 
-  useEffect(() => {
-    scenarioRef.current = selectedScenario;
-  }, [selectedScenario]);
+  // ================== SESSION MANAGEMENT ==================
+  const [sessionId, setSessionId] = useState("ninda");
+  const sessionIdRef = useRef(sessionId);
+
+  // ================== CHAT STATE ==================
+  const [chatHistory, setChatHistory] = useState([]);
+
+  // ================== ROLEPLAY CONTEXT ==================
+  const scenarioRef = useRef(null);
+
+  // ================== DAILY STORY ==================
+  const { dailyStory, toggleDailyPhase } = useDailyStory();
 
   // ================== REF ==================
   const bottomRef = useRef(null); // 🔵 Scroll ke bawah chat
   const recognitionRef = useRef(null); // 🔵 Referensi untuk SpeechRecognition
   const shouldSendOnEndRef = useRef(false); // 🔵 Flag untuk mengirim teks otomatis
-  const scenarioRef = useRef(null);
 
   // ================== AUDIO PERMISSION ==================
   const {
@@ -61,6 +111,32 @@ export default function SpeakingApp() {
 
   // ================== HOOKS ==================
   const { speakText, isSpeaking, forceStop } = useTTS_Google(); // 🗣️ Text-to-Speech
+
+  // ================== RolePlay ==================
+  const {
+    selectedScenario,
+    selectScenario,
+    showSummary,
+    summaryData,
+    closeSummary,
+    handleRoleplayCompleted,
+  } = useRoleplay({
+    sessionIdRef,
+    scenarioRef,
+    chatHistory,
+    setChatHistory,
+  });
+
+  // ================== SEND TEXT TO BACKEND ==================
+  const { sendTextToBackend } = useConversationEngine({
+    sessionIdRef,
+    scenarioRef,
+    setChatHistory,
+    speakText,
+    onRoleplayCompleted: handleRoleplayCompleted,
+  });
+
+  // ================== SUGGESTIONS ==================
   const { suggestions, fetchSuggestions } = useSuggestions(chatHistory); // 💡 Saran dari chat history
   const { isIdle, resetIdle } = useIdle(15000); // ⏱️ Deteksi idle user (15 detik)
 
@@ -75,150 +151,15 @@ export default function SpeakingApp() {
   // ================== BACKEND ==================
   useBackendPing(); // 🔗 Check backend connection
 
-  // ================== SESSION ==================
-  const [sessionId, setSessionId] = useState("ninda"); // 🆔 Sekarang bisa diedit
-
-  // ================== SEND TEXT TO BACKEND ==================
-  const sendTextToBackend = async (text) => {
-    await streamChat({
-      text,
-      sessionId: sessionIdRef.current,
-      scenarioId: scenarioRef.current?.id ?? 0,
-
-      // ===== Saat user mengirim pesan =====
-      onUserMessage: (msg) => {
-        setChatHistory((prev) => [...prev, { sender: "You", message: msg }]);
-      },
-
-      // ===== Saat AI streaming jawaban =====
-      onStreamUpdate: (aiText) => {
-        setChatHistory((prev) => {
-          const withoutTemp = prev.filter((c) => c.sender !== "AI-temp");
-          return [...withoutTemp, { sender: "AI-temp", message: aiText }];
-        });
-      },
-
-      onStreamEnd: async (finalText, meta) => {
-        // Update AI final message
-        setChatHistory((prev) =>
-          prev.map((c) =>
-            c.sender === "AI-temp" ? { sender: "AI", message: finalText } : c,
-          ),
-        );
-
-        speakText(finalText);
-        updateStreak().catch(() => {});
-        fetchStreak();
-
-        // Hanya Roleplay >0 yang auto-clear
-        if (meta?.completed && scenarioRef.current?.id > 0) {
-          console.log("🏁 Roleplay finished → Show summary");
-
-          const totalTurns =
-            chatHistory.filter((c) => c.sender === "You").length + 1;
-
-          setSummaryData({
-            totalTurns,
-            lastMessage: finalText,
-            duration: "5m 12s",
-          });
-
-          setShowSummary(true);
-
-          // Clear frontend history & reset scenario
-          setChatHistory([]);
-          setSelectedScenario(null);
-
-          // Clear backend roleplay history
-          try {
-            await fetch(`${linkBackend}/roleplay/clear`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                session_id: sessionIdRef.current,
-                scenario_id: scenarioRef.current.id,
-              }),
-            });
-            console.log("🧹 Backend roleplay history cleared");
-          } catch (err) {
-            console.error("❌ Failed to clear backend roleplay history", err);
-          }
-        }
-      },
-    });
-  };
-
   // ===== clearAllHistory =====
-  const clearAllHistory = async () => {
-    const confirmClear = window.confirm(
-      "Hapus SEMUA chat history user ini? (main + semua roleplay)",
-    );
-
-    if (!confirmClear) return;
-
-    try {
-      console.log("🧹 Clearing history for:", sessionId);
-
-      // ✅ 1. clear main chat
-      await fetch(`${linkBackend}/history/clear-all`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session_id: sessionId, // ✅ langsung dari state
-        }),
-      });
-
-      // ✅ 2. clear ALL roleplay juga
-      await fetch(`${linkBackend}/roleplay/clear`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session_id: sessionId,
-          scenario_id: 0, // backend treat 0 = semua
-        }),
-      });
-
-      // ✅ 3. reset frontend state
-      setChatHistory([]);
-      setSelectedScenario(null);
-
-      console.log("✅ ALL history cleared");
-    } catch (err) {
-      console.error("❌ Failed clear all history", err);
-    }
-  };
-
-  // ================== Update Streak ==================
-
-  const updateStreak = async () => {
-    try {
-      await fetch(`${linkBackend}/user/update-streak`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId }),
-      });
-    } catch (err) {
-      console.error("Failed update streak", err);
-    }
-  };
-
-  const [streak, setStreak] = useState({
-    current_streak: 0,
-    longest_streak: 0,
-    chat_count: 0,
+  const { clearAllHistory } = useHistoryManager({
+    sessionIdRef,
+    setChatHistory,
+    selectScenario,
   });
 
-  const fetchStreak = async () => {
-    try {
-      const res = await fetch(`${linkBackend}/user/streak/${sessionId}`);
-      const data = await res.json();
-      setStreak(data);
-    } catch (err) {
-      console.error("Failed to fetch streak:", err);
-    }
-  };
-
-  const sessionIdRef = useRef(sessionId);
+  // ================== Update Streak ==================
+  const { streak, updateStreak, fetchStreak } = useStreak(sessionId);
 
   useEffect(() => {
     sessionIdRef.current = sessionId;
@@ -257,24 +198,10 @@ export default function SpeakingApp() {
     cancelRecording,
   } = speech;
 
-  const startRecording = async () => {
-    console.log("🎤 Mic button pressed");
-
-    // 1️⃣ Force stop TTS
-    forceStop();
-
-    // 2️⃣ Tunggu 1 animation frame
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-
-    // 3️⃣ Tunggu 1 microtask
-    await Promise.resolve();
-
-    // 4️⃣ Tambah sedikit delay
-    setTimeout(() => {
-      rawStartRecording();
-    }, 120);
-  };
-
+  const { startRecording } = useMicController({
+    rawStartRecording,
+    forceStop,
+  });
   // ================== TOGGLE SUGGESTION ==================
   const toggleSuggestion = () => {
     resetIdle();
@@ -304,6 +231,7 @@ export default function SpeakingApp() {
           onWheel={resetIdle}
         >
           <Header streak={streak} />
+
           <div className="text-white">
             <p>Mic Volume: {volume}</p>
 
@@ -317,24 +245,7 @@ export default function SpeakingApp() {
           {/* SUMMARY CARD */}
           {showSummary && summaryData && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-              <RoleplaySummaryCard
-                data={summaryData}
-                onClose={async () => {
-                  setShowSummary(false); // sembunyikan card
-                  setChatHistory([]); // reset chat
-                  setSelectedScenario(null); // keluar roleplay
-
-                  // clear backend history
-                  await fetch(`${linkBackend}/roleplay/clear`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      session_id: sessionIdRef.current,
-                      scenario_id: scenarioRef.current?.id ?? 0,
-                    }),
-                  });
-                }}
-              />
+              <RoleplaySummaryCard data={summaryData} onClose={closeSummary} />
             </div>
           )}
 
@@ -359,49 +270,22 @@ export default function SpeakingApp() {
             </button>
           </div>
 
-          <RoleplayToggle
-            key={selectedScenario?.id ?? "main"} // 🔥 force remount saat keluar
-            selectedScenario={selectedScenario} // 🔥 controlled component
-            onScenarioSelect={async (scenario) => {
-              const prevScenario = scenarioRef.current;
+          {mode === "dailyStory" && (
+            <DailyStoryIndicator
+              dailyStory={dailyStory}
+              onToggle={toggleDailyPhase}
+            />
+          )}
 
-              try {
-                // 🧹 1️⃣ Jika keluar roleplay
-                if (scenario === null && prevScenario) {
-                  await fetch(`${linkBackend}/roleplay/clear`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      session_id: sessionIdRef.current,
-                      scenario_id: prevScenario.id,
-                    }),
-                  });
+          {mode !== "dailyStory" && (
+            <RoleplayToggle
+              key={selectedScenario?.id ?? "main"}
+              selectedScenario={selectedScenario}
+              onScenarioSelect={selectScenario}
+            />
+          )}
 
-                  console.log("🧹 Roleplay cleared");
-                }
-
-                // ⭐ 2️⃣ Jika masuk roleplay baru
-                if (scenario) {
-                  await fetch(`${linkBackend}/roleplay/start`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      session_id: sessionIdRef.current,
-                      scenario_id: scenario.id,
-                    }),
-                  });
-
-                  console.log("🎯 Roleplay started:", scenario.name);
-                }
-
-                // 🧼 3️⃣ RESET UI STATE
-                setChatHistory([]); // bersihkan chat
-                setSelectedScenario(scenario ?? null); // reset scenario
-              } catch (err) {
-                console.error("❌ Roleplay error:", err);
-              }
-            }}
-          />
+          <ModeSelector mode={mode} setMode={setMode} />
 
           {/* SESSION ID INPUT */}
           <div className="flex items-center space-x-2 text-white">
