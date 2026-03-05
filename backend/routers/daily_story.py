@@ -224,6 +224,7 @@ async def stream_daily_story(req: StreamRequest):
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
+#
 @router.get("/progress")
 async def get_daily_progress(session_id: str = Query(...)):
     progress = get_progress(f"{session_id}_daily")
