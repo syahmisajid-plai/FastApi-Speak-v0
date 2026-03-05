@@ -18,6 +18,8 @@ from langchain_core.prompts import (
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables.history import RunnableWithMessageHistory
 
+from fastapi import Query
+
 from db import get_session_history
 
 
@@ -220,3 +222,24 @@ async def stream_daily_story(req: StreamRequest):
         yield f"event: meta\ndata: {json.dumps(meta)}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@router.get("/progress")
+async def get_daily_progress(session_id: str = Query(...)):
+    progress = get_progress(f"{session_id}_daily")
+    return {
+        "morning": (
+            check_completion(
+                {
+                    "turns": progress["turns"],
+                    "words": progress["words"],
+                    "transcript": progress["transcript"],
+                }
+            )
+            if detect_phase() == "morning"
+            else False
+        ),
+        "afternoon": False,
+        "evening": False,
+        "night": False,
+    }

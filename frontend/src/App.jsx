@@ -108,6 +108,25 @@ Feature tambahan:
     useDailyStory();
   const currentPhase = detectPhase();
 
+  useEffect(() => {
+    // ⭐ Fetch progress saat masuk dailyStory
+    if (mode === "dailyStory") {
+      fetch(`${linkBackend}/daily-story/progress?session_id=${sessionId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("📥 Daily Story Progress fetched:", data);
+
+          // tandai fase yang sudah lengkap
+          for (const phase in data) {
+            if (data[phase]) {
+              markPhaseComplete(phase);
+            }
+          }
+        })
+        .catch((err) => console.error(err));
+    }
+  }, [mode, sessionId]);
+
   // ================== REF ==================
   const bottomRef = useRef(null); // 🔵 Scroll ke bawah chat
   const recognitionRef = useRef(null); // 🔵 Referensi untuk SpeechRecognition
