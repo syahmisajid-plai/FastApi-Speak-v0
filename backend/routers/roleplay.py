@@ -168,7 +168,7 @@ def start_roleplay(req: StartRoleplayRequest):
     }
 
 
-@router.post("/stream_answer")
+@router.post("/roleplay/stream_answer")
 async def stream_answer(req: StreamRequest):
     print("🔥 STREAM")
     print("SESSION:", req.session_id)

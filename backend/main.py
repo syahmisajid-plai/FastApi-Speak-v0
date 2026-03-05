@@ -16,6 +16,7 @@ from routers import (
     suggestion,
     translate,
     tts,
+    daily_story,
 )
 
 
@@ -45,6 +46,7 @@ async def lifespan(app: FastAPI):
 # FASTAPI APP
 # -----------------------------
 app = FastAPI(lifespan=lifespan)
+
 
 # -----------------------------
 # CORS
@@ -85,6 +87,7 @@ app.include_router(stt.router)
 app.include_router(suggestion.router)
 app.include_router(translate.router)
 app.include_router(tts.router)
+app.include_router(daily_story.router)
 
 
 # Set path ke service account GCP

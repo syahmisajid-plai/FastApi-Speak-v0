@@ -1,7 +1,7 @@
 export default function ModeSelector({ mode, setMode }) {
   const modes = [
-    { key: "freeTalk", icon: "💬", label: "Talk" },
     { key: "dailyStory", icon: "📖", label: "Story" },
+    { key: "freeTalk", icon: "💬", label: "Talk" },
     { key: "roleplay", icon: "🎭", label: "Roleplay" },
   ];
 

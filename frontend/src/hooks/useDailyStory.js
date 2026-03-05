@@ -15,5 +15,19 @@ export default function useDailyStory() {
     }));
   };
 
-  return { dailyStory, toggleDailyPhase };
+  const markPhaseComplete = (phase) => {
+    setDailyStory((prev) => ({
+      ...prev,
+      [phase]: true,
+    }));
+  };
+
+  const completedCount = Object.values(dailyStory).filter(Boolean).length;
+
+  return {
+    dailyStory,
+    toggleDailyPhase,
+    markPhaseComplete,
+    completedCount,
+  };
 }

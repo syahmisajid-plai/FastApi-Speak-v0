@@ -3,15 +3,17 @@ import { streamChat } from "../services/chatService";
 export default function useConversationEngine({
   sessionIdRef,
   scenarioRef,
+  modeRef, // ⭐ NEW
   setChatHistory,
   speakText,
-  onRoleplayCompleted, // ⭐ callback ke luar
+  onRoleplayCompleted,
 }) {
   const sendTextToBackend = async (text) => {
     await streamChat({
       text,
       sessionId: sessionIdRef.current,
       scenarioId: scenarioRef.current?.id ?? 0,
+      mode: modeRef.current, // ⭐ penting
 
       // ===== user message =====
       onUserMessage: (msg) => {
@@ -22,6 +24,7 @@ export default function useConversationEngine({
       onStreamUpdate: (aiText) => {
         setChatHistory((prev) => {
           const withoutTemp = prev.filter((c) => c.sender !== "AI-temp");
+
           return [...withoutTemp, { sender: "AI-temp", message: aiText }];
         });
       },
@@ -36,7 +39,7 @@ export default function useConversationEngine({
 
         speakText(finalText);
 
-        // ⭐ hanya memberi tahu luar
+        // ⭐ hanya roleplay yang punya completion
         if (meta?.completed && scenarioRef.current?.id > 0) {
           onRoleplayCompleted?.(finalText);
         }

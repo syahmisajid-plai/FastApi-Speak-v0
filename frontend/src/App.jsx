@@ -33,6 +33,7 @@ import useStreak from "./hooks/useStreak";
 // ================== AUDIO ==================
 import useTTS_Google from "./hooks/useTTS_Google";
 import useMicMonitor from "./utils/useMicMonitor";
+import { detectPhase } from "./utils/detectPhase";
 
 // ================== DEV / DEBUG ==================
 import useEruda from "./hooks/useEruda";
@@ -77,7 +78,12 @@ Feature tambahan:
 
   // ================== Set Mode ==================
   const [mode, setMode] = useState("freeTalk");
+  const modeRef = useRef(mode);
   // freeTalk | dailyStory | roleplay
+
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
 
   // ================== SESSION MANAGEMENT ==================
   const [sessionId, setSessionId] = useState("ninda");
@@ -90,7 +96,9 @@ Feature tambahan:
   const scenarioRef = useRef(null);
 
   // ================== DAILY STORY ==================
-  const { dailyStory, toggleDailyPhase } = useDailyStory();
+  const { dailyStory, toggleDailyPhase, markPhaseComplete, completedCount } =
+    useDailyStory();
+  const currentPhase = detectPhase();
 
   // ================== REF ==================
   const bottomRef = useRef(null); // 🔵 Scroll ke bawah chat
@@ -131,6 +139,7 @@ Feature tambahan:
   const { sendTextToBackend } = useConversationEngine({
     sessionIdRef,
     scenarioRef,
+    modeRef, // ⭐ tambah ini
     setChatHistory,
     speakText,
     onRoleplayCompleted: handleRoleplayCompleted,

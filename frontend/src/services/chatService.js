@@ -1,26 +1,32 @@
+// /services/chatService.js
 import { linkBackend } from "../config";
 
 export async function streamChat({
   text,
   sessionId,
-  scenarioId = 0, // 👈 tambah ini
+  scenarioId = 0,
+  mode = "roleplay",
   onUserMessage,
   onStreamUpdate,
   onStreamEnd,
 }) {
   console.log("🚀 SEND TO AI:", text);
 
-  // 1️⃣ kirim user message ke caller
   onUserMessage(text);
 
-  // 2️⃣ POST streaming ke backend
-  const res = await fetch(`${linkBackend}/stream_answer`, {
+  let endpoint = "";
+
+  if (mode === "roleplay") endpoint = "/roleplay/stream";
+  if (mode === "dailyStory") endpoint = "/daily-story/stream";
+  if (mode === "freeTalk") endpoint = "/roleplay/stream";
+
+  const res = await fetch(`${linkBackend}${endpoint}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       session_id: sessionId,
       input: text,
-      scenario_id: scenarioId, // 🔥 INI YANG PENTING
+      scenario_id: scenarioId,
     }),
   });
 
@@ -32,13 +38,11 @@ export async function streamChat({
   const decoder = new TextDecoder();
   let aiText = "";
 
-  // 3️⃣ baca stream token demi token
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
 
     const chunk = decoder.decode(value);
-
     const cleanChunk = chunk.replace(/^data:\s*/gm, "");
 
     if (cleanChunk.includes("__ROLEPLAY_END__")) {
@@ -53,10 +57,8 @@ export async function streamChat({
     onStreamUpdate(aiText.trim());
   }
 
-  // 🔥 PENTING BANGET
   await reader.cancel();
   reader.releaseLock();
 
-  // 4️⃣ kirim hasil final ke caller
   onStreamEnd(aiText);
 }
