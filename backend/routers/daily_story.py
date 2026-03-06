@@ -41,40 +41,88 @@ session_progress = {}
 
 
 def get_progress(session_id):
-
     if session_id not in session_progress:
-        session_progress[session_id] = {"turns": 0, "words": 0, "transcript": ""}
-
+        # inisialisasi semua phase
+        session_progress[session_id] = {
+            "morning": {"turns": 0, "words": 0, "transcript": "", "completed": False},
+            "afternoon": {"turns": 0, "words": 0, "transcript": "", "completed": False},
+            "evening": {"turns": 0, "words": 0, "transcript": "", "completed": False},
+            "night": {"turns": 0, "words": 0, "transcript": "", "completed": False},
+        }
     return session_progress[session_id]
+
+
+# -----------------------------
+# NARRATIVE DETECTION
+# -----------------------------
+STORY_VERBS = [
+    "woke",
+    "went",
+    "had",
+    "did",
+    "played",
+    "saw",
+    "ate",
+    "cooked",
+    "studied",
+    "walked",
+    "morning",
+]
+
+STORY_MARKERS = ["then", "after", "later", "next", "before", "morning"]
+
+
+def is_storytelling(text: str) -> bool:
+    text_lower = text.lower()
+    verbs_count = sum(1 for verb in STORY_VERBS if verb in text_lower)
+    markers_count = sum(1 for marker in STORY_MARKERS if marker in text_lower)
+
+    # ---- LOGGING ----
+    print("📝 Text:", text)
+    print("🔹 Verbs found:", verbs_count)
+    print("🔹 Markers found:", markers_count)
+
+    # jika ada minimal 2 verbs atau 1 verb + 1 marker → valid story
+    if verbs_count >= 2 or (verbs_count >= 1 and markers_count >= 1):
+        print("✅ This is considered a story.")
+        return True
+    else:
+        print("❌ Not a story yet.")
+        return False
 
 
 # -----------------------------
 # COMPLETION CHECK
 # -----------------------------
 def check_completion(progress):
-
-    if progress["turns"] >= 2 and progress["words"] >= 10:
+    if (
+        progress["turns"] >= 2
+        and progress["words"] >= 10
+        and is_storytelling(progress["transcript"])
+    ):
         return True
-
     return False
 
 
 # -----------------------------
 # TIME DETECTION
 # -----------------------------
-def detect_phase():
+def detect_phase(progress):
+    phases_order = ["morning", "afternoon", "evening", "night"]
 
+    # cek phase pertama yang belum completed
+    for phase in phases_order:
+        if not progress[phase]["completed"]:
+            return phase
+
+    # kalau semua selesai, kembalikan phase sekarang berdasarkan jam
     hour = datetime.now().hour
-
     if hour < 11:
         return "morning"
-
     elif hour < 16:
         return "afternoon"
-
     elif hour < 19:
         return "evening"
-
     else:
         return "night"
 
@@ -96,6 +144,7 @@ Rules:
 - max 15 words
 - friendly tone
 - ask one short question
+- if user talks about something else, gently remind them to focus on their morning or today's activities
 """,
     "afternoon": """
 You are an English speaking partner helping the user reflect on the day.
@@ -110,6 +159,7 @@ Rules:
 - max 15 words
 - casual tone
 - ask one short question
+- if user talks about something else, gently remind them to focus on their morning or today's activities
 """,
     "evening": """
 You are an English speaking partner helping the user reflect on the day.
@@ -124,6 +174,7 @@ Rules:
 - max 15 words
 - friendly tone
 - ask one short question
+- if user talks about something else, gently remind them to focus on their morning or today's activities
 """,
     "night": """
 You are an English speaking partner helping the user reflect on their whole day.
@@ -138,6 +189,7 @@ Rules:
 - max 15 words
 - calm friendly tone
 - ask one short question
+- if user talks about something else, gently remind them to focus on their morning or today's activities
 """,
 }
 
@@ -166,18 +218,24 @@ async def stream_daily_story(req: StreamRequest):
     # -----------------------------
     progress = get_progress(session_key)
 
-    progress["turns"] += 1
-    progress["words"] += len(req.input.split())
-    progress["transcript"] += " " + req.input
+    # progress["turns"] += 1
+    # progress["words"] += len(req.input.split())
+    # progress["transcript"] += " " + req.input
 
     # -----------------------------
     # DETECT PHASE
     # -----------------------------
-    phase = detect_phase()
+    phase = detect_phase(progress)
+
+    phase_progress = progress[phase]
+    phase_progress["turns"] += 1
+    phase_progress["words"] += len(req.input.split())
+    phase_progress["transcript"] += " " + req.input
+    phase_progress["completed"] = check_completion(phase_progress)
 
     print("🌤 DAILY STORY PHASE:", phase)
-    print("📊 TURNS:", progress["turns"])
-    print("📝 WORDS:", progress["words"])
+    print("📊 TURNS:", phase_progress["turns"])
+    print("📝 WORDS:", phase_progress["words"])
 
     base_prompt = DAILY_PROMPTS.get(phase)
 
@@ -203,7 +261,7 @@ async def stream_daily_story(req: StreamRequest):
     # -----------------------------
     # CHECK COMPLETION
     # -----------------------------
-    completed = check_completion(progress)
+    completed = phase_progress["completed"]
 
     # -----------------------------
     # STREAM RESPONSE
@@ -228,19 +286,16 @@ async def stream_daily_story(req: StreamRequest):
 @router.get("/progress")
 async def get_daily_progress(session_id: str = Query(...)):
     progress = get_progress(f"{session_id}_daily")
-    return {
-        "morning": (
-            check_completion(
-                {
-                    "turns": progress["turns"],
-                    "words": progress["words"],
-                    "transcript": progress["transcript"],
-                }
-            )
-            if detect_phase() == "morning"
-            else False
-        ),
-        "afternoon": False,
-        "evening": False,
-        "night": False,
-    }
+
+    phases_order = ["morning", "afternoon", "evening", "night"]
+    progress_resp = {}
+    unlock_next = True
+
+    for p in phases_order:
+        if unlock_next:
+            progress_resp[p] = progress[p]["completed"]
+            unlock_next = progress[p]["completed"]
+        else:
+            progress_resp[p] = False
+
+    return progress_resp
