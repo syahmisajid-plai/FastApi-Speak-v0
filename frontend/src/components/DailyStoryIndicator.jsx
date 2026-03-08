@@ -48,7 +48,7 @@ const DailyStoryIndicator = ({ dailyStory }) => {
             {completedCount}/4 completed
           </span>
         </div>
-        <div className="flex flex-col items-end text-right">
+        <div className="flex flex-col items-end text-right leading-tight">
           <span className="text-[11px] opacity-70">{todayDate}</span>
           <div className="text-sm font-mono bg-white/10 px-2 py-1 rounded-md mt-1">
             {time}
