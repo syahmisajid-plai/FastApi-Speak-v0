@@ -85,7 +85,6 @@ Feature tambahan:
   // freeTalk | dailyStory | roleplay
 
   // ================== Load History ==================
-  // ================== Load History ==================
   const loadDailyHistory = async (session) => {
     const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
     const sessionKey = `${session}_daily_${today}`;
