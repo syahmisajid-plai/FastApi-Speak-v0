@@ -54,6 +54,20 @@ def init_db():
     """
     )
 
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS daily_story_sessions (
+            session_key TEXT,
+            story_date TEXT,
+            morning_completed INTEGER DEFAULT 0,
+            afternoon_completed INTEGER DEFAULT 0,
+            evening_completed INTEGER DEFAULT 0,
+            night_completed INTEGER DEFAULT 0,
+            PRIMARY KEY (session_key, story_date)
+        )
+    """
+    )
+
     conn.commit()
     conn.close()
 
@@ -195,3 +209,66 @@ def complete_roleplay(session_key):
 
     conn.commit()
     conn.close()
+
+
+def create_daily_story_session(session_key, story_date):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    if DATABASE_URL:
+        cursor.execute(
+            """
+            INSERT INTO daily_story_sessions (session_key, story_date)
+            VALUES (%s, %s)
+            ON CONFLICT DO NOTHING
+            """,
+            (session_key, story_date),
+        )
+    else:
+        cursor.execute(
+            """
+            INSERT OR IGNORE INTO daily_story_sessions (session_key, story_date)
+            VALUES (?, ?)
+            """,
+            (session_key, story_date),
+        )
+
+    conn.commit()
+    conn.close()
+
+
+def get_daily_story_session(session_key, story_date):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    if DATABASE_URL:
+        cursor.execute(
+            """
+            SELECT * FROM daily_story_sessions
+            WHERE session_key=%s AND story_date=%s
+            """,
+            (session_key, story_date),
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT * FROM daily_story_sessions
+            WHERE session_key=? AND story_date=?
+            """,
+            (session_key, story_date),
+        )
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return None
+
+    return {
+        "session_key": row[0],
+        "story_date": row[1],
+        "morning_completed": row[2],
+        "afternoon_completed": row[3],
+        "evening_completed": row[4],
+        "night_completed": row[5],
+    }

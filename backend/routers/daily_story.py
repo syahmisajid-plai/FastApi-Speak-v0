@@ -220,7 +220,7 @@ Rules:
 """,
 }
 
-USE_STREAMING = False  # 🔴 matikan dulu streaming
+USE_STREAMING = True  # 🔴 matikan dulu streaming
 
 # -----------------------------
 # LLM

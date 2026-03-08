@@ -32,6 +32,24 @@ export async function streamChat({
     }),
   });
 
+  // ⭐ detect non-stream response
+  const contentType = res.headers.get("content-type");
+
+  if (contentType && contentType.includes("application/json")) {
+    const data = await res.json();
+
+    onStreamUpdate(data.text);
+    onStreamEnd(data.text);
+
+    onMeta?.({
+      phase: data.phase,
+      ready: data.ready,
+      completed: data.completed,
+    });
+
+    return;
+  }
+
   if (!res.body) {
     throw new Error("No response body from server");
   }
