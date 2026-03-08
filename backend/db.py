@@ -272,3 +272,42 @@ def get_daily_story_session(session_key, story_date):
         "evening_completed": row[4],
         "night_completed": row[5],
     }
+
+
+def complete_daily_story_phase(session_key, story_date, phase):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    column_map = {
+        "morning": "morning_completed",
+        "afternoon": "afternoon_completed",
+        "evening": "evening_completed",
+        "night": "night_completed",
+    }
+
+    column = column_map.get(phase)
+    if not column:
+        conn.close()
+        return
+
+    if DATABASE_URL:
+        cursor.execute(
+            f"""
+            UPDATE daily_story_sessions
+            SET {column}=1
+            WHERE session_key=%s AND story_date=%s
+            """,
+            (session_key, story_date),
+        )
+    else:
+        cursor.execute(
+            f"""
+            UPDATE daily_story_sessions
+            SET {column}=1
+            WHERE session_key=? AND story_date=?
+            """,
+            (session_key, story_date),
+        )
+
+    conn.commit()
+    conn.close()

@@ -2,7 +2,7 @@
 
 import os
 import json
-from datetime import datetime
+from datetime import datetime, date
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
@@ -20,7 +20,12 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 
 from fastapi import Query
 
-from db import get_session_history
+from db import (
+    get_session_history,
+    complete_daily_story_phase,
+    create_daily_story_session,
+    get_daily_story_session,
+)
 
 
 router = APIRouter(prefix="/daily-story", tags=["Daily Story"])
@@ -374,3 +379,23 @@ async def next_phase(req: NextPhaseRequest):
             return {"completed_phase": p}
 
     return {"message": "no phase ready"}
+
+
+class CompletePhaseRequest(BaseModel):
+    session_id: str
+    phase: str  # 'morning', 'afternoon', 'evening', 'night'
+
+
+@router.post("/complete_phase")
+async def complete_phase(req: CompletePhaseRequest):
+    today = str(date.today())  # YYYY-MM-DD
+    session_key = f"{req.session_id}_daily"  # key untuk DB
+
+    # pastikan row untuk hari ini ada
+    if not get_daily_story_session(session_key, today):
+        create_daily_story_session(session_key, today)
+
+    # update kolom yang sesuai
+    complete_daily_story_phase(session_key, today, req.phase)
+
+    return {"status": "ok", "completed_phase": req.phase}
