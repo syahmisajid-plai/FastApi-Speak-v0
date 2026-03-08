@@ -24,33 +24,36 @@ def safe_content(raw):
 
 @router.get("/history")
 def get_history(session_id: str):
+
     if DATABASE_URL:
         conn = psycopg2.connect(DATABASE_URL)
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT role, content, timestamp FROM message_store WHERE session_id=%s ORDER BY id ASC",
-            (session_id,),
-        )
-        rows = cursor.fetchall()
-        conn.close()
     else:
         conn = sqlite3.connect("chat_history.db")
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT role, content, timestamp FROM message_store WHERE session_id=? ORDER BY id ASC",
-            (session_id,),
-        )
-        rows = cursor.fetchall()
-        conn.close()
 
-    return [
-        {
-            "role": r[0],
-            "content": safe_content(r[1]),
-            "timestamp": r[2],
-        }
-        for r in rows
-    ]
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT message FROM message_store WHERE session_id=%s ORDER BY id ASC",
+        (session_id,),
+    )
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    history = []
+
+    for r in rows:
+        try:
+            data = json.loads(r[0])
+            role = data.get("type", "ai")
+            content = data.get("data", {}).get("content", "")
+
+            history.append({"role": role, "content": content})
+
+        except Exception as e:
+            print("Parse error:", e)
+
+    return history
 
 
 @router.post("/history/clear-all")
