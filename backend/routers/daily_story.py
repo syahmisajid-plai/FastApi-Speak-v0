@@ -367,35 +367,24 @@ class NextPhaseRequest(BaseModel):
 
 @router.post("/next_phase")
 async def next_phase(req: NextPhaseRequest):
+    today = str(datetime.now().date())
+    session_key = f"{req.session_id}_daily_{today}"
 
-    progress = get_progress(f"{req.session_id}_daily")
+    # pastikan row ada
+    if not get_daily_story_session(session_key, today):
+        create_daily_story_session(session_key, today)
 
+    progress = get_progress(session_key)
     phases = ["morning", "afternoon", "evening", "night"]
 
     for p in phases:
         if progress[p]["ready"] and not progress[p]["completed"]:
             progress[p]["completed"] = True
             progress[p]["ready"] = False
+
+            # 🔹 update DB
+            complete_daily_story_phase(session_key, today, p)
+
             return {"completed_phase": p}
 
     return {"message": "no phase ready"}
-
-
-class CompletePhaseRequest(BaseModel):
-    session_id: str
-    phase: str  # 'morning', 'afternoon', 'evening', 'night'
-
-
-@router.post("/complete_phase")
-async def complete_phase(req: CompletePhaseRequest):
-    today = str(date.today())  # YYYY-MM-DD
-    session_key = f"{req.session_id}_daily"  # key untuk DB
-
-    # pastikan row untuk hari ini ada
-    if not get_daily_story_session(session_key, today):
-        create_daily_story_session(session_key, today)
-
-    # update kolom yang sesuai
-    complete_daily_story_phase(session_key, today, req.phase)
-
-    return {"status": "ok", "completed_phase": req.phase}
