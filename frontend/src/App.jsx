@@ -98,7 +98,12 @@ Feature tambahan:
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
 
-      setChatHistory(Array.isArray(data) ? data : []);
+      const formatted = (Array.isArray(data) ? data : []).map((msg) => ({
+        sender: msg.role === "human" ? "You" : "AI",
+        message: msg.content,
+      }));
+
+      setChatHistory(formatted);
       console.log("📥 Daily history loaded:", data);
     } catch (err) {
       console.error("Failed to load daily history:", err);

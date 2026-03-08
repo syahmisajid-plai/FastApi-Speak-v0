@@ -71,23 +71,40 @@ export async function streamChat({
       // =====================
       // NORMAL TOKEN STREAM
       // =====================
-      const cleanChunk = event.replace(/^data:\s*/gm, "");
+      // const cleanChunk = event.replace(/^data:\s*/gm, "");
+      const cleanChunk = event.replace(/^data:\s*/gm, "").trim();
+
+      if (!cleanChunk) continue;
 
       if (cleanChunk.includes("__ROLEPLAY_END__")) {
         await reader.cancel();
         reader.releaseLock();
 
-        onStreamEnd(aiText.trim(), { completed: true });
+        onStreamEnd(aiText, { completed: true });
         return;
       }
 
-      aiText += cleanChunk;
-      onStreamUpdate(aiText.trim());
+      aiText += cleanChunk + " ";
+
+      const formatted = aiText
+        .replace(/\s+([.,!?])/g, "$1")
+        .replace(/\s+([’'])/g, "$1")
+        .replace(/([’'])\s+/g, "$1")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      onStreamUpdate(formatted);
     }
   }
 
   await reader.cancel();
   reader.releaseLock();
 
-  onStreamEnd(aiText);
+  const finalFormatted = aiText
+    .replace(/\s+([.,!?])/g, "$1")
+    .replace(/([’'])\s+/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  onStreamEnd(finalFormatted);
 }

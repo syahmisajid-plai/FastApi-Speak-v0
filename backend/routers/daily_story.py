@@ -220,13 +220,14 @@ Rules:
 """,
 }
 
+USE_STREAMING = False  # 🔴 matikan dulu streaming
 
 # -----------------------------
 # LLM
 # -----------------------------
 llm = ChatOpenAI(
     model="gpt-4o-mini",
-    streaming=True,
+    streaming=USE_STREAMING,
     max_tokens=40,
     temperature=0.7,
 )
@@ -297,26 +298,43 @@ async def stream_daily_story(req: StreamRequest):
     completed = phase_progress["completed"]
 
     # -----------------------------
-    # STREAM RESPONSE
+    # RESPONSE
     # -----------------------------
-    def event_stream():
+    if USE_STREAMING:
 
-        for chunk in runnable.stream(
+        def event_stream():
+
+            for chunk in runnable.stream(
+                {"input": req.input},
+                config={"configurable": {"session_id": session_key}},
+            ):
+                yield f"data: {chunk}\n\n"
+
+            # send meta event after streaming
+            meta = {
+                "phase": phase,
+                "ready": phase_progress["ready"],
+                "completed": phase_progress["completed"],
+            }
+
+            yield f"event: meta\ndata: {json.dumps(meta)}\n\n"
+
+        return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+    else:
+
+        # NON STREAM MODE
+        response = runnable.invoke(
             {"input": req.input},
             config={"configurable": {"session_id": session_key}},
-        ):
-            yield f"data: {chunk}\n\n"
+        )
 
-        # send meta event after streaming
-        meta = {
+        return {
+            "text": response,
             "phase": phase,
             "ready": phase_progress["ready"],
             "completed": phase_progress["completed"],
         }
-
-        yield f"event: meta\ndata: {json.dumps(meta)}\n\n"
-
-    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 #
