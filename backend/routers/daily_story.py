@@ -44,13 +44,39 @@ def get_progress(session_id):
     if session_id not in session_progress:
         # inisialisasi semua phase
         session_progress[session_id] = {
-            "morning": {"turns": 0, "words": 0, "transcript": "", "completed": False},
-            "afternoon": {"turns": 0, "words": 0, "transcript": "", "completed": False},
-            "evening": {"turns": 0, "words": 0, "transcript": "", "completed": False},
-            "night": {"turns": 0, "words": 0, "transcript": "", "completed": False},
+            "morning": {
+                "turns": 0,
+                "words": 0,
+                "transcript": "",
+                "completed": False,
+                "ready": False,
+            },
+            "afternoon": {
+                "turns": 0,
+                "words": 0,
+                "transcript": "",
+                "completed": False,
+                "ready": False,
+            },
+            "evening": {
+                "turns": 0,
+                "words": 0,
+                "transcript": "",
+                "completed": False,
+                "ready": False,
+            },
+            "night": {
+                "turns": 0,
+                "words": 0,
+                "transcript": "",
+                "completed": False,
+                "ready": False,
+            },
         }
     return session_progress[session_id]
 
+
+# sssssssshht
 
 # -----------------------------
 # NARRATIVE DETECTION
@@ -96,10 +122,11 @@ def is_storytelling(text: str) -> bool:
 # -----------------------------
 def check_completion(progress):
     if (
-        progress["turns"] >= 2
-        and progress["words"] >= 10
-        and is_storytelling(progress["transcript"])
+        progress["turns"] >= 1
+        and progress["words"] >= 5
+        # and is_storytelling(progress["transcript"])
     ):
+        print("PHASE COMPLETE")
         return True
     return False
 
@@ -211,7 +238,7 @@ llm = ChatOpenAI(
 @router.post("/stream_answer")
 async def stream_daily_story(req: StreamRequest):
 
-    session_key = f"{req.session_id}_daily"
+    session_key = f"{req.session_id}_daily_{datetime.now().date()}"
 
     # -----------------------------
     # UPDATE PROGRESS
@@ -231,11 +258,17 @@ async def stream_daily_story(req: StreamRequest):
     phase_progress["turns"] += 1
     phase_progress["words"] += len(req.input.split())
     phase_progress["transcript"] += " " + req.input
-    phase_progress["completed"] = check_completion(phase_progress)
+    # keep last 200 chars only
+    phase_progress["transcript"] = phase_progress["transcript"][-200:]
+
+    if not phase_progress["ready"] and check_completion(phase_progress):
+        phase_progress["ready"] = True
 
     print("🌤 DAILY STORY PHASE:", phase)
     print("📊 TURNS:", phase_progress["turns"])
     print("📝 WORDS:", phase_progress["words"])
+
+    print("📊 PHASE STATE:", phase_progress)
 
     base_prompt = DAILY_PROMPTS.get(phase)
 
@@ -275,7 +308,11 @@ async def stream_daily_story(req: StreamRequest):
             yield f"data: {chunk}\n\n"
 
         # send meta event after streaming
-        meta = {"completed": completed, "phase": phase}
+        meta = {
+            "phase": phase,
+            "ready": phase_progress["ready"],
+            "completed": phase_progress["completed"],
+        }
 
         yield f"event: meta\ndata: {json.dumps(meta)}\n\n"
 
@@ -299,3 +336,23 @@ async def get_daily_progress(session_id: str = Query(...)):
             progress_resp[p] = False
 
     return progress_resp
+
+
+class NextPhaseRequest(BaseModel):
+    session_id: str
+
+
+@router.post("/next_phase")
+async def next_phase(req: NextPhaseRequest):
+
+    progress = get_progress(f"{req.session_id}_daily")
+
+    phases = ["morning", "afternoon", "evening", "night"]
+
+    for p in phases:
+        if progress[p]["ready"] and not progress[p]["completed"]:
+            progress[p]["completed"] = True
+            progress[p]["ready"] = False
+            return {"completed_phase": p}
+
+    return {"message": "no phase ready"}

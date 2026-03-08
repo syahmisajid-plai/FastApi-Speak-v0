@@ -1,1 +1,3 @@
-- Respone sometimes too long
+- database daily
+- Suara awal buka Daily
+- Prompt Daily

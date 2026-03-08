@@ -28,6 +28,11 @@ const DailyStoryIndicator = ({ dailyStory }) => {
   const completedCount = phases.filter((p) => dailyStory[p.key]).length;
   const progress = (completedCount / phases.length) * 100;
 
+  const todayDate = new Date().toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+  });
+
   // -----------------------------
   // LOGIKA UNLOCK NEXT
   // -----------------------------
@@ -43,8 +48,11 @@ const DailyStoryIndicator = ({ dailyStory }) => {
             {completedCount}/4 completed
           </span>
         </div>
-        <div className="text-sm font-mono bg-white/10 px-2 py-1 rounded-md">
-          {time}
+        <div className="flex flex-col items-end text-right">
+          <span className="text-[11px] opacity-70">{todayDate}</span>
+          <div className="text-sm font-mono bg-white/10 px-2 py-1 rounded-md mt-1">
+            {time}
+          </div>
         </div>
       </div>
       {/* Progress */}

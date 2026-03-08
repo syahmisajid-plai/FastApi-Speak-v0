@@ -84,11 +84,33 @@ Feature tambahan:
   const modeRef = useRef(mode);
   // freeTalk | dailyStory | roleplay
 
+  // ================== Load History ==================
+  const loadDailyHistory = async () => {
+    const today = new Date().toLocaleDateString("sv-SE");
+    const sessionKey = `${sessionId}_daily_${today}`;
+
+    try {
+      const res = await fetch(
+        `${linkBackend}/history?session_id=${sessionKey}`,
+      );
+
+      const data = await res.json();
+
+      setChatHistory(data);
+    } catch (err) {
+      console.error("Failed load daily history:", err);
+    }
+  };
+
   useEffect(() => {
     modeRef.current = mode;
 
-    // ⭐ CLEAR CHAT SAAT MODE BERUBAH
-    setChatHistory([]);
+    if (mode === "dailyStory") {
+      loadDailyHistory();
+    } else {
+      // mode lain tetap reset
+      setChatHistory([]);
+    }
 
     console.log("🔄 MODE CHANGED:", mode);
   }, [mode]);
@@ -107,6 +129,9 @@ Feature tambahan:
   const { dailyStory, toggleDailyPhase, markPhaseComplete, completedCount } =
     useDailyStory();
   const currentPhase = detectPhase();
+
+  const [readyToContinue, setReadyToContinue] = useState(false);
+  const [currentStoryPhase, setCurrentStoryPhase] = useState(null);
 
   useEffect(() => {
     // ⭐ Fetch progress saat masuk dailyStory
@@ -184,8 +209,10 @@ Feature tambahan:
 
     // ⭐ TAMBAHKAN INI
     onPhaseCompleted: (phase) => {
-      console.log("🌅 DAILY PHASE COMPLETED:", phase);
-      markPhaseComplete(phase);
+      console.log("🌅 DAILY PHASE READY:", phase);
+
+      setCurrentStoryPhase(phase);
+      setReadyToContinue(true);
     },
   });
 
@@ -273,6 +300,13 @@ Feature tambahan:
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
 
+  const phaseOrder = ["morning", "afternoon", "evening", "night"];
+
+  const getNextPhase = (phase) => {
+    const index = phaseOrder.indexOf(phase);
+    return phaseOrder[index + 1];
+  };
+
   // =
   return (
     <>
@@ -325,6 +359,73 @@ Feature tambahan:
 
           {mode === "dailyStory" && (
             <DailyStoryIndicator dailyStory={dailyStory} />
+          )}
+
+          {mode === "dailyStory" && readyToContinue && (
+            <div className="px-3 mt-4">
+              <button
+                onClick={() => {
+                  const next = getNextPhase(currentStoryPhase);
+
+                  if (next) {
+                    fetch(`${linkBackend}/daily-story/next_phase`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        session_id: sessionId,
+                      }),
+                    })
+                      .then((res) => res.json())
+                      .then((data) => {
+                        console.log("PHASE MOVED:", data);
+
+                        markPhaseComplete(currentStoryPhase);
+                        setReadyToContinue(false);
+                      });
+                  }
+                }}
+                className="
+        group
+        w-full
+        bg-gradient-to-r
+        from-emerald-500
+        to-green-600
+        text-white
+        rounded-2xl
+        py-4
+        px-4
+        shadow-lg
+        active:scale-95
+        transition-all
+        duration-200
+        flex
+        items-center
+        justify-between
+      "
+              >
+                {/* left side */}
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">🚀</div>
+
+                  <div className="flex flex-col text-left">
+                    <span className="text-xs opacity-80">
+                      Phase {currentStoryPhase} complete
+                    </span>
+
+                    <span className="font-semibold text-base leading-tight">
+                      Continue Story
+                    </span>
+                  </div>
+                </div>
+
+                {/* arrow */}
+                <div className="text-xl group-active:translate-x-1 transition">
+                  →
+                </div>
+              </button>
+            </div>
           )}
 
           {mode !== "dailyStory" && (

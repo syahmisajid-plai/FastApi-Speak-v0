@@ -40,7 +40,10 @@ export default function useConversationEngine({
       // META EVENT (Daily Story)
       // =========================
       onMeta: (meta) => {
-        if (meta?.completed) {
+        console.log("META RECEIVED:", meta);
+
+        if (meta?.ready) {
+          console.log("CALLING onPhaseCompleted", meta.phase);
           onPhaseCompleted?.(meta.phase);
         }
       },
