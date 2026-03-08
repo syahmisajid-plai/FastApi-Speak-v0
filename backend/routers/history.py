@@ -15,6 +15,13 @@ class ClearAllUserHistoryRequest(BaseModel):
     session_id: str
 
 
+def safe_content(raw):
+    try:
+        return json.loads(raw)["data"]["content"]
+    except:
+        return ""  # fallback jika kosong atau invalid
+
+
 @router.get("/history")
 def get_history(session_id: str):
     if DATABASE_URL:
@@ -36,11 +43,10 @@ def get_history(session_id: str):
         rows = cursor.fetchall()
         conn.close()
 
-    # selalu return array walau kosong
     return [
         {
             "role": r[0],
-            "content": json.loads(r[1])["data"]["content"],
+            "content": safe_content(r[1]),
             "timestamp": r[2],
         }
         for r in rows
