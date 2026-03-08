@@ -107,6 +107,7 @@ Feature tambahan:
     }
   };
 
+  //
   // ================== Mode change effect ==================
   useEffect(() => {
     modeRef.current = mode;
