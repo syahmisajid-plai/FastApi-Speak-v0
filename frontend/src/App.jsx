@@ -85,31 +85,36 @@ Feature tambahan:
   // freeTalk | dailyStory | roleplay
 
   // ================== Load History ==================
-  const loadDailyHistory = async () => {
-    const today = new Date().toLocaleDateString("sv-SE");
-    const sessionKey = `${sessionId}_daily_${today}`;
+  // ================== Load History ==================
+  const loadDailyHistory = async (session) => {
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    const sessionKey = `${session}_daily_${today}`;
+
+    console.log("🔑 Loading daily history for sessionKey:", sessionKey);
 
     try {
       const res = await fetch(
         `${linkBackend}/history?session_id=${sessionKey}`,
       );
-
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
 
-      setChatHistory(data);
+      setChatHistory(Array.isArray(data) ? data : []);
+      console.log("📥 Daily history loaded:", data);
     } catch (err) {
-      console.error("Failed load daily history:", err);
+      console.error("Failed to load daily history:", err);
+      setChatHistory([]); // fallback agar .map() tetap aman
     }
   };
 
+  // ================== Mode change effect ==================
   useEffect(() => {
     modeRef.current = mode;
 
     if (mode === "dailyStory") {
-      loadDailyHistory();
+      loadDailyHistory(sessionIdRef.current); // load history sesuai session terbaru
     } else {
-      // mode lain tetap reset
-      setChatHistory([]);
+      setChatHistory([]); // reset untuk mode lain
     }
 
     console.log("🔄 MODE CHANGED:", mode);

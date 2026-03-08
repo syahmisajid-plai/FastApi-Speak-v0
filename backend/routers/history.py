@@ -4,6 +4,8 @@ import sqlite3
 import psycopg2
 import os
 
+import json
+
 router = APIRouter()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -35,7 +37,14 @@ def get_history(session_id: str):
         conn.close()
 
     # selalu return array walau kosong
-    return [{"role": r[0], "content": r[1], "timestamp": r[2]} for r in rows]
+    return [
+        {
+            "role": r[0],
+            "content": json.loads(r[1])["data"]["content"],
+            "timestamp": r[2],
+        }
+        for r in rows
+    ]
 
 
 @router.post("/history/clear-all")
