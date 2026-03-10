@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const DailyStoryIndicator = ({ dailyStory }) => {
+const DailyStoryIndicator = ({ dailyStory, isDailyLocked }) => {
   const phases = [
     { key: "morning", label: "Morning", emoji: "🌅" },
     { key: "afternoon", label: "Afternoon", emoji: "☀️" },
@@ -13,15 +13,17 @@ const DailyStoryIndicator = ({ dailyStory }) => {
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
+
       const formatted = now.toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       });
+
       setTime(formatted);
     };
 
     updateClock();
-    const interval = setInterval(updateClock, 1000);
+    const interval = setInterval(updateClock, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -39,7 +41,7 @@ const DailyStoryIndicator = ({ dailyStory }) => {
   let unlockNext = true; // fase pertama selalu unlock
 
   return (
-    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 text-white w-full">
+    <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-4 text-white w-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex flex-col">
@@ -58,7 +60,7 @@ const DailyStoryIndicator = ({ dailyStory }) => {
       {/* Progress */}
       <div className="w-full h-2 bg-white/10 rounded-full mb-4 overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-green-400 to-green-500 transition-all duration-500"
+          className="h-full bg-gradient-to-r from-bl-400 to-bl-500 transition-all duration-500"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -94,6 +96,14 @@ const DailyStoryIndicator = ({ dailyStory }) => {
           );
         })}
       </div>
+
+      {isDailyLocked && (
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-md flex flex-col items-center justify-center rounded-2xl z-20">
+          <div className="text-3xl mb-2">🔒</div>
+          <div className="text-sm font-medium">Daily Story Locked</div>
+          <div className="text-xs opacity-70 mt-1">Available 16:00 – 02:00</div>
+        </div>
+      )}
     </div>
   );
 };

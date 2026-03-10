@@ -75,6 +75,28 @@ button {
   clip-path: circle(150% at 50% 50%);
 }
 
+.blur-locked {
+  filter: blur(1px) grayscale(70%);
+  pointer-events: none;
+}
+
+/* di App.css atau global CSS */
+@keyframes slow-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+.animate-slow-pulse {
+  animation: slow-pulse 4s ease-in-out infinite;
+}
+
 /* 
 #root {
   max-width: 1280px;

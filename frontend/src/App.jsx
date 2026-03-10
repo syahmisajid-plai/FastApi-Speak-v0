@@ -75,6 +75,7 @@ Feature tambahan:
   const [isRecording, setIsRecording] = useState(false); // 🔴 Status perekaman
   const [showSuggestions, setShowSuggestions] = useState(false); // 🔴 Tampilkan saran
   const [showOverlay, setShowOverlay] = useState(true); // 🔑 SATU-SATUNYA GATE
+  const [roleplayModalOpen, setRoleplayModalOpen] = useState(false);
 
   const [pendingMode, setPendingMode] = useState(null);
   const [showModeConfirm, setShowModeConfirm] = useState(false);
@@ -83,6 +84,12 @@ Feature tambahan:
   const [mode, setMode] = useState("freeTalk");
   const modeRef = useRef(mode);
   // freeTalk | dailyStory | roleplay
+
+  // ================== STATE Daily Greeting ==================
+  const [dailyGreetingDone, setDailyGreetingDone] = useState(false);
+
+  // ================== REF AUDIO ==================
+  const audioDailyStartRef = useRef(null);
 
   // ================== Load History ==================
   const loadDailyHistory = async (session) => {
@@ -111,7 +118,22 @@ Feature tambahan:
     }
   };
 
-  //
+  // ================== Lock Daily ==================
+  const [timeAllowed, setTimeAllowed] = useState(false);
+
+  useEffect(() => {
+    const checkTime = () => {
+      const hour = new Date().getHours();
+      setTimeAllowed(hour >= 16 && hour < 22);
+    };
+
+    checkTime();
+    const interval = setInterval(checkTime, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const isDailyLocked = mode === "dailyStory" && !timeAllowed;
+
   // ================== Mode change effect ==================
   useEffect(() => {
     modeRef.current = mode;
@@ -226,6 +248,46 @@ Feature tambahan:
     },
   });
 
+  // ================== Sapaan Pertama Daily ==================
+  useEffect(() => {
+    if (mode !== "dailyStory") return; // ✅ hanya di mode dailyStory
+    if (isDailyLocked) return;
+    if (dailyGreetingDone) return; // ✅ pastikan hanya sekali
+
+    const today = new Date().toISOString().split("T")[0];
+    const sessionKey = `${sessionId}_daily_${today}`;
+
+    console.log("🔄 Checking first daily greeting...", { sessionKey });
+
+    fetch(`${linkBackend}/history?session_id=${sessionKey}`)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("📥 Daily history loaded:", data);
+
+        if (data.length === 0) {
+          console.log("🎉 No chat yet today → sending first greeting");
+
+          setChatHistory((prev) => [
+            ...prev,
+            {
+              sender: "AI",
+              message:
+                "Time to share your story today 😊. How did your morning start?",
+              phase: "morning", // optional: tandai phase
+            },
+          ]);
+
+          // 🎵 Mainkan audio
+          audioDailyStartRef.current?.play().catch(console.error);
+          setDailyGreetingDone(true);
+        } else {
+          console.log("⏭ Chat already exists today → skipping greeting");
+          setDailyGreetingDone(true); // tetap tandai done supaya tidak repeat
+        }
+      })
+      .catch(console.error);
+  }, [mode, sessionId, dailyGreetingDone]);
+
   // ================== SUGGESTIONS ==================
   const { suggestions, fetchSuggestions } = useSuggestions(chatHistory); // 💡 Saran dari chat history
   const { isIdle, resetIdle } = useIdle(15000); // ⏱️ Deteksi idle user (15 detik)
@@ -306,6 +368,15 @@ Feature tambahan:
     }
   }, [isRecording]);
 
+  // ================== KELUAR DARI MODE ROLEPLAY ==================
+  useEffect(() => {
+    if (mode !== "roleplay") {
+      // ❌ Reset roleplay saat pindah mode selain roleplay
+      setRoleplayModalOpen(false); // tutup modal
+      selectScenario(null); // reset selectedScenario → sama seperti klik ❌
+    }
+  }, [mode]);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
@@ -328,6 +399,13 @@ Feature tambahan:
           onWheel={resetIdle}
         >
           <Header streak={streak} />
+
+          {/* 🔊 Audio untuk greeting daily */}
+          <audio
+            ref={audioDailyStartRef}
+            src="/src/assets/daily_start.mp3"
+            preload="auto"
+          />
 
           <div className="text-white">
             <p>Mic Volume: {volume}</p>
@@ -368,7 +446,10 @@ Feature tambahan:
           </div>
 
           {mode === "dailyStory" && (
-            <DailyStoryIndicator dailyStory={dailyStory} />
+            <DailyStoryIndicator
+              dailyStory={dailyStory}
+              isDailyLocked={isDailyLocked}
+            />
           )}
 
           {mode === "dailyStory" && readyToContinue && (
@@ -397,23 +478,23 @@ Feature tambahan:
                   }
                 }}
                 className="
-        group
-        w-full
-        bg-gradient-to-r
-        from-emerald-500
-        to-green-600
-        text-white
-        rounded-2xl
-        py-4
-        px-4
-        shadow-lg
-        active:scale-95
-        transition-all
-        duration-200
-        flex
-        items-center
-        justify-between
-      "
+                  group
+                  w-full
+                  bg-gradient-to-r
+                  from-emerald-500
+                  to-green-600
+                  text-white
+                  rounded-2xl
+                  py-4
+                  px-4
+                  shadow-lg
+                  active:scale-95
+                  transition-all
+                  duration-200
+                  flex
+                  items-center
+                  justify-between
+                "
               >
                 {/* left side */}
                 <div className="flex items-center gap-3">
@@ -440,13 +521,23 @@ Feature tambahan:
 
           {mode !== "dailyStory" && (
             <RoleplayToggle
-              key={selectedScenario?.id ?? "main"}
               selectedScenario={selectedScenario}
               onScenarioSelect={selectScenario}
+              isOpen={roleplayModalOpen} // controlled
+              setIsOpen={setRoleplayModalOpen} // controlled
+              setMode={setMode} // <-- tambahkan ini
             />
           )}
 
-          <ModeSelector mode={mode} setMode={handleModeChange} />
+          <ModeSelector
+            mode={mode}
+            setMode={(newMode) => {
+              if (newMode === mode) return;
+              setMode(newMode);
+
+              if (newMode === "roleplay") setRoleplayModalOpen(true); // ✅ buka modal langsung
+            }}
+          />
 
           {showModeConfirm && (
             <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
@@ -526,6 +617,7 @@ Feature tambahan:
               openLupaKata: () => lupaKata.toggleLupaKata(isRecording),
               isLupaKataActive: lupaKata.isLupaKataActive,
               lupaKataResult: lupaKata.lupaKataResult,
+              isDailyLocked,
             }}
           />
 

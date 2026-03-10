@@ -1,3 +1,15 @@
-- database daily
-- Suara awal buka Daily
-- Prompt Daily
+- database daily ✅
+- Suara awal buka Daily ✅
+- Prompt Daily ?✅?
+
+- Mic On, kunci ganti mode  ✅
+- Ada Jeda Update Roleplay, Kunci Mode Lain (Atau ada icon Pindah Mode) ✅
+- Warna Tiap Mode Beda ✅
+
+- Ganti Stage Clear UI History
+
+- Kunci Stage Daily sampe jam 16.00 ✅ (tambahkan ON OF Development (blm)) 
+- Prompt Sesuaikan ini sudah di ujung hari (Mode Daily)
+
+
+✅❌
