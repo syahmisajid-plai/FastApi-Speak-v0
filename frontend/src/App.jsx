@@ -124,7 +124,7 @@ Feature tambahan:
   useEffect(() => {
     const checkTime = () => {
       const hour = new Date().getHours();
-      setTimeAllowed(hour >= 16 && hour < 22);
+      setTimeAllowed(hour >= 16 || hour < 6);
     };
 
     checkTime();
