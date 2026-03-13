@@ -394,7 +394,7 @@ Feature tambahan:
       {/* 🔥 MAIN APP — SELALU RENDER */}
       <div className="min-h-screen lg:w-full flex justify-center bg-linear-to-b from-slate-900 to-blue-950 p-4">
         <div
-          className="w-full max-w-md space-y-6 flex flex-col"
+          className="w-full max-w-md flex flex-col space-y-4 sm:space-y-6 mb-64"
           onClick={resetIdle}
           onWheel={resetIdle}
         >
