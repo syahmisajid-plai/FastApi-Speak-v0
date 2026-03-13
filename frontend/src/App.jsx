@@ -392,7 +392,16 @@ Feature tambahan:
   return (
     <>
       {/* 🔥 MAIN APP — SELALU RENDER */}
-      <div className="min-h-screen lg:w-full flex justify-center bg-linear-to-b from-slate-900 to-blue-950 p-4">
+      <div
+        className={`min-h-screen lg:w-full flex justify-center p-4
+        ${
+          mode === "dailyStory"
+            ? "bg-linear-to-b from-gray-800 to-gray-900"
+            : mode === "roleplay"
+              ? "bg-linear-to-b from-purple-400 to-indigo-600"
+              : "bg-linear-to-b  from-slate-900 to-blue-950"
+        }`}
+      >
         <div
           className="w-full max-w-md flex flex-col space-y-4 sm:space-y-6 mb-16"
           onClick={resetIdle}
