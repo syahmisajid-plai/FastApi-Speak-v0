@@ -614,7 +614,12 @@ Feature tambahan:
               cancelRecording,
               toggleSuggestion,
               isIdle,
-              openLupaKata: () => lupaKata.toggleLupaKata(isRecording),
+              openLupaKata: () =>
+                lupaKata.toggleLupaKata(
+                  isRecording, // main recording sedang aktif
+                  speech.pauseRecording, // pause main recording sementara
+                  speech.resumeRecording, // resume setelah selesai
+                ),
               isLupaKataActive: lupaKata.isLupaKataActive,
               lupaKataResult: lupaKata.lupaKataResult,
               isDailyLocked,

@@ -11,5 +11,11 @@
 - Kunci Stage Daily sampe jam 16.00 ✅ (tambahkan ON OF Development (blm)) 
 - Prompt Sesuaikan ini sudah di ujung hari (Mode Daily)
 
+- Translated saat Recording
+-- Record belum ada kata tidak bisa cancel / send ✅
+-- Translated biasa tetap kembali ke Recording ✅
+-- Record lalu Translated, belum lock recording ✅
+-- beri jeda suara translated baru lanjutkan record 
+
 
 ✅❌

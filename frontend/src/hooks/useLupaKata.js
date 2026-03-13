@@ -12,6 +12,10 @@ export default function useLupaKata({
   const finalTextRef = useRef("");
 
   const recognitionRef = useRef(null);
+
+  // ⬇️ TAMBAHKAN INI
+  const wasRecordingBeforeLupaKataRef = useRef(false);
+  const resumeMainRecordingRef = useRef(null);
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -53,36 +57,38 @@ export default function useLupaKata({
   };
 
   /* ================= START ================= */
-  const startLupaKata = (isMainRecording) => {
-    if (!SpeechRecognition) {
-      alert("SpeechRecognition not supported");
-      return;
-    }
+  const startLupaKata = (
+    isMainRecording,
+    pauseMainRecording,
+    resumeMainRecording,
+  ) => {
+    if (!SpeechRecognition) return;
 
-    if (isMainRecording) {
-      stopMainRecording?.();
+    // simpan status main recording
+    wasRecordingBeforeLupaKataRef.current = isMainRecording;
+    resumeMainRecordingRef.current = resumeMainRecording;
+
+    if (isMainRecording && pauseMainRecording) {
+      pauseMainRecording(); // ⬅️ pause main recording
     }
 
     const recognition = new SpeechRecognition();
     recognition.lang = "id-ID";
-    recognition.continuous = true; // 🔑 jangan auto-end
+    recognition.continuous = true;
     recognition.interimResults = true;
 
     finalTextRef.current = "";
 
     recognition.onresult = (event) => {
       let interim = "";
-
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const t = event.results[i][0].transcript;
-
         if (event.results[i].isFinal) {
           finalTextRef.current += t + " ";
         } else {
           interim += t;
         }
       }
-
       setLupaKataHeardText(finalTextRef.current + interim);
     };
 
@@ -90,6 +96,15 @@ export default function useLupaKata({
       console.error("LupaKata STT error:", e.error);
       setIsLupaKataActive(false);
       setLupaKataHeardText("");
+      // Resume main recording kalau error
+      resumeMainRecording?.();
+    };
+
+    recognition.onend = () => {
+      if (wasRecordingBeforeLupaKataRef.current) {
+        resumeMainRecording?.();
+        wasRecordingBeforeLupaKataRef.current = false;
+      }
     };
 
     recognitionRef.current = recognition;
@@ -107,12 +122,22 @@ export default function useLupaKata({
       setIsLupaKataActive(false);
       setLupaKataHeardText("");
     }
+
+    // ⚠️ Hanya resume main recording kalau sebelumnya record aktif
+    if (wasRecordingBeforeLupaKataRef.current) {
+      resumeMainRecordingRef.current?.();
+      wasRecordingBeforeLupaKataRef.current = false;
+    }
   };
 
   /* ================= TOGGLE ================= */
-  const toggleLupaKata = (isMainRecording) => {
+  const toggleLupaKata = (
+    isMainRecording,
+    pauseMainRecording,
+    resumeMainRecording,
+  ) => {
     if (!isLupaKataActive) {
-      startLupaKata(isMainRecording);
+      startLupaKata(isMainRecording, pauseMainRecording, resumeMainRecording);
     } else {
       stopLupaKata();
     }

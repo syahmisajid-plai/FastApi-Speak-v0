@@ -68,20 +68,26 @@ export default function ControlSection({
               {/* Tombol Record */}
               <div className="col-span-3 h-16 rounded-lg font-bold transition relative">
                 {isRecording ? (
-                  <div className="flex w-full h-full">
-                    <div
-                      className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-l-lg flex items-center justify-center cursor-pointer"
-                      onClick={stopRecording}
-                    >
-                      🟦 Send
+                  isLupaKataActive ? (
+                    <div className="w-full h-full bg-gray-400 text-gray-700 rounded-lg flex items-center justify-center font-bold">
+                      🔒 Recording Locked
                     </div>
-                    <div
-                      className="flex-1 bg-gray-500 hover:bg-gray-600 text-white rounded-r-lg flex items-center justify-center cursor-pointer"
-                      onClick={cancelRecording}
-                    >
-                      🟥 Cancel
+                  ) : (
+                    <div className="flex w-full h-full">
+                      <div
+                        className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-l-lg flex items-center justify-center cursor-pointer"
+                        onClick={stopRecording}
+                      >
+                        🟦 Send
+                      </div>
+                      <div
+                        className="flex-1 bg-gray-500 hover:bg-gray-600 text-white rounded-r-lg flex items-center justify-center cursor-pointer"
+                        onClick={cancelRecording}
+                      >
+                        🟥 Cancel
+                      </div>
                     </div>
-                  </div>
+                  )
                 ) : (
                   <div
                     className={`w-full h-full rounded-lg flex items-center justify-center font-bold
@@ -122,15 +128,13 @@ export default function ControlSection({
                   <div
                     className={`w-full h-full flex items-center justify-center text-white text-sm font-bold rounded-lg text-center
                   ${
-                    isRecording || isDailyLocked
+                    isDailyLocked
                       ? "bg-gray-400 text-gray-700 cursor-not-allowed"
                       : isLupaKataActive
                         ? "bg-emerald-300"
                         : "bg-emerald-500 hover:bg-emerald-600 cursor-pointer"
                   }`}
-                    onClick={
-                      !isRecording && !isDailyLocked ? openLupaKata : undefined
-                    }
+                    onClick={!isDailyLocked ? openLupaKata : undefined}
                   >
                     {isRecording
                       ? "🔒 Translate Locked"
