@@ -12,7 +12,7 @@ export default function BottomActions({
   lupaKata,
 }) {
   return (
-    <div className="fixed bottom-20 lg:bottom-20 left-0 lg:w-full px-4 space-y-4">
+    <div className="fixed bottom-20 lg:bottom-20 left-0 w-full px-4 space-y-4">
       {lupaKata.isLupaKataActive && <LupaKataOverlay />}
       {isRecording && !lupaKata.isLupaKataActive && <RecordingSection />}
       {showSuggestions && (

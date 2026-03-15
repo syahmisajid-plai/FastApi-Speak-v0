@@ -144,7 +144,7 @@ export default function ControlSection({
                 <div className="col-span-1 h-16 flex items-center justify-center relative group">
                   {/* mobile hint sebelum ditekan */}
                   {showHint && !isLupaKataActive && (
-                    <div className="absolute -top-16 bg-black/80 text-white text-[10px] px-3 py-1 rounded-md whitespace-normal text-center">
+                    <div className="absolute -top-20 bg-black/80 text-white text-[10px] px-3 py-1 rounded-md whitespace-normal text-center">
                       Forgot a word? Tap here
                       <br />
                       (ID → EN)
