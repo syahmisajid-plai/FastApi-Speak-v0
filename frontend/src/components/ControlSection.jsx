@@ -81,7 +81,7 @@ export default function ControlSection({
                     <div className="flex w-full h-full items-center justify-center gap-3">
                       {/* SEND */}
                       <div
-                        className="flex-1 h-12 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center cursor-pointer font-semibold shadow-md hover:scale-105 transition"
+                        className="flex-1 h-12 text-sm lg:text-base bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center cursor-pointer font-semibold shadow-md hover:scale-105 transition"
                         onClick={stopRecording}
                       >
                         📤 Send
@@ -89,7 +89,7 @@ export default function ControlSection({
 
                       {/* CANCEL */}
                       <div
-                        className="flex-1 h-12 bg-gray-500 hover:bg-gray-600 text-white rounded-full flex items-center justify-center cursor-pointer font-semibold shadow-md hover:scale-105 transition"
+                        className="flex-1 h-12 text-sm lg:text-base bg-gray-500 hover:bg-gray-600 text-white rounded-full flex items-center justify-center cursor-pointer font-semibold shadow-md hover:scale-105 transition"
                         onClick={cancelRecording}
                       >
                         ✖ Cancel
@@ -183,7 +183,7 @@ export default function ControlSection({
                       }
                     }}
                   >
-                    {isRecording ? "🤔" : isLupaKataActive ? "⏹" : "🔄"}
+                    {isLupaKataActive ? "⏹" : isRecording ? "🤔" : "🔄"}
                   </div>
                 </div>
               )}
