@@ -1,9 +1,15 @@
-import { useState } from "react";
+// ================== REACT CORE ==================
+import { useEffect, useState, useRef } from "react";
 import bgTree from "../assets/bg_tree.jpg";
 import airport from "../assets/airport.png";
 import interview from "../assets/interview.jpg";
 import orderFood from "../assets/order_food.png";
 import shopping from "../assets/shopping.jpg";
+
+import easy_mode from "../assets/7AvxLpHYRtmcMPAtwJGRtQ.webp";
+import medium_mode from "../assets/360_F_1487969412_OJJSsXoi9qcN72n06ZODBiX9BJAVKgPl.jpg";
+import hard_mode from "../assets/ya_-re-dragon-vs.jpg";
+import hard_mode2 from "../assets/knight-vs-dragon-battle-vector-59124162.avif";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { EffectCards } from "swiper/modules";
@@ -20,12 +26,20 @@ export default function RoleplayToggleSwipe({
   setIsOpen, // <-- dari parent
   setMode, // <-- props baru
 }) {
-  const scenarios = [
-    { id: 1, name: "Ordering at a Restaurant", image: orderFood },
-    { id: 2, name: "Job Interview", image: interview },
-    { id: 3, name: "Traveling at the Airport", image: airport },
-    { id: 4, name: "Shopping in a Mall", image: shopping },
+  const difficulties = [
+    { id: 1, name: "Easy Mode", image: easy_mode },
+    { id: 2, name: "Medium Mode", image: medium_mode },
+    { id: 3, name: "Hard Mode", image: hard_mode },
+    { id: 4, name: "Hard Mode", image: hard_mode2 },
   ];
+
+  useEffect(() => {
+    if (isOpen) {
+      setStep("difficulty");
+      setSelectedDifficulty(null);
+      setMission(null);
+    }
+  }, [isOpen]);
 
   const handleSelect = (scenario) => {
     setIsOpen(false);
@@ -33,6 +47,23 @@ export default function RoleplayToggleSwipe({
   };
 
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState("difficulty");
+  const [selectedDifficulty, setSelectedDifficulty] = useState(null);
+  const [mission, setMission] = useState(null);
+
+  const dummyMission = {
+    theme: "Restaurant",
+    difficulty: "Medium",
+    scenario: "You are asking the waiter for food recommendations.",
+    goal: "Order a meal and confirm the price.",
+    checklist: [
+      "Greet the waiter",
+      "Ask for recommendation",
+      "Ask about ingredients",
+      "Order food",
+      "Confirm the price",
+    ],
+  };
 
   const handleCloseOrSelect = async (scenario = null) => {
     try {
@@ -71,14 +102,16 @@ export default function RoleplayToggleSwipe({
     }
   };
 
+  const dummyScenarioName = "Airport Check-in";
+
   return (
     <section
       className={`relative rounded-xl p-4 shadow transition-colors duration-500
-        ${
-          selectedScenario
-            ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
-            : "bg-white text-gray-900"
-        }`}
+      ${
+        selectedScenario
+          ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
+          : "bg-white text-gray-900"
+      }`}
     >
       {/* ❌ CLOSE BUTTON */}
       {selectedScenario && (
@@ -92,116 +125,155 @@ export default function RoleplayToggleSwipe({
         </button>
       )}
 
-      <p className="text-sm mb-1">
-        {selectedScenario ? "🎭 Selected Scenario" : "💬 Scenario"}
+      <p className="text-xs opacity-80 mb-1">
+        {selectedScenario ? "🎭 Roleplay Mission" : "💬 Free Talk"}
       </p>
 
-      <p className="text-base font-medium mb-4">
-        {selectedScenario
-          ? `Scenario: ${selectedScenario.name}`
-          : "Main Scenario"}
+      <p className="text-lg font-semibold mb-1">
+        {selectedScenario ? selectedScenario.name : "Start a conversation"}
       </p>
+
+      {selectedScenario && (
+        <p className="text-sm opacity-80 mb-3">
+          Scenario Mission: Airport Check-in
+        </p>
+      )}
 
       {/* tombol buka modal */}
-      {!selectedScenario && (
-        <div className="absolute right-4 bottom-4">
-          <div
-            className="w-12 h-7 flex items-center justify-center rounded-full shadow-xl cursor-pointer
-            bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
-            onClick={() => setIsOpen(true)}
-          >
-            🎭
-          </div>
+      <div className="absolute right-4 bottom-4">
+        <div
+          className="w-12 h-7 flex items-center justify-center rounded-full shadow-xl cursor-pointer
+        bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
+          onClick={() => {
+            setMode("roleplay"); // ubah mode
+            setStep("difficulty"); // reset step
+            setIsOpen(true); // buka modal
+          }}
+        >
+          🎭
         </div>
-      )}
+      </div>
 
       {/* MODAL */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="w-[280px] h-[380px]">
-            {loading && (
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: "rgba(0,0,0,0.3)",
-                  borderRadius: "1rem",
-                  zIndex: 50,
-                  gap: "0.5rem",
-                }}
+          <div className="w-[280px] h-[380px]  rounded-xl p-3">
+            {/* STEP 1 — DIFFICULTY */}
+            {step === "difficulty" && (
+              <Swiper
+                effect="cards"
+                grabCursor={true}
+                modules={[EffectCards]}
+                className="h-full"
               >
-                {/* Orang berjalan */}
-                <div
-                  style={{
-                    position: "relative",
-                    width: "32px",
-                    height: "32px",
-                  }}
-                >
-                  <div
-                    style={{
-                      position: "absolute",
-                      fontSize: "2rem",
-                      animation: "walk 1s linear infinite alternate",
-                    }}
-                  >
-                    🚶
-                  </div>
-                </div>
+                {difficulties.map((s) => (
+                  <SwiperSlide key={s.id}>
+                    <div
+                      className="w-full h-full rounded-xl flex items-center justify-center text-xl font-semibold shadow-2xl cursor-pointer"
+                      style={{
+                        backgroundImage: `url(${s.image})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        color: "white",
+                      }}
+                      onClick={() => {
+                        setSelectedDifficulty(s);
+                        setStep("randomizing");
 
-                {/* Teks loading */}
-                <span
-                  style={{
-                    color: "#ffffff", // putih murni
-                    fontWeight: 700, // lebih tebal
-                    textShadow: "0 0 6px rgba(0,0,0,0.7)", // agar menonjol di background gelap
-                    fontSize: "1rem",
-                  }}
-                >
-                  {selectedScenario
-                    ? `Moving to: ${selectedScenario.name} 🚶‍♂️`
-                    : "Getting ready... 👣"}
-                </span>
+                        setTimeout(() => {
+                          setMission(dummyMission);
+                          setStep("mission");
+                        }, 2000);
+                      }}
+                    >
+                      {s.name}
+                    </div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            )}
 
-                {/* Keyframes inline */}
-                <style>
-                  {`
-                  @keyframes walk {
-                    0% { transform: translateX(20px); }
-                    50% { transform: translateX(0); }
-                    100% { transform: translateX(-20px); }
-                  }
-                `}
-                </style>
+            {/* STEP 2 — RANDOMIZING */}
+            {step === "randomizing" && (
+              <div className="flex flex-col items-center justify-center h-full text-white bg-black/40 rounded-2xl">
+                <div className="text-4xl animate-spin">🎲</div>
+
+                <p className="mt-4 text-lg font-semibold">
+                  Finding your mission...
+                </p>
+
+                <p className="text-sm opacity-80">
+                  Preparing roleplay scenario
+                </p>
               </div>
             )}
-            <Swiper
-              effect="cards"
-              grabCursor={true}
-              modules={[EffectCards]}
-              className="h-full"
-            >
-              {scenarios.map((s) => (
-                <SwiperSlide key={s.id}>
-                  <div
-                    className="w-full h-full rounded-xl flex items-center justify-center text-xl font-semibold shadow-2xl cursor-pointer"
-                    style={{
-                      backgroundImage: `url(${s.image})`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                      color: "white",
-                    }}
-                    onClick={() => handleCloseOrSelect(s)}
-                  >
-                    {s.name}
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
+
+            {/* STEP 3 — MISSION CARD */}
+            {step === "mission" && mission && (
+              <div className="bg-linear-to-br from-indigo-400 to-purple-400 rounded-xl shadow-md border border-gray-100 p-3 flex flex-col gap-2">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-2">
+                  <h2 className="text-sm font-semibold">
+                    🎯 {mission.theme} Mission
+                  </h2>
+
+                  <span className="text-xs px-2 py-0.5 mt-0.5 rounded-full bg-indigo-100 text-indigo-700 whitespace-nowrap">
+                    {selectedDifficulty?.name}
+                  </span>
+                </div>
+
+                {/* Scenario */}
+                <div className="rounded-md p-2">
+                  <p className="text-[10px] font-medium text-black uppercase mb-0.5">
+                    Scenario
+                  </p>
+
+                  <p className="text-xs text-gray-800 leading-snug">
+                    {mission.scenario}
+                  </p>
+                </div>
+
+                {/* Goal */}
+                <div className="rounded-md p-2">
+                  <p className="text-[10px] font-medium text-black uppercase mb-0.5">
+                    Goal
+                  </p>
+
+                  <p className="text-xs text-gray-800 leading-snug">
+                    {mission.goal}
+                  </p>
+                </div>
+
+                {/* Checklist */}
+                <div className="p-2">
+                  <p className="text-[10px] font-medium text-black uppercase mb-1">
+                    Checklist
+                  </p>
+
+                  <ul className="flex flex-col gap-[3px] text-xs">
+                    {mission.checklist.map((c, i) => (
+                      <li key={i} className="flex items-start gap-1">
+                        <span className="text-green-350 mt-[1px]">✔</span>
+                        <span className="text-gray-800">{c}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Start Button */}
+                <button
+                  className="mt-1 py-2! rounded-lg bg-indigo-500! text-white text-sm font-medium hover:bg-indigo-600! transition"
+                  onClick={() =>
+                    handleCloseOrSelect({
+                      id: selectedDifficulty?.id,
+                      name: selectedDifficulty?.name,
+                    })
+                  }
+                >
+                  Start Roleplay 🚀
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

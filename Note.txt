@@ -17,5 +17,12 @@
 -- Record lalu Translated, belum lock recording ✅
 -- beri jeda suara translated baru lanjutkan record 
 
+- Prompt Free Talk & Roleplay Mission
+
+-Roleplay Mission -> pilihan kesulitan -> animasi sistem random tema -> muncucl card mission (tema, skenario, tingkat kesulitan, mission, checklist penyelesaian)
+-Tombol Bawah roleplay blum fix langsung loncat ke summary mission
+
+-backend roleplay yang baru belum
+-UI loading jeda roleplay -> free talk
 
 ✅❌
