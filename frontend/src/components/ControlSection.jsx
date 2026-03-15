@@ -1,3 +1,6 @@
+// ================== REACT CORE ==================
+import { useEffect, useState, useRef } from "react";
+
 export default function ControlSection({
   isRecording,
   isSpeaking, // ✅ TAMBAHKAN
@@ -15,10 +18,12 @@ export default function ControlSection({
   forceStop, // ✅ TAMBAHKAN
   isDailyLocked,
 }) {
+  const [showHint, setShowHint] = useState(true);
+
   return (
     <>
       {/* FLOATING SUGGEST BUTTON */}
-      <div className="grid grid-cols-5 gap-4 max-w-md mx-auto">
+      {/* <div className="grid grid-cols-5 gap-4 max-w-md mx-auto">
         <div className="flex justify-center col-span-4"></div>
         <div className="flex justify-center col-span-1">
           <div
@@ -35,7 +40,7 @@ export default function ControlSection({
             ✨
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* MIC / RECORD & LUPA KATA */}
       <div className="relative max-w-md mx-auto">
@@ -66,81 +71,119 @@ export default function ControlSection({
           ) : (
             <>
               {/* Tombol Record */}
-              <div className="col-span-3 h-16 rounded-lg font-bold transition relative">
+              <div className="col-start-2 col-span-2 h-16 rounded-lg font-bold transition relative">
                 {isRecording ? (
                   isLupaKataActive ? (
                     <div className="w-full h-full bg-gray-400 text-gray-700 rounded-lg flex items-center justify-center font-bold">
                       🔒 Recording Locked
                     </div>
                   ) : (
-                    <div className="flex w-full h-full">
+                    <div className="flex w-full h-full items-center justify-center gap-3">
+                      {/* SEND */}
                       <div
-                        className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-l-lg flex items-center justify-center cursor-pointer"
+                        className="flex-1 h-12 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center cursor-pointer font-semibold shadow-md hover:scale-105 transition"
                         onClick={stopRecording}
                       >
-                        🟦 Send
+                        📤 Send
                       </div>
+
+                      {/* CANCEL */}
                       <div
-                        className="flex-1 bg-gray-500 hover:bg-gray-600 text-white rounded-r-lg flex items-center justify-center cursor-pointer"
+                        className="flex-1 h-12 bg-gray-500 hover:bg-gray-600 text-white rounded-full flex items-center justify-center cursor-pointer font-semibold shadow-md hover:scale-105 transition"
                         onClick={cancelRecording}
                       >
-                        🟥 Cancel
+                        ✖ Cancel
                       </div>
                     </div>
                   )
                 ) : (
                   <div
-                    className={`w-full h-full rounded-lg flex items-center justify-center font-bold
-                    ${
-                      isLupaKataActive || isDailyLocked
-                        ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                        : isSpeaking
-                          ? "bg-orange-400 hover:bg-orange-500 text-white cursor-pointer"
-                          : "bg-red-500 hover:bg-red-600 text-white cursor-pointer"
-                    }
-                  `}
+                    className="w-full h-full flex items-center justify-center"
                     onClick={
                       !isLupaKataActive && !isDailyLocked
                         ? () => {
                             if (isSpeaking) {
                               console.log("🛑 Interrupting TTS first");
-                              forceStop(); // tap pertama cuma stop audio
+                              forceStop();
                               return;
                             }
 
-                            startRecording(); // baru record kalau tidak speaking
+                            startRecording();
                           }
                         : undefined
                     }
                   >
-                    {isLupaKataActive
-                      ? "🔒 Recording Locked"
-                      : isSpeaking
-                        ? "⏹ Stop AI"
-                        : "🔴 Record"}
+                    <div className="relative flex items-center justify-center">
+                      {/* OUTER PULSE RING */}
+                      {!isLupaKataActive && !isDailyLocked && (
+                        <span
+                          className={`absolute w-12 h-12 rounded-full border-2 border-white/70 animate-ping`}
+                        />
+                      )}
+
+                      {/* MAIN MIC BUTTON */}
+                      <div
+                        className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-lg
+                      ${
+                        isLupaKataActive || isDailyLocked
+                          ? "bg-gray-500 text-gray-300"
+                          : isSpeaking
+                            ? "bg-orange-500 text-white"
+                            : "bg-red-600 text-white hover:scale-105 transition"
+                      }`}
+                      >
+                        {isLupaKataActive ? "🔒" : isSpeaking ? "⏹" : "🎙️"}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
 
               {/* Lupa Kata */}
               {micReady && (
-                <div className="col-span-1 h-16 rounded-lg transition relative">
+                <div className="col-span-1 h-16 flex items-center justify-center relative group">
+                  {/* mobile hint sebelum ditekan */}
+                  {showHint && !isLupaKataActive && (
+                    <div className="absolute -top-16 bg-black/80 text-white text-[10px] px-3 py-1 rounded-md whitespace-normal text-center">
+                      Forgot a word? Tap here
+                      <br />
+                      (ID → EN)
+                    </div>
+                  )}
+
+                  {/* clue setelah ditekan */}
+                  {isLupaKataActive && (
+                    <div
+                      className="absolute -top-16 left-1/2 transform -translate-x-1/2 
+                    bg-black/80 text-white text-xs px-3 py-1 rounded-md text-center whitespace-normal max-w-xs"
+                    >
+                      Speak in Indonesian now ⬇
+                    </div>
+                  )}
+
+                  {/* subtle glow ketika aktif */}
+                  {isLupaKataActive && (
+                    <span className="absolute w-14 h-14 rounded-full bg-emerald-400/40 blur-md animate-pulse"></span>
+                  )}
+
+                  {/* tombol Lupa Kata */}
                   <div
-                    className={`w-full h-full flex items-center justify-center text-white text-sm font-bold rounded-lg text-center
+                    className={`relative w-14 h-14 flex items-center justify-center rounded-full text-xl shadow-md transition-all duration-200
                   ${
                     isDailyLocked
-                      ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                       : isLupaKataActive
-                        ? "bg-emerald-300"
-                        : "bg-emerald-500 hover:bg-emerald-600 cursor-pointer"
+                        ? "bg-emerald-500 text-white scale-105"
+                        : "bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-110 cursor-pointer"
                   }`}
-                    onClick={!isDailyLocked ? openLupaKata : undefined}
+                    onClick={() => {
+                      if (!isDailyLocked) {
+                        openLupaKata(); // aktifkan translate
+                        setShowHint(false); // sembunyikan hint awal
+                      }
+                    }}
                   >
-                    {isRecording
-                      ? "🔒 Translate Locked"
-                      : isLupaKataActive
-                        ? "⏹ Stop"
-                        : "📖 Translate"}
+                    {isRecording ? "🤔" : isLupaKataActive ? "⏹" : "🔄"}
                   </div>
                 </div>
               )}
