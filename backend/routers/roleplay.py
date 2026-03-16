@@ -1,119 +1,36 @@
 # routers/roleplay.py
+
 import os
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-import re
 
 from langchain_openai import ChatOpenAI
-from langchain_core.prompts import (
-    ChatPromptTemplate,
-    SystemMessagePromptTemplate,
-    HumanMessagePromptTemplate,
-    MessagesPlaceholder,
-)
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_community.chat_message_histories import SQLChatMessageHistory
+from langchain_core.messages import SystemMessage, HumanMessage
 
 from db import (
     get_session_history,
     create_roleplay_session,
     get_roleplay_session,
-    increment_turn,  # 🔥 WAJIB
+    increment_turn,
     complete_roleplay,
+    get_random_scenario,
+    get_scenario_checklist,
+    get_scenario,
 )
 
+router = APIRouter(prefix="/roleplay", tags=["Roleplay"])
 
-# fungsi dari db.py
-
-router = APIRouter()
 DATABASE_URL = os.getenv("DATABASE_URL")
-
-# -----------------------------
-# SCENARIO IDENTITY PROMPTS
-# -----------------------------
-
-SCENARIO_PROMPTS = {
-    0: """
-You are an English conversation partner for speaking practice.
-Encourage friendly casual conversation.
-Make the user relaxed and confident.
-""",
-    1: """
-You are a waiter in a restaurant.
-Help the customer order food and pay the bill.
-Be friendly and professional.
-""",
-    2: """
-You are a job interviewer.
-Conduct a professional interview.
-Ask relevant questions about experience and skills.
-""",
-    3: """
-You are airport staff.
-Help passengers with check-in and boarding.
-Be clear and helpful.
-""",
-    4: """
-You are a shop assistant in a mall.
-Help customers find and buy items.
-Be friendly and helpful.
-""",
-}
-
-# -----------------------------
-# GLOBAL STYLE RULES
-# -----------------------------
-
-GLOBAL_STYLE_RULES = """
-If the user makes a grammar, tense, or wording mistake, gently suggest a better sentence.
-
-Use this format:
-
-You could say:
-"correct sentence"
-
-Rules:
-
-1. Do NOT repeat the user's incorrect sentence.
-2. If the sentence is already correct, do not show a correction.
-3. Keep corrections short and natural.
-4. If there are multiple mistakes, correct only the most important one.
-
-Example:
-
-User: "I go to campus yesterday"
-
-Assistant:
-
-You could say:
-"I went to campus yesterday."
-
-Nice! What did you do there?
-"""
-
-SCENARIO_GOALS = {
-    0: ("Have a casual conversation", 3),
-    1: ("Order food and pay the bill", 3),
-    2: ("Answer job interview questions", 3),
-    3: ("Check in and board a flight", 3),
-    4: ("Buy an item in a mall", 3),
-}
 
 
 # -----------------------------
 # MODELS
 # -----------------------------
-class ClearRoleplayRequest(BaseModel):
-    session_id: str
-    scenario_id: int
 
 
-class StreamRequest(BaseModel):
-    session_id: str
-    input: str
-    scenario_id: int = 0  # default main scenario
+class GenerateRequest(BaseModel):
+    difficulty: str
 
 
 class StartRoleplayRequest(BaseModel):
@@ -121,213 +38,168 @@ class StartRoleplayRequest(BaseModel):
     scenario_id: int
 
 
+class StreamRequest(BaseModel):
+    session_id: str
+    scenario_id: int
+    input: str
+
+
 # -----------------------------
 # LLM
 # -----------------------------
+
 llm = ChatOpenAI(
     model="gpt-4o-mini",
     streaming=True,
-    max_tokens=32,
     temperature=0.7,
+    max_tokens=80,
 )
 
 
 # -----------------------------
-# ROUTES
+# GENERATE RANDOM SCENARIO
 # -----------------------------
-@router.post("/roleplay/clear")
-def clear_roleplay(req: ClearRoleplayRequest):
-
-    session_key = f"{req.session_id}_sc{req.scenario_id}"
-
-    if DATABASE_URL:
-        conn_str = DATABASE_URL
-    else:
-        conn_str = "sqlite:///chat_history.db"
-
-    history = SQLChatMessageHistory(
-        session_id=session_key,
-        connection_string=conn_str,
-    )
-
-    history.clear()
-
-    print("🧹 Cleared roleplay history:", session_key)
-
-    return {"status": "cleared"}
 
 
-@router.post("/roleplay/start")
-def start_roleplay(req: StartRoleplayRequest):
+@router.get("/generate")
+def generate_roleplay(difficulty: str):
 
-    session_key = f"{req.session_id}_sc{req.scenario_id}"
+    scenario = get_random_scenario(difficulty)
 
-    # ambil goal
-    goal, target_turn = SCENARIO_GOALS.get(req.scenario_id, ("Have a conversation", 6))
+    if not scenario:
+        return {"error": "No scenario found"}
 
-    # reset chat history
-    history = get_session_history(session_key)
-    history.clear()
-
-    # buat roleplay session state
-    create_roleplay_session(
-        session_key=session_key,
-        scenario_id=req.scenario_id,
-        goal=goal,
-        target_turn=target_turn,
-    )
-
-    print("🎯 START ROLEPLAY:", session_key, goal)
+    checklist = get_scenario_checklist(scenario["id"])
 
     return {
-        "status": "started",
-        "goal": goal,
-        "target_turn": target_turn,
+        "scenario_id": scenario["id"],
+        "theme": scenario["theme"],
+        "difficulty": scenario["difficulty"],
+        "user_role": scenario["user_role"],
+        "ai_role": scenario["ai_role"],
+        "situation": scenario["situation"],
+        "goal": scenario["goal"],
+        "target_turn": scenario["target_turn"],
+        "checklist": checklist,
     }
 
 
-@router.post("/roleplay/stream_answer")
-async def stream_answer(req: StreamRequest):
-    print("🔥 STREAM")
-    print("SESSION:", req.session_id)
-    print("SCENARIO:", req.scenario_id)
+# -----------------------------
+# START ROLEPLAY SESSION
+# -----------------------------
 
-    # -----------------------------
-    # SESSION KEY & LOAD SESSION
-    # -----------------------------
+
+@router.post("/start")
+def start_roleplay(req: StartRoleplayRequest):
+
+    scenario = get_scenario(req.scenario_id)
+
+    if not scenario:
+        return {"error": "Scenario not found"}
+
+    session_key = f"{req.session_id}_sc{req.scenario_id}"
+
+    history = get_session_history(session_key)
+    history.clear()
+
+    create_roleplay_session(
+        session_key=session_key,
+        scenario_id=req.scenario_id,
+        goal=scenario["goal"],
+        target_turn=scenario["target_turn"],
+    )
+
+    return {
+        "status": "started",
+        "goal": scenario["goal"],
+        "target_turn": scenario["target_turn"],
+    }
+
+
+# -----------------------------
+# STREAM ROLEPLAY RESPONSE
+# -----------------------------
+
+
+@router.post("/stream_answer")
+async def stream_answer(req: StreamRequest):
+
+    scenario = get_scenario(req.scenario_id)
+
+    if not scenario:
+        return {"error": "Scenario not found"}
+
     session_key = f"{req.session_id}_sc{req.scenario_id}"
     session_data = get_roleplay_session(session_key)
 
-    # ❌ Cek session hanya untuk roleplay (id > 0)
-    if req.scenario_id > 0 and not session_data:
+    if not session_data:
         return {"error": "Roleplay not started"}
 
-    # ❌ Stop final hanya untuk roleplay
-    if req.scenario_id > 0 and session_data.get("status") == "done":
-        print("⛔ Session already completed")
-        return {"message": "Session finished. Start new roleplay."}
+    if session_data["status"] == "completed":
+        return {"message": "Roleplay already finished"}
 
     # -----------------------------
-    # TURN INFO
+    # TURN LOGIC
     # -----------------------------
-    if req.scenario_id == 0:
-        # main scenario: unlimited
-        current_turn = 0
-        next_turn = 0
-        target_turn = None
-        is_final_turn = False
-    else:
-        current_turn = session_data["current_turn"]
-        target_turn = session_data["target_turn"]
-        next_turn = current_turn + 1
-        is_final_turn = next_turn >= target_turn
 
-    goal = session_data["goal"] if session_data else SCENARIO_PROMPTS[0]
+    current_turn = session_data["current_turn"]
+    target_turn = session_data["target_turn"]
 
-    print("CURRENT TURN:", current_turn)
-    print("NEXT TURN:", next_turn)
-    print("TARGET TURN:", target_turn)
-    print("IS FINAL TURN:", is_final_turn)
-
-    # -----------------------------
-    # BEHAVIOR RULES
-    # -----------------------------
-    if req.scenario_id == 0:
-        behavior_rule = """
-        MAIN SCENARIO:
-        - Free conversation.
-        - No forced goodbye or ending.
-        - Short, casual, friendly English.
-        """
-    else:
-        remaining_turn = target_turn - next_turn
-        if remaining_turn <= 0:
-            behavior_rule = """
-            FINAL TURN:
-            - This is the last message.
-            - You MUST finish the interaction.
-            - You MUST say a polite goodbye.
-            - You MUST NOT ask any question.
-            - Do NOT offer further help.
-            - Do NOT continue the shopping process.
-            - End with a closing sentence like:
-            "Thank you for visiting. Have a nice day."
-            """
-        elif remaining_turn == 1:
-            behavior_rule = """
-            NEAR FINAL TURN:
-            - Start wrapping up the topic.
-            - Ask one light closing question.
-            - Prepare to finish the conversation soon.
-            """
-        else:
-            behavior_rule = """
-            NORMAL TURN:
-            - Continue the conversation.
-            - End with ONE short question.
-            """
+    next_turn = current_turn + 1
+    is_final_turn = next_turn >= target_turn
 
     # -----------------------------
     # SYSTEM PROMPT
     # -----------------------------
-    base_prompt = SCENARIO_PROMPTS.get(req.scenario_id, SCENARIO_PROMPTS[0])
-    enriched_prompt = f"""
-    {base_prompt}
 
-    {GLOBAL_STYLE_RULES}
+    system_prompt = f"""
+    You are roleplaying as: {scenario["ai_role"]}
 
-    ROLEPLAY GOAL:
-    {goal}
+    User role:
+    {scenario["user_role"]}
 
-    TURN INFO:
-    Current Turn: {next_turn}
-    Target Turn: {target_turn}
+    Situation:
+    {scenario["situation"]}
 
-    {behavior_rule}
+    Goal:
+    {scenario["goal"]}
+
+    Stay in character.
+    Encourage the user to speak English.
+    Respond naturally.
+    Keep responses short.
     """
-    print("\n================ FINAL SYSTEM PROMPT ================")
-    print(enriched_prompt)
-    print("=====================================================\n")
 
-    system_prompt = SystemMessagePromptTemplate.from_template(enriched_prompt)
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            system_prompt,
-            MessagesPlaceholder(variable_name="history"),
-            HumanMessagePromptTemplate.from_template("{input}"),
-        ]
-    )
-
-    chain = prompt | llm | StrOutputParser()
-    runnable = RunnableWithMessageHistory(
-        chain,
-        get_session_history,
-        input_messages_key="input",
-        history_messages_key="history",
-    )
+    messages = [
+        SystemMessage(content=system_prompt),
+        *get_session_history(session_key).messages,
+        HumanMessage(content=req.input),
+    ]
 
     # -----------------------------
     # STREAM RESPONSE
     # -----------------------------
-    def event_stream():
+
+    async def event_stream():
+
         full_text = ""
 
-        for chunk in runnable.stream(
-            {"input": req.input},
-            config={"configurable": {"session_id": session_key}},
-        ):
-            full_text += chunk
-            yield f"data: {chunk}\n\n"
+        response = llm.stream(messages)
 
-        # -----------------------------
-        # INCREMENT TURN & COMPLETE ROLEPLAY
-        # -----------------------------
-        if req.scenario_id > 0:
-            increment_turn(session_key)
+        for chunk in response:
+            token = chunk.content or ""
+            full_text += token
+            yield f"data: {token}\n\n"
 
-            if is_final_turn:
-                complete_roleplay(session_key)
-                print("🏁 ROLEPLAY COMPLETED")
-                yield "data: __ROLEPLAY_END__\n\n"
+        # update turn
+        increment_turn(session_key)
+
+        if is_final_turn:
+            complete_roleplay(session_key)
+            yield "data: __ROLEPLAY_END__\n\n"
+
+        history = get_session_history(session_key)
+        history.add_user_message(req.input)
+        history.add_ai_message(full_text)
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")

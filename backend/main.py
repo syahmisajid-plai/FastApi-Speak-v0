@@ -17,6 +17,7 @@ from routers import (
     translate,
     tts,
     daily_story,
+    freetalk,
 )
 
 
@@ -88,6 +89,7 @@ app.include_router(suggestion.router)
 app.include_router(translate.router)
 app.include_router(tts.router)
 app.include_router(daily_story.router)
+app.include_router(freetalk.router)
 
 
 # Set path ke service account GCP

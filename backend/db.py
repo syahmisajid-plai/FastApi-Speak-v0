@@ -68,8 +68,148 @@ def init_db():
     """
     )
 
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS scenarios (
+            id INTEGER PRIMARY KEY,
+            theme TEXT,
+            difficulty TEXT,
+            user_role TEXT,
+            ai_role TEXT,
+            situation TEXT,
+            goal TEXT,
+            target_turn INTEGER
+        )
+    """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS scenario_checklist (
+            id INTEGER PRIMARY KEY,
+            scenario_id INTEGER,
+            step_key TEXT,
+            description TEXT,
+            step_order INTEGER
+        )
+    """
+    )
+
     conn.commit()
     conn.close()
+
+
+def get_random_scenario(difficulty):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    if DATABASE_URL:
+        cursor.execute(
+            """
+            SELECT * FROM scenarios
+            WHERE difficulty=%s
+            ORDER BY RANDOM()
+            LIMIT 1
+            """,
+            (difficulty,),
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT * FROM scenarios
+            WHERE difficulty=?
+            ORDER BY RANDOM()
+            LIMIT 1
+            """,
+            (difficulty,),
+        )
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return None
+
+    return {
+        "id": row[0],
+        "theme": row[1],
+        "difficulty": row[2],
+        "user_role": row[3],
+        "ai_role": row[4],
+        "situation": row[5],
+        "goal": row[6],
+        "target_turn": row[7],
+    }
+
+
+def get_scenario_checklist(scenario_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    if DATABASE_URL:
+        cursor.execute(
+            """
+            SELECT step_key, description
+            FROM scenario_checklist
+            WHERE scenario_id=%s
+            ORDER BY step_order
+            """,
+            (scenario_id,),
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT step_key, description
+            FROM scenario_checklist
+            WHERE scenario_id=?
+            ORDER BY step_order
+            """,
+            (scenario_id,),
+        )
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [{"step_key": r[0], "description": r[1]} for r in rows]
+
+
+def get_scenario(scenario_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    if DATABASE_URL:
+        cursor.execute(
+            """
+            SELECT * FROM scenarios
+            WHERE id=%s
+            """,
+            (scenario_id,),
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT * FROM scenarios
+            WHERE id=?
+            """,
+            (scenario_id,),
+        )
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return None
+
+    return {
+        "id": row[0],
+        "theme": row[1],
+        "difficulty": row[2],
+        "user_role": row[3],
+        "ai_role": row[4],
+        "situation": row[5],
+        "goal": row[6],
+        "target_turn": row[7],
+    }
 
 
 def get_session_history(session_id: str):

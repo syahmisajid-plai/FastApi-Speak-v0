@@ -133,8 +133,6 @@ Feature tambahan:
   }, []);
 
   const isDailyLocked = mode === "dailyStory" && !timeAllowed;
-  console.log("===================isDailyLocked===================");
-  console.log(isDailyLocked);
 
   // ================== Mode change effect ==================
   useEffect(() => {

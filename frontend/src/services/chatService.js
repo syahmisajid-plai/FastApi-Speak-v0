@@ -16,11 +16,13 @@ export async function streamChat({
 
   onUserMessage(text);
 
-  let endpoint = "";
+  const endpointMap = {
+    roleplay: "/roleplay/stream_answer",
+    dailyStory: "/daily-story/stream_answer",
+    freeTalk: "/free-talk/stream_answer",
+  };
 
-  if (mode === "roleplay") endpoint = "/roleplay/stream_answer";
-  if (mode === "dailyStory") endpoint = "/daily-story/stream_answer";
-  if (mode === "freeTalk") endpoint = "/roleplay/stream_answer";
+  const endpoint = endpointMap[mode];
 
   const res = await fetch(`${linkBackend}${endpoint}`, {
     method: "POST",

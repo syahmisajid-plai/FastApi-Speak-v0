@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { linkBackend } from "../config";
 
 export default function useRoleplay({
@@ -7,85 +7,78 @@ export default function useRoleplay({
   chatHistory,
   setChatHistory,
 }) {
-  // ================== STATE ==================
-
   const [selectedScenario, setSelectedScenario] = useState(null);
+
   const [showSummary, setShowSummary] = useState(false);
   const [summaryData, setSummaryData] = useState(null);
 
+  // sync ref
   useEffect(() => {
     scenarioRef.current = selectedScenario;
   }, [selectedScenario]);
 
-  // ================== SELECT SCENARIO ==================
-  const selectScenario = async (scenario) => {
-    const prevScenario = scenarioRef.current;
+  // =========================
+  // API HELPERS
+  // =========================
 
+  const clearRoleplay = async (scenarioId) => {
     try {
-      // 🧹 keluar roleplay
-      if (scenario === null && prevScenario) {
-        await fetch(`${linkBackend}/roleplay/clear`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            session_id: sessionIdRef.current,
-            scenario_id: prevScenario.id,
-          }),
-        });
-
-        console.log("🧹 Roleplay cleared");
-      }
-
-      // ⭐ masuk roleplay baru
-      if (scenario) {
-        await fetch(`${linkBackend}/roleplay/start`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            session_id: sessionIdRef.current,
-            scenario_id: scenario.id,
-          }),
-        });
-
-        console.log("🎯 Roleplay started:", scenario.name);
-      }
-
-      // ⭐ UPDATE REF (INI YANG PENTING)
-      scenarioRef.current = scenario ?? null;
-
-      // reset UI
-      setChatHistory([]);
-      setSelectedScenario(scenario ?? null);
-    } catch (err) {
-      console.error("❌ Roleplay error:", err);
-    }
-  };
-
-  // ================== SHOW SUMMARY ==================
-  const openSummary = (data) => {
-    setSummaryData(data);
-    setShowSummary(true);
-  };
-
-  // ================== CLOSE SUMMARY ==================
-  const closeSummary = async () => {
-    try {
-      setShowSummary(false);
-      setChatHistory([]);
-      setSelectedScenario(null);
-
       await fetch(`${linkBackend}/roleplay/clear`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           session_id: sessionIdRef.current,
-          scenario_id: scenarioRef.current?.id ?? 0,
+          scenario_id: scenarioId,
         }),
       });
+
+      console.log("🧹 Roleplay cleared");
     } catch (err) {
-      console.error("❌ Failed to clear roleplay", err);
+      console.error("❌ clearRoleplay error", err);
     }
   };
+
+  const startRoleplay = async (scenario) => {
+    try {
+      await fetch(`${linkBackend}/roleplay/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sessionIdRef.current,
+          scenario_id: scenario.id,
+        }),
+      });
+
+      console.log("🎯 Roleplay started:", scenario.name);
+    } catch (err) {
+      console.error("❌ startRoleplay error", err);
+    }
+  };
+
+  // =========================
+  // SELECT SCENARIO
+  // =========================
+
+  const selectScenario = async (scenario) => {
+    const prevScenario = scenarioRef.current;
+
+    // keluar roleplay
+    if (!scenario && prevScenario) {
+      await clearRoleplay(prevScenario.id);
+    }
+
+    // masuk roleplay baru
+    if (scenario) {
+      await startRoleplay(scenario);
+    }
+
+    setChatHistory([]);
+    setSelectedScenario(scenario ?? null);
+  };
+
+  // =========================
+  // ROLEPLAY COMPLETED
+  // =========================
 
   const handleRoleplayCompleted = async (finalText) => {
     console.log("🏁 Roleplay finished");
@@ -100,17 +93,35 @@ export default function useRoleplay({
 
     setShowSummary(true);
 
-    setChatHistory([]);
-    setSelectedScenario(null);
+    const scenarioId = scenarioRef.current?.id;
 
-    await fetch(`${linkBackend}/roleplay/clear`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        session_id: sessionIdRef.current,
-        scenario_id: scenarioRef.current.id,
-      }),
-    });
+    setSelectedScenario(null);
+    setChatHistory([]);
+
+    if (scenarioId) {
+      await clearRoleplay(scenarioId);
+    }
+  };
+
+  // =========================
+  // SUMMARY CONTROL
+  // =========================
+
+  const openSummary = (data) => {
+    setSummaryData(data);
+    setShowSummary(true);
+  };
+
+  const closeSummary = async () => {
+    const scenarioId = scenarioRef.current?.id;
+
+    setShowSummary(false);
+    setSelectedScenario(null);
+    setChatHistory([]);
+
+    if (scenarioId) {
+      await clearRoleplay(scenarioId);
+    }
   };
 
   return {
