@@ -6,7 +6,7 @@ export default function ModeSelector({
   micActive,
   lupaKataActive,
 }) {
-  const [lockedMode, setLockedMode] = useState(null); // mode yang sedang dikunci
+  // const [lockedMode, setLockedMode] = useState(null); // mode yang sedang dikunci
 
   const modes = [
     { key: "dailyStory", icon: "📖", label: "Story", color: "emerald" },
@@ -23,11 +23,11 @@ export default function ModeSelector({
 
   const handleModeChange = (m) => {
     if (mode === m.key) return; // sudah aktif
-    if (lockedMode) return; // sedang dikunci
+    // if (lockedMode) return; // sedang dikunci
     if (micActive || lupaKataActive) return; // mic/lupa kata aktif
 
     setMode(m.key);
-    setLockedMode(m.key); // kunci mode lain sementara
+    // setLockedMode(m.key); // kunci mode lain sementara
 
     // // unlock setelah 5 detik
     // setTimeout(() => {
@@ -40,9 +40,10 @@ export default function ModeSelector({
       <div className="w-full max-w-md flex bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg p-1">
         {modes.map((m) => {
           const active = mode === m.key;
-          const locked =
-            (lockedMode && !active) ||
-            ((micActive || lupaKataActive) && !active);
+          // const locked =
+          //   (lockedMode && !active) ||
+          //   ((micActive || lupaKataActive) && !active);
+          const locked = false;
 
           return (
             <div key={m.key} className="relative flex-1">
@@ -56,13 +57,7 @@ export default function ModeSelector({
                       ? `${modeStyles[m.color]} text-white shadow-2xl scale-105 ring-2 animate-slow-pulse`
                       : ""
                   }
-                  ${
-                    locked
-                      ? "pointer-events-none text-white/40 filter blur-sm"
-                      : !active
-                        ? "text-white/60 hover:text-white hover:bg-white/10"
-                        : ""
-                  }
+${!active ? "text-white/60 hover:text-white hover:bg-white/10" : ""}
                 `}
                 title={
                   locked
@@ -74,11 +69,11 @@ export default function ModeSelector({
                 <span className="text-[11px] font-medium">{m.label}</span>
               </button>
 
-              {locked && (
+              {/* {locked && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <span className="text-red-400 text-xl">🔒</span>
                 </div>
-              )}
+              )} */}
             </div>
           );
         })}
