@@ -65,6 +65,16 @@ export default function RoleplayToggleSwipe({
     ],
   };
 
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleCloseOrSelect = async (scenario = null) => {
     try {
       setLoading(true);
@@ -92,7 +102,7 @@ export default function RoleplayToggleSwipe({
         if (setMode) setMode("freeTalk");
       }
       // tambahkan delay 10 detik sebelum close
-      await new Promise((resolve) => setTimeout(resolve, 2800));
+      // await new Promise((resolve) => setTimeout(resolve, 2800));
 
       if (setIsOpen) setIsOpen(false);
     } catch (err) {
@@ -109,54 +119,91 @@ export default function RoleplayToggleSwipe({
       className={`relative rounded-xl p-4 shadow transition-colors duration-500
       ${
         selectedScenario
-          ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
-          : "bg-white text-gray-900"
+          ? "bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white"
+          : "bg-slate-900/80 text-white border border-slate-700/40"
       }`}
     >
-      {/* ❌ CLOSE BUTTON */}
-      {selectedScenario && (
+      <div className="relative bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
+        {/* DATE & TIME */}
+        <div className="absolute top-3 right-3 text-right text-[11px] text-white/70 leading-tight">
+          <div>
+            {now.toLocaleDateString("en-US", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+            })}
+          </div>
+          {/* <div className="font-medium">
+            {now.toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </div> */}
+        </div>
+
+        {/* ❌ CLOSE BUTTON */}
+        {selectedScenario && (
+          <button
+            className="absolute -top-4 -right-4 w-8 h-8 flex items-center justify-center 
+            rounded-full bg-white/10!! text-white text-sm transition"
+            onClick={() => handleCloseOrSelect(null)}
+          >
+            ✕
+          </button>
+        )}
+        {/* HEADER */}
+        <div className="flex items-start gap-3 pr-10">
+          {/* ICON */}
+          <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/20 text-lg">
+            {selectedScenario ? "🎭" : "💬"}
+          </div>
+
+          <div className="flex flex-col">
+            {/* MODE BADGE */}
+            <span className="text-[10px] uppercase tracking-wider text-white/70 mb-1">
+              {selectedScenario ? "Roleplay Mode" : "Free Talk"}
+            </span>
+
+            {/* TITLE */}
+            <p className="text-lg font-semibold leading-tight">
+              {selectedScenario ? selectedScenario.name : "Start speaking"}
+            </p>
+
+            {/* HINT */}
+            {!selectedScenario && (
+              <p className="text-xs text-white/60 mt-1">
+                Talk freely 🎙️ AI will respond
+              </p>
+            )}
+
+            {/* SUBTITLE */}
+            {selectedScenario && (
+              <p className="text-xs text-white/70 mt-1">
+                ✈️ Mission: Airport Check-in Conversation
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* FLOATING ROLEPLAY BUTTON */}
         <button
-          className="absolute top-4 right-4 px-3 py-1 rounded-lg text-white font-bold"
+          className="absolute right-3 bottom-3 w-10 h-10 flex items-center justify-center
+            rounded-full shadow-lg cursor-pointer
+            bg-gradient-to-r from-purple-600 to-indigo-600 
+            hover:scale-105 active:scale-95 transition"
           onClick={() => {
-            handleCloseOrSelect(null);
-          }}
-        >
-          ❌
-        </button>
-      )}
-
-      <p className="text-xs opacity-80 mb-1">
-        {selectedScenario ? "🎭 Roleplay Mission" : "💬 Free Talk"}
-      </p>
-
-      <p className="text-lg font-semibold mb-1">
-        {selectedScenario ? selectedScenario.name : "Start a conversation"}
-      </p>
-
-      {selectedScenario && (
-        <p className="text-sm opacity-80 mb-3">
-          Scenario Mission: Airport Check-in
-        </p>
-      )}
-
-      {/* tombol buka modal */}
-      <div className="absolute right-4 bottom-4">
-        <div
-          className="w-12 h-7 flex items-center justify-center rounded-full shadow-xl cursor-pointer
-        bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
-          onClick={() => {
-            setMode("roleplay"); // ubah mode
-            setStep("difficulty"); // reset step
-            setIsOpen(true); // buka modal
+            setMode("roleplay");
+            setStep("difficulty");
+            setIsOpen(true);
           }}
         >
           🎭
-        </div>
+        </button>
       </div>
 
       {/* MODAL */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
           <div className="w-[280px] h-[380px]  rounded-xl p-3">
             {/* STEP 1 — DIFFICULTY */}
             {step === "difficulty" && (

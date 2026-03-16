@@ -67,12 +67,30 @@ Be friendly and helpful.
 # -----------------------------
 
 GLOBAL_STYLE_RULES = """
-GENERAL RULES:
-- Use simple English.
-- Short sentences, maximum 15 words.
-- Correct grammar politely.
-- Be natural and conversational.
-- Do not give long explanations.
+If the user makes a grammar, tense, or wording mistake, gently suggest a better sentence.
+
+Use this format:
+
+You could say:
+"correct sentence"
+
+Rules:
+
+1. Do NOT repeat the user's incorrect sentence.
+2. If the sentence is already correct, do not show a correction.
+3. Keep corrections short and natural.
+4. If there are multiple mistakes, correct only the most important one.
+
+Example:
+
+User: "I go to campus yesterday"
+
+Assistant:
+
+You could say:
+"I went to campus yesterday."
+
+Nice! What did you do there?
 """
 
 SCENARIO_GOALS = {

@@ -124,7 +124,7 @@ Feature tambahan:
   useEffect(() => {
     const checkTime = () => {
       const hour = new Date().getHours();
-      setTimeAllowed(hour >= 16 || hour < 6);
+      setTimeAllowed(hour != 16 || hour < 6);
     };
 
     checkTime();
@@ -133,6 +133,8 @@ Feature tambahan:
   }, []);
 
   const isDailyLocked = mode === "dailyStory" && !timeAllowed;
+  console.log("===================isDailyLocked===================");
+  console.log(isDailyLocked);
 
   // ================== Mode change effect ==================
   useEffect(() => {

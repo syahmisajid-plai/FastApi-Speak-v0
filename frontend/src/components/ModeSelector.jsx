@@ -29,10 +29,10 @@ export default function ModeSelector({
     setMode(m.key);
     setLockedMode(m.key); // kunci mode lain sementara
 
-    // unlock setelah 5 detik
-    setTimeout(() => {
-      setLockedMode(null);
-    }, 3000);
+    // // unlock setelah 5 detik
+    // setTimeout(() => {
+    //   setLockedMode(null);
+    // }, 3000);
   };
 
   return (
