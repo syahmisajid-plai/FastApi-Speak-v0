@@ -150,7 +150,7 @@ Feature tambahan:
   }, [mode]);
 
   // ================== SESSION MANAGEMENT ==================
-  const [sessionId, setSessionId] = useState("ninda");
+  const [sessionId, setSessionId] = useState("sam");
   const sessionIdRef = useRef(sessionId);
 
   // ================== CHAT STATE ==================
@@ -595,7 +595,7 @@ Feature tambahan:
               value={sessionId}
               onChange={(e) => setSessionId(e.target.value)}
             >
-              <option value="ninda">ninda</option>
+              <option value="sam">sam</option>
               <option value="syahmi">syahmi</option>
             </select>
           </div>
