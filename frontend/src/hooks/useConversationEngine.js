@@ -12,6 +12,8 @@ export default function useConversationEngine({
   onPhaseCompleted, // ⭐ NEW
 }) {
   const sendTextToBackend = async (text) => {
+    if (modeRef.current === "roleplay") return;
+
     await streamChat({
       text,
       sessionId: sessionIdRef.current,

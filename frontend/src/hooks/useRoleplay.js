@@ -12,32 +12,61 @@ export default function useRoleplay({
   const [showSummary, setShowSummary] = useState(false);
   const [summaryData, setSummaryData] = useState(null);
 
-  // sync ref
+  const [isLoading, setIsLoading] = useState(false);
+
+  const exitRoleplay = async () => {
+    if (scenarioRef.current) {
+      await clearRoleplay(scenarioRef.current.id);
+    }
+    setSelectedScenario(null);
+    setChatHistory([]);
+  };
+
+  // =========================
+  // SYNC REF
+  // =========================
   useEffect(() => {
     scenarioRef.current = selectedScenario;
   }, [selectedScenario]);
 
   // =========================
-  // API HELPERS
+  // GENERATE SCENARIO
   // =========================
-
-  const clearRoleplay = async (scenarioId) => {
+  const generateScenario = async (difficulty = "easy") => {
     try {
-      await fetch(`${linkBackend}/roleplay/clear`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session_id: sessionIdRef.current,
-          scenario_id: scenarioId,
-        }),
-      });
+      setIsLoading(true);
 
-      console.log("🧹 Roleplay cleared");
+      const res = await fetch(
+        `${linkBackend}/roleplay/generate?difficulty=${difficulty}`,
+      );
+
+      const data = await res.json();
+
+      const mapped = {
+        id: data.scenario_id,
+        name: data.theme,
+        category: data.category,
+        difficulty: data.difficulty,
+        user_role: data.user_role,
+        ai_role: data.ai_role,
+        situation: data.situation,
+        goal: data.goal,
+        target_turn: data.target_turn,
+        checklist: data.checklist,
+      };
+
+      return mapped;
     } catch (err) {
-      console.error("❌ clearRoleplay error", err);
+      console.error("❌ generateScenario error", err);
+      return null;
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // =========================
+  // START ROLEPLAY
+  // =========================
   const startRoleplay = async (scenario) => {
     try {
       await fetch(`${linkBackend}/roleplay/start`, {
@@ -49,41 +78,124 @@ export default function useRoleplay({
         }),
       });
 
-      console.log("🎯 Roleplay started:", scenario.name);
+      // 🔥 initial AI message
+      setChatHistory([
+        {
+          sender: "AI",
+          text: `Hi! I'm your ${scenario.ai_role}. ${scenario.situation}`,
+        },
+      ]);
     } catch (err) {
       console.error("❌ startRoleplay error", err);
     }
   };
 
   // =========================
-  // SELECT SCENARIO
+  // CLEAR ROLEPLAY
   // =========================
-
-  const selectScenario = async (scenario) => {
-    const prevScenario = scenarioRef.current;
-
-    // keluar roleplay
-    if (!scenario && prevScenario) {
-      await clearRoleplay(prevScenario.id);
+  const clearRoleplay = async (scenarioId) => {
+    try {
+      await fetch(`${linkBackend}/roleplay/clear`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sessionIdRef.current,
+          scenario_id: scenarioId,
+        }),
+      });
+    } catch (err) {
+      console.error("❌ clearRoleplay error", err);
     }
-
-    // masuk roleplay baru
-    if (scenario) {
-      await startRoleplay(scenario);
-    }
-
-    setChatHistory([]);
-    setSelectedScenario(scenario ?? null);
   };
 
   // =========================
-  // ROLEPLAY COMPLETED
+  // SELECT SCENARIO
   // =========================
+  const selectScenario = async (difficulty = "easy") => {
+    const scenario = await generateScenario(difficulty);
+    if (!scenario) return;
 
+    // clear previous
+    if (scenarioRef.current) {
+      await clearRoleplay(scenarioRef.current.id);
+    }
+
+    setSelectedScenario(scenario);
+    await startRoleplay(scenario);
+  };
+
+  // =========================
+  // STREAM ANSWER (CORE 🔥)
+  // =========================
+  const sendMessage = async (input) => {
+    const scenario = scenarioRef.current;
+    if (!scenario) return;
+
+    // add user message
+    setChatHistory((prev) => [...prev, { sender: "You", text: input }]);
+
+    try {
+      const res = await fetch(`${linkBackend}/roleplay/stream_answer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sessionIdRef.current,
+          scenario_id: scenario.id,
+          input,
+        }),
+      });
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      let fullText = "";
+
+      setChatHistory((prev) => [...prev, { sender: "AI", text: "" }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n");
+
+        for (let line of lines) {
+          if (line.startsWith("data: ")) {
+            const token = line.replace("data: ", "");
+
+            // selesai
+            if (token === "__ROLEPLAY_END__") {
+              handleRoleplayCompleted(fullText);
+              return;
+            }
+
+            fullText += token;
+
+            // realtime update AI message
+            setChatHistory((prev) => {
+              const updated = [...prev];
+              updated[updated.length - 1].text += token;
+              return updated;
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.error("❌ stream error", err);
+    }
+  };
+
+  // =========================
+  // COMPLETED
+  // =========================
   const handleRoleplayCompleted = async (finalText) => {
-    console.log("🏁 Roleplay finished");
+    const chatHistoryRef = useRef([]);
 
-    const totalTurns = chatHistory.filter((c) => c.sender === "You").length;
+    useEffect(() => {
+      chatHistoryRef.current = chatHistory;
+    }, [chatHistory]);
+
+    const totalTurns = chatHistoryRef.filter((c) => c.sender === "You").length;
 
     setSummaryData({
       totalTurns,
@@ -106,12 +218,6 @@ export default function useRoleplay({
   // =========================
   // SUMMARY CONTROL
   // =========================
-
-  const openSummary = (data) => {
-    setSummaryData(data);
-    setShowSummary(true);
-  };
-
   const closeSummary = async () => {
     const scenarioId = scenarioRef.current?.id;
 
@@ -125,16 +231,18 @@ export default function useRoleplay({
   };
 
   return {
+    // state
     selectedScenario,
-
-    selectScenario,
+    chatHistory,
+    isLoading,
 
     showSummary,
     summaryData,
 
-    openSummary,
+    // actions
+    selectScenario,
+    sendMessage,
     closeSummary,
-
-    handleRoleplayCompleted,
+    exitRoleplay,
   };
 }

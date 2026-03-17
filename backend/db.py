@@ -71,7 +71,7 @@ def init_db():
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS scenarios (
-            id INTEGER PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             category TEXT,
             theme TEXT,
             difficulty TEXT,
@@ -87,8 +87,8 @@ def init_db():
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS scenario_checklist (
-            id INTEGER PRIMARY KEY,
-            scenario_id INTEGER,
+            id SERIAL PRIMARY KEY,
+            scenario_id INTEGER REFERENCES scenarios(id),
             step_key TEXT,
             description TEXT,
             step_order INTEGER
@@ -111,7 +111,7 @@ def get_random_scenario(difficulty):
         cursor.execute(
             """
             SELECT * FROM scenarios
-            WHERE difficulty=%s
+            WHERE LOWER(difficulty)=%s
             ORDER BY RANDOM()
             LIMIT 1
             """,
@@ -121,7 +121,7 @@ def get_random_scenario(difficulty):
         cursor.execute(
             """
             SELECT * FROM scenarios
-            WHERE difficulty=?
+            WHERE LOWER(difficulty)=?
             ORDER BY RANDOM()
             LIMIT 1
             """,

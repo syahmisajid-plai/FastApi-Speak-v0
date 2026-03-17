@@ -80,21 +80,6 @@ export default function RoleplayToggleSwipe({
       setLoading(true);
 
       if (scenario) {
-        // ✅ gunakan endpoint /roleplay/start
-        const res = await fetch(`${linkBackend}/roleplay/start`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            session_id: "some_session_id",
-            scenario_id: scenario.id,
-          }),
-        });
-
-        if (!res.ok) {
-          console.error("Failed to start roleplay:", res.status);
-          return;
-        }
-
         if (onScenarioSelect) onScenarioSelect(scenario);
       } else {
         // tombol ❌
@@ -179,7 +164,7 @@ export default function RoleplayToggleSwipe({
             {/* SUBTITLE */}
             {selectedScenario && (
               <p className="text-xs text-white/70 mt-1">
-                ✈️ Mission: Airport Check-in Conversation
+                🎯 {selectedScenario?.theme}
               </p>
             )}
           </div>
@@ -223,14 +208,42 @@ export default function RoleplayToggleSwipe({
                         backgroundPosition: "center",
                         color: "white",
                       }}
-                      onClick={() => {
+                      onClick={async () => {
                         setSelectedDifficulty(s);
                         setStep("randomizing");
 
-                        setTimeout(() => {
-                          setMission(dummyMission);
+                        try {
+                          const difficultyMap = {
+                            "Easy Mode": "easy",
+                            "Medium Mode": "medium",
+                            "Hard Mode": "hard",
+                          };
+
+                          const res = await fetch(
+                            `${linkBackend}/roleplay/generate?difficulty=${difficultyMap[s.name]}`,
+                          );
+
+                          const data = await res.json();
+
+                          console.log("GENERATE RESULT:", data); // 🔥 WAJIB
+
+                          setMission({
+                            id: data.scenario_id,
+                            theme: data.theme,
+                            category: data.category,
+                            difficulty: data.difficulty,
+                            user_role: data.user_role,
+                            ai_role: data.ai_role,
+                            situation: data.situation,
+                            goal: data.goal,
+                            target_turn: data.target_turn,
+                            checklist: data.checklist,
+                          });
+
                           setStep("mission");
-                        }, 2000);
+                        } catch (err) {
+                          console.error(err);
+                        }
                       }}
                     >
                       {s.name}
@@ -269,6 +282,10 @@ export default function RoleplayToggleSwipe({
                   </span>
                 </div>
 
+                <p className="text-[10px] text-gray-700">
+                  You: {mission.user_role} | AI: {mission.ai_role}
+                </p>
+
                 {/* Scenario */}
                 <div className="rounded-md p-2">
                   <p className="text-[10px] font-medium text-black uppercase mb-0.5">
@@ -276,7 +293,7 @@ export default function RoleplayToggleSwipe({
                   </p>
 
                   <p className="text-xs text-gray-800 leading-snug">
-                    {mission.scenario}
+                    {mission.situation}
                   </p>
                 </div>
 
@@ -298,7 +315,7 @@ export default function RoleplayToggleSwipe({
                   </p>
 
                   <ul className="flex flex-col gap-[3px] text-xs">
-                    {mission.checklist.map((c, i) => (
+                    {mission?.checklist?.map((c, i) => (
                       <li key={i} className="flex items-start gap-1">
                         <span className="text-green-350 mt-px">✔</span>
                         <span className="text-gray-800">{c}</span>
@@ -310,12 +327,7 @@ export default function RoleplayToggleSwipe({
                 {/* Start Button */}
                 <button
                   className="mt-1 py-2! rounded-lg bg-indigo-500! text-white text-sm font-medium hover:bg-indigo-600! transition"
-                  onClick={() =>
-                    handleCloseOrSelect({
-                      id: selectedDifficulty?.id,
-                      name: selectedDifficulty?.name,
-                    })
-                  }
+                  onClick={() => handleCloseOrSelect(mission)}
                 >
                   Start Roleplay 🚀
                 </button>

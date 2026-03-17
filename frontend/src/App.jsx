@@ -107,7 +107,7 @@ Feature tambahan:
 
       const formatted = (Array.isArray(data) ? data : []).map((msg) => ({
         sender: msg.role === "human" ? "You" : "AI",
-        message: msg.content,
+        text: msg.content,
       }));
 
       setChatHistory(formatted);
@@ -144,7 +144,7 @@ Feature tambahan:
       setChatHistory([]); // reset untuk mode lain
     }
 
-    console.log("🔄 MODE CHANGED:", mode);
+    // console.log("🔄 MODE CHANGED:", mode);
   }, [mode]);
 
   // ================== SESSION MANAGEMENT ==================
@@ -217,11 +217,16 @@ Feature tambahan:
   // ================== RolePlay ==================
   const {
     selectedScenario,
-    selectScenario,
+    chatHistory: roleplayChatHistory, // optional kalau mau pisah
+    isLoading,
+
     showSummary,
     summaryData,
+
+    selectScenario,
+    sendMessage, // 🔥 INI YANG BARU
     closeSummary,
-    handleRoleplayCompleted,
+    exitRoleplay,
   } = useRoleplay({
     sessionIdRef,
     scenarioRef,
@@ -237,7 +242,7 @@ Feature tambahan:
     setChatHistory,
     speakText,
 
-    onRoleplayCompleted: handleRoleplayCompleted,
+    onRoleplayCompleted: null,
 
     // ⭐ TAMBAHKAN INI
     onPhaseCompleted: (phase) => {
@@ -271,8 +276,7 @@ Feature tambahan:
             ...prev,
             {
               sender: "AI",
-              message:
-                "Time to share your story today 😊. How did your morning start?",
+              text: "Time to share your story today 😊. How did your morning start?",
               phase: "morning", // optional: tandai phase
             },
           ]);
@@ -337,7 +341,13 @@ Feature tambahan:
     recognitionRef,
     setIsRecording,
     shouldSendOnEndRef,
-    onFinalResult: sendTextToBackend, // Hasil final dikirim ke backend
+    onFinalResult: (text) => {
+      if (modeRef.current === "roleplay") {
+        sendMessage(text); // 🔥 pakai roleplay streaming
+      } else {
+        sendTextToBackend(text); // normal mode
+      }
+    },
     onResetIdle: resetIdle, // Reset idle jika user bicara
     isLupaKataActive: lupaKata.isLupaKataActive, // Jangan rekam utama saat lupa kata aktif
   });
@@ -369,11 +379,12 @@ Feature tambahan:
   }, [isRecording]);
 
   // ================== KELUAR DARI MODE ROLEPLAY ==================
+
   useEffect(() => {
-    if (mode !== "roleplay") {
+    if (mode !== "roleplay" && selectedScenario) {
       // ❌ Reset roleplay saat pindah mode selain roleplay
       setRoleplayModalOpen(false); // tutup modal
-      selectScenario(null); // reset selectedScenario → sama seperti klik ❌
+      exitRoleplay();
     }
   }, [mode]);
 

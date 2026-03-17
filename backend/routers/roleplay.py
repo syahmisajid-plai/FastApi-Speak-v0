@@ -74,6 +74,7 @@ def generate_roleplay(difficulty: str):
 
     return {
         "scenario_id": scenario["id"],
+        "category": scenario["category"],  # 🔥 TAMBAHAN
         "theme": scenario["theme"],
         "difficulty": scenario["difficulty"],
         "user_role": scenario["user_role"],
@@ -81,7 +82,10 @@ def generate_roleplay(difficulty: str):
         "situation": scenario["situation"],
         "goal": scenario["goal"],
         "target_turn": scenario["target_turn"],
-        "checklist": checklist,
+        "checklist": [
+        item["description"]
+        for item in sorted(checklist, key=lambda x: x["step_order"])
+]
     }
 
 
@@ -149,6 +153,12 @@ async def stream_answer(req: StreamRequest):
     next_turn = current_turn + 1
     is_final_turn = next_turn >= target_turn
 
+    checklist = get_scenario_checklist(req.scenario_id)
+
+    checklist_text = "\n".join(
+        [f"- {item['description']}" for item in checklist]
+    )
+
     # -----------------------------
     # SYSTEM PROMPT
     # -----------------------------
@@ -164,6 +174,9 @@ async def stream_answer(req: StreamRequest):
 
     Goal:
     {scenario["goal"]}
+
+    Conversation steps the user should try:
+    {checklist_text}
 
     Stay in character.
     Encourage the user to speak English.
