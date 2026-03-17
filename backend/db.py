@@ -72,6 +72,7 @@ def init_db():
         """
         CREATE TABLE IF NOT EXISTS scenarios (
             id INTEGER PRIMARY KEY,
+            category TEXT,
             theme TEXT,
             difficulty TEXT,
             user_role TEXT,
@@ -132,13 +133,14 @@ def get_random_scenario(difficulty):
 
     return {
         "id": row[0],
-        "theme": row[1],
-        "difficulty": row[2],
-        "user_role": row[3],
-        "ai_role": row[4],
-        "situation": row[5],
-        "goal": row[6],
-        "target_turn": row[7],
+        "category": row[1],
+        "theme": row[2],
+        "difficulty": row[3],
+        "user_role": row[4],
+        "ai_role": row[5],
+        "situation": row[6],
+        "goal": row[7],
+        "target_turn": row[8],
     }
 
 
@@ -202,13 +204,14 @@ def get_scenario(scenario_id):
 
     return {
         "id": row[0],
-        "theme": row[1],
-        "difficulty": row[2],
-        "user_role": row[3],
-        "ai_role": row[4],
-        "situation": row[5],
-        "goal": row[6],
-        "target_turn": row[7],
+        "category": row[1],
+        "theme": row[2],
+        "difficulty": row[3],
+        "user_role": row[4],
+        "ai_role": row[5],
+        "situation": row[6],
+        "goal": row[7],
+        "target_turn": row[8],
     }
 
 
