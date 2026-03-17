@@ -100,6 +100,9 @@ def init_db():
     conn.close()
 
 
+# {}
+
+
 def get_random_scenario(difficulty):
     conn = get_db_connection()
     cursor = conn.cursor()
