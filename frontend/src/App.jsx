@@ -107,7 +107,7 @@ Feature tambahan:
 
       const formatted = (Array.isArray(data) ? data : []).map((msg) => ({
         sender: msg.role === "human" ? "You" : "AI",
-        text: msg.content,
+        message: msg.content, // ✅ sesuai ChatSection
       }));
 
       setChatHistory(formatted);
@@ -217,16 +217,13 @@ Feature tambahan:
   // ================== RolePlay ==================
   const {
     selectedScenario,
-    chatHistory: roleplayChatHistory, // optional kalau mau pisah
     isLoading,
-
     showSummary,
     summaryData,
-
     selectScenario,
-    sendMessage, // 🔥 INI YANG BARU
     closeSummary,
     exitRoleplay,
+    handleRoleplayCompleted, // ✅ TAMBAH
   } = useRoleplay({
     sessionIdRef,
     scenarioRef,
@@ -242,7 +239,7 @@ Feature tambahan:
     setChatHistory,
     speakText,
 
-    onRoleplayCompleted: null,
+    onRoleplayCompleted: handleRoleplayCompleted, // ✅ FIX
 
     // ⭐ TAMBAHKAN INI
     onPhaseCompleted: (phase) => {
@@ -276,7 +273,8 @@ Feature tambahan:
             ...prev,
             {
               sender: "AI",
-              text: "Time to share your story today 😊. How did your morning start?",
+              message:
+                "Time to share your story today 😊. How did your morning start?",
               phase: "morning", // optional: tandai phase
             },
           ]);
@@ -342,11 +340,7 @@ Feature tambahan:
     setIsRecording,
     shouldSendOnEndRef,
     onFinalResult: (text) => {
-      if (modeRef.current === "roleplay") {
-        sendMessage(text); // 🔥 pakai roleplay streaming
-      } else {
-        sendTextToBackend(text); // normal mode
-      }
+      sendTextToBackend(text); // ✅ SEMUA MODE LEWAT SINI
     },
     onResetIdle: resetIdle, // Reset idle jika user bicara
     isLupaKataActive: lupaKata.isLupaKataActive, // Jangan rekam utama saat lupa kata aktif

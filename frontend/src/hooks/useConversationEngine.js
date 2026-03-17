@@ -12,11 +12,6 @@ export default function useConversationEngine({
   onPhaseCompleted, // ⭐ NEW
 }) {
   const sendTextToBackend = async (text) => {
-    console.log("🚀 SEND TEXT:", text);
-    console.log("📌 MODE:", modeRef.current);
-    console.log("📌 SESSION:", sessionIdRef.current);
-    console.log("📌 SCENARIO:", scenarioRef.current);
-
     await streamChat({
       text,
       sessionId: sessionIdRef.current,
@@ -27,48 +22,28 @@ export default function useConversationEngine({
       // USER MESSAGE
       // =========================
       onUserMessage: (msg) => {
-        console.log("👤 USER MESSAGE TRIGGERED:", msg);
-
-        setChatHistory((prev) => {
-          const updated = [...prev, { sender: "You", text: msg }];
-          console.log("🧠 CHAT STATE AFTER USER:", updated);
-          return updated;
-        });
+        setChatHistory((prev) => [...prev, { sender: "You", message: msg }]);
       },
 
       // =========================
       // STREAMING TOKEN
       // =========================
       onStreamUpdate: (aiText) => {
-        console.log("🤖 STREAM TOKEN:", aiText);
-
         setChatHistory((prev) => {
-          const last = prev[prev.length - 1];
+          const withoutTemp = prev.filter((c) => c.sender !== "AI-temp");
 
-          let updated;
-
-          if (last?.sender === "AI-temp") {
-            updated = [
-              ...prev.slice(0, -1),
-              { sender: "AI-temp", text: aiText },
-            ];
-          } else {
-            updated = [...prev, { sender: "AI-temp", text: aiText }];
-          }
-
-          console.log("🧠 CHAT STATE STREAM:", updated);
-          return updated;
+          return [...withoutTemp, { sender: "AI-temp", message: aiText }];
         });
       },
 
       // =========================
-      // META EVENT
+      // META EVENT (Daily Story)
       // =========================
       onMeta: (meta) => {
-        console.log("📊 META RECEIVED:", meta);
+        console.log("META RECEIVED:", meta);
 
         if (meta?.ready) {
-          console.log("✅ PHASE READY:", meta.phase);
+          console.log("CALLING onPhaseCompleted", meta.phase);
           onPhaseCompleted?.(meta.phase);
         }
       },
@@ -77,22 +52,16 @@ export default function useConversationEngine({
       // FINAL ANSWER
       // =========================
       onStreamEnd: async (finalText, meta) => {
-        console.log("✅ FINAL AI TEXT:", finalText);
-        console.log("🏁 META END:", meta);
-
-        setChatHistory((prev) => {
-          const updated = prev.map((c) =>
-            c.sender === "AI-temp" ? { sender: "AI", text: finalText } : c,
-          );
-
-          console.log("🧠 CHAT STATE FINAL:", updated);
-          return updated;
-        });
+        setChatHistory((prev) =>
+          prev.map((c) =>
+            c.sender === "AI-temp" ? { sender: "AI", message: finalText } : c,
+          ),
+        );
 
         speakText(finalText);
 
+        // ⭐ hanya roleplay yang punya completion
         if (meta?.completed && scenarioRef.current?.id > 0) {
-          console.log("🎭 ROLEPLAY COMPLETED");
           onRoleplayCompleted?.(finalText);
         }
       },

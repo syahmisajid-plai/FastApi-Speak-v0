@@ -13,23 +13,35 @@ export default function useRoleplay({
   const [summaryData, setSummaryData] = useState(null);
 
   const [isLoading, setIsLoading] = useState(false);
+  const isGeneratingRef = useRef(false);
 
   const chatHistoryRef = useRef([]);
 
-  const exitRoleplay = async () => {
-    if (scenarioRef.current) {
-      await clearRoleplay(scenarioRef.current.id);
-    }
-    setSelectedScenario(null);
-    setChatHistory([]);
-  };
+  // =========================
+  // SYNC CHAT REF
+  // =========================
+  useEffect(() => {
+    chatHistoryRef.current = chatHistory;
+  }, [chatHistory]);
 
   // =========================
-  // SYNC REF
+  // SYNC SCENARIO REF
   // =========================
   useEffect(() => {
     scenarioRef.current = selectedScenario;
   }, [selectedScenario]);
+
+  // =========================
+  // EXIT ROLEPLAY
+  // =========================
+  const exitRoleplay = async () => {
+    if (scenarioRef.current) {
+      await clearRoleplay(scenarioRef.current.id);
+    }
+
+    setSelectedScenario(null);
+    setChatHistory([]);
+  };
 
   // =========================
   // GENERATE SCENARIO
@@ -44,16 +56,13 @@ export default function useRoleplay({
 
       const data = await res.json();
 
-      console.log("🎯 GENERATED RAW:", data);
-
-      // ❗ HANDLE ERROR BACKEND
       if (!res.ok || !data.scenario_id) {
         console.error("❌ INVALID GENERATE RESPONSE:", data);
         return null;
       }
 
-      const mapped = {
-        id: Number(data.scenario_id), // paksa number
+      return {
+        id: Number(data.scenario_id),
         name: data.theme ?? "",
         category: data.category ?? "",
         difficulty: data.difficulty ?? "",
@@ -64,8 +73,6 @@ export default function useRoleplay({
         target_turn: data.target_turn ?? 0,
         checklist: data.checklist ?? [],
       };
-
-      return mapped;
     } catch (err) {
       console.error("❌ generateScenario error", err);
       return null;
@@ -79,8 +86,6 @@ export default function useRoleplay({
   // =========================
   const startRoleplay = async (scenario) => {
     try {
-      console.log("🎯 START ROLEPLAY WITH:", scenario);
-
       if (!scenario?.id) {
         console.error("❌ scenario.id INVALID:", scenario);
         return;
@@ -97,15 +102,12 @@ export default function useRoleplay({
 
       const data = await res.json();
 
-      console.log("📡 START RESPONSE:", res.status, data);
-
-      // ❗ HANDLE ERROR
       if (!res.ok) {
         console.error("❌ START FAILED:", data);
         return;
       }
 
-      // ✅ hanya set chat kalau sukses
+      // ✅ initial AI message
       setChatHistory([
         {
           sender: "AI",
@@ -139,94 +141,35 @@ export default function useRoleplay({
   // SELECT SCENARIO
   // =========================
   const selectScenario = async (difficulty = "easy") => {
-    const scenario = await generateScenario(difficulty);
-    if (!scenario) return;
+    if (isGeneratingRef.current) return null;
+    isGeneratingRef.current = true;
 
-    // clear previous
+    const scenario = await generateScenario(difficulty);
+
+    if (!scenario) {
+      isGeneratingRef.current = false;
+      return null;
+    }
+
     if (scenarioRef.current) {
       await clearRoleplay(scenarioRef.current.id);
     }
 
-    if (!scenario) return;
     setSelectedScenario(scenario);
     await startRoleplay(scenario);
+
+    isGeneratingRef.current = false;
+
+    return scenario;
   };
 
   // =========================
-  // STREAM ANSWER (CORE 🔥)
-  // =========================
-  const sendMessage = async (input) => {
-    const scenario = scenarioRef.current;
-    if (!scenario) return;
-
-    if (!scenario?.id) {
-      console.error("❌ STREAM tanpa scenario valid:", scenario);
-      return;
-    }
-
-    // add user message
-    setChatHistory((prev) => [...prev, { sender: "You", text: input }]);
-
-    try {
-      const res = await fetch(`${linkBackend}/roleplay/stream_answer`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session_id: sessionIdRef.current,
-          scenario_id: scenario.id,
-          input,
-        }),
-      });
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-
-      let fullText = "";
-
-      setChatHistory((prev) => [...prev, { sender: "AI", text: "" }]);
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
-
-        for (let line of lines) {
-          if (line.startsWith("data: ")) {
-            const token = line.replace("data: ", "");
-
-            // selesai
-            if (token === "__ROLEPLAY_END__") {
-              handleRoleplayCompleted(fullText);
-              return;
-            }
-
-            fullText += token;
-
-            // realtime update AI message
-            setChatHistory((prev) => {
-              const updated = [...prev];
-              updated[updated.length - 1].text += token;
-              return updated;
-            });
-          }
-        }
-      }
-    } catch (err) {
-      console.error("❌ stream error", err);
-    }
-  };
-
-  // =========================
-  // COMPLETED
+  // COMPLETED (dipanggil dari ConversationEngine)
   // =========================
   const handleRoleplayCompleted = async (finalText) => {
-    useEffect(() => {
-      chatHistoryRef.current = chatHistory;
-    }, [chatHistory]);
-
-    const totalTurns = chatHistoryRef.filter((c) => c.sender === "You").length;
+    const totalTurns = chatHistoryRef.current.filter(
+      (c) => c.sender === "You",
+    ).length;
 
     setSummaryData({
       totalTurns,
@@ -247,7 +190,7 @@ export default function useRoleplay({
   };
 
   // =========================
-  // SUMMARY CONTROL
+  // CLOSE SUMMARY
   // =========================
   const closeSummary = async () => {
     const scenarioId = scenarioRef.current?.id;
@@ -266,14 +209,15 @@ export default function useRoleplay({
     selectedScenario,
     chatHistory,
     isLoading,
-
     showSummary,
     summaryData,
 
     // actions
     selectScenario,
-    sendMessage,
     closeSummary,
     exitRoleplay,
+
+    // 🔥 expose ke engine
+    handleRoleplayCompleted,
   };
 }

@@ -79,15 +79,10 @@ export default function RoleplayToggleSwipe({
     try {
       setLoading(true);
 
-      if (scenario) {
-        if (onScenarioSelect) onScenarioSelect(scenario);
-      } else {
+      if (!scenario) {
         // tombol ❌
-        if (onScenarioSelect) onScenarioSelect(null);
         if (setMode) setMode("freeTalk");
       }
-      // tambahkan delay 10 detik sebelum close
-      // await new Promise((resolve) => setTimeout(resolve, 2800));
 
       if (setIsOpen) setIsOpen(false);
     } catch (err) {
@@ -212,38 +207,20 @@ export default function RoleplayToggleSwipe({
                         setSelectedDifficulty(s);
                         setStep("randomizing");
 
-                        try {
-                          const difficultyMap = {
-                            "Easy Mode": "easy",
-                            "Medium Mode": "medium",
-                            "Hard Mode": "hard",
-                          };
+                        const difficultyMap = {
+                          "Easy Mode": "easy",
+                          "Medium Mode": "medium",
+                          "Hard Mode": "hard",
+                        };
 
-                          const res = await fetch(
-                            `${linkBackend}/roleplay/generate?difficulty=${difficultyMap[s.name]}`,
-                          );
+                        const scenario = await onScenarioSelect(
+                          difficultyMap[s.name],
+                        );
 
-                          const data = await res.json();
+                        if (!scenario) return;
 
-                          console.log("GENERATE RESULT:", data); // 🔥 WAJIB
-
-                          setMission({
-                            id: data.scenario_id,
-                            theme: data.theme,
-                            category: data.category,
-                            difficulty: data.difficulty,
-                            user_role: data.user_role,
-                            ai_role: data.ai_role,
-                            situation: data.situation,
-                            goal: data.goal,
-                            target_turn: data.target_turn,
-                            checklist: data.checklist,
-                          });
-
-                          setStep("mission");
-                        } catch (err) {
-                          console.error(err);
-                        }
+                        setMission(scenario);
+                        setStep("mission");
                       }}
                     >
                       {s.name}
