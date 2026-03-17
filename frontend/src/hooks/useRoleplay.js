@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { linkBackend } from "../config";
 
 export default function useRoleplay({
@@ -13,6 +13,8 @@ export default function useRoleplay({
   const [summaryData, setSummaryData] = useState(null);
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const chatHistoryRef = useRef([]);
 
   const exitRoleplay = async () => {
     if (scenarioRef.current) {
@@ -42,17 +44,25 @@ export default function useRoleplay({
 
       const data = await res.json();
 
+      console.log("🎯 GENERATED RAW:", data);
+
+      // ❗ HANDLE ERROR BACKEND
+      if (!res.ok || !data.scenario_id) {
+        console.error("❌ INVALID GENERATE RESPONSE:", data);
+        return null;
+      }
+
       const mapped = {
-        id: data.scenario_id,
-        name: data.theme,
-        category: data.category,
-        difficulty: data.difficulty,
-        user_role: data.user_role,
-        ai_role: data.ai_role,
-        situation: data.situation,
-        goal: data.goal,
-        target_turn: data.target_turn,
-        checklist: data.checklist,
+        id: Number(data.scenario_id), // paksa number
+        name: data.theme ?? "",
+        category: data.category ?? "",
+        difficulty: data.difficulty ?? "",
+        user_role: data.user_role ?? "",
+        ai_role: data.ai_role ?? "",
+        situation: data.situation ?? "",
+        goal: data.goal ?? "",
+        target_turn: data.target_turn ?? 0,
+        checklist: data.checklist ?? [],
       };
 
       return mapped;
@@ -69,7 +79,14 @@ export default function useRoleplay({
   // =========================
   const startRoleplay = async (scenario) => {
     try {
-      await fetch(`${linkBackend}/roleplay/start`, {
+      console.log("🎯 START ROLEPLAY WITH:", scenario);
+
+      if (!scenario?.id) {
+        console.error("❌ scenario.id INVALID:", scenario);
+        return;
+      }
+
+      const res = await fetch(`${linkBackend}/roleplay/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -78,7 +95,17 @@ export default function useRoleplay({
         }),
       });
 
-      // 🔥 initial AI message
+      const data = await res.json();
+
+      console.log("📡 START RESPONSE:", res.status, data);
+
+      // ❗ HANDLE ERROR
+      if (!res.ok) {
+        console.error("❌ START FAILED:", data);
+        return;
+      }
+
+      // ✅ hanya set chat kalau sukses
       setChatHistory([
         {
           sender: "AI",
@@ -120,6 +147,7 @@ export default function useRoleplay({
       await clearRoleplay(scenarioRef.current.id);
     }
 
+    if (!scenario) return;
     setSelectedScenario(scenario);
     await startRoleplay(scenario);
   };
@@ -130,6 +158,11 @@ export default function useRoleplay({
   const sendMessage = async (input) => {
     const scenario = scenarioRef.current;
     if (!scenario) return;
+
+    if (!scenario?.id) {
+      console.error("❌ STREAM tanpa scenario valid:", scenario);
+      return;
+    }
 
     // add user message
     setChatHistory((prev) => [...prev, { sender: "You", text: input }]);
@@ -189,8 +222,6 @@ export default function useRoleplay({
   // COMPLETED
   // =========================
   const handleRoleplayCompleted = async (finalText) => {
-    const chatHistoryRef = useRef([]);
-
     useEffect(() => {
       chatHistoryRef.current = chatHistory;
     }, [chatHistory]);

@@ -64,29 +64,44 @@ llm = ChatOpenAI(
 
 @router.get("/generate")
 def generate_roleplay(difficulty: str):
+    try:
+        scenario = get_random_scenario(difficulty)
 
-    scenario = get_random_scenario(difficulty)
+        if not scenario:
+            return {"error": "No scenario found"}
 
-    if not scenario:
-        return {"error": "No scenario found"}
+        checklist = get_scenario_checklist(scenario["id"]) or []
 
-    checklist = get_scenario_checklist(scenario["id"])
+        checklist_sorted = sorted(
+            checklist, key=lambda x: x.get("step_order", 0)
+        )
 
-    return {
-        "scenario_id": scenario["id"],
-        "category": scenario["category"],  # 🔥 TAMBAHAN
-        "theme": scenario["theme"],
-        "difficulty": scenario["difficulty"],
-        "user_role": scenario["user_role"],
-        "ai_role": scenario["ai_role"],
-        "situation": scenario["situation"],
-        "goal": scenario["goal"],
-        "target_turn": scenario["target_turn"],
-        "checklist": [
-        item["description"]
-        for item in sorted(checklist, key=lambda x: x["step_order"])
-]
-    }
+        checklist_clean = [
+            item.get("description", "")
+            for item in checklist_sorted
+            if item
+        ]
+
+        return {
+            "scenario_id": scenario.get("id"),
+            "category": scenario.get("category"),
+            "theme": scenario.get("theme"),
+            "difficulty": scenario.get("difficulty"),
+            "user_role": scenario.get("user_role"),
+            "ai_role": scenario.get("ai_role"),
+            "situation": scenario.get("situation"),
+            "goal": scenario.get("goal"),
+            "target_turn": scenario.get("target_turn"),
+            "checklist": checklist_clean,
+        }
+
+    except Exception as e:
+        import traceback
+
+        print("❌ ERROR IN /generate:")
+        traceback.print_exc()
+
+        return {"error": str(e)}
 
 
 # -----------------------------

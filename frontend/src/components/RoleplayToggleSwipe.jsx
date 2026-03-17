@@ -318,7 +318,9 @@ export default function RoleplayToggleSwipe({
                     {mission?.checklist?.map((c, i) => (
                       <li key={i} className="flex items-start gap-1">
                         <span className="text-green-350 mt-px">✔</span>
-                        <span className="text-gray-800">{c}</span>
+                        <span className="text-gray-800">
+                          {typeof c === "string" ? c : c.description}
+                        </span>
                       </li>
                     ))}
                   </ul>
