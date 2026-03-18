@@ -93,7 +93,7 @@ def generate_roleplay(difficulty: str):
             {
                 "step_key": item["step_key"],
                 "description": item["description"],
-                "step_order": item["step_order"],
+                "step_order": item.get("step_order", 0),
                 "keywords": keyword_map.get(item["step_key"], []),
             }
             for item in checklist_sorted
