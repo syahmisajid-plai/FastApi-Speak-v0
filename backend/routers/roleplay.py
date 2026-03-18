@@ -17,6 +17,7 @@ from db import (
     get_random_scenario,
     get_scenario_checklist,
     get_scenario,
+    get_keywords_by_scenario
 )
 
 router = APIRouter(prefix="/roleplay", tags=["Roleplay"])
@@ -71,15 +72,31 @@ def generate_roleplay(difficulty: str):
             return {"error": "No scenario found"}
 
         checklist = get_scenario_checklist(scenario["id"]) or []
+        keywords = get_keywords_by_scenario(scenario["id"])
+
+        keyword_map = {}
+
+        for item in keywords:
+            step = item["step_key"]
+            kw = item["keyword"]
+
+            if step not in keyword_map:
+                keyword_map[step] = []
+
+            keyword_map[step].append(kw)
 
         checklist_sorted = sorted(
             checklist, key=lambda x: x.get("step_order", 0)
         )
 
         checklist_clean = [
-            item.get("description", "")
+            {
+                "step_key": item["step_key"],
+                "description": item["description"],
+                "step_order": item["step_order"],
+                "keywords": keyword_map.get(item["step_key"], []),
+            }
             for item in checklist_sorted
-            if item
         ]
 
         return {

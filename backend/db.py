@@ -96,11 +96,48 @@ def init_db():
     """
     )
 
+    cursor.execute(
+        """
+        CREATE TABLE scenario_checklist_keywords (
+        id SERIAL PRIMARY KEY,
+        scenario_id INT NOT NULL,
+        step_key VARCHAR(50) NOT NULL,
+        keyword VARCHAR(100) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """
+    )
+
+
     conn.commit()
     conn.close()
 
 
 # {}
+
+def get_keywords_by_scenario(scenario_id):
+    conn = get_db_connection()  # sesuaikan dengan punyamu
+    cur = conn.cursor()
+
+    query = """
+    SELECT step_key, keyword
+    FROM scenario_checklist_keywords
+    WHERE scenario_id = %s
+    """
+
+    cur.execute(query, (scenario_id,))
+    rows = cur.fetchall()
+
+    # mapping ke list of dict
+    result = [
+        {"step_key": row[0], "keyword": row[1]}
+        for row in rows
+    ]
+
+    cur.close()
+    conn.close()
+
+    return result
 
 
 def get_random_scenario(difficulty):

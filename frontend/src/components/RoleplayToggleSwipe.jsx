@@ -50,6 +50,7 @@ export default function RoleplayToggleSwipe({
   const [step, setStep] = useState("difficulty");
   const [selectedDifficulty, setSelectedDifficulty] = useState(null);
   const [mission, setMission] = useState(null);
+  const [activeChecklist, setActiveChecklist] = useState(null);
 
   const dummyMission = {
     theme: "Restaurant",
@@ -63,6 +64,36 @@ export default function RoleplayToggleSwipe({
       "Order food",
       "Confirm the price",
     ],
+  };
+
+  const updateChecklistProgress = (input) => {
+    const text = input.toLowerCase();
+
+    setActiveChecklist((prev) => {
+      const updated = [...prev];
+
+      for (let i = 0; i < updated.length; i++) {
+        const item = updated[i];
+
+        if (item.done) continue;
+
+        const prevDone = i === 0 || updated[i - 1].done;
+        if (!prevDone) break;
+
+        const matched = item.keywords.some((kw) => {
+          const regex = new RegExp(`\\b${kw}\\b`, "i");
+          return regex.test(text);
+        });
+
+        if (matched) {
+          updated[i] = { ...item, done: true };
+        }
+
+        break;
+      }
+
+      return updated;
+    });
   };
 
   const [now, setNow] = useState(new Date());
@@ -156,10 +187,11 @@ export default function RoleplayToggleSwipe({
               </p>
             )}
 
-            {/* SUBTITLE */}
+            {/* Role */}
             {selectedScenario && (
               <p className="text-xs text-white/70 mt-1">
-                🎯 {selectedScenario?.theme}
+                🙂: {selectedScenario?.user_role} | 🤖:{" "}
+                {selectedScenario?.ai_role}
               </p>
             )}
           </div>
@@ -248,18 +280,26 @@ export default function RoleplayToggleSwipe({
             {/* STEP 3 — MISSION CARD */}
             {step === "mission" && mission && (
               <div className="bg-linear-to-br from-indigo-400 to-purple-400 rounded-xl shadow-md border border-gray-100 p-3 flex flex-col gap-2">
-                {/* Header */}
                 <div className="flex items-start justify-between gap-2">
-                  <h2 className="text-sm font-semibold">
-                    🎯 {mission.theme} Mission
+                  {/* Header */}
+                  <h2 className="text-md font-semibold leading-snug">
+                    🎯 {mission.name}
                   </h2>
 
-                  <span className="text-xs px-2 py-0.5 mt-0.5 rounded-full bg-indigo-100 text-indigo-700 whitespace-nowrap">
-                    {selectedDifficulty?.name}
-                  </span>
+                  {/* Category */}
+                  <div className="flex gap-1 whitespace-nowrap">
+                    <span className="text-[10px] px-2 py-0.5 mt-0.5 rounded-full bg-white/80 text-indigo-700">
+                      {mission.category}
+                    </span>
+
+                    {/* Difficulty */}
+                    <span className="text-xs px-2 py-0.5 mt-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                      {selectedDifficulty?.name}
+                    </span>
+                  </div>
                 </div>
 
-                <p className="text-[10px] text-gray-700">
+                <p className="text-[11px] text-gray-700">
                   You: {mission.user_role} | AI: {mission.ai_role}
                 </p>
 
@@ -294,10 +334,8 @@ export default function RoleplayToggleSwipe({
                   <ul className="flex flex-col gap-[3px] text-xs">
                     {mission?.checklist?.map((c, i) => (
                       <li key={i} className="flex items-start gap-1">
-                        <span className="text-green-350 mt-px">✔</span>
-                        <span className="text-gray-800">
-                          {typeof c === "string" ? c : c.description}
-                        </span>
+                        <span className="text-gray-400 mt-px">⬜</span>
+                        <span className="text-gray-800">{c.description}</span>
                       </li>
                     ))}
                   </ul>
@@ -306,13 +344,41 @@ export default function RoleplayToggleSwipe({
                 {/* Start Button */}
                 <button
                   className="mt-1 py-2! rounded-lg bg-indigo-500! text-white text-sm font-medium hover:bg-indigo-600! transition"
-                  onClick={() => handleCloseOrSelect(mission)}
+                  onClick={() => {
+                    const normalizedChecklist = mission.checklist.map(
+                      (item) => ({
+                        step_key: item.step_key,
+                        text: item.description,
+                        keywords: item.keywords ?? [],
+                        done: false,
+                      }),
+                    );
+
+                    setActiveChecklist(normalizedChecklist);
+                    handleCloseOrSelect(mission);
+                  }}
                 >
                   Start Roleplay 🚀
                 </button>
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Checklist */}
+      {selectedScenario && activeChecklist && (
+        <div className="mt-3 bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/10">
+          <p className="text-[11px] uppercase text-white/70 mb-2">🎯 Task</p>
+
+          <ul className="flex flex-col gap-1 text-xs">
+            {activeChecklist.map((item, i) => (
+              <li key={i} className="flex items-center gap-2">
+                <span>{item.done ? "✔" : "⬜"}</span>
+                <span className="text-white/90">{item.text}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </section>

@@ -71,7 +71,14 @@ export default function useRoleplay({
         situation: data.situation ?? "",
         goal: data.goal ?? "",
         target_turn: data.target_turn ?? 0,
-        checklist: data.checklist ?? [],
+        // 🔥 UBAH DI SINI
+        checklist: (data.checklist ?? []).map((item) => ({
+          step_key: item.step_key,
+          description: item.description,
+          step_order: item.step_order,
+          keywords: item.keywords ?? [],
+          done: false, // 👈 ini penting untuk UI checklist
+        })),
       };
     } catch (err) {
       console.error("❌ generateScenario error", err);
