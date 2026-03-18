@@ -98,7 +98,7 @@ def init_db():
 
     cursor.execute(
         """
-        CREATE TABLE scenario_checklist_keywords (
+        CREATE TABLE IF NOT EXISTS scenario_checklist_keywords (
         id SERIAL PRIMARY KEY,
         scenario_id INT NOT NULL,
         step_key VARCHAR(50) NOT NULL,
