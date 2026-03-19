@@ -25,6 +25,8 @@ export default function RoleplayToggleSwipe({
   isOpen, // <-- dari parent
   setIsOpen, // <-- dari parent
   setMode, // <-- props baru
+  lastUserMessage,
+  onFinish,
 }) {
   const difficulties = [
     { id: 1, name: "Easy Mode", image: easy_mode },
@@ -41,6 +43,12 @@ export default function RoleplayToggleSwipe({
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!lastUserMessage || !activeChecklist) return;
+
+    updateChecklistProgress(lastUserMessage);
+  }, [lastUserMessage]);
+
   const handleSelect = (scenario) => {
     setIsOpen(false);
     if (onScenarioSelect) onScenarioSelect(scenario);
@@ -51,6 +59,32 @@ export default function RoleplayToggleSwipe({
   const [selectedDifficulty, setSelectedDifficulty] = useState(null);
   const [mission, setMission] = useState(null);
   const [activeChecklist, setActiveChecklist] = useState(null);
+
+  const [hasFinished, setHasFinished] = useState(false);
+
+  useEffect(() => {
+    if (!activeChecklist || !onFinish || hasFinished) return;
+
+    const isAllDone = activeChecklist.every((item) => item.done);
+
+    if (isAllDone) {
+      setHasFinished(true);
+      onFinish();
+      if (setMode) setMode("freeTalk");
+
+      // optional reset
+      setActiveChecklist(null);
+    }
+  }, [activeChecklist, onFinish, hasFinished]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setStep("difficulty");
+      setSelectedDifficulty(null);
+      setMission(null);
+      setHasFinished(false); // ✅ reset
+    }
+  }, [isOpen]);
 
   const dummyMission = {
     theme: "Restaurant",
@@ -70,8 +104,9 @@ export default function RoleplayToggleSwipe({
     const text = input.toLowerCase();
 
     setActiveChecklist((prev) => {
-      const updated = [...prev];
+      if (!prev) return prev;
 
+      const updated = [...prev];
       for (let i = 0; i < updated.length; i++) {
         const item = updated[i];
 
@@ -368,14 +403,53 @@ export default function RoleplayToggleSwipe({
 
       {/* Checklist */}
       {selectedScenario && activeChecklist && (
-        <div className="mt-3 bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/10">
-          <p className="text-[11px] uppercase text-white/70 mb-2">🎯 Task</p>
+        <div className="mt-3 bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/10 shadow-sm">
+          {/* HEADER */}
+          <p className="text-[11px] uppercase tracking-wide text-white/60 mb-2">
+            🎯 Mission
+          </p>
 
-          <ul className="flex flex-col gap-1 text-xs">
+          {/* CONTEXT: Situation + Goal */}
+          {(mission?.situation || mission?.goal) && (
+            <div className="mb-3 space-y-2">
+              {mission?.situation && (
+                <div className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10">
+                  <p className="text-[10px] uppercase text-white/40 mb-[2px]">
+                    Situation
+                  </p>
+                  <p className="text-xs text-white/85 leading-snug">
+                    {mission.situation}
+                  </p>
+                </div>
+              )}
+
+              {mission?.goal && (
+                <div className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10">
+                  <p className="text-[10px] uppercase text-white/40 mb-[2px]">
+                    Goal
+                  </p>
+                  <p className="text-xs text-white/90 font-medium leading-snug">
+                    {mission.goal}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* DIVIDER */}
+          <div className="h-px bg-white/10 my-2" />
+
+          {/* CHECKLIST */}
+          <ul className="flex flex-col gap-1.5 text-xs">
             {activeChecklist.map((item, i) => (
-              <li key={i} className="flex items-center gap-2">
-                <span>{item.done ? "✔" : "⬜"}</span>
-                <span className="text-white/90">{item.text}</span>
+              <li
+                key={i}
+                className={`flex items-center gap-2 transition ${
+                  item.done ? "opacity-60" : "opacity-100"
+                }`}
+              >
+                <span className="text-sm">{item.done ? "✔" : "⬜"}</span>
+                <span className="text-white/90 leading-snug">{item.text}</span>
               </li>
             ))}
           </ul>

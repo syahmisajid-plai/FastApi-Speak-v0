@@ -25,4 +25,18 @@
 -backend roleplay yang baru belum
 -UI loading jeda roleplay -> free talk
 
+- Logic Checklist Roleplay ✅
+- Akhiri Roleplay ✅
+- Update Summary Card Roleplay
+- Setelah roleplay selesai hentikan jawaban AI
+- Jangan pindah mode langsung setelah roleplay selesai tapi saat summary card dipencet ok
+
+- Perbaiki sistem / kata keyword checklist roleplay
+
+- Kata - Kata Pembuka
+
+- Database Penyelesaian Roleplay Mission
+
+- Mode berbicara dengan teman
+
 ✅❌

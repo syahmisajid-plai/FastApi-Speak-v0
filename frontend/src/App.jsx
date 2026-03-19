@@ -231,6 +231,10 @@ Feature tambahan:
     setChatHistory,
   });
 
+  const handleChecklistFinished = () => {
+    handleRoleplayCompleted("Checklist completed");
+  };
+
   // ================== SEND TEXT TO BACKEND ==================
   const { sendTextToBackend } = useConversationEngine({
     sessionIdRef,
@@ -249,6 +253,11 @@ Feature tambahan:
       setReadyToContinue(true);
     },
   });
+
+  // ================== Chat User Terakhir kali (untuk checklist roleplay) ==================
+  const lastUserMessage = chatHistory
+    .filter((msg) => msg.sender === "You")
+    .slice(-1)[0]?.message;
 
   // ================== Sapaan Pertama Daily ==================
   useEffect(() => {
@@ -540,6 +549,8 @@ Feature tambahan:
               isOpen={roleplayModalOpen} // controlled
               setIsOpen={setRoleplayModalOpen} // controlled
               setMode={setMode} // <-- tambahkan ini
+              lastUserMessage={lastUserMessage}
+              onFinish={handleChecklistFinished}
             />
           )}
 
