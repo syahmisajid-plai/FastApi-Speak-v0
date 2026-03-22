@@ -89,7 +89,7 @@ def init_db():
     # -----------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS scenario_checklist (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             scenario_id INTEGER,
             step_key TEXT,
             description TEXT,
