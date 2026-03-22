@@ -69,14 +69,38 @@ export default function RoleplayToggleSwipe({
   useEffect(() => {
     if (!activeChecklist || !onFinish || hasFinished) return;
 
-    const totalDone = activeChecklist.filter((item) => item.done).length;
-    const totalChecklist = activeChecklist.length;
+    let latestChecklist = [...activeChecklist];
+
+    // 🔥 RE-CHECK last message biar tidak miss
+    if (lastUserMessage) {
+      const text = lastUserMessage.toLowerCase();
+
+      for (let i = 0; i < latestChecklist.length; i++) {
+        const item = latestChecklist[i];
+
+        if (item.done) continue;
+
+        const prevDone = i === 0 || latestChecklist[i - 1].done;
+        if (!prevDone) break;
+
+        const matched = item.keywords.some((kw) => {
+          const regex = new RegExp(`\\b${kw}\\b`, "i");
+          return regex.test(text);
+        });
+
+        if (matched) {
+          latestChecklist[i] = { ...item, done: true };
+        }
+
+        break;
+      }
+    }
+
+    const totalDone = latestChecklist.filter((item) => item.done).length;
+    const totalChecklist = latestChecklist.length;
 
     const isAllDone = totalChecklist > 0 && totalDone === totalChecklist;
     const isTurnFinished = maxTurn > 0 && currentTurn >= maxTurn;
-
-    console.log("=================================== maxTurn", maxTurn);
-    console.log("=================================== currentTurn", currentTurn);
 
     if (isAllDone || isTurnFinished) {
       setHasFinished(true);
@@ -92,7 +116,15 @@ export default function RoleplayToggleSwipe({
 
       setActiveChecklist(null);
     }
-  }, [activeChecklist, onFinish, hasFinished, currentTurn, maxTurn, setMode]);
+  }, [
+    activeChecklist,
+    lastUserMessage, // 🔥 penting
+    currentTurn,
+    maxTurn,
+    onFinish,
+    hasFinished,
+    setMode,
+  ]);
 
   useEffect(() => {
     if (isOpen) {

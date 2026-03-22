@@ -13,9 +13,6 @@ export default function RoleplaySummaryCard({ data, onClose }) {
   return (
     <div className="relative w-80 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white shadow-2xl p-5 overflow-hidden">
       {/* Glow decoration */}
-      <h1>{done}</h1>
-      <h1>{total}</h1>
-      <h1>{percent}</h1>
       <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/20 blur-3xl rounded-full" />
       <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-500/20 blur-3xl rounded-full" />
 
@@ -37,8 +34,20 @@ export default function RoleplaySummaryCard({ data, onClose }) {
 
       {/* Status Badge */}
       <div className="flex justify-center mb-4">
-        <span className="px-3 py-1 text-xs rounded-full bg-green-500/20 text-green-300 border border-green-400/30">
-          ✅ Completed
+        <span
+          className={`px-3 py-1 text-xs rounded-full border ${
+            percent === 100
+              ? "bg-green-500/20 text-green-300 border-green-400/30"
+              : percent === 0
+                ? "bg-red-500/20 text-red-300 border-red-400/30"
+                : "bg-yellow-500/20 text-yellow-300 border-yellow-400/30"
+          }`}
+        >
+          {percent === 100
+            ? "✅ Completed"
+            : percent === 0
+              ? "❌ Failed"
+              : `⏳ ${percent}%`}
         </span>
       </div>
 

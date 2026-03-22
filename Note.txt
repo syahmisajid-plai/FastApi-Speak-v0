@@ -27,11 +27,14 @@
 
 - Logic Checklist Roleplay ✅
 - Akhiri Roleplay ✅
-- Update Summary Card Roleplay
+- Update Summary Card Roleplay ✅
 - Setelah roleplay selesai hentikan jawaban AI
 - Jangan pindah mode langsung setelah roleplay selesai tapi saat summary card dipencet ok
 
-- Cumn yang easy yang terkirim
+- Cumn yang easy yang terkirim ✅
+
+- Pindahkan Logic di Roleplay.jsx ke useRoleplay.js
+- Tambahkan List Checklist Mengambang
 
 - Perbaiki sistem / kata keyword checklist roleplay
 
