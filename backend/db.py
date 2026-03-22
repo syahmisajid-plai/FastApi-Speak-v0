@@ -115,7 +115,7 @@ def init_db():
     # -----------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS scenario_contexts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             scenario_id INTEGER NOT NULL,
             context_key TEXT NOT NULL,
             context_type TEXT,
