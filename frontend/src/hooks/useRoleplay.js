@@ -18,6 +18,8 @@ export default function useRoleplay({
 
   const chatHistoryRef = useRef([]);
 
+  const [activeChecklist, setActiveChecklist] = useState(null);
+
   // =========================
   // SYNC CHAT REF
   // =========================
@@ -78,7 +80,11 @@ export default function useRoleplay({
           description: item.description,
           step_order: item.step_order,
           keywords: item.keywords ?? [],
-          done: false, // 👈 ini penting untuk UI checklist
+          done: false,
+
+          // ✅ tambahkan ini
+          context_type: item.context_type ?? null,
+          context_data: item.context_data ?? null,
         })),
       };
     } catch (err) {
@@ -89,6 +95,80 @@ export default function useRoleplay({
     }
   };
 
+  const injectContextMessage = (item) => {
+    let message = "";
+
+    if (item.context_type === "list" && Array.isArray(item.context_data)) {
+      message = "Here is the menu:\n";
+
+      item.context_data.forEach((m) => {
+        message += `- ${m.name} (Rp${m.price})\n`;
+      });
+    }
+
+    if (item.context_type === "object" && item.context_data) {
+      message = "Here is the information:\n";
+
+      Object.entries(item.context_data).forEach(([key, val]) => {
+        message += `- ${key}: ${val}\n`;
+      });
+    }
+
+    setChatHistory((prev) => [
+      ...prev,
+      {
+        sender: "System", // 🔥 beda dari AI
+        text: message,
+      },
+    ]);
+  };
+
+  useEffect(() => {
+    if (!activeChecklist || activeChecklist.length === 0) return;
+
+    const lastUserMsg = chatHistoryRef.current
+      .filter((c) => c.sender === "You")
+      .slice(-1)[0]?.text;
+
+    if (!lastUserMsg) return;
+
+    const text = lastUserMsg.toLowerCase();
+
+    setActiveChecklist((prev) => {
+      if (!prev) return prev;
+
+      const updated = [...prev];
+
+      for (let i = 0; i < updated.length; i++) {
+        const item = updated[i];
+
+        if (item.done) continue;
+
+        const prevDone = i === 0 || updated[i - 1].done;
+        if (!prevDone) break;
+
+        const matched = item.keywords.some((kw) => {
+          const regex = new RegExp(`\\b${kw}\\b`, "i");
+          return regex.test(text);
+        });
+
+        if (matched) {
+          updated[i] = { ...item, done: true };
+
+          // 🔥 INI KUNCI
+          if (!item.context_shown && item.context_type && item.context_data) {
+            injectContextMessage(item);
+            updated[i].context_shown = true;
+          }
+        }
+
+        break;
+      }
+
+      return updated;
+    });
+  }, [chatHistory]);
+
   // =========================
   // START ROLEPLAY
   // =========================
@@ -98,6 +178,13 @@ export default function useRoleplay({
         console.error("❌ scenario.id INVALID:", scenario);
         return;
       }
+
+      setActiveChecklist(
+        scenario.checklist.map((item) => ({
+          ...item,
+          context_shown: false, // 🔥 penting
+        })),
+      );
 
       const res = await fetch(`${linkBackend}/roleplay/start`, {
         method: "POST",

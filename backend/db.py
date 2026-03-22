@@ -84,17 +84,19 @@ def init_db():
     """
     )
 
-    cursor.execute(
-        """
+    # -----------------------------
+    # SCENARIO CHECKLIST (UPDATED)
+    # -----------------------------
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS scenario_checklist (
-            id SERIAL PRIMARY KEY,
-            scenario_id INTEGER REFERENCES scenarios(id),
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            scenario_id INTEGER,
             step_key TEXT,
             description TEXT,
-            step_order INTEGER
+            step_order INTEGER,
+            context_key TEXT
         )
-    """
-    )
+    """)
 
     cursor.execute(
         """
@@ -107,6 +109,20 @@ def init_db():
         );
     """
     )
+
+    # -----------------------------
+    # NEW: SCENARIO CONTEXTS
+    # -----------------------------
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS scenario_contexts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            scenario_id INTEGER NOT NULL,
+            context_key TEXT NOT NULL,
+            context_type TEXT,
+            context_data TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
 
 
     conn.commit()
@@ -254,6 +270,49 @@ def get_scenario(scenario_id):
         "target_turn": row[8],
     }
 
+import json
+
+
+def get_contexts_by_scenario(scenario_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Detect placeholder (PostgreSQL vs SQLite)
+    placeholder = "%s" if "psycopg2" in str(type(conn)) else "?"
+
+    query = f"""
+        SELECT context_key, context_type, context_data
+        FROM scenario_contexts
+        WHERE scenario_id = {placeholder}
+    """
+
+    cursor.execute(query, (scenario_id,))
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    results = []
+
+    for row in rows:
+        context_key = row[0]
+        context_type = row[1]
+        raw_data = row[2]
+
+        # Parse JSON safely
+        parsed_data = None
+        if raw_data:
+            try:
+                parsed_data = json.loads(raw_data)
+            except Exception:
+                parsed_data = raw_data  # fallback kalau bukan JSON valid
+
+        results.append({
+            "context_key": context_key,
+            "context_type": context_type,
+            "context_data": parsed_data,
+        })
+
+    return results
 
 def get_session_history(session_id: str):
     if DATABASE_URL:

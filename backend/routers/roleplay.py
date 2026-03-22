@@ -17,7 +17,8 @@ from db import (
     get_random_scenario,
     get_scenario_checklist,
     get_scenario,
-    get_keywords_by_scenario
+    get_keywords_by_scenario,
+    get_contexts_by_scenario
 )
 
 router = APIRouter(prefix="/roleplay", tags=["Roleplay"])
@@ -67,10 +68,21 @@ llm = ChatOpenAI(
 def generate_roleplay(difficulty: str):
     try:
         scenario = get_random_scenario(difficulty)
-
+        
         if not scenario:
             return {"error": "No scenario found"}
 
+        contexts = get_contexts_by_scenario(scenario["id"]) or []
+
+        context_map = {
+            item["context_key"]: {
+                "type": item["context_type"],
+                "data": item["context_data"]
+            }
+            for item in contexts
+        }
+
+        
         checklist = get_scenario_checklist(scenario["id"]) or []
         keywords = get_keywords_by_scenario(scenario["id"])
 
@@ -95,6 +107,19 @@ def generate_roleplay(difficulty: str):
                 "description": item["description"],
                 "step_order": item.get("step_order", 0),
                 "keywords": keyword_map.get(item["step_key"], []),
+
+                # optional (debug / internal)
+                "context_key": item.get("context_key"),
+
+                # ✅ INI YANG PENTING
+                "context_type": (
+                    context_map.get(item.get("context_key"), {}).get("type")
+                    if item.get("context_key") else None
+                ),
+                "context_data": (
+                    context_map.get(item.get("context_key"), {}).get("data")
+                    if item.get("context_key") else None
+                ),
             }
             for item in checklist_sorted
         ]
