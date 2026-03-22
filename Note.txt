@@ -31,6 +31,8 @@
 - Setelah roleplay selesai hentikan jawaban AI
 - Jangan pindah mode langsung setelah roleplay selesai tapi saat summary card dipencet ok
 
+- Cumn yang easy yang terkirim
+
 - Perbaiki sistem / kata keyword checklist roleplay
 
 - Kata - Kata Pembuka

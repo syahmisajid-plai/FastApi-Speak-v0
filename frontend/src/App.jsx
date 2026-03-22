@@ -215,6 +215,11 @@ Feature tambahan:
   const { speakText, isSpeaking, forceStop } = useTTS_Google(); // 🗣️ Text-to-Speech
 
   // ================== RolePlay ==================
+  // const [checklistProgress, setChecklistProgress] = useState({
+  //   totalDone: 0,
+  //   totalChecklist: 0,
+  // });
+
   const {
     selectedScenario,
     isLoading,
@@ -229,11 +234,22 @@ Feature tambahan:
     scenarioRef,
     chatHistory,
     setChatHistory,
+    // checklistProgress,
   });
 
-  const handleChecklistFinished = () => {
-    handleRoleplayCompleted("Checklist completed");
+  const maxTurn = selectedScenario?.target_turn ?? 0;
+
+  const currentTurn = chatHistory.filter((msg) => msg.sender === "You").length;
+
+  const handleChecklistFinished = (progress) => {
+    handleRoleplayCompleted("Checklist completed", progress);
   };
+
+  // const handleChecklistUpdate = ({ totalDone, totalChecklist }) => {
+  //   console.log("📊 Progress dari child:", totalDone, "/", totalChecklist);
+
+  //   setChecklistProgress({ totalDone, totalChecklist });
+  // };
 
   // ================== SEND TEXT TO BACKEND ==================
   const { sendTextToBackend } = useConversationEngine({
@@ -551,6 +567,9 @@ Feature tambahan:
               setMode={setMode} // <-- tambahkan ini
               lastUserMessage={lastUserMessage}
               onFinish={handleChecklistFinished}
+              // onChecklistUpdate={handleChecklistUpdate}
+              currentTurn={currentTurn}
+              maxTurn={maxTurn}
             />
           )}
 

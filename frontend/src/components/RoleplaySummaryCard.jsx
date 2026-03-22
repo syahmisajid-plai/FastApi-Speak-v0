@@ -5,9 +5,17 @@ export default function RoleplaySummaryCard({ data, onClose }) {
 
   if (!data) return null;
 
+  const done = data.checklistDone ?? 0;
+  const total = data.checklistTotal ?? 0;
+
+  const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+
   return (
     <div className="relative w-80 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white shadow-2xl p-5 overflow-hidden">
       {/* Glow decoration */}
+      <h1>{done}</h1>
+      <h1>{total}</h1>
+      <h1>{percent}</h1>
       <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/20 blur-3xl rounded-full" />
       <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-500/20 blur-3xl rounded-full" />
 
@@ -58,10 +66,13 @@ export default function RoleplaySummaryCard({ data, onClose }) {
       <div className="mb-4">
         <div className="flex justify-between text-xs text-white/60 mb-1">
           <span>Progress</span>
-          <span>100%</span>
+          <span>{percent}%</span>
         </div>
         <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-          <div className="h-full w-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full" />
+          <div
+            className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full transition-all duration-500"
+            style={{ width: `${percent}%` }}
+          />
         </div>
       </div>
 

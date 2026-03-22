@@ -6,6 +6,7 @@ export default function useRoleplay({
   scenarioRef,
   chatHistory,
   setChatHistory,
+  checklistProgress,
 }) {
   const [selectedScenario, setSelectedScenario] = useState(null);
 
@@ -173,15 +174,22 @@ export default function useRoleplay({
   // =========================
   // COMPLETED (dipanggil dari ConversationEngine)
   // =========================
-  const handleRoleplayCompleted = async (finalText) => {
+  const handleRoleplayCompleted = async (finalText, progressFromChild) => {
     const totalTurns = chatHistoryRef.current.filter(
       (c) => c.sender === "You",
     ).length;
+
+    const progressSnapshot = {
+      done: progressFromChild?.totalDone ?? 0,
+      total: progressFromChild?.totalChecklist ?? 0,
+    };
 
     setSummaryData({
       totalTurns,
       lastMessage: finalText,
       duration: "5m",
+      checklistDone: progressSnapshot.done,
+      checklistTotal: progressSnapshot.total,
     });
 
     setShowSummary(true);

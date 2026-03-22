@@ -27,6 +27,9 @@ export default function RoleplayToggleSwipe({
   setMode, // <-- props baru
   lastUserMessage,
   onFinish,
+  onChecklistUpdate,
+  currentTurn,
+  maxTurn,
 }) {
   const difficulties = [
     { id: 1, name: "Easy Mode", image: easy_mode },
@@ -62,20 +65,34 @@ export default function RoleplayToggleSwipe({
 
   const [hasFinished, setHasFinished] = useState(false);
 
+  // Checklist Selesai
   useEffect(() => {
     if (!activeChecklist || !onFinish || hasFinished) return;
 
-    const isAllDone = activeChecklist.every((item) => item.done);
+    const totalDone = activeChecklist.filter((item) => item.done).length;
+    const totalChecklist = activeChecklist.length;
 
-    if (isAllDone) {
+    const isAllDone = totalChecklist > 0 && totalDone === totalChecklist;
+    const isTurnFinished = maxTurn > 0 && currentTurn >= maxTurn;
+
+    console.log("=================================== maxTurn", maxTurn);
+    console.log("=================================== currentTurn", currentTurn);
+
+    if (isAllDone || isTurnFinished) {
       setHasFinished(true);
-      onFinish();
+
+      console.log("Checklist Progress:");
+      console.log("Total Done:", totalDone);
+      console.log("Total Checklist:", totalChecklist);
+      console.log("Turn:", currentTurn, "/", maxTurn);
+
+      onFinish({ totalDone, totalChecklist });
+
       if (setMode) setMode("freeTalk");
 
-      // optional reset
       setActiveChecklist(null);
     }
-  }, [activeChecklist, onFinish, hasFinished]);
+  }, [activeChecklist, onFinish, hasFinished, currentTurn, maxTurn, setMode]);
 
   useEffect(() => {
     if (isOpen) {
