@@ -207,7 +207,7 @@ def get_scenario_checklist(scenario_id):
     if DATABASE_URL:
         cursor.execute(
             """
-            SELECT step_key, description
+            SELECT step_key, description, step_order, context_key
             FROM scenario_checklist
             WHERE scenario_id=%s
             ORDER BY step_order
@@ -217,7 +217,7 @@ def get_scenario_checklist(scenario_id):
     else:
         cursor.execute(
             """
-            SELECT step_key, description
+            SELECT step_key, description, step_order, context_key
             FROM scenario_checklist
             WHERE scenario_id=?
             ORDER BY step_order
@@ -228,7 +228,15 @@ def get_scenario_checklist(scenario_id):
     rows = cursor.fetchall()
     conn.close()
 
-    return [{"step_key": r[0], "description": r[1]} for r in rows]
+    return [
+    {
+        "step_key": r[0],
+        "description": r[1],
+        "step_order": r[2],
+        "context_key": r[3],  # 🔥 INI KUNCI
+    }
+    for r in rows
+]
 
 
 def get_scenario(scenario_id):

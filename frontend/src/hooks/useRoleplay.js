@@ -59,6 +59,9 @@ export default function useRoleplay({
 
       const data = await res.json();
 
+      console.log("🔥 RAW DATA FROM BACKEND:", data);
+      console.log("🔥 CHECKLIST RAW:", data.checklist);
+
       if (!res.ok || !data.scenario_id) {
         console.error("❌ INVALID GENERATE RESPONSE:", data);
         return null;
@@ -118,7 +121,7 @@ export default function useRoleplay({
       ...prev,
       {
         sender: "System", // 🔥 beda dari AI
-        text: message,
+        msg: message,
       },
     ]);
   };
