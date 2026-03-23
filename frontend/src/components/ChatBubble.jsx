@@ -57,7 +57,7 @@ export default function ChatBubble({ chat }) {
             : "bg-gray-200 text-gray-900 rounded-bl-none"
         }`}
       >
-        {chat.message}
+        <div className="whitespace-pre-line">{chat.message}</div>
 
         {/* Tombol hanya untuk AI */}
         {chat.sender === "AI" && (

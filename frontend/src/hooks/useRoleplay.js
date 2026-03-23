@@ -18,7 +18,75 @@ export default function useRoleplay({
 
   const chatHistoryRef = useRef([]);
 
-  const [activeChecklist, setActiveChecklist] = useState(null);
+  const lastStepKeyRef = useRef(null);
+
+  const formatContextData = (context_type, context_data) => {
+    if (!context_type || !context_data) return "";
+
+    const labelMap = {
+      ordered_item: "🧾 Your Order",
+      received_item: "⚠️ Received Item",
+      table_number: "🪑 Table Number",
+    };
+
+    const formatLabel = (key) =>
+      labelMap[key] ||
+      key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+    // =========================
+    // OBJECT
+    // =========================
+    if (context_type === "object") {
+      return Object.entries(context_data)
+        .map(([key, value]) => {
+          const label = formatLabel(key);
+
+          return `${label}\n${value}`;
+        })
+        .join("\n\n"); // 🔥 spacing antar item
+    }
+
+    // =========================
+    // LIST
+    // =========================
+    if (context_type === "list") {
+      return context_data
+        .map((item) => {
+          const name = item.name || "Item";
+          const price = item.price ? `Rp${item.price}` : "";
+
+          return `🍽 ${name}\n${price}`;
+        })
+        .join("\n\n");
+    }
+
+    return "";
+  };
+
+  const pushNextStepToChat = (updatedChecklist) => {
+    const nextStep = updatedChecklist.find((s) => !s.done);
+    if (!nextStep) return;
+
+    if (lastStepKeyRef.current === nextStep.step_key) return;
+    lastStepKeyRef.current = nextStep.step_key;
+
+    const contextText = formatContextData(
+      nextStep.context_type,
+      nextStep.context_data,
+    );
+
+    if (contextText) {
+      setTimeout(() => {
+        setChatHistory((prev) => [
+          ...prev,
+          {
+            sender: "AI",
+            message: `📌 Situation Details\n\n${contextText}`,
+          },
+        ]);
+      }, 600);
+    }
+  };
 
   // =========================
   // SYNC CHAT REF
@@ -98,80 +166,6 @@ export default function useRoleplay({
     }
   };
 
-  const injectContextMessage = (item) => {
-    let message = "";
-
-    if (item.context_type === "list" && Array.isArray(item.context_data)) {
-      message = "Here is the menu:\n";
-
-      item.context_data.forEach((m) => {
-        message += `- ${m.name} (Rp${m.price})\n`;
-      });
-    }
-
-    if (item.context_type === "object" && item.context_data) {
-      message = "Here is the information:\n";
-
-      Object.entries(item.context_data).forEach(([key, val]) => {
-        message += `- ${key}: ${val}\n`;
-      });
-    }
-
-    setChatHistory((prev) => [
-      ...prev,
-      {
-        sender: "System", // 🔥 beda dari AI
-        msg: message,
-      },
-    ]);
-  };
-
-  useEffect(() => {
-    if (!activeChecklist || activeChecklist.length === 0) return;
-
-    const lastUserMsg = chatHistoryRef.current
-      .filter((c) => c.sender === "You")
-      .slice(-1)[0]?.text;
-
-    if (!lastUserMsg) return;
-
-    const text = lastUserMsg.toLowerCase();
-
-    setActiveChecklist((prev) => {
-      if (!prev) return prev;
-
-      const updated = [...prev];
-
-      for (let i = 0; i < updated.length; i++) {
-        const item = updated[i];
-
-        if (item.done) continue;
-
-        const prevDone = i === 0 || updated[i - 1].done;
-        if (!prevDone) break;
-
-        const matched = item.keywords.some((kw) => {
-          const regex = new RegExp(`\\b${kw}\\b`, "i");
-          return regex.test(text);
-        });
-
-        if (matched) {
-          updated[i] = { ...item, done: true };
-
-          // 🔥 INI KUNCI
-          if (!item.context_shown && item.context_type && item.context_data) {
-            injectContextMessage(item);
-            updated[i].context_shown = true;
-          }
-        }
-
-        break;
-      }
-
-      return updated;
-    });
-  }, [chatHistory]);
-
   // =========================
   // START ROLEPLAY
   // =========================
@@ -181,13 +175,6 @@ export default function useRoleplay({
         console.error("❌ scenario.id INVALID:", scenario);
         return;
       }
-
-      setActiveChecklist(
-        scenario.checklist.map((item) => ({
-          ...item,
-          context_shown: false, // 🔥 penting
-        })),
-      );
 
       const res = await fetch(`${linkBackend}/roleplay/start`, {
         method: "POST",
@@ -209,7 +196,7 @@ export default function useRoleplay({
       setChatHistory([
         {
           sender: "AI",
-          text: `Hi! I'm your ${scenario.ai_role}. ${scenario.situation}`,
+          message: `Hi! I'm your ${scenario.ai_role}. ${scenario.situation}`,
         },
       ]);
     } catch (err) {
@@ -324,5 +311,8 @@ export default function useRoleplay({
 
     // 🔥 expose ke engine
     handleRoleplayCompleted,
+
+    // 🔥 TAMBAHKAN INI
+    pushNextStepToChat,
   };
 }

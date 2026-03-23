@@ -229,6 +229,7 @@ Feature tambahan:
     closeSummary,
     exitRoleplay,
     handleRoleplayCompleted, // ✅ TAMBAH
+    pushNextStepToChat,
   } = useRoleplay({
     sessionIdRef,
     scenarioRef,
@@ -245,11 +246,11 @@ Feature tambahan:
     handleRoleplayCompleted("Checklist completed", progress);
   };
 
-  // const handleChecklistUpdate = ({ totalDone, totalChecklist }) => {
-  //   console.log("📊 Progress dari child:", totalDone, "/", totalChecklist);
+  const handleChecklistUpdate = (updatedChecklist, currentStep) => {
+    console.log("📍 CURRENT STEP:", currentStep);
 
-  //   setChecklistProgress({ totalDone, totalChecklist });
-  // };
+    pushNextStepToChat(updatedChecklist);
+  };
 
   // ================== SEND TEXT TO BACKEND ==================
   const { sendTextToBackend } = useConversationEngine({
@@ -567,7 +568,7 @@ Feature tambahan:
               setMode={setMode} // <-- tambahkan ini
               lastUserMessage={lastUserMessage}
               onFinish={handleChecklistFinished}
-              // onChecklistUpdate={handleChecklistUpdate}
+              onChecklistUpdate={handleChecklistUpdate}
               currentTurn={currentTurn}
               maxTurn={maxTurn}
             />

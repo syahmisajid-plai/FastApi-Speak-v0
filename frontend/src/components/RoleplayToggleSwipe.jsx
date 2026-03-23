@@ -149,6 +149,10 @@ export default function RoleplayToggleSwipe({
     ],
   };
 
+  const getCurrentStep = (checklist) => {
+    return checklist.find((item) => !item.done);
+  };
+
   const updateChecklistProgress = (input) => {
     const text = input.toLowerCase();
 
@@ -156,6 +160,7 @@ export default function RoleplayToggleSwipe({
       if (!prev) return prev;
 
       const updated = [...prev];
+
       for (let i = 0; i < updated.length; i++) {
         const item = updated[i];
 
@@ -174,6 +179,14 @@ export default function RoleplayToggleSwipe({
         }
 
         break;
+      }
+
+      // 🔥 TAMBAHKAN INI
+      const currentStep = getCurrentStep(updated);
+
+      // 🔥 KIRIM KE PARENT
+      if (onChecklistUpdate) {
+        onChecklistUpdate(updated, currentStep);
       }
 
       return updated;
@@ -435,10 +448,18 @@ export default function RoleplayToggleSwipe({
                         text: item.description,
                         keywords: item.keywords ?? [],
                         done: false,
+                        context_type: item.context_type ?? null, // 🔥 penting
+                        context_data: item.context_data ?? null, // 🔥 penting
                       }),
                     );
 
                     setActiveChecklist(normalizedChecklist);
+
+                    // 🔥 KIRIM STEP PERTAMA
+                    const firstStep = normalizedChecklist[0];
+                    if (onChecklistUpdate) {
+                      onChecklistUpdate(normalizedChecklist, firstStep);
+                    }
                     handleCloseOrSelect(mission);
                   }}
                 >
