@@ -39,10 +39,12 @@ export default function RoleplayToggleSwipe({
   // ];
 
   const category = [
-    { id: 1, name: "Airport", image: easy_mode },
-    { id: 2, name: "Restaurant", image: medium_mode },
-    { id: 3, name: "Interview", image: hard_mode },
-    { id: 4, name: "Shopping", image: hard_mode2 },
+    { id: 1, name: "Food", image: easy_mode },
+    { id: 2, name: "Work", image: medium_mode },
+    { id: 3, name: "Daily Life", image: hard_mode },
+    { id: 4, name: "Travel", image: hard_mode2 },
+    { id: 5, name: "Shopping", image: medium_mode },
+    { id: 6, name: "Health", image: medium_mode },
   ];
 
   useEffect(() => {
@@ -59,7 +61,7 @@ export default function RoleplayToggleSwipe({
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState("category");
   // const [selectedDifficulty, setSelectedCategory] = useState(null);
-  const [SelectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [mission, setMission] = useState(null);
   const [activeChecklist, setActiveChecklist] = useState(null);
 
@@ -322,7 +324,7 @@ export default function RoleplayToggleSwipe({
                 modules={[EffectCards]}
                 className="h-full"
               >
-                {categorys.map((t) => (
+                {category.map((t) => (
                   <SwiperSlide key={t.id}>
                     <div
                       className="w-full h-full rounded-xl flex items-center justify-center text-xl font-semibold shadow-2xl cursor-pointer"
@@ -385,7 +387,7 @@ export default function RoleplayToggleSwipe({
 
                     {/* Difficulty */}
                     <span className="text-xs px-2 py-0.5 mt-0.5 rounded-full bg-indigo-100 text-indigo-700">
-                      {mission?.category}
+                      {mission?.difficulty}
                     </span>
                   </div>
                 </div>
