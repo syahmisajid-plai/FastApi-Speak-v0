@@ -11,6 +11,7 @@ import RoleplaySummaryCard from "./components/RoleplaySummaryCard";
 import DailyStoryIndicator from "./components/DailyStoryIndicator";
 import Testcard_swipe from "./components/testcard_swipe";
 import ModeSelector from "./components/ModeSelector";
+import ContextRenderer from "./components/ContextRenderer";
 
 // ================== STYLES ==================
 import "./App.css";
@@ -220,6 +221,8 @@ Feature tambahan:
   //   totalChecklist: 0,
   // });
 
+  const [showContext, setShowContext] = useState(false);
+
   const {
     selectedScenario,
     isLoading,
@@ -230,6 +233,7 @@ Feature tambahan:
     exitRoleplay,
     handleRoleplayCompleted, // ✅ TAMBAH
     pushNextStepToChat,
+    activeContext,
   } = useRoleplay({
     sessionIdRef,
     scenarioRef,
@@ -251,6 +255,12 @@ Feature tambahan:
 
     pushNextStepToChat(updatedChecklist);
   };
+
+  useEffect(() => {
+    if (activeContext) {
+      setShowContext(true);
+    }
+  }, [activeContext]);
 
   // ================== SEND TEXT TO BACKEND ==================
   const { sendTextToBackend } = useConversationEngine({
@@ -463,6 +473,48 @@ Feature tambahan:
               <RoleplaySummaryCard data={summaryData} onClose={closeSummary} />
             </div>
           )}
+
+          {showContext && activeContext && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+              <div className="bg-white text-black rounded-xl p-5 w-[350px] max-h-[80vh] overflow-y-auto shadow-xl">
+                {/* HEADER */}
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-bold">📌 Situation Details</h2>
+                  <button onClick={() => setShowContext(false)}>✖</button>
+                </div>
+
+                {/* CONTENT */}
+                <ContextRenderer context={activeContext} />
+              </div>
+            </div>
+          )}
+
+          {/* 🔥 TAMBAHKAN DI SINI */}
+          {mode === "roleplay" &&
+            selectedScenario &&
+            activeContext &&
+            !showContext && (
+              <button
+                onClick={() => setShowContext(true)}
+                className="
+              text-sm
+              fixed 
+              bottom-65 
+              right-4 
+              z-40
+              bg-blue-600! 
+              text-white 
+              px-4! py-3! 
+              rounded-full 
+              shadow-lg
+              hover:scale-105
+              active:scale-95
+              transition
+            "
+              >
+                📌
+              </button>
+            )}
 
           <div className="relative">
             {/* konten lain */}

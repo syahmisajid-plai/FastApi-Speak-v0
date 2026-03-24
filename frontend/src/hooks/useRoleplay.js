@@ -20,48 +20,7 @@ export default function useRoleplay({
 
   const lastStepKeyRef = useRef(null);
 
-  const formatContextData = (context_type, context_data) => {
-    if (!context_type || !context_data) return "";
-
-    const labelMap = {
-      ordered_item: "🧾 Your Order",
-      received_item: "⚠️ Received Item",
-      table_number: "🪑 Table Number",
-    };
-
-    const formatLabel = (key) =>
-      labelMap[key] ||
-      key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-
-    // =========================
-    // OBJECT
-    // =========================
-    if (context_type === "object") {
-      return Object.entries(context_data)
-        .map(([key, value]) => {
-          const label = formatLabel(key);
-
-          return `${label}\n${value}`;
-        })
-        .join("\n\n"); // 🔥 spacing antar item
-    }
-
-    // =========================
-    // LIST
-    // =========================
-    if (context_type === "list") {
-      return context_data
-        .map((item) => {
-          const name = item.name || "Item";
-          const price = item.price ? `Rp${item.price}` : "";
-
-          return `🍽 ${name}\n${price}`;
-        })
-        .join("\n\n");
-    }
-
-    return "";
-  };
+  const [activeContext, setActiveContext] = useState(null);
 
   const pushNextStepToChat = (updatedChecklist) => {
     const nextStep = updatedChecklist.find((s) => !s.done);
@@ -70,22 +29,18 @@ export default function useRoleplay({
     if (lastStepKeyRef.current === nextStep.step_key) return;
     lastStepKeyRef.current = nextStep.step_key;
 
-    const contextText = formatContextData(
-      nextStep.context_type,
-      nextStep.context_data,
-    );
-
-    if (contextText) {
-      setTimeout(() => {
-        setChatHistory((prev) => [
-          ...prev,
-          {
-            sender: "AI",
-            message: `📌 Situation Details\n\n${contextText}`,
-          },
-        ]);
-      }, 600);
+    if (nextStep.context_type && nextStep.context_data) {
+      setActiveContext({
+        type: nextStep.context_type,
+        data: nextStep.context_data,
+        stepKey: nextStep.step_key,
+      });
     }
+  };
+
+  const resetContextState = () => {
+    setActiveContext(null);
+    lastStepKeyRef.current = null;
   };
 
   // =========================
@@ -109,6 +64,8 @@ export default function useRoleplay({
     if (scenarioRef.current) {
       await clearRoleplay(scenarioRef.current.id);
     }
+
+    resetContextState(); // 🔥 TAMBAH INI
 
     setSelectedScenario(null);
     setChatHistory([]);
@@ -229,6 +186,9 @@ export default function useRoleplay({
     if (isGeneratingRef.current) return null;
     isGeneratingRef.current = true;
 
+    // 🔥 RESET DULU (INI KUNCI)
+    resetContextState();
+
     const scenario = await generateScenario(difficulty);
 
     if (!scenario) {
@@ -273,6 +233,9 @@ export default function useRoleplay({
 
     const scenarioId = scenarioRef.current?.id;
 
+    // 🔥 RESET
+    resetContextState();
+
     setSelectedScenario(null);
     setChatHistory([]);
 
@@ -288,6 +251,8 @@ export default function useRoleplay({
     const scenarioId = scenarioRef.current?.id;
 
     setShowSummary(false);
+
+    resetContextState(); // 🔥 TAMBAH INI
     setSelectedScenario(null);
     setChatHistory([]);
 
@@ -314,5 +279,8 @@ export default function useRoleplay({
 
     // 🔥 TAMBAHKAN INI
     pushNextStepToChat,
+
+    // 🔥 ini yang penting
+    activeContext,
   };
 }
