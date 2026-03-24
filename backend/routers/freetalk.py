@@ -21,21 +21,25 @@ llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
 
 
 def run_freetalk(session_id: str, user_message: str):
+    try:
+        history = get_session_history(session_id)
 
-    history = get_session_history(session_id)
+        messages = [
+            SystemMessage(content=FREE_TALK_PROMPT),
+            *history.messages,
+            HumanMessage(content=user_message),
+        ]
 
-    messages = [
-        SystemMessage(content=FREE_TALK_PROMPT),
-        *history.messages,
-        HumanMessage(content=user_message),
-    ]
+        response = llm.invoke(messages)
 
-    response = llm.invoke(messages)
+        history.add_user_message(user_message)
+        history.add_ai_message(response.content)
 
-    history.add_user_message(user_message)
-    history.add_ai_message(response.content)
+        return response.content
 
-    return response.content
+    except Exception as e:
+        print("❌ FREETALK ERROR:", e)
+        return "Sorry, something went wrong."
 
 
 @router.post("/stream_answer")
