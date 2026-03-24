@@ -258,21 +258,22 @@ llm = ChatOpenAI(
 @router.post("/stream_answer")
 async def stream_daily_story(req: StreamRequest):
 
-    session_key = f"{req.session_id}_{req.user_id}_daily_{datetime.now().date()}"
+    today = str(datetime.now().date())
 
-    # -----------------------------
-    # UPDATE PROGRESS
-    # -----------------------------
-    progress = get_progress(session_key)
+    base_session_key = f"{req.session_id}_{req.user_id}_daily_{today}"
+
+    progress = get_progress(base_session_key)
+
+    phase = detect_phase(progress)
+
+    session_key = f"{base_session_key}_{phase}"
+
+    # tetap gunakan base_session_key untuk update progress
+    phase_progress = progress[phase]
 
     # progress["turns"] += 1
     # progress["words"] += len(req.input.split())
     # progress["transcript"] += " " + req.input
-
-    # -----------------------------
-    # DETECT PHASE
-    # -----------------------------
-    phase = detect_phase(progress)
 
     phase_progress = progress[phase]
     phase_progress["turns"] += 1
@@ -383,7 +384,7 @@ class NextPhaseRequest(BaseModel):
 @router.post("/next_phase")
 async def next_phase(req: NextPhaseRequest):
     today = str(datetime.now().date())
-    session_key = f"{req.session_id}_{req.user_id}_daily_{datetime.now().date()}"
+    session_key = f"{req.session_id}_{req.user_id}_daily_{today}"
 
     # pastikan row ada
     if not get_daily_story_session(session_key, req.user_id, today):
