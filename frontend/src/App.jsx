@@ -566,6 +566,7 @@ Feature tambahan:
                       },
                       body: JSON.stringify({
                         session_id: sessionId,
+                        user_id: userId,
                       }),
                     })
                       .then((res) => res.json())

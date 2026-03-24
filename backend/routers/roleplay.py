@@ -41,6 +41,7 @@ class StartRoleplayRequest(BaseModel):
 
 
 class StreamRequest(BaseModel):
+    user_id:str
     session_id: str
     scenario_id: int
     input: str
@@ -191,7 +192,7 @@ async def stream_answer(req: StreamRequest):
     if not scenario:
         return {"error": "Scenario not found"}
 
-    session_key = f"{req.session_id}_sc{req.scenario_id}"
+    session_key = f"{req.session_id}_{req.user_id}sc{req.scenario_id}"
     session_data = get_roleplay_session(session_key)
 
     if not session_data:

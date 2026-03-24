@@ -516,33 +516,33 @@ def complete_roleplay(session_key):
     conn.close()
 
 
-def create_daily_story_session(session_key, story_date):
+def create_daily_story_session(session_key, user_id, story_date):
     conn = get_db_connection()
     cursor = conn.cursor()
 
     if DATABASE_URL:
         cursor.execute(
             """
-            INSERT INTO daily_story_sessions (session_key, story_date)
-            VALUES (%s, %s)
+            INSERT INTO daily_story_sessions (session_key, user_id, story_date)
+            VALUES (%s, %s, %s)
             ON CONFLICT DO NOTHING
             """,
-            (session_key, story_date),
+            (session_key, user_id, story_date),
         )
     else:
         cursor.execute(
             """
-            INSERT OR IGNORE INTO daily_story_sessions (session_key, story_date)
-            VALUES (?, ?)
+            INSERT OR IGNORE INTO daily_story_sessions (session_key, user_id, story_date)
+            VALUES (?, ?, ?)
             """,
-            (session_key, story_date),
+            (session_key, user_id, story_date),
         )
 
     conn.commit()
     conn.close()
 
 
-def get_daily_story_session(session_key, story_date):
+def get_daily_story_session(session_key, user_id, story_date):
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -550,17 +550,17 @@ def get_daily_story_session(session_key, story_date):
         cursor.execute(
             """
             SELECT * FROM daily_story_sessions
-            WHERE session_key=%s AND story_date=%s
+            WHERE session_key=%s AND user_id=%s AND story_date=%s
             """,
-            (session_key, story_date),
+            (session_key, user_id, story_date),
         )
     else:
         cursor.execute(
             """
             SELECT * FROM daily_story_sessions
-            WHERE session_key=? AND story_date=?
+            WHERE session_key=? AND user_id=? AND story_date=?
             """,
-            (session_key, story_date),
+            (session_key, user_id, story_date),
         )
 
     row = cursor.fetchone()
@@ -570,16 +570,17 @@ def get_daily_story_session(session_key, story_date):
         return None
 
     return {
-        "session_key": row[0],
+        "user_id": row[0],
         "story_date": row[1],
         "morning_completed": row[2],
         "afternoon_completed": row[3],
         "evening_completed": row[4],
         "night_completed": row[5],
+        "session_key": row[6],
     }
 
 
-def complete_daily_story_phase(session_key, story_date, phase):
+def complete_daily_story_phase(session_key, user_id, story_date, phase):
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -600,18 +601,18 @@ def complete_daily_story_phase(session_key, story_date, phase):
             f"""
             UPDATE daily_story_sessions
             SET {column}=1
-            WHERE session_key=%s AND story_date=%s
+            WHERE session_key=%s AND user_id=%s AND story_date=%s
             """,
-            (session_key, story_date),
+            (session_key, user_id, story_date),
         )
     else:
         cursor.execute(
             f"""
             UPDATE daily_story_sessions
             SET {column}=1
-            WHERE session_key=? AND story_date=?
+            WHERE session_key=? AND user_id=? AND story_date=?
             """,
-            (session_key, story_date),
+            (session_key, user_id, story_date),
         )
 
     conn.commit()

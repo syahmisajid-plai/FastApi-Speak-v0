@@ -358,8 +358,8 @@ async def stream_daily_story(req: StreamRequest):
 
 #
 @router.get("/progress")
-async def get_daily_progress(session_id: str = Query(...)):
-    progress = get_progress(f"{session_id}_daily")
+async def get_daily_progress(session_id: str = Query(...), user_id: str = Query(...)):
+    progress = get_progress(f"{session_id}_{user_id}_daily")
 
     phases_order = ["morning", "afternoon", "evening", "night"]
     progress_resp = {}
@@ -377,16 +377,17 @@ async def get_daily_progress(session_id: str = Query(...)):
 
 class NextPhaseRequest(BaseModel):
     session_id: str
+    user_id: str
 
 
 @router.post("/next_phase")
 async def next_phase(req: NextPhaseRequest):
     today = str(datetime.now().date())
-    session_key = f"{req.session_id}_daily_{today}"
+    session_key = f"{req.session_id}_{req.user_id}_daily_{datetime.now().date()}"
 
     # pastikan row ada
-    if not get_daily_story_session(session_key, today):
-        create_daily_story_session(session_key, today)
+    if not get_daily_story_session(session_key, req.user_id, today):
+        create_daily_story_session(session_key, req.user_id, today)
 
     progress = get_progress(session_key)
     phases = ["morning", "afternoon", "evening", "night"]
@@ -397,7 +398,7 @@ async def next_phase(req: NextPhaseRequest):
             progress[p]["ready"] = False
 
             # 🔹 update DB
-            complete_daily_story_phase(session_key, today, p)
+            complete_daily_story_phase(session_key, req.user_id, today, p)
 
             return {"completed_phase": p}
 
