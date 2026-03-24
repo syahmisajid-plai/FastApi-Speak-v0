@@ -94,7 +94,7 @@ export default function useRoleplay({
 
       return {
         id: Number(data.scenario_id),
-        name: data.category ?? "",
+        name: data.theme ?? "",
         category: data.category ?? "",
         difficulty: data.difficulty ?? "",
         user_role: data.user_role ?? "",

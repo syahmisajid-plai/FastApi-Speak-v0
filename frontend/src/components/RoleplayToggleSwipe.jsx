@@ -4,12 +4,19 @@ import bgTree from "../assets/bg_tree.jpg";
 import airport from "../assets/airport.png";
 import interview from "../assets/interview.jpg";
 import orderFood from "../assets/order_food.png";
-import shopping from "../assets/shopping.jpg";
+import xshopping from "../assets/shopping.jpg";
 
 import easy_mode from "../assets/7AvxLpHYRtmcMPAtwJGRtQ.webp";
 import medium_mode from "../assets/360_F_1487969412_OJJSsXoi9qcN72n06ZODBiX9BJAVKgPl.jpg";
 import hard_mode from "../assets/ya_-re-dragon-vs.jpg";
 import hard_mode2 from "../assets/knight-vs-dragon-battle-vector-59124162.avif";
+
+import food from "../assets/food.jpg";
+import work from "../assets/work.png";
+import daily_life from "../assets/Daily_Life.avif";
+import travel from "../assets/travel.avif";
+import shopping from "../assets/Shopping.avif";
+import health from "../assets/Health.png";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { EffectCards } from "swiper/modules";
@@ -39,12 +46,12 @@ export default function RoleplayToggleSwipe({
   // ];
 
   const category = [
-    { id: 1, name: "Food", image: easy_mode },
-    { id: 2, name: "Work", image: medium_mode },
-    { id: 3, name: "Daily Life", image: hard_mode },
-    { id: 4, name: "Travel", image: hard_mode2 },
-    { id: 5, name: "Shopping", image: medium_mode },
-    { id: 6, name: "Health", image: medium_mode },
+    { id: 1, name: "Food", image: food },
+    { id: 2, name: "Work", image: work },
+    { id: 3, name: "Daily Life", image: daily_life },
+    { id: 4, name: "Travel", image: travel },
+    { id: 5, name: "Shopping", image: shopping },
+    { id: 6, name: "Health", image: health },
   ];
 
   useEffect(() => {
@@ -274,10 +281,18 @@ export default function RoleplayToggleSwipe({
               {selectedScenario ? "Roleplay Mode" : "Free Talk"}
             </span>
 
-            {/* TITLE */}
-            <p className="text-lg font-semibold leading-tight">
-              {selectedScenario ? selectedScenario.name : "Start speaking"}
-            </p>
+            {/* TITLE + DIFFICULTY */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-lg font-semibold leading-tight">
+                {selectedScenario ? selectedScenario.name : "Start speaking"}
+              </p>
+
+              {selectedScenario?.difficulty && (
+                <span className="px-2 py-[2px] rounded-full bg-white/10 text-white/80 text-[10px] font-semibold uppercase">
+                  {selectedScenario.difficulty}
+                </span>
+              )}
+            </div>
 
             {/* HINT */}
             {!selectedScenario && (
@@ -327,12 +342,11 @@ export default function RoleplayToggleSwipe({
                 {category.map((t) => (
                   <SwiperSlide key={t.id}>
                     <div
-                      className="w-full h-full rounded-xl flex items-center justify-center text-xl font-semibold shadow-2xl cursor-pointer"
+                      className="relative w-full h-full rounded-xl flex items-center justify-center text-xl font-semibold shadow-2xl cursor-pointer overflow-hidden"
                       style={{
                         backgroundImage: `url(${t.image})`,
                         backgroundSize: "cover",
                         backgroundPosition: "center",
-                        color: "white",
                       }}
                       onClick={async () => {
                         setSelectedCategory(t);
@@ -348,7 +362,18 @@ export default function RoleplayToggleSwipe({
                         setStep("mission");
                       }}
                     >
-                      {t.name}
+                      {/* Overlay */}
+                      <div className="absolute inset-0 bg-black/30" />
+
+                      {/* Text */}
+                      <span
+                        className="relative z-10 text-white text-center px-2"
+                        style={{
+                          WebkitTextStroke: "0.5px black",
+                        }}
+                      >
+                        {t.name}
+                      </span>
                     </div>
                   </SwiperSlide>
                 ))}

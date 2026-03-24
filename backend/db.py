@@ -124,6 +124,32 @@ def init_db():
         )
     """)
 
+    # -----------------------------
+    # NEW: USER
+    # -----------------------------
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id UUID PRIMARY KEY,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+
+            username VARCHAR(100),
+            full_name VARCHAR(255),
+            avatar_url TEXT,
+
+            language_level VARCHAR(50),
+
+            last_active_at TIMESTAMP,
+
+            preferred_language VARCHAR(10) DEFAULT 'en',
+            daily_reminder_time TIME,
+            notification_enabled BOOLEAN DEFAULT TRUE,
+
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+
 
     conn.commit()
     conn.close()
