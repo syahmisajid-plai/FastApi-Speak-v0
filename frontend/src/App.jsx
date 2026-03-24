@@ -152,6 +152,13 @@ Feature tambahan:
   const [sessionId, setSessionId] = useState("sam");
   const sessionIdRef = useRef(sessionId);
 
+  const userMap = {
+    sam: "21121b45-6987-432c-a2cd-fda17eabbd2b",
+    syifa: "51c3476b-d6a9-4d82-8bf2-64bbf53f2e50",
+  };
+
+  const userId = userMap[sessionId];
+
   // ================== CHAT STATE ==================
   const [chatHistory, setChatHistory] = useState([]);
 
@@ -265,6 +272,7 @@ Feature tambahan:
   // ================== SEND TEXT TO BACKEND ==================
   const { sendTextToBackend } = useConversationEngine({
     sessionIdRef,
+    userId,
     scenarioRef,
     modeRef,
     setChatHistory,
@@ -682,7 +690,7 @@ Feature tambahan:
               onChange={(e) => setSessionId(e.target.value)}
             >
               <option value="sam">sam</option>
-              <option value="syahmi">syahmi</option>
+              <option value="syifa">syifa</option>
             </select>
           </div>
 

@@ -12,6 +12,7 @@ router = APIRouter(prefix="/free-talk", tags=["Free Talk"])
 
 
 class FreeTalkRequest(BaseModel):
+    user_id:str
     session_id: str
     input: str
 
@@ -20,9 +21,10 @@ class FreeTalkRequest(BaseModel):
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
 
 
-def run_freetalk(session_id: str, user_message: str):
+def run_freetalk(session_id: str, user_id: str, user_message: str):
     try:
-        history = get_session_history(session_id)
+        session_key = f"{session_id}_{user_id}_freetalk"
+        history = get_session_history(session_key)
 
         messages = [
             SystemMessage(content=FREE_TALK_PROMPT),
@@ -45,6 +47,10 @@ def run_freetalk(session_id: str, user_message: str):
 @router.post("/stream_answer")
 def free_talk(req: FreeTalkRequest):
 
-    reply = run_freetalk(req.session_id, req.input)
+    reply = run_freetalk(
+        session_id=req.session_id,
+        user_id=req.user_id,
+        user_message=req.input
+    )
 
     return {"text": reply}

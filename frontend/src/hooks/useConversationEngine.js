@@ -3,6 +3,7 @@ import { streamChat } from "../services/chatService";
 
 export default function useConversationEngine({
   sessionIdRef,
+  userId,
   scenarioRef,
   modeRef,
   setChatHistory,
@@ -15,6 +16,7 @@ export default function useConversationEngine({
     await streamChat({
       text,
       sessionId: sessionIdRef.current,
+      userId: userId,
       scenarioId: scenarioRef.current?.id ?? 0,
       mode: modeRef.current,
 

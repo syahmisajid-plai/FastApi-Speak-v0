@@ -4,6 +4,7 @@ import { linkBackend } from "../config";
 export async function streamChat({
   text,
   sessionId,
+  userId,
   scenarioId = 0,
   mode = "roleplay",
 
@@ -29,6 +30,7 @@ export async function streamChat({
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       session_id: sessionId,
+      userId: userId,
       input: text,
       scenario_id: scenarioId,
     }),
