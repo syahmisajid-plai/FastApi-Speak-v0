@@ -58,14 +58,22 @@ def init_db():
         """
         CREATE TABLE IF NOT EXISTS daily_story_sessions (
             session_key TEXT,
-            story_date TEXT,
+            user_id UUID NOT NULL,
+            story_date DATE,
+
             morning_completed INTEGER DEFAULT 0,
             afternoon_completed INTEGER DEFAULT 0,
             evening_completed INTEGER DEFAULT 0,
             night_completed INTEGER DEFAULT 0,
-            PRIMARY KEY (session_key, story_date)
+
+            PRIMARY KEY (user_id, story_date),
+
+            CONSTRAINT fk_user
+                FOREIGN KEY (user_id)
+                REFERENCES users(id)
+                ON DELETE CASCADE
         )
-    """
+        """
     )
 
     cursor.execute(
@@ -149,6 +157,27 @@ def init_db():
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
+
+    # # -----------------------------
+    # # NEW: Message Store
+    # # -----------------------------
+    # cursor.execute(
+    #     """
+    #     CREATE TABLE IF NOT EXISTS message_store (
+    #         id SERIAL PRIMARY KEY,
+    #         user_id UUID NOT NULL,
+    #         session_id TEXT,
+    #         message TEXT,
+
+    #         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    #         CONSTRAINT fk_message_user
+    #             FOREIGN KEY (user_id)
+    #             REFERENCES users(id)
+    #             ON DELETE CASCADE
+    #     )
+    #     """
+    # )
 
 
     conn.commit()
