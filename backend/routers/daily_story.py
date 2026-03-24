@@ -35,7 +35,7 @@ router = APIRouter(prefix="/daily-story", tags=["Daily Story"])
 # MODEL
 # -----------------------------
 class StreamRequest(BaseModel):
-    userId:str
+    user_id:str
     session_id: str
     input: str
 
@@ -258,7 +258,7 @@ llm = ChatOpenAI(
 @router.post("/stream_answer")
 async def stream_daily_story(req: StreamRequest):
 
-    session_key = f"{req.session_id}_{req.userId}_daily_{datetime.now().date()}"
+    session_key = f"{req.session_id}_{req.user_id}_daily_{datetime.now().date()}"
 
     # -----------------------------
     # UPDATE PROGRESS

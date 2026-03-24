@@ -30,7 +30,7 @@ export async function streamChat({
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       session_id: sessionId,
-      userId: userId,
+      user_id: userId,
       input: text,
       scenario_id: scenarioId,
     }),
