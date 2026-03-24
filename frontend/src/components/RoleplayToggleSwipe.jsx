@@ -31,20 +31,19 @@ export default function RoleplayToggleSwipe({
   currentTurn,
   maxTurn,
 }) {
-  const difficulties = [
-    { id: 1, name: "Easy Mode", image: easy_mode },
-    { id: 2, name: "Medium Mode", image: medium_mode },
-    { id: 3, name: "Hard Mode", image: hard_mode },
-    { id: 4, name: "Hard Mode", image: hard_mode2 },
-  ];
+  // const difficulties = [
+  //   { id: 1, name: "Easy Mode", image: easy_mode },
+  //   { id: 2, name: "Medium Mode", image: medium_mode },
+  //   { id: 3, name: "Hard Mode", image: hard_mode },
+  //   { id: 4, name: "Hard Mode", image: hard_mode2 },
+  // ];
 
-  useEffect(() => {
-    if (isOpen) {
-      setStep("difficulty");
-      setSelectedDifficulty(null);
-      setMission(null);
-    }
-  }, [isOpen]);
+  const themes = [
+    { id: 1, name: "Airport", image: easy_mode },
+    { id: 2, name: "Restaurant", image: medium_mode },
+    { id: 3, name: "Interview", image: hard_mode },
+    { id: 4, name: "Shopping", image: hard_mode2 },
+  ];
 
   useEffect(() => {
     if (!lastUserMessage || !activeChecklist) return;
@@ -58,8 +57,9 @@ export default function RoleplayToggleSwipe({
   };
 
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState("difficulty");
-  const [selectedDifficulty, setSelectedDifficulty] = useState(null);
+  const [step, setStep] = useState("theme");
+  // const [selectedDifficulty, setSelectedTheme] = useState(null);
+  const [SelectedTheme, setSelectedTheme] = useState(null);
   const [mission, setMission] = useState(null);
   const [activeChecklist, setActiveChecklist] = useState(null);
 
@@ -128,8 +128,8 @@ export default function RoleplayToggleSwipe({
 
   useEffect(() => {
     if (isOpen) {
-      setStep("difficulty");
-      setSelectedDifficulty(null);
+      setStep("theme");
+      setSelectedTheme(null);
       setMission(null);
       setHasFinished(false); // ✅ reset
     }
@@ -302,7 +302,7 @@ export default function RoleplayToggleSwipe({
             hover:scale-105 active:scale-95 transition"
           onClick={() => {
             setMode("roleplay");
-            setStep("difficulty");
+            setStep("theme");
             setIsOpen(true);
           }}
         >
@@ -314,36 +314,30 @@ export default function RoleplayToggleSwipe({
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
           <div className="w-[280px] h-[380px]  rounded-xl p-3">
-            {/* STEP 1 — DIFFICULTY */}
-            {step === "difficulty" && (
+            {/* STEP 1 — THEME SELECTION */}
+            {step === "theme" && (
               <Swiper
                 effect="cards"
                 grabCursor={true}
                 modules={[EffectCards]}
                 className="h-full"
               >
-                {difficulties.map((s) => (
-                  <SwiperSlide key={s.id}>
+                {themes.map((t) => (
+                  <SwiperSlide key={t.id}>
                     <div
                       className="w-full h-full rounded-xl flex items-center justify-center text-xl font-semibold shadow-2xl cursor-pointer"
                       style={{
-                        backgroundImage: `url(${s.image})`,
+                        backgroundImage: `url(${t.image})`,
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                         color: "white",
                       }}
                       onClick={async () => {
-                        setSelectedDifficulty(s);
+                        setSelectedTheme(t);
                         setStep("randomizing");
 
-                        const difficultyMap = {
-                          "Easy Mode": "easy",
-                          "Medium Mode": "medium",
-                          "Hard Mode": "hard",
-                        };
-
                         const scenario = await onScenarioSelect(
-                          difficultyMap[s.name],
+                          t.name.toLowerCase(),
                         );
 
                         if (!scenario) return;
@@ -352,7 +346,7 @@ export default function RoleplayToggleSwipe({
                         setStep("mission");
                       }}
                     >
-                      {s.name}
+                      {t.name}
                     </div>
                   </SwiperSlide>
                 ))}
@@ -391,7 +385,7 @@ export default function RoleplayToggleSwipe({
 
                     {/* Difficulty */}
                     <span className="text-xs px-2 py-0.5 mt-0.5 rounded-full bg-indigo-100 text-indigo-700">
-                      {selectedDifficulty?.name}
+                      {mission?.theme}
                     </span>
                   </div>
                 </div>

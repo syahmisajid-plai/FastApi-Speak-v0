@@ -32,7 +32,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 class GenerateRequest(BaseModel):
-    difficulty: str
+    theme: str
 
 
 class StartRoleplayRequest(BaseModel):
@@ -65,9 +65,9 @@ llm = ChatOpenAI(
 
 
 @router.get("/generate")
-def generate_roleplay(difficulty: str):
+def generate_roleplay(theme: str):
     try:
-        scenario = get_random_scenario(difficulty)
+        scenario = get_random_scenario(theme)
         
         if not scenario:
             return {"error": "No scenario found"}

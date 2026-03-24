@@ -74,12 +74,12 @@ export default function useRoleplay({
   // =========================
   // GENERATE SCENARIO
   // =========================
-  const generateScenario = async (difficulty = "easy") => {
+  const generateScenario = async (theme = "food") => {
     try {
       setIsLoading(true);
 
       const res = await fetch(
-        `${linkBackend}/roleplay/generate?difficulty=${difficulty}`,
+        `${linkBackend}/roleplay/generate?theme=${theme}`,
       );
 
       const data = await res.json();
@@ -182,14 +182,14 @@ export default function useRoleplay({
   // =========================
   // SELECT SCENARIO
   // =========================
-  const selectScenario = async (difficulty = "easy") => {
+  const selectScenario = async (theme = "food") => {
     if (isGeneratingRef.current) return null;
     isGeneratingRef.current = true;
 
     // 🔥 RESET DULU (INI KUNCI)
     resetContextState();
 
-    const scenario = await generateScenario(difficulty);
+    const scenario = await generateScenario(theme);
 
     if (!scenario) {
       isGeneratingRef.current = false;

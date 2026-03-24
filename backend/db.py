@@ -156,7 +156,7 @@ def get_keywords_by_scenario(scenario_id):
     return result
 
 
-def get_random_scenario(difficulty):
+def get_random_scenario(theme):
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -164,21 +164,21 @@ def get_random_scenario(difficulty):
         cursor.execute(
             """
             SELECT * FROM scenarios
-            WHERE LOWER(difficulty)=%s
+            WHERE LOWER(theme) = LOWER(%s)
             ORDER BY RANDOM()
             LIMIT 1
             """,
-            (difficulty,),
+            (theme,),
         )
     else:
         cursor.execute(
             """
             SELECT * FROM scenarios
-            WHERE LOWER(difficulty)=?
+            WHERE LOWER(theme) = LOWER(?)
             ORDER BY RANDOM()
             LIMIT 1
             """,
-            (difficulty,),
+            (theme,),
         )
 
     row = cursor.fetchone()
