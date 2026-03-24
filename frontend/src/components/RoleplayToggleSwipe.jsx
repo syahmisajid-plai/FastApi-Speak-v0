@@ -38,7 +38,7 @@ export default function RoleplayToggleSwipe({
   //   { id: 4, name: "Hard Mode", image: hard_mode2 },
   // ];
 
-  const themes = [
+  const category = [
     { id: 1, name: "Airport", image: easy_mode },
     { id: 2, name: "Restaurant", image: medium_mode },
     { id: 3, name: "Interview", image: hard_mode },
@@ -57,9 +57,9 @@ export default function RoleplayToggleSwipe({
   };
 
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState("theme");
-  // const [selectedDifficulty, setSelectedTheme] = useState(null);
-  const [SelectedTheme, setSelectedTheme] = useState(null);
+  const [step, setStep] = useState("category");
+  // const [selectedDifficulty, setSelectedCategory] = useState(null);
+  const [SelectedCategory, setSelectedCategory] = useState(null);
   const [mission, setMission] = useState(null);
   const [activeChecklist, setActiveChecklist] = useState(null);
 
@@ -128,15 +128,15 @@ export default function RoleplayToggleSwipe({
 
   useEffect(() => {
     if (isOpen) {
-      setStep("theme");
-      setSelectedTheme(null);
+      setStep("category");
+      setSelectedCategory(null);
       setMission(null);
       setHasFinished(false); // ✅ reset
     }
   }, [isOpen]);
 
   const dummyMission = {
-    theme: "Restaurant",
+    category: "Restaurant",
     difficulty: "Medium",
     scenario: "You are asking the waiter for food recommendations.",
     goal: "Order a meal and confirm the price.",
@@ -302,7 +302,7 @@ export default function RoleplayToggleSwipe({
             hover:scale-105 active:scale-95 transition"
           onClick={() => {
             setMode("roleplay");
-            setStep("theme");
+            setStep("category");
             setIsOpen(true);
           }}
         >
@@ -314,15 +314,15 @@ export default function RoleplayToggleSwipe({
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
           <div className="w-[280px] h-[380px]  rounded-xl p-3">
-            {/* STEP 1 — THEME SELECTION */}
-            {step === "theme" && (
+            {/* STEP 1 — category SELECTION */}
+            {step === "category" && (
               <Swiper
                 effect="cards"
                 grabCursor={true}
                 modules={[EffectCards]}
                 className="h-full"
               >
-                {themes.map((t) => (
+                {categorys.map((t) => (
                   <SwiperSlide key={t.id}>
                     <div
                       className="w-full h-full rounded-xl flex items-center justify-center text-xl font-semibold shadow-2xl cursor-pointer"
@@ -333,7 +333,7 @@ export default function RoleplayToggleSwipe({
                         color: "white",
                       }}
                       onClick={async () => {
-                        setSelectedTheme(t);
+                        setSelectedCategory(t);
                         setStep("randomizing");
 
                         const scenario = await onScenarioSelect(
@@ -385,7 +385,7 @@ export default function RoleplayToggleSwipe({
 
                     {/* Difficulty */}
                     <span className="text-xs px-2 py-0.5 mt-0.5 rounded-full bg-indigo-100 text-indigo-700">
-                      {mission?.theme}
+                      {mission?.category}
                     </span>
                   </div>
                 </div>

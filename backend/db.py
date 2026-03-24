@@ -156,7 +156,7 @@ def get_keywords_by_scenario(scenario_id):
     return result
 
 
-def get_random_scenario(theme):
+def get_random_scenario(category):
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -164,21 +164,21 @@ def get_random_scenario(theme):
         cursor.execute(
             """
             SELECT * FROM scenarios
-            WHERE LOWER(theme) = LOWER(%s)
+            WHERE LOWER(category) = LOWER(%s)
             ORDER BY RANDOM()
             LIMIT 1
             """,
-            (theme,),
+            (category,),
         )
     else:
         cursor.execute(
             """
             SELECT * FROM scenarios
-            WHERE LOWER(theme) = LOWER(?)
+            WHERE LOWER(category) = LOWER(?)
             ORDER BY RANDOM()
             LIMIT 1
             """,
-            (theme,),
+            (category,),
         )
 
     row = cursor.fetchone()
