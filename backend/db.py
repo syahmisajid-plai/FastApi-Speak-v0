@@ -28,6 +28,10 @@ def init_db():
         raise Exception("Cannot connect to the database")
 
     cursor = conn.cursor()
+    cursor.execute("""
+        CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+    """)
+    
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS user_streak (
@@ -155,6 +159,25 @@ def init_db():
 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS daily_story_summary (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            user_id UUID NOT NULL,
+            story_date DATE NOT NULL,
+
+            summary_text TEXT,
+
+            key_points JSONB,
+            vocab_used JSONB,
+            mistakes JSONB,
+
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+            CONSTRAINT unique_user_story_date UNIQUE (user_id, story_date)
         );
     """)
 
