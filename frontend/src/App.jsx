@@ -117,7 +117,7 @@ Feature tambahan:
     const sessionKey = `${session}_${userId}_daily_${today}`;
 
     console.log("🔑 Loading daily history for sessionKey:", sessionKey);
-
+    //
     try {
       const res = await fetch(
         `${linkBackend}/daily-story/history?session_id=${sessionKey}`,
