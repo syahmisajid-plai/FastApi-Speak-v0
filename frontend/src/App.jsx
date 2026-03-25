@@ -133,6 +133,9 @@ Feature tambahan:
 
         const phase = msg.phase;
 
+        console.log("🧪 MSG:", msg);
+        console.log("🧪 PHASE:", msg.phase);
+
         // 🔥 insert divider kalau phase berubah
         if (phase && phase !== lastPhase) {
           formatted.push({
