@@ -3,7 +3,7 @@ import { streamChat } from "../services/chatService";
 
 export default function useConversationEngine({
   sessionIdRef,
-  userId,
+  userIdRef,
   scenarioRef,
   modeRef,
   setChatHistory,
@@ -13,10 +13,19 @@ export default function useConversationEngine({
   onPhaseCompleted, // ⭐ NEW
 }) {
   const sendTextToBackend = async (text) => {
+    console.log("📤 ====== useConversationEngine.js =======");
+    console.log("📤 SEND TEXT TRIGGERED");
+    console.log("👤 userIdRef:", userIdRef);
+    console.log("🆔 sessionId:", sessionIdRef.current);
+    console.log("🎭 scenarioId:", scenarioRef.current?.id ?? 0);
+    console.log("🧭 mode:", modeRef.current);
+
+    const currentUserId = userIdRef.current;
+
     await streamChat({
       text,
       sessionId: sessionIdRef.current,
-      userId: userId,
+      userId: currentUserId,
       scenarioId: scenarioRef.current?.id ?? 0,
       mode: modeRef.current,
 

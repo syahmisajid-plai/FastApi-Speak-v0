@@ -81,7 +81,7 @@ Feature tambahan:
   const [pendingMode, setPendingMode] = useState(null);
   const [showModeConfirm, setShowModeConfirm] = useState(false);
 
-  const [activePhase, setActivePhase] = useState("morning");
+  // const [activePhase, setActivePhase] = useState("morning");
 
   // ================== Set Mode ==================
   const [mode, setMode] = useState("freeTalk");
@@ -157,9 +157,16 @@ Feature tambahan:
   const userMap = {
     sam: "21121b45-6987-432c-a2cd-fda17eabbd2b",
     syifa: "51c3476b-d6a9-4d82-8bf2-64bbf53f2e50",
+    test: "1234576b-d6a9-4d82-8bf2-64bbf53f2e50",
   };
 
   const userId = userMap[sessionId];
+
+  const userIdRef = useRef(userId);
+
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
 
   // ================== Daily Current ==================
   useEffect(() => {
@@ -171,7 +178,7 @@ Feature tambahan:
       .then((res) => res.json())
       .then((data) => {
         const phase = detectPhase(data); // atau backend kirim current_phase langsung
-        setActivePhase(phase);
+        // setActivePhase(phase);
       });
   }, [mode, sessionId]);
 
@@ -195,16 +202,16 @@ Feature tambahan:
   const [currentStoryPhase, setCurrentStoryPhase] = useState(null);
 
   useEffect(() => {
-    // ⭐ Fetch progress saat masuk dailyStory
     if (mode === "dailyStory") {
-      fetch(
-        `${linkBackend}/daily-story/progress?session_id=${sessionId}&user_id=${userId}`,
-      )
+      const url = `${linkBackend}/daily-story/progress?session_id=${sessionId}&user_id=${userId}`;
+
+      console.log("🌐 Fetching URL:", url);
+
+      fetch(url)
         .then((res) => res.json())
         .then((data) => {
           console.log("📥 Daily Story Progress fetched:", data);
 
-          // tandai fase yang sudah lengkap
           for (const phase in data) {
             if (data[phase]) {
               markPhaseComplete(phase);
@@ -213,7 +220,7 @@ Feature tambahan:
         })
         .catch((err) => console.error(err));
     }
-  }, [mode, sessionId]);
+  }, [mode, sessionId, userId]);
 
   // ================== REF ==================
   const bottomRef = useRef(null); // 🔵 Scroll ke bawah chat
@@ -292,10 +299,11 @@ Feature tambahan:
     }
   }, [activeContext]);
 
+  // console.log("======================= userId =======================", userId);
   // ================== SEND TEXT TO BACKEND ==================
   const { sendTextToBackend } = useConversationEngine({
     sessionIdRef,
-    userId,
+    userIdRef,
     scenarioRef,
     modeRef,
     setChatHistory,
@@ -461,7 +469,7 @@ Feature tambahan:
     return phaseOrder[index + 1] || "night";
   };
 
-  // const activePhase = getNextPhase(currentStoryPhase);
+  const activePhase = getNextPhase(currentStoryPhase);
 
   // =
   return (
@@ -607,7 +615,7 @@ Feature tambahan:
 
                         const data = await res.json();
                         console.log("PHASE MOVED:", data);
-                        setActivePhase(detectPhase(data));
+                        // setActivePhase(detectPhase(data));
 
                         // ✅ tandai phase selesai
                         markPhaseComplete(currentStoryPhase);
@@ -749,6 +757,7 @@ Feature tambahan:
             >
               <option value="sam">sam</option>
               <option value="syifa">syifa</option>
+              <option value="test">test</option>
             </select>
           </div>
 

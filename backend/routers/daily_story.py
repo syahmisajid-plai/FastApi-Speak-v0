@@ -371,21 +371,27 @@ async def stream_daily_story(req: StreamRequest):
 
 #
 @router.get("/progress")
-async def get_daily_progress(session_id: str = Query(...), user_id: str = Query(...)):
-    progress = get_progress(f"{session_id}_{user_id}_daily")
+async def get_daily_progress(session_id: str, user_id: str):
+    today = str(datetime.now().date())
 
-    phases_order = ["morning", "afternoon", "evening", "night"]
-    progress_resp = {}
-    unlock_next = True
+    session_key = f"{session_id}_{user_id}_daily_{today}"
 
-    for p in phases_order:
-        if unlock_next:
-            progress_resp[p] = progress[p]["completed"]
-            unlock_next = progress[p]["completed"]
-        else:
-            progress_resp[p] = False
+    row = get_daily_story_session(session_key, user_id, today)
 
-    return progress_resp
+    if not row:
+        return {
+            "morning": False,
+            "afternoon": False,
+            "evening": False,
+            "night": False,
+        }
+
+    return {
+        "morning": bool(row["morning_completed"]),
+        "afternoon": bool(row["afternoon_completed"]),
+        "evening": bool(row["evening_completed"]),
+        "night": bool(row["night_completed"]),
+    }
 
 
 class NextPhaseRequest(BaseModel):
@@ -463,35 +469,35 @@ def generate_summary(messages):
     # Prompt template
     prompt = ChatPromptTemplate.from_messages([
         SystemMessagePromptTemplate.from_template("""
-You are an expert English tutor assistant.
+    You are an expert English tutor assistant.
 
-Your task is to analyze a conversation and produce a structured summary in JSON format.
+    Your task is to analyze a conversation and produce a structured summary in JSON format.
 
-You MUST return ONLY valid JSON with the following structure:
+    You MUST return ONLY valid JSON with the following structure:
 
-{
-  "summary_text": string,
-  "key_points": list of strings,
-  "vocab_used": list of strings,
-  "mistakes": list of objects with:
-      - mistake: string
-      - correction: string
-}
+    {
+    "summary_text": string,
+    "key_points": list of strings,
+    "vocab_used": list of strings,
+    "mistakes": list of objects with:
+        - mistake: string
+        - correction: string
+    }
 
-Guidelines:
-- summary_text: concise paragraph summarizing the conversation
-- key_points: main learning points
-- vocab_used: important English words/phrases used
-- mistakes: only include user mistakes with corrections
-- If no mistakes, return empty list
-"""),
-        HumanMessagePromptTemplate.from_template("""
-Conversation:
-{conversation}
+    Guidelines:
+    - summary_text: concise paragraph summarizing the conversation
+    - key_points: main learning points
+    - vocab_used: important English words/phrases used
+    - mistakes: only include user mistakes with corrections
+    - If no mistakes, return empty list
+    """),
+            HumanMessagePromptTemplate.from_template("""
+    Conversation:
+    {conversation}
 
-Return JSON only.
-""")
-    ])
+    Return JSON only.
+    """)
+        ])
 
     # Chain
     chain = prompt | llm | StrOutputParser()

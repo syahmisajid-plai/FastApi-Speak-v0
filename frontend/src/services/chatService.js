@@ -25,6 +25,14 @@ export async function streamChat({
 
   const endpoint = endpointMap[mode];
 
+  console.log("📤 ==================== chatService.js: ====================", {
+    session_id: sessionId,
+    user_id: userId,
+    input: text,
+    scenario_id: scenarioId,
+    mode,
+  });
+
   const res = await fetch(`${linkBackend}${endpoint}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
