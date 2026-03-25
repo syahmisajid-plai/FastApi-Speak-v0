@@ -29,6 +29,8 @@ from db import (
     create_daily_story_session,
     get_daily_story_session,
 
+    get_daily_history,
+
     # summary
     get_daily_session,
     get_summary,
@@ -519,6 +521,10 @@ def generate_summary(messages):
         }
 
     return result
+
+@router.get("/history")
+def daily_history(session_id: str):
+    return get_daily_history(session_id)
 
 @router.post("/summary/generate")
 async def generate_daily_summary(req: SummaryRequest):

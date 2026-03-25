@@ -34,7 +34,7 @@ import useStreak from "./hooks/useStreak";
 // ================== AUDIO ==================
 import useTTS_Google from "./hooks/useTTS_Google";
 import useMicMonitor from "./utils/useMicMonitor";
-import { detectPhase } from "./utils/detectPhase";
+import { getCurrentPhaseFromProgress } from "./utils/detectPhase";
 
 // ================== DEV / DEBUG ==================
 import useEruda from "./hooks/useEruda";
@@ -81,7 +81,7 @@ Feature tambahan:
   const [pendingMode, setPendingMode] = useState(null);
   const [showModeConfirm, setShowModeConfirm] = useState(false);
 
-  // const [activePhase, setActivePhase] = useState("morning");
+  const [activePhase, setActivePhase] = useState("morning");
 
   // ================== Set Mode ==================
   const [mode, setMode] = useState("freeTalk");
@@ -92,18 +92,35 @@ Feature tambahan:
   const [dailyGreetingDone, setDailyGreetingDone] = useState(false);
 
   // ================== REF AUDIO ==================
+
+  // ================== SESSION MANAGEMENT ==================
+  const [sessionId, setSessionId] = useState("sam");
+  const sessionIdRef = useRef(sessionId);
+
+  const userMap = {
+    sam: "21121b45-6987-432c-a2cd-fda17eabbd2b",
+    syifa: "51c3476b-d6a9-4d82-8bf2-64bbf53f2e50",
+    test: "1234576b-d6a9-4d82-8bf2-64bbf53f2e50",
+  };
+
+  const userId = userMap[sessionId];
+  const userIdRef = useRef(userId);
+
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
   const audioDailyStartRef = useRef(null);
 
   // ================== Load History ==================
   const loadDailyHistory = async (session) => {
     const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-    const sessionKey = `${session}_${userId}_daily_${today}_${activePhase}`;
+    const sessionKey = `${session}_${userId}_daily_${today}`;
 
     console.log("🔑 Loading daily history for sessionKey:", sessionKey);
 
     try {
       const res = await fetch(
-        `${linkBackend}/history?session_id=${sessionKey}`,
+        `${linkBackend}/daily-story/history?session_id=${sessionKey}`,
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -137,50 +154,42 @@ Feature tambahan:
 
   const isDailyLocked = mode === "dailyStory" && !timeAllowed;
 
-  // ================== Mode change effect ==================
-  useEffect(() => {
-    modeRef.current = mode;
-
-    if (mode === "dailyStory") {
-      loadDailyHistory(sessionIdRef.current); // load history sesuai session terbaru
-    } else {
-      setChatHistory([]); // reset untuk mode lain
-    }
-
-    // console.log("🔄 MODE CHANGED:", mode);
-  }, [mode]);
-
-  // ================== SESSION MANAGEMENT ==================
-  const [sessionId, setSessionId] = useState("sam");
-  const sessionIdRef = useRef(sessionId);
-
-  const userMap = {
-    sam: "21121b45-6987-432c-a2cd-fda17eabbd2b",
-    syifa: "51c3476b-d6a9-4d82-8bf2-64bbf53f2e50",
-    test: "1234576b-d6a9-4d82-8bf2-64bbf53f2e50",
-  };
-
-  const userId = userMap[sessionId];
-
-  const userIdRef = useRef(userId);
-
-  useEffect(() => {
-    userIdRef.current = userId;
-  }, [userId]);
-
-  // ================== Daily Current ==================
   useEffect(() => {
     if (mode !== "dailyStory") return;
 
-    fetch(
-      `${linkBackend}/daily-story/progress?session_id=${sessionId}&user_id=${userId}`,
-    )
-      .then((res) => res.json())
+    console.log("🚀 Loading FULL daily history");
+
+    loadDailyHistory(sessionIdRef.current);
+  }, [mode, sessionId]);
+
+  useEffect(() => {
+    if (mode !== "dailyStory") return;
+
+    const url = `${linkBackend}/daily-story/progress?session_id=${sessionId}&user_id=${userId}`;
+
+    console.log("🌐 Fetching:", url);
+
+    fetch(url)
+      .then((res) => {
+        console.log("📡 Raw response:", res);
+        return res.json();
+      })
       .then((data) => {
-        const phase = detectPhase(data); // atau backend kirim current_phase langsung
-        // setActivePhase(phase);
+        console.log("📥 Response data:", data);
+
+        const phase = getCurrentPhaseFromProgress(data);
+        console.log("🧠 Detected phase:", phase);
+
+        setActivePhase(phase);
+      })
+      .catch((err) => {
+        console.error("❌ Fetch error:", err);
       });
   }, [mode, sessionId]);
+
+  useEffect(() => {
+    console.log("🔥 activePhase updated:", activePhase);
+  }, [activePhase]);
 
   // ================== CHAT STATE ==================
   const [chatHistory, setChatHistory] = useState([]);
@@ -196,7 +205,7 @@ Feature tambahan:
     completedCount,
     generateSummary,
   } = useDailyStory(userId);
-  const currentPhase = detectPhase();
+  const currentPhase = getCurrentPhaseFromProgress();
 
   const [readyToContinue, setReadyToContinue] = useState(false);
   const [currentStoryPhase, setCurrentStoryPhase] = useState(null);
@@ -469,7 +478,7 @@ Feature tambahan:
     return phaseOrder[index + 1] || "night";
   };
 
-  const activePhase = getNextPhase(currentStoryPhase);
+  // const activePhase = getNextPhase(currentStoryPhase);
 
   // =
   return (
@@ -615,7 +624,7 @@ Feature tambahan:
 
                         const data = await res.json();
                         console.log("PHASE MOVED:", data);
-                        // setActivePhase(detectPhase(data));
+                        setActivePhase(getCurrentPhaseFromProgress(data));
 
                         // ✅ tandai phase selesai
                         markPhaseComplete(currentStoryPhase);

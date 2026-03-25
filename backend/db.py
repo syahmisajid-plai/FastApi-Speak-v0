@@ -737,3 +737,54 @@ def save_summary(cursor, conn, user_id, story_date, summary):
     ))
 
     conn.commit()
+
+def get_daily_history(session_prefix):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    if DATABASE_URL:
+        cursor.execute(
+            """
+            SELECT message, session_id 
+            FROM message_store 
+            WHERE session_id LIKE %s
+            ORDER BY id ASC
+            """,
+            (session_prefix + "%",),
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT message, session_id 
+            FROM message_store 
+            WHERE session_id LIKE ?
+            ORDER BY id ASC
+            """,
+            (session_prefix + "%",),
+        )
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    history = []
+
+    for r in rows:
+        try:
+            data = json.loads(r[0])
+            role = data.get("type", "ai")
+            content = data.get("data", {}).get("content", "")
+
+            # 🔥 ambil phase dari session_id
+            session_id = r[1]
+            phase = session_id.split("_")[-1]
+
+            history.append({
+                "role": role,
+                "content": content,
+                "phase": phase,
+            })
+
+        except Exception as e:
+            print("Parse error:", e)
+
+    return history
