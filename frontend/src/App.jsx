@@ -125,10 +125,31 @@ Feature tambahan:
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
 
-      const formatted = (Array.isArray(data) ? data : []).map((msg) => ({
-        sender: msg.role === "human" ? "You" : "AI",
-        message: msg.content, // ✅ sesuai ChatSection
-      }));
+      const formatted = [];
+      let lastPhase = null;
+
+      (Array.isArray(data) ? data : []).forEach((msg) => {
+        if (!msg.content) return;
+
+        const phase = msg.phase;
+
+        // 🔥 insert divider kalau phase berubah
+        if (phase && phase !== lastPhase) {
+          formatted.push({
+            type: "phase",
+            phase,
+          });
+
+          lastPhase = phase;
+        }
+
+        // 🔥 chat message
+        formatted.push({
+          type: "chat",
+          sender: msg.role === "human" ? "You" : "AI",
+          message: msg.content,
+        });
+      });
 
       setChatHistory(formatted);
       console.log("📥 Daily history loaded:", data);

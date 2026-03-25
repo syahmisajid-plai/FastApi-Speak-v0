@@ -774,14 +774,16 @@ def get_daily_history(session_prefix):
             role = data.get("type", "ai")
             content = data.get("data", {}).get("content", "")
 
-            # 🔥 ambil phase dari session_id
             session_id = r[1]
-            phase = session_id.split("_")[-1]
+
+            # 🔥 ambil phase dari session_id
+            parts = session_id.split("_")
+            phase = parts[-1] if len(parts) > 0 else None
 
             history.append({
                 "role": role,
                 "content": content,
-                "phase": phase,
+                "phase": phase,  # ✅ INI YANG PENTING
             })
 
         except Exception as e:
