@@ -40,12 +40,18 @@
 
 - Kata - Kata Pembuka✅
 
+- Migradi Logic Daily from App.jsx to useDaily
+
+- Fix Update History Chat + Phase Daily Story
+
+
+
 - Inject Context_data ke Propmt (tapi saat step tertentu)
 
 - Database Penyelesaian Roleplay Mission
 
 - Mode berbicara dengan teman
 
--
+- 
 
 ✅❌

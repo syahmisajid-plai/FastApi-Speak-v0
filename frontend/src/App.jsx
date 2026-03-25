@@ -81,6 +81,8 @@ Feature tambahan:
   const [pendingMode, setPendingMode] = useState(null);
   const [showModeConfirm, setShowModeConfirm] = useState(false);
 
+  const [activePhase, setActivePhase] = useState("morning");
+
   // ================== Set Mode ==================
   const [mode, setMode] = useState("freeTalk");
   const modeRef = useRef(mode);
@@ -95,7 +97,7 @@ Feature tambahan:
   // ================== Load History ==================
   const loadDailyHistory = async (session) => {
     const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-    const sessionKey = `${session}_daily_${today}`;
+    const sessionKey = `${session}_${userId}_daily_${today}_${activePhase}`;
 
     console.log("🔑 Loading daily history for sessionKey:", sessionKey);
 
@@ -159,6 +161,20 @@ Feature tambahan:
 
   const userId = userMap[sessionId];
 
+  // ================== Daily Current ==================
+  useEffect(() => {
+    if (mode !== "dailyStory") return;
+
+    fetch(
+      `${linkBackend}/daily-story/progress?session_id=${sessionId}&user_id=${userId}`,
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        const phase = detectPhase(data); // atau backend kirim current_phase langsung
+        setActivePhase(phase);
+      });
+  }, [mode, sessionId]);
+
   // ================== CHAT STATE ==================
   const [chatHistory, setChatHistory] = useState([]);
 
@@ -166,8 +182,13 @@ Feature tambahan:
   const scenarioRef = useRef(null);
 
   // ================== DAILY STORY ==================
-  const { dailyStory, toggleDailyPhase, markPhaseComplete, completedCount } =
-    useDailyStory();
+  const {
+    dailyStory,
+    toggleDailyPhase,
+    markPhaseComplete,
+    completedCount,
+    generateSummary,
+  } = useDailyStory(userId);
   const currentPhase = detectPhase();
 
   const [readyToContinue, setReadyToContinue] = useState(false);
@@ -176,7 +197,9 @@ Feature tambahan:
   useEffect(() => {
     // ⭐ Fetch progress saat masuk dailyStory
     if (mode === "dailyStory") {
-      fetch(`${linkBackend}/daily-story/progress?session_id=${sessionId}`)
+      fetch(
+        `${linkBackend}/daily-story/progress?session_id=${sessionId}&user_id=${userId}`,
+      )
         .then((res) => res.json())
         .then((data) => {
           console.log("📥 Daily Story Progress fetched:", data);
@@ -301,7 +324,7 @@ Feature tambahan:
     if (dailyGreetingDone) return; // ✅ pastikan hanya sekali
 
     const today = new Date().toISOString().split("T")[0];
-    const sessionKey = `${sessionId}_daily_${today}`;
+    const sessionKey = `${sessionId}_${userId}_daily_${today}_${activePhase}`;
 
     console.log("🔄 Checking first daily greeting...", { sessionKey });
 
@@ -433,9 +456,12 @@ Feature tambahan:
   const phaseOrder = ["morning", "afternoon", "evening", "night"];
 
   const getNextPhase = (phase) => {
+    if (!phase) return "morning";
     const index = phaseOrder.indexOf(phase);
-    return phaseOrder[index + 1];
+    return phaseOrder[index + 1] || "night";
   };
+
+  // const activePhase = getNextPhase(currentStoryPhase);
 
   // =
   return (
@@ -552,73 +578,104 @@ Feature tambahan:
             />
           )}
 
-          {mode === "dailyStory" && readyToContinue && (
-            <div className="px-3 mt-4">
-              <button
-                onClick={() => {
-                  const next = getNextPhase(currentStoryPhase);
+          {mode === "dailyStory" &&
+            readyToContinue &&
+            (() => {
+              const next = getNextPhase(currentStoryPhase);
+              const isLastPhase = !next;
 
-                  if (next) {
-                    fetch(`${linkBackend}/daily-story/next_phase`, {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify({
-                        session_id: sessionId,
-                        user_id: userId,
-                      }),
-                    })
-                      .then((res) => res.json())
-                      .then((data) => {
+              return (
+                <div className="px-3 mt-4">
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(
+                          `${linkBackend}/daily-story/next_phase`,
+                          {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                              session_id: sessionId,
+                              user_id: userId,
+                            }),
+                          },
+                        );
+
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                        const data = await res.json();
                         console.log("PHASE MOVED:", data);
+                        setActivePhase(detectPhase(data));
 
+                        // ✅ tandai phase selesai
                         markPhaseComplete(currentStoryPhase);
+
+                        // ✅ reset tombol
                         setReadyToContinue(false);
-                      });
-                  }
-                }}
-                className="
-                  group
-                  w-full
-                  bg-gradient-to-r
-                  from-emerald-500
-                  to-green-600
-                  text-white
-                  rounded-2xl
-                  py-4
-                  px-4
-                  shadow-lg
-                  active:scale-95
-                  transition-all
-                  duration-200
-                  flex
-                  items-center
-                  justify-between
-                "
-              >
-                {/* left side */}
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">🚀</div>
 
-                  <div className="flex flex-col text-left">
-                    <span className="text-xs opacity-80">
-                      Phase {currentStoryPhase} complete
-                    </span>
+                        // 🎉 JIKA LAST PHASE → GENERATE SUMMARY
+                        if (isLastPhase) {
+                          console.log("🎉 STORY FINISHED → GENERATING SUMMARY");
 
-                    <span className="font-semibold text-base leading-tight">
-                      Continue Story
-                    </span>
-                  </div>
+                          const summary = await generateSummary();
+
+                          console.log("📊 FINAL SUMMARY:", summary);
+
+                          // optional UI:
+                          // setSummaryData(summary)
+                          // setShowSummary(true)
+                        }
+                      } catch (err) {
+                        console.error("❌ Failed to move phase:", err);
+                      }
+                    }}
+                    className="
+          group
+          w-full
+          bg-gradient-to-r
+          from-emerald-500
+          to-green-600
+          text-white
+          rounded-2xl
+          py-4
+          px-4
+          shadow-lg
+          active:scale-95
+          transition-all
+          duration-200
+          flex
+          items-center
+          justify-between
+        "
+                  >
+                    {/* LEFT */}
+                    <div className="flex items-center gap-3">
+                      <div className="text-2xl">
+                        {isLastPhase ? "🎉" : "🚀"}
+                      </div>
+
+                      <div className="flex flex-col text-left">
+                        <span className="text-xs opacity-80">
+                          Phase {currentStoryPhase} complete
+                          {!isLastPhase && ` → ${next}`}
+                        </span>
+
+                        <span className="font-semibold text-base leading-tight">
+                          {isLastPhase ? "Finish Story" : "Continue Story"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* RIGHT */}
+                    <div className="text-xl group-active:translate-x-1 transition">
+                      →
+                    </div>
+                  </button>
                 </div>
-
-                {/* arrow */}
-                <div className="text-xl group-active:translate-x-1 transition">
-                  →
-                </div>
-              </button>
-            </div>
-          )}
+              );
+            })()}
 
           {mode !== "dailyStory" && (
             <RoleplayToggle

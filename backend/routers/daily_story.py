@@ -18,6 +18,9 @@ from langchain_core.prompts import (
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables.history import RunnableWithMessageHistory
 
+import json
+from uuid import UUID
+
 from fastapi import Query
 
 from db import (
@@ -25,6 +28,12 @@ from db import (
     complete_daily_story_phase,
     create_daily_story_session,
     get_daily_story_session,
+
+    # summary
+    get_daily_session,
+    get_summary,
+    get_messages_by_date,
+    save_summary,
 )
 
 
@@ -39,6 +48,9 @@ class StreamRequest(BaseModel):
     session_id: str
     input: str
 
+class SummaryRequest(BaseModel):
+    user_id: UUID
+    story_date: date
 
 # -----------------------------
 # SESSION PROGRESS TRACKING
@@ -386,6 +398,13 @@ async def next_phase(req: NextPhaseRequest):
     today = str(datetime.now().date())
     session_key = f"{req.session_id}_{req.user_id}_daily_{today}"
 
+    # 🔍 DEBUG
+    print("===== NEXT PHASE DEBUG =====")
+    print("session_id (req):", req.session_id)
+    print("user_id (req):", req.user_id)
+    print("today:", today)
+    print("constructed session_key:", session_key)
+
     # pastikan row ada
     if not get_daily_story_session(session_key, req.user_id, today):
         create_daily_story_session(session_key, req.user_id, today)
@@ -404,3 +423,141 @@ async def next_phase(req: NextPhaseRequest):
             return {"completed_phase": p}
 
     return {"message": "no phase ready"}
+
+def is_complete(session: dict) -> bool:
+    """
+    Cek apakah semua phase daily sudah selesai
+    """
+
+    if not session:
+        return False
+
+    required_fields = [
+        "morning_completed",
+        "afternoon_completed",
+        "evening_completed",
+        "night_completed",
+    ]
+
+    return all(session.get(field, 0) == 1 for field in required_fields)
+
+def generate_summary(messages):
+    """
+    Generate structured summary from conversation messages using LangChain
+    """
+
+    # Convert messages → readable conversation text
+    conversation_text = []
+
+    for msg in messages:
+        role = msg.get("type")
+        content = msg.get("data", {}).get("content", "")
+
+        if role == "human":
+            conversation_text.append(f"User: {content}")
+        elif role == "ai":
+            conversation_text.append(f"AI: {content}")
+
+    conversation_text = "\n".join(conversation_text)
+
+    # Prompt template
+    prompt = ChatPromptTemplate.from_messages([
+        SystemMessagePromptTemplate.from_template("""
+You are an expert English tutor assistant.
+
+Your task is to analyze a conversation and produce a structured summary in JSON format.
+
+You MUST return ONLY valid JSON with the following structure:
+
+{
+  "summary_text": string,
+  "key_points": list of strings,
+  "vocab_used": list of strings,
+  "mistakes": list of objects with:
+      - mistake: string
+      - correction: string
+}
+
+Guidelines:
+- summary_text: concise paragraph summarizing the conversation
+- key_points: main learning points
+- vocab_used: important English words/phrases used
+- mistakes: only include user mistakes with corrections
+- If no mistakes, return empty list
+"""),
+        HumanMessagePromptTemplate.from_template("""
+Conversation:
+{conversation}
+
+Return JSON only.
+""")
+    ])
+
+    # Chain
+    chain = prompt | llm | StrOutputParser()
+
+    # Invoke
+    response = chain.invoke({
+        "conversation": conversation_text
+    })
+
+    # Parse JSON safely
+    try:
+        result = json.loads(response)
+    except:
+        result = {
+            "summary_text": response,
+            "key_points": [],
+            "vocab_used": [],
+            "mistakes": []
+        }
+
+    return result
+
+@router.post("/summary/generate")
+async def generate_daily_summary(req: SummaryRequest):
+
+    try:
+        # 1. ambil session
+        session = get_daily_session(req.user_id, req.story_date)
+
+        if not session:
+            return {"status": "session_not_found"}
+
+        # 2. validasi completion
+        if not is_complete(session):
+            return {"status": "not_complete"}
+
+        # 3. cek summary sudah ada
+        existing = get_summary(req.user_id, req.story_date)
+        if existing:
+            return {"status": "already_exists", "data": existing}
+
+        # 4. ambil messages
+        messages = get_messages_by_date(req.user_id, req.story_date)
+
+        if not messages:
+            return {"status": "no_messages"}
+
+        # 5. generate summary (LLM)
+        summary = generate_summary(messages)
+
+        if not summary or not summary.get("summary_text"):
+            return {"status": "failed_to_generate"}
+
+        # 6. save ke DB
+        save_summary(req.user_id, req.story_date, summary)
+
+        return {
+            "status": "generated",
+            "data": summary
+        }
+
+    except Exception as e:
+        # optional: log error juga
+        print(f"[ERROR] generate_daily_summary: {str(e)}")
+
+        return {
+            "status": "error",
+            "message": str(e)
+        }

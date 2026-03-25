@@ -640,3 +640,100 @@ def complete_daily_story_phase(session_key, user_id, story_date, phase):
 
     conn.commit()
     conn.close()
+
+def get_daily_session(cursor, user_id, story_date):
+    cursor.execute("""
+        SELECT *
+        FROM daily_story_sessions
+        WHERE user_id = %s
+        AND story_date = %s
+    """, (user_id, story_date))
+
+    row = cursor.fetchone()
+
+    if not row:
+        return None
+
+    columns = [desc[0] for desc in cursor.description]
+    return dict(zip(columns, row))
+
+def get_summary(cursor, user_id, story_date):
+    cursor.execute("""
+        SELECT *
+        FROM daily_story_summary
+        WHERE user_id = %s
+        AND story_date = %s
+    """, (user_id, story_date))
+
+    row = cursor.fetchone()
+
+    if not row:
+        return None
+
+    columns = [desc[0] for desc in cursor.description]
+    return dict(zip(columns, row))
+
+import json
+
+def get_messages_by_date(cursor, user_id, story_date):
+    # ambil session_key dari tabel session
+    cursor.execute("""
+        SELECT session_key
+        FROM daily_story_sessions
+        WHERE user_id = %s
+        AND story_date = %s
+    """, (user_id, story_date))
+
+    row = cursor.fetchone()
+    if not row:
+        return []
+
+    session_key = row[0]
+
+    # ambil semua messages berdasarkan prefix
+    cursor.execute("""
+        SELECT message
+        FROM message_store
+        WHERE session_id LIKE %s
+        ORDER BY created_at ASC
+    """, (session_key + "%",))
+
+    rows = cursor.fetchall()
+
+    messages = []
+    for (msg,) in rows:
+        try:
+            messages.append(json.loads(msg))  # 🔥 penting
+        except:
+            continue  # skip kalau corrupt
+
+    return [msg for (msg,) in rows]
+
+def save_summary(cursor, conn, user_id, story_date, summary):
+    cursor.execute("""
+        INSERT INTO daily_story_summary (
+            user_id,
+            story_date,
+            summary_text,
+            key_points,
+            vocab_used,
+            mistakes
+        )
+        VALUES (%s, %s, %s, %s, %s, %s)
+        ON CONFLICT (user_id, story_date)
+        DO UPDATE SET
+            summary_text = EXCLUDED.summary_text,
+            key_points = EXCLUDED.key_points,
+            vocab_used = EXCLUDED.vocab_used,
+            mistakes = EXCLUDED.mistakes,
+            updated_at = CURRENT_TIMESTAMP
+    """, (
+        user_id,
+        story_date,
+        summary.get("summary_text"),
+        json.dumps(summary.get("key_points") or []),
+        json.dumps(summary.get("vocab_used") or []),
+        json.dumps(summary.get("mistakes") or [])
+    ))
+
+    conn.commit()
