@@ -515,7 +515,8 @@ def generate_daily_summary_by_phase(messages, call_model):
         """
 
         # Panggil model
-        summary = call_model(prompt)
+        response = llm.invoke(prompt)
+        summary = response.content
         summaries[phase] = summary.strip()
 
         # Debug print summary
