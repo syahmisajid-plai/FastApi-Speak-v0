@@ -432,6 +432,10 @@ async def next_phase(req: NextPhaseRequest):
 
     return {"message": "no phase ready"}
 
+@router.get("/history")
+def daily_history(session_id: str):
+    return get_daily_history(session_id)
+
 def is_complete(session: dict) -> bool:
     """
     Cek apakah semua phase daily sudah selesai
@@ -521,10 +525,6 @@ def generate_summary(messages):
         }
 
     return result
-
-@router.get("/history")
-def daily_history(session_id: str):
-    return get_daily_history(session_id)
 
 @router.post("/summary/generate")
 async def generate_daily_summary(req: SummaryRequest):

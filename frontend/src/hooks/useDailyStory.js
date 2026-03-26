@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { linkBackend } from "../config";
 
 export default function useDailyStory(userId) {
   const [dailyStory, setDailyStory] = useState({
@@ -26,7 +27,7 @@ export default function useDailyStory(userId) {
 
   const generateSummary = async () => {
     try {
-      const res = await fetch(`${linkBackend}/summary/generate`, {
+      const res = await fetch(`${linkBackend}/daily-story/summary/generate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

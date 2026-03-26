@@ -40,6 +40,10 @@
 
 - Kata - Kata Pembuka✅
 
+- Setelah Masuk phase baru tambahkan ai chat baru
+
+- Prompt Kasih Contoh Memperpanjang kalimat
+
 - Migradi Logic Daily from App.jsx to useDaily
 
 - Fix Update History Chat + Phase Daily Story

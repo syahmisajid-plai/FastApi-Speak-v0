@@ -17,7 +17,7 @@ export default function ChatSection({
               <div className="flex-1 h-[1px] bg-white/20"></div>
 
               <div className="px-3 text-[11px] text-white/60">
-                {chat.phase.toUpperCase()}
+                {chat.phase?.toUpperCase() || "[UNKNOWN PHASE]"}
               </div>
 
               <div className="flex-1 h-[1px] bg-white/20"></div>

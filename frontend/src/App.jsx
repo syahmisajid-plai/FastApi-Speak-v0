@@ -101,6 +101,9 @@ Feature tambahan:
     sam: "21121b45-6987-432c-a2cd-fda17eabbd2b",
     syifa: "51c3476b-d6a9-4d82-8bf2-64bbf53f2e50",
     test: "1234576b-d6a9-4d82-8bf2-64bbf53f2e50",
+    test2: "3214576b-d6a9-4d82-8bf2-64bbf53f2e50",
+    test3: "4214576b-d6a9-4d82-8bf2-64bbf53f2e50",
+    test4: "5214576b-d6a9-4d82-8bf2-64bbf53f2e50",
   };
 
   const userId = userMap[sessionId];
@@ -168,7 +171,7 @@ Feature tambahan:
   useEffect(() => {
     const checkTime = () => {
       const hour = new Date().getHours();
-      setTimeAllowed(hour != 16 || hour < 6);
+      setTimeAllowed(hour != 17 || hour < 6);
     };
 
     checkTime();
@@ -526,8 +529,15 @@ Feature tambahan:
 
   const getNextPhase = (phase) => {
     if (!phase) return "morning";
+
     const index = phaseOrder.indexOf(phase);
-    return phaseOrder[index + 1] || "night";
+
+    // ✅ kalau sudah terakhir → return null
+    if (index === phaseOrder.length - 1) {
+      return null;
+    }
+
+    return phaseOrder[index + 1];
   };
 
   // const activePhase = getNextPhase(currentStoryPhase);
@@ -677,19 +687,21 @@ Feature tambahan:
                         const data = await res.json();
                         console.log("PHASE MOVED:", data);
 
-                        const newPhase = getCurrentPhaseFromProgress(data);
+                        // ==================== HITUNG NEXT PHASE ====================
+                        const currentPhase = activePhase; // fase sekarang dari state
+                        const nextPhase = getNextPhase(currentPhase); // hitung fase selanjutnya
 
-                        // ✅ update state
-                        setActivePhase(newPhase);
+                        // ==================== UPDATE STATE ====================
+                        setActivePhase(nextPhase);
 
-                        // 🔥 INJECT KE CHAT HISTORY (INI YANG KURANG)
+                        // ==================== INJECT KE CHAT HISTORY ====================
                         setChatHistory((prev) => {
                           const last = prev[prev.length - 1];
 
                           // ❌ prevent duplicate divider
                           if (
                             last?.type === "phase" &&
-                            last.phase === newPhase
+                            last.phase === nextPhase
                           ) {
                             return prev;
                           }
@@ -698,7 +710,7 @@ Feature tambahan:
                             ...prev,
                             {
                               type: "phase",
-                              phase: newPhase,
+                              phase: nextPhase,
                             },
                           ];
                         });
@@ -883,6 +895,9 @@ Feature tambahan:
               <option value="sam">sam</option>
               <option value="syifa">syifa</option>
               <option value="test">test</option>
+              <option value="test2">test2</option>
+              <option value="test3">test3</option>
+              <option value="test4">test4</option>
             </select>
           </div>
 

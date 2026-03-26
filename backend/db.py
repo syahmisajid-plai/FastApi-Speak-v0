@@ -641,7 +641,10 @@ def complete_daily_story_phase(session_key, user_id, story_date, phase):
     conn.commit()
     conn.close()
 
-def get_daily_session(cursor, user_id, story_date):
+def get_daily_session(user_id, story_date):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
     cursor.execute("""
         SELECT *
         FROM daily_story_sessions
@@ -657,7 +660,10 @@ def get_daily_session(cursor, user_id, story_date):
     columns = [desc[0] for desc in cursor.description]
     return dict(zip(columns, row))
 
-def get_summary(cursor, user_id, story_date):
+def get_summary(user_id, story_date):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
     cursor.execute("""
         SELECT *
         FROM daily_story_summary
@@ -675,7 +681,10 @@ def get_summary(cursor, user_id, story_date):
 
 import json
 
-def get_messages_by_date(cursor, user_id, story_date):
+def get_messages_by_date(user_id, story_date):
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
     # ambil session_key dari tabel session
     cursor.execute("""
         SELECT session_key
