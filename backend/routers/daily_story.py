@@ -52,7 +52,7 @@ class StreamRequest(BaseModel):
 
 class SummaryRequest(BaseModel):
     user_name: str
-    user_id: UUID
+    user_id: str
     story_date: date
 
 # -----------------------------
