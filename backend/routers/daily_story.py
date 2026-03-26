@@ -454,13 +454,12 @@ def is_complete(session: dict) -> bool:
 
     return all(session.get(field, 0) == 1 for field in required_fields)
 
-def generate_daily_summary_by_phase(messages, call_model):
+def generate_daily_summary_by_phase(messages):
     """
     Generate daily story summaries per phase from conversation messages.
     
     Args:
         messages (list): list of messages, each with 'type', 'data', 'phase'
-        call_model (func): function to call your LLM with prompt, returns summary string
     
     Returns:
         dict: {phase: summary_text}
@@ -581,7 +580,7 @@ async def generate_daily_summary(req: SummaryRequest):
         print("[STEP 5] Generating summary using LLM per phase...")
 
         # Gunakan fungsi generate_daily_summary_by_phase
-        summaries = generate_daily_summary_by_phase(messages, call_model)
+        summaries = generate_daily_summary_by_phase(messages)
 
         if not summaries:
             print("[EXIT] Failed to generate any summary")
