@@ -106,6 +106,7 @@ Feature tambahan:
     test4: "5214576b-d6a9-4d82-8bf2-64bbf53f2e50",
     test5: "6214576b-d6a9-4d82-8bf2-64bbf53f2e50",
     test6: "7214576b-d6a9-4d82-8bf2-64bbf53f2e50",
+    test7: "8214576b-d6a9-4d82-8bf2-64bbf53f2e50",
   };
 
   const userId = userMap[sessionId];
@@ -902,6 +903,7 @@ Feature tambahan:
               <option value="test4">test4</option>
               <option value="test5">test5</option>
               <option value="test6">test6</option>
+              <option value="test7">test7</option>
             </select>
           </div>
 
