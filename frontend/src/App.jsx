@@ -574,7 +574,7 @@ Feature tambahan:
                 const summary = await generateSummary();
                 console.log("✅ Summary generated:", summary);
               }}
-              className="bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded-md"
+              className="bg-green-500! hover:bg-green-600! text-white font-semibold px-4! py-2! rounded-md"
             >
               Generate Summary
             </button>

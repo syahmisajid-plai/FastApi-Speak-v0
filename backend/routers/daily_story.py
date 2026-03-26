@@ -559,7 +559,16 @@ async def generate_daily_summary(req: SummaryRequest):
         print("[STEP 4] Fetching messages...")
         sessionKey = f'{req.user_name}_{req.user_id}_daily_{req.story_date}'
         messages = get_human_messages(sessionKey)
-        print(f"[STEP 4 RESULT] total_messages={len(messages) if messages else 0}")
+
+        if not messages:
+            print("[STEP 4 RESULT] No messages found")
+            return {"status": "no_messages"}
+
+        print(f"[STEP 4 RESULT] total_messages={len(messages)}")
+
+        # Loop untuk menampilkan isi pesan lengkap
+        for i, msg in enumerate(messages, start=1):
+            print(f"Message {i}: {msg}")
 
         if not messages:
             print("[EXIT] No messages found")
