@@ -174,7 +174,7 @@ Feature tambahan:
   useEffect(() => {
     const checkTime = () => {
       const hour = new Date().getHours();
-      setTimeAllowed(hour != 17 || hour < 6);
+      setTimeAllowed(hour != 15 || hour < 6);
     };
 
     checkTime();

@@ -475,35 +475,29 @@ def generate_summary(messages):
 
     # Prompt template
     prompt = ChatPromptTemplate.from_messages([
-        SystemMessagePromptTemplate.from_template("""
-    You are an expert English tutor assistant.
+SystemMessagePromptTemplate.from_template("""
+You are an expert English tutor assistant.
 
-    Your task is to analyze a conversation and produce a structured summary in JSON format.
+Your task is to analyze a conversation and produce a structured summary in JSON format.
 
-    You MUST return ONLY valid JSON with the following structure:
+You MUST return ONLY valid JSON with the following structure:
 
-    {
-    "summary_text": string,
-    "key_points": list of strings,
-    "vocab_used": list of strings,
-    "mistakes": list of objects with:
-        - mistake: string
-        - correction: string
-    }
+{{
+"summary_text": string,
+"key_points": list of strings,
+"vocab_used": list of strings,
+"mistakes": list of objects with:
+    - mistake: string
+    - correction: string
+}}
 
-    Guidelines:
-    - summary_text: concise paragraph summarizing the conversation
-    - key_points: main learning points
-    - vocab_used: important English words/phrases used
-    - mistakes: only include user mistakes with corrections
-    - If no mistakes, return empty list
-    """),
-            HumanMessagePromptTemplate.from_template("""
-    Conversation:
-    {conversation}
-
-    Return JSON only.
-    """)
+Guidelines:
+- summary_text: concise paragraph summarizing the conversation
+- key_points: main learning points
+- vocab_used: important English words/phrases used
+- mistakes: only include user mistakes with corrections
+- If no mistakes, return empty list
+""")
         ])
 
     # Chain
