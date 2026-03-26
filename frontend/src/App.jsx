@@ -12,6 +12,7 @@ import DailyStoryIndicator from "./components/DailyStoryIndicator";
 import Testcard_swipe from "./components/testcard_swipe";
 import ModeSelector from "./components/ModeSelector";
 import ContextRenderer from "./components/ContextRenderer";
+import DailySummaryViewer from "./components/DailySummaryViewer";
 
 // ================== STYLES ==================
 import "./App.css";
@@ -76,6 +77,7 @@ Feature tambahan:
   const [isRecording, setIsRecording] = useState(false); // 🔴 Status perekaman
   const [showSuggestions, setShowSuggestions] = useState(false); // 🔴 Tampilkan saran
   const [showOverlay, setShowOverlay] = useState(true); // 🔑 SATU-SATUNYA GATE
+  const [showDiary, setShowDiary] = useState(false);
   const [roleplayModalOpen, setRoleplayModalOpen] = useState(false);
 
   const [pendingMode, setPendingMode] = useState(null);
@@ -566,6 +568,24 @@ Feature tambahan:
         >
           <Header streak={streak} />
 
+          {/* ================== Open Diary Daily Story ================== */}
+          <div className="w-full flex justify-center mb-2">
+            <button
+              onClick={() => setShowDiary(true)}
+              className="
+                bg-blue-500/90! hover:bg-blue-600!
+                text-white text-sm
+                px-4! py-2!
+                rounded-lg
+                shadow-md
+                transition
+                active:scale-95
+              "
+            >
+              📖 Open Diary
+            </button>
+          </div>
+
           {/* ================== DEBUG: GENERATE SUMMARY ================== */}
           <div className="w-full flex justify-center mb-4">
             <button
@@ -968,6 +988,22 @@ Feature tambahan:
           onUnlock={handleUnlock}
           onFinish={() => setShowOverlay(false)}
         />
+      )}
+
+      {/* 🧱 OVERLAY — showDiary */}
+      {showDiary && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex justify-center items-start overflow-y-auto">
+          <div className="w-full max-w-md mt-10 bg-white text-black rounded-xl p-4">
+            {/* HEADER */}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">📖 Daily Diary</h2>
+              <button onClick={() => setShowDiary(false)}>✖</button>
+            </div>
+
+            {/* CONTENT */}
+            <DailySummaryViewer userId={userId} />
+          </div>
+        </div>
       )}
     </>
   );

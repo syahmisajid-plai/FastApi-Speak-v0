@@ -437,6 +437,31 @@ async def next_phase(req: NextPhaseRequest):
 def daily_history(session_id: str):
     return get_daily_history(session_id)
 
+@router.get("/daily-story/summary")
+def get_daily_summary(user_id: str, story_date: str):
+    try:
+        print("\n========== [GET] daily_summary ==========")
+        print(f"[REQUEST] user_id={user_id}, story_date={story_date}")
+
+        data = get_summary(user_id, story_date)
+
+        print(f"[RESULT] data={data}")
+
+        if not data:
+            return {"status": "not_found"}
+
+        return {
+            "status": "success",
+            "data": data
+        }
+
+    except Exception as e:
+        print(f"[ERROR] get_daily_summary: {str(e)}")
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
 def is_complete(session: dict) -> bool:
     """
     Cek apakah semua phase daily sudah selesai

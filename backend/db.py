@@ -834,3 +834,29 @@ def get_daily_history(session_prefix):
             print("Parse error:", e)
 
     return history
+
+def get_summary(user_id, story_date):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            morning_summary,
+            afternoon_summary,
+            evening_summary,
+            night_summary
+        FROM daily_story_summary
+        WHERE user_id = %s AND story_date = %s
+    """, (user_id, story_date))
+
+    row = cursor.fetchone()
+
+    if not row:
+        return None
+
+    return {
+        "morning_summary": row[0],
+        "afternoon_summary": row[1],
+        "evening_summary": row[2],
+        "night_summary": row[3],
+    }
