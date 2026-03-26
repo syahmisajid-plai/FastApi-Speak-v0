@@ -482,14 +482,14 @@ def generate_summary(messages):
 
     You MUST return ONLY valid JSON with the following structure:
 
-    {{
+    {
     "summary_text": string,
     "key_points": list of strings,
     "vocab_used": list of strings,
     "mistakes": list of objects with:
         - mistake: string
         - correction: string
-    }}
+    }
 
     Guidelines:
     - summary_text: concise paragraph summarizing the conversation
@@ -497,6 +497,12 @@ def generate_summary(messages):
     - vocab_used: important English words/phrases used
     - mistakes: only include user mistakes with corrections
     - If no mistakes, return empty list
+    """),
+            HumanMessagePromptTemplate.from_template("""
+    Conversation:
+    {conversation}
+
+    Return JSON only.
     """)
         ])
 
