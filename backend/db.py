@@ -735,7 +735,10 @@ def get_human_messages(session_prefix):
 
     return human_messages
 
-def save_summary(cursor, conn, user_id, story_date, summary):
+def save_summary(user_id, story_date, summary):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
     cursor.execute("""
         INSERT INTO daily_story_summary (
             user_id,
