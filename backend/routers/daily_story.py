@@ -3,6 +3,7 @@
 import os
 import json
 from datetime import datetime, date
+import pytz
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
@@ -273,7 +274,8 @@ llm = ChatOpenAI(
 @router.post("/stream_answer")
 async def stream_daily_story(req: StreamRequest):
 
-    today = str(datetime.now().date())
+    tz = pytz.timezone("Asia/Jakarta")
+    today = datetime.now(tz).date()
 
     base_session_key = f"{req.session_id}_{req.user_id}_daily_{today}"
 
@@ -375,7 +377,8 @@ async def stream_daily_story(req: StreamRequest):
 #
 @router.get("/progress")
 async def get_daily_progress(session_id: str, user_id: str):
-    today = str(datetime.now().date())
+    tz = pytz.timezone("Asia/Jakarta")
+    today = datetime.now(tz).date()
 
     session_key = f"{session_id}_{user_id}_daily_{today}"
 
@@ -404,7 +407,8 @@ class NextPhaseRequest(BaseModel):
 
 @router.post("/next_phase")
 async def next_phase(req: NextPhaseRequest):
-    today = str(datetime.now().date())
+    tz = pytz.timezone("Asia/Jakarta")
+    today = datetime.now(tz).date()
     session_key = f"{req.session_id}_{req.user_id}_daily_{today}"
 
     # 🔍 DEBUG

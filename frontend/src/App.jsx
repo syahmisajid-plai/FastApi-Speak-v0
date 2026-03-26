@@ -121,7 +121,12 @@ Feature tambahan:
 
   // ================== Load History ==================
   const loadDailyHistory = async (session) => {
-    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    const today = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Jakarta",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date()); // YYYY-MM-DD
     const sessionKey = `${session}_${userId}_daily_${today}`;
 
     console.log("🔑 Loading daily history for sessionKey:", sessionKey);
@@ -383,7 +388,12 @@ Feature tambahan:
     if (isDailyLocked) return;
     if (dailyGreetingDone) return; // ✅ pastikan hanya sekali
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Jakarta",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
     const sessionKey = `${sessionId}_${userId}_daily_${today}_${activePhase}`;
 
     console.log("🔄 Checking first daily greeting...", { sessionKey });
@@ -992,16 +1002,69 @@ Feature tambahan:
 
       {/* 🧱 OVERLAY — showDiary */}
       {showDiary && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
-          <div className="w-11/12 max-w-md max-w-md mt-10 bg-white text-black rounded-xl p-4">
-            {/* HEADER */}
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">📖 Daily Diary</h2>
-              <button onClick={() => setShowDiary(false)}>✖</button>
-            </div>
+        <div
+          className="
+            fixed inset-0 z-50
+            bg-black/60 backdrop-blur-sm
+            flex items-center justify-center
+            p-4
+          "
+          onClick={() => setShowDiary(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="
+              relative
+
+              w-10/12
+              md:w-full max-w-md
+              
+              max-h-8/12
+              md:max-h-[90vh] overflow-x-hidden
+              
+              bg-gradient-to-br
+              from-[#1e1b2e]
+              via-[#111827]
+              to-[#020617]
+              
+              border border-white/10
+              rounded-3xl
+              p-5
+              
+              shadow-2xl
+              text-white
+              
+              animate-fade-in
+            "
+          >
+            {/* 🌟 Glow background */}
+            <div className="absolute -top-20 -left-20 w-60 h-60 bg-purple-500/20 rounded-full blur-3xl" />
+            <div className="absolute -bottom-20 -right-20 w-60 h-60 bg-blue-500/20 rounded-full blur-3xl" />
 
             {/* CONTENT */}
-            <DailySummaryViewer userId={userId} />
+            <div className="relative z-10">
+              {/* HEADER */}
+              <div className="flex justify-between items-center mb-5">
+                <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+                  📖 <span>Daily Diary</span>
+                </h2>
+
+                <button
+                  onClick={() => setShowDiary(false)}
+                  className="
+                    text-white/60!
+                    hover:text-white 
+                    transition
+                    text-lg
+                  "
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* CONTENT */}
+              <DailySummaryViewer userId={userId} />
+            </div>
           </div>
         </div>
       )}
