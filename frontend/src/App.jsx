@@ -105,6 +105,7 @@ Feature tambahan:
     test3: "4214576b-d6a9-4d82-8bf2-64bbf53f2e50",
     test4: "5214576b-d6a9-4d82-8bf2-64bbf53f2e50",
     test5: "6214576b-d6a9-4d82-8bf2-64bbf53f2e50",
+    test6: "7214576b-d6a9-4d82-8bf2-64bbf53f2e50",
   };
 
   const userId = userMap[sessionId];
@@ -232,7 +233,7 @@ Feature tambahan:
     markPhaseComplete,
     completedCount,
     generateSummary,
-  } = useDailyStory(userId);
+  } = useDailyStory(sessionIdRef, userId);
   const currentPhase = getCurrentPhaseFromProgress();
 
   const [readyToContinue, setReadyToContinue] = useState(false);
@@ -900,6 +901,7 @@ Feature tambahan:
               <option value="test3">test3</option>
               <option value="test4">test4</option>
               <option value="test5">test5</option>
+              <option value="test6">test6</option>
             </select>
           </div>
 

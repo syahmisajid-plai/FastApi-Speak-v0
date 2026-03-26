@@ -51,6 +51,7 @@ class StreamRequest(BaseModel):
     input: str
 
 class SummaryRequest(BaseModel):
+    user_name: str
     user_id: UUID
     story_date: date
 
@@ -562,7 +563,8 @@ async def generate_daily_summary(req: SummaryRequest):
 
         # 4. ambil messages
         print("[STEP 4] Fetching messages...")
-        messages = get_human_messages(req.user_id, req.story_date)
+        sessionKey = f'{req.user_name}_{req.user_id}_daily_{req.story_date}'
+        messages = get_human_messages(sessionKey)
         print(f"[STEP 4 RESULT] total_messages={len(messages) if messages else 0}")
 
         if not messages:

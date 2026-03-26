@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { linkBackend } from "../config";
 
-export default function useDailyStory(userId) {
+export default function useDailyStory(userId, sessionIdRef) {
   const [dailyStory, setDailyStory] = useState({
     morning: false,
     afternoon: false,
@@ -33,6 +33,7 @@ export default function useDailyStory(userId) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          user_name: sessionIdRef,
           user_id: userId,
           story_date: new Date().toISOString().split("T")[0],
         }),
