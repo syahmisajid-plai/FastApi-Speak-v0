@@ -454,72 +454,74 @@ def is_complete(session: dict) -> bool:
 
     return all(session.get(field, 0) == 1 for field in required_fields)
 
-def generate_summary(messages):
+def generate_daily_summary_by_phase(messages, call_model):
     """
-    Generate structured summary from conversation messages using LangChain
+    Generate daily story summaries per phase from conversation messages.
+    
+    Args:
+        messages (list): list of messages, each with 'type', 'data', 'phase'
+        call_model (func): function to call your LLM with prompt, returns summary string
+    
+    Returns:
+        dict: {phase: summary_text}
     """
 
-    # Convert messages → readable conversation text
-    conversation_text = []
+    # Ambil semua phase unik dari messages
+    phases = sorted(list({m.get("phase") for m in messages if m.get("phase")}))
+    summaries = {}
 
-    for msg in messages:
-        role = msg.get("type")
-        content = msg.get("data", {}).get("content", "")
+    for phase in phases:
+        # Ambil semua pesan untuk phase ini
+        msgs_phase = [m for m in messages if m.get("phase") == phase]
 
-        if role == "human":
-            conversation_text.append(f"User: {content}")
-        elif role == "ai":
-            conversation_text.append(f"AI: {content}")
+        # Debug print
+        print(f"\n=== Processing phase: {phase} ===")
+        for m in msgs_phase:
+            print(f"Message: {m.get('data', {}).get('content','')}")
 
-    conversation_text = "\n".join(conversation_text)
+        # Convert messages → readable text
+        conversation_text = []
+        for msg in msgs_phase:
+            role = msg.get("type")
+            content = msg.get("data", {}).get("content", "")
+            if role == "human":
+                conversation_text.append(f"User: {content}")
+            elif role == "ai":
+                conversation_text.append(f"AI: {content}")
+        conversation_text = "\n".join(conversation_text)
 
-    # Prompt template
-    prompt = ChatPromptTemplate.from_messages([
-SystemMessagePromptTemplate.from_template("""
-You are an expert English tutor assistant.
+        # Prompt template dengan contoh summary
+        prompt = f"""
+        You are an expert assistant helping a user summarize their daily stories, like a diary.
+        The user has just finished telling their day. Your task is to summarize their activities for the phase '{phase}' in a concise paragraph, clear and natural, in English.
 
-Your task is to analyze a conversation and produce a structured summary in JSON format.
+        Guidelines:
+        - Mention the activities the user did in this phase.
+        - Keep it simple and easy to read.
+        - Write it like a diary entry: "In the morning, I did ..."
 
-You MUST return ONLY valid JSON with the following structure:
+        Example:
 
-{{
-"summary_text": string,
-"key_points": list of strings,
-"vocab_used": list of strings,
-"mistakes": list of objects with:
-    - mistake: string
-    - correction: string
-}}
+        Input (morning):
+        User: I wake up and drink coffee.
+        User: I go for a jog.
 
-Guidelines:
-- summary_text: concise paragraph summarizing the conversation
-- key_points: main learning points
-- vocab_used: important English words/phrases used
-- mistakes: only include user mistakes with corrections
-- If no mistakes, return empty list
-""")
-        ])
+        Summary:
+        In the morning, I started my day with a cup of coffee and went for a jog to get some exercise.
 
-    # Chain
-    chain = prompt | llm | StrOutputParser()
+        Now summarize this conversation for the phase '{phase}':
 
-    # Invoke
-    response = chain.invoke({
-        "conversation": conversation_text
-    })
+        {conversation_text}
+        """
 
-    # Parse JSON safely
-    try:
-        result = json.loads(response)
-    except:
-        result = {
-            "summary_text": response,
-            "key_points": [],
-            "vocab_used": [],
-            "mistakes": []
-        }
+        # Panggil model
+        summary = call_model(prompt)
+        summaries[phase] = summary.strip()
 
-    return result
+        # Debug print summary
+        print(f"Summary for phase '{phase}': {summaries[phase]}")
+
+    return summaries
 
 @router.post("/summary/generate")
 async def generate_daily_summary(req: SummaryRequest):
@@ -574,14 +576,19 @@ async def generate_daily_summary(req: SummaryRequest):
             print("[EXIT] No messages found")
             return {"status": "no_messages"}
 
-        # 5. generate summary (LLM)
-        print("[STEP 5] Generating summary using LLM...")
-        summary = generate_summary(messages)
-        print(f"[STEP 5 RESULT] summary={summary}")
+        # 5. generate summary (LLM) per phase
+        print("[STEP 5] Generating summary using LLM per phase...")
 
-        if not summary or not summary.get("summary_text"):
-            print("[EXIT] Failed to generate summary")
+        # Gunakan fungsi generate_daily_summary_by_phase
+        summaries = generate_daily_summary_by_phase(messages, call_model)
+
+        if not summaries:
+            print("[EXIT] Failed to generate any summary")
             return {"status": "failed_to_generate"}
+
+        # Debug print semua phase summary
+        for phase, text in summaries.items():
+            print(f"[STEP 5 RESULT] Phase='{phase}' Summary='{text}'")
 
         # 6. save ke DB
         print("[STEP 6] Saving summary to DB...")

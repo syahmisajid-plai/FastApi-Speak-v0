@@ -736,33 +736,29 @@ def get_human_messages(session_prefix):
     return human_messages
 
 def save_summary(user_id, story_date, summary):
+    """
+    Save daily story summary to DB.
+    Only summary_text is stored. Other fields are ignored.
+    """
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     cursor.execute("""
         INSERT INTO daily_story_summary (
             user_id,
             story_date,
-            summary_text,
-            key_points,
-            vocab_used,
-            mistakes
+            summary_text
         )
-        VALUES (%s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s)
         ON CONFLICT (user_id, story_date)
         DO UPDATE SET
             summary_text = EXCLUDED.summary_text,
-            key_points = EXCLUDED.key_points,
-            vocab_used = EXCLUDED.vocab_used,
-            mistakes = EXCLUDED.mistakes,
             updated_at = CURRENT_TIMESTAMP
     """, (
         user_id,
         story_date,
-        summary.get("summary_text"),
-        json.dumps(summary.get("key_points") or []),
-        json.dumps(summary.get("vocab_used") or []),
-        json.dumps(summary.get("mistakes") or [])
+        summary.get("summary_text")  # hanya simpan summary_text
     ))
 
     conn.commit()
