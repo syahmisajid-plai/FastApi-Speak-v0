@@ -530,35 +530,61 @@ def daily_history(session_id: str):
 async def generate_daily_summary(req: SummaryRequest):
 
     try:
+        print("\n========== [START] generate_daily_summary ==========")
+        print(f"[REQUEST] user_id={req.user_id}, story_date={req.story_date}")
+
         # 1. ambil session
+        print("[STEP 1] Fetching session...")
         session = get_daily_session(req.user_id, req.story_date)
+        print(f"[STEP 1 RESULT] session={session}")
 
         if not session:
+            print("[EXIT] Session not found")
             return {"status": "session_not_found"}
 
         # 2. validasi completion
-        if not is_complete(session):
+        print("[STEP 2] Checking completion...")
+        complete = is_complete(session)
+        print(f"[STEP 2 RESULT] is_complete={complete}")
+
+        if not complete:
+            print("[EXIT] Session not complete")
             return {"status": "not_complete"}
 
         # 3. cek summary sudah ada
+        print("[STEP 3] Checking existing summary...")
         existing = get_summary(req.user_id, req.story_date)
+        print(f"[STEP 3 RESULT] existing={existing}")
+
         if existing:
+            print("[EXIT] Summary already exists")
             return {"status": "already_exists", "data": existing}
 
         # 4. ambil messages
+        print("[STEP 4] Fetching messages...")
         messages = get_messages_by_date(req.user_id, req.story_date)
+        print(f"[STEP 4 RESULT] total_messages={len(messages) if messages else 0}")
 
         if not messages:
+            print("[EXIT] No messages found")
             return {"status": "no_messages"}
 
         # 5. generate summary (LLM)
+        print("[STEP 5] Generating summary using LLM...")
         summary = generate_summary(messages)
+        print(f"[STEP 5 RESULT] summary={summary}")
 
         if not summary or not summary.get("summary_text"):
+            print("[EXIT] Failed to generate summary")
             return {"status": "failed_to_generate"}
 
         # 6. save ke DB
+        print("[STEP 6] Saving summary to DB...")
         save_summary(req.user_id, req.story_date, summary)
+        print("[STEP 6 RESULT] Summary saved successfully")
+
+        print("[SUCCESS] Summary generated successfully")
+        print("========== [END] generate_daily_summary ==========\n")
 
         return {
             "status": "generated",
@@ -566,8 +592,8 @@ async def generate_daily_summary(req: SummaryRequest):
         }
 
     except Exception as e:
-        # optional: log error juga
         print(f"[ERROR] generate_daily_summary: {str(e)}")
+        print("========== [FAILED] generate_daily_summary ==========\n")
 
         return {
             "status": "error",
