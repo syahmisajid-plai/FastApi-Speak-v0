@@ -269,7 +269,12 @@ Feature tambahan:
     }
 
     setMode(newMode);
+
+    if (newMode === "roleplay") {
+      setRoleplayModalOpen(true);
+    }
   };
+
   // ================== AUDIO PERMISSION ==================
   const {
     micReady,
@@ -333,6 +338,12 @@ Feature tambahan:
   }, [activeContext]);
 
   // console.log("======================= userId =======================", userId);
+
+  useEffect(() => {
+    modeRef.current = mode;
+    console.log("🧠 modeRef updated:", mode);
+  }, [mode]);
+
   // ================== SEND TEXT TO BACKEND ==================
   const { sendTextToBackend } = useConversationEngine({
     sessionIdRef,
@@ -377,15 +388,32 @@ Feature tambahan:
         if (data.length === 0) {
           console.log("🎉 No chat yet today → sending first greeting");
 
-          setChatHistory((prev) => [
-            ...prev,
-            {
-              sender: "AI",
-              message:
-                "Time to share your story today 😊. How did your morning start?",
-              phase: "morning", // optional: tandai phase
-            },
-          ]);
+          setChatHistory((prev) => {
+            const last = prev[prev.length - 1];
+
+            // ❌ prevent duplicate kalau sudah ada
+            if (last?.type === "phase" && last.phase === "morning") {
+              return prev;
+            }
+
+            return [
+              ...prev,
+
+              // 🔥 phase divider dulu
+              {
+                type: "phase",
+                phase: "morning",
+              },
+
+              // 🔥 baru chat AI
+              {
+                type: "chat",
+                sender: "AI",
+                message:
+                  "Time to share your story today 😊. How did your morning start?",
+              },
+            ];
+          });
 
           // 🎵 Mainkan audio
           audioDailyStartRef.current?.play().catch(console.error);
@@ -648,7 +676,32 @@ Feature tambahan:
 
                         const data = await res.json();
                         console.log("PHASE MOVED:", data);
-                        setActivePhase(getCurrentPhaseFromProgress(data));
+
+                        const newPhase = getCurrentPhaseFromProgress(data);
+
+                        // ✅ update state
+                        setActivePhase(newPhase);
+
+                        // 🔥 INJECT KE CHAT HISTORY (INI YANG KURANG)
+                        setChatHistory((prev) => {
+                          const last = prev[prev.length - 1];
+
+                          // ❌ prevent duplicate divider
+                          if (
+                            last?.type === "phase" &&
+                            last.phase === newPhase
+                          ) {
+                            return prev;
+                          }
+
+                          return [
+                            ...prev,
+                            {
+                              type: "phase",
+                              phase: newPhase,
+                            },
+                          ];
+                        });
 
                         // ✅ tandai phase selesai
                         markPhaseComplete(currentStoryPhase);
@@ -733,28 +786,52 @@ Feature tambahan:
             />
           )}
 
-          <ModeSelector
-            mode={mode}
-            setMode={(newMode) => {
-              if (newMode === mode) return;
-              setMode(newMode);
-
-              if (newMode === "roleplay") setRoleplayModalOpen(true); // ✅ buka modal langsung
-            }}
-          />
+          <ModeSelector mode={mode} setMode={handleModeChange} />
 
           {showModeConfirm && (
             <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-              <div className="bg-white text-black rounded-xl p-6 w-[300px] text-center space-y-4">
+              <div
+                className="
+    bg-white/10 
+    backdrop-blur-xl 
+    border border-white/20
+    text-white 
+    rounded-2xl 
+    p-6 
+    w-[320px] 
+    text-center 
+    space-y-5 
+    shadow-2xl
+  "
+              >
+                {/* ICON */}
+                <div className="text-4xl">⚠️</div>
+
+                {/* TITLE */}
                 <h2 className="text-lg font-semibold">Change Mode?</h2>
 
-                <p className="text-sm text-gray-600">
-                  Chat history will be cleared. Continue?
+                {/* DESCRIPTION */}
+                <p className="text-sm text-white/70 leading-relaxed">
+                  Your current chat will be cleared when switching modes.
+                  <br />
+                  Do you want to continue?
                 </p>
 
-                <div className="flex justify-center gap-4 pt-2">
+                {/* BUTTONS */}
+                <div className="flex gap-3 pt-2">
+                  {/* CANCEL */}
                   <button
-                    className="px-4 py-2 bg-gray-300 rounded-lg"
+                    className="
+                      flex-1
+                      py-2.5!
+                      rounded-xl
+                      bg-white/10!
+                      hover:bg-white/20
+                      text-white/80
+                      font-medium
+                      transition-all
+                      active:scale-95
+                    "
                     onClick={() => {
                       setShowModeConfirm(false);
                       setPendingMode(null);
@@ -763,8 +840,23 @@ Feature tambahan:
                     Cancel
                   </button>
 
+                  {/* CONFIRM */}
                   <button
-                    className="px-4 py-2 bg-red-500  rounded-lg"
+                    className="
+                      flex-1
+                      py-2.5!
+                      rounded-xl
+                      bg-gradient-to-r
+                      from-red-500
+                      to-rose-500
+                      hover:from-red-600
+                      hover:to-rose-600
+                      text-white
+                      font-semibold
+                      shadow-lg
+                      transition-all
+                      active:scale-95
+                    "
                     onClick={() => {
                       setMode(pendingMode);
                       setChatHistory([]);
@@ -772,7 +864,7 @@ Feature tambahan:
                       setShowModeConfirm(false);
                     }}
                   >
-                    Yes
+                    Continue
                   </button>
                 </div>
               </div>
