@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { linkBackend } from "../config";
 
 export default function DailySummaryViewer({ userId }) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date()); // YYYY-MM-DD
 
   const [selectedDate, setSelectedDate] = useState(today);
   const [summary, setSummary] = useState(null);

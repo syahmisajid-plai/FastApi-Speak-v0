@@ -5,9 +5,23 @@ export default function ChatSection({
   liveTranscript,
   lupaKata, // ⬅️ TAMBAH INI
   bottomRef,
+  disabled = false, // 🔒 tambahkan prop disabled
+  mode,
 }) {
   return (
-    <section className="rounded-xl p-4 shadow flex flex-col space-y-2 max-h-max overflow-y-auto">
+    <section className="relative rounded-xl p-4 shadow flex flex-col space-y-2 max-h-max overflow-y-auto">
+      {/* Overlay jika chat di-disable */}
+      {mode === "dailyStory" && disabled && (
+        <div className="absolute inset-0 z-25 bg-black/70 flex flex-col items-center justify-center text-center p-4 rounded-xl">
+          <h2 className="text-white text-lg font-bold mb-2">
+            🎉 Daily hari ini sudah complete!
+          </h2>
+          <p className="text-gray-200 text-sm mb-4">
+            Terima kasih telah menyelesaikan semua phase hari ini.
+          </p>
+        </div>
+      )}
+
       {/* Chat history biasa */}
       {chatHistory.map((chat, idx) => {
         // 🌅 PHASE DIVIDER
@@ -29,7 +43,7 @@ export default function ChatSection({
         return <ChatBubble key={idx} chat={chat} />;
       })}
 
-      {/* Live transcript (recording biasa) */}
+      {/* Live transcript */}
       {liveTranscript && (
         <div className="flex justify-end">
           <div className="max-w-[75%] p-3 rounded-lg bg-yellow-100 text-gray-900 italic">
@@ -38,7 +52,7 @@ export default function ChatSection({
         </div>
       )}
 
-      {/* ⬇️ LUPA KATA transcript MASUK CHAT */}
+      {/* LUPA KATA transcript MASUK CHAT */}
       {lupaKata.lupaKataHeardText && (
         <div className="flex justify-end">
           <div className="max-w-[75%] p-3 rounded-lg bg-orange-100 text-gray-900 italic">

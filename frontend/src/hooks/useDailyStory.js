@@ -24,13 +24,19 @@ export default function useDailyStory(sessionIdRef, userIdRef) {
   };
 
   const completedCount = Object.values(dailyStory).filter(Boolean).length;
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date()); // YYYY-MM-DD
 
   const generateSummary = async () => {
     try {
       const payload = {
         user_name: sessionIdRef.current,
         user_id: userIdRef.current,
-        story_date: new Date().toISOString().split("T")[0],
+        story_date: today,
       };
 
       console.log("📤 Sending summary payload:", payload); // ✅ log payload
@@ -43,7 +49,7 @@ export default function useDailyStory(sessionIdRef, userIdRef) {
         body: JSON.stringify({
           user_name: sessionIdRef.current,
           user_id: userIdRef.current,
-          story_date: new Date().toISOString().split("T")[0],
+          story_date: today,
         }),
       });
 

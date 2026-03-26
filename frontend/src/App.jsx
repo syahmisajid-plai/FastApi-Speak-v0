@@ -80,6 +80,7 @@ Feature tambahan:
   const [showDiary, setShowDiary] = useState(false);
   const [roleplayModalOpen, setRoleplayModalOpen] = useState(false);
 
+  // ================== Tambahkan state ==================
   const [pendingMode, setPendingMode] = useState(null);
   const [showModeConfirm, setShowModeConfirm] = useState(false);
 
@@ -247,6 +248,14 @@ Feature tambahan:
   const [readyToContinue, setReadyToContinue] = useState(false);
   const [currentStoryPhase, setCurrentStoryPhase] = useState(null);
 
+  // Di dalam component
+  const [progressData, setProgressData] = useState({
+    morning: false,
+    afternoon: false,
+    evening: false,
+    night: false,
+  });
+
   useEffect(() => {
     if (mode === "dailyStory") {
       const url = `${linkBackend}/daily-story/progress?session_id=${sessionId}&user_id=${userId}`;
@@ -263,10 +272,14 @@ Feature tambahan:
               markPhaseComplete(phase);
             }
           }
+          setProgressData(data); // update state
         })
         .catch((err) => console.error(err));
     }
   }, [mode, sessionId, userId]);
+
+  // nanti di render:
+  const allDailyComplete = Object.values(progressData).every((v) => v === true);
 
   // ================== REF ==================
   const bottomRef = useRef(null); // 🔵 Scroll ke bawah chat
@@ -578,8 +591,8 @@ Feature tambahan:
         >
           <Header streak={streak} />
 
-          {/* ================== Open Diary Daily Story ================== */}
-          <div className="w-full flex justify-center mb-2">
+          {/* ================== DEBUG: Open Diary Daily Story ================== */}
+          {/* <div className="w-full flex justify-center mb-2">
             <button
               onClick={() => setShowDiary(true)}
               className="
@@ -594,10 +607,10 @@ Feature tambahan:
             >
               📖 Open Diary
             </button>
-          </div>
+          </div> */}
 
           {/* ================== DEBUG: GENERATE SUMMARY ================== */}
-          <div className="w-full flex justify-center mb-4">
+          {/* <div className="w-full flex justify-center mb-4">
             <button
               onClick={async () => {
                 console.log("📝 Generating summary...");
@@ -608,7 +621,7 @@ Feature tambahan:
             >
               Generate Summary
             </button>
-          </div>
+          </div> */}
 
           {/* 🔊 Audio untuk greeting daily */}
           <audio
@@ -956,6 +969,8 @@ Feature tambahan:
             chatHistory={chatHistory}
             liveTranscript={liveTranscript}
             bottomRef={bottomRef}
+            disabled={allDailyComplete}
+            mode={mode}
           />
 
           <BottomActions
@@ -991,6 +1006,37 @@ Feature tambahan:
           <div className="mb-48" />
         </div>
       </div>
+
+      {/* Overlay untuk daily complete */}
+      {mode === "dailyStory" && allDailyComplete && (
+        <div className="fixed inset-0 z-25 bg-black/70 flex flex-col items-center justify-center text-center p-4 rounded-xl">
+          <h2 className="text-white text-lg font-bold mb-2">
+            🎉 Daily hari ini sudah complete!
+          </h2>
+          <p className="text-gray-200 text-sm mb-4">
+            Terima kasih telah menyelesaikan semua phase hari ini.
+          </p>
+          <button
+            onClick={() => setShowDiary(true)}
+            className="bg-blue-500! hover:bg-blue-600! text-white px-4! py-2! rounded-md shadow-md"
+          >
+            Lihat Summary
+          </button>
+        </div>
+      )}
+
+      {/* Tombol record */}
+      {/* <button
+        disabled={allDailyComplete} // 🔒 tombol record juga disable
+        onClick={() => startRecording()}
+        className={`mt-4 px-4 py-2 rounded-md shadow-md text-white ${
+          allDailyComplete
+            ? "bg-gray-500 cursor-not-allowed"
+            : "bg-green-500 hover:bg-green-600"
+        }`}
+      >
+        🎤 Record
+      </button> */}
 
       {/* 🧱 OVERLAY — DI ATAS MAIN APP */}
       {showOverlay && (
