@@ -681,42 +681,59 @@ def get_summary(user_id, story_date):
 
 import json
 
-def get_messages_by_date(user_id, story_date):
-
+def get_human_messages(session_prefix):
     conn = get_db_connection()
     cursor = conn.cursor()
-    # ambil session_key dari tabel session
-    cursor.execute("""
-        SELECT session_key
-        FROM daily_story_sessions
-        WHERE user_id = %s
-        AND story_date = %s
-    """, (user_id, story_date))
 
-    row = cursor.fetchone()
-    if not row:
-        return []
-
-    session_key = row[0]
-
-    # ambil semua messages berdasarkan prefix
-    cursor.execute("""
-        SELECT message
-        FROM message_store
-        WHERE session_id LIKE %s
-        ORDER BY created_at ASC
-    """, (session_key + "%",))
+    if DATABASE_URL:
+        cursor.execute(
+            """
+            SELECT message, session_id 
+            FROM message_store 
+            WHERE session_id LIKE %s
+            ORDER BY id ASC
+            """,
+            (session_prefix + "%",),
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT message, session_id 
+            FROM message_store 
+            WHERE session_id LIKE ?
+            ORDER BY id ASC
+            """,
+            (session_prefix + "%",),
+        )
 
     rows = cursor.fetchall()
+    conn.close()
 
-    messages = []
-    for (msg,) in rows:
+    human_messages = []
+
+    for r in rows:
         try:
-            messages.append(json.loads(msg))  # 🔥 penting
-        except:
-            continue  # skip kalau corrupt
+            data = json.loads(r[0])
+            if data.get("type") != "human":
+                continue  # skip AI messages
 
-    return [msg for (msg,) in rows]
+            content = data.get("data", {}).get("content", "")
+
+            session_id = r[1]
+            # ambil phase dari session_id
+            parts = session_id.split("_")
+            phase = parts[-1] if len(parts) > 0 else None
+
+            human_messages.append({
+                "type": "human",
+                "data": {"content": content},
+                "phase": phase,
+            })
+
+        except Exception as e:
+            print("Parse error:", e)
+
+    return human_messages
 
 def save_summary(cursor, conn, user_id, story_date, summary):
     cursor.execute("""

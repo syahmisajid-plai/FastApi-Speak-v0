@@ -34,7 +34,7 @@ from db import (
     # summary
     get_daily_session,
     get_summary,
-    get_messages_by_date,
+    get_human_messages,
     save_summary,
 )
 
@@ -562,7 +562,7 @@ async def generate_daily_summary(req: SummaryRequest):
 
         # 4. ambil messages
         print("[STEP 4] Fetching messages...")
-        messages = get_messages_by_date(req.user_id, req.story_date)
+        messages = get_human_messages(req.user_id, req.story_date)
         print(f"[STEP 4 RESULT] total_messages={len(messages) if messages else 0}")
 
         if not messages:
