@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { linkBackend } from "../config";
 
-export default function useDailyStory(userId, sessionIdRef) {
+export default function useDailyStory(sessionIdRef, userIdRef) {
   const [dailyStory, setDailyStory] = useState({
     morning: false,
     afternoon: false,
@@ -27,14 +27,22 @@ export default function useDailyStory(userId, sessionIdRef) {
 
   const generateSummary = async () => {
     try {
+      const payload = {
+        user_name: sessionIdRef.current,
+        user_id: userIdRef.current,
+        story_date: new Date().toISOString().split("T")[0],
+      };
+
+      console.log("📤 Sending summary payload:", payload); // ✅ log payload
+
       const res = await fetch(`${linkBackend}/daily-story/summary/generate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          user_name: sessionIdRef,
-          user_id: userId,
+          user_name: sessionIdRef.current,
+          user_id: userIdRef.current,
           story_date: new Date().toISOString().split("T")[0],
         }),
       });

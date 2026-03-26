@@ -234,7 +234,7 @@ Feature tambahan:
     markPhaseComplete,
     completedCount,
     generateSummary,
-  } = useDailyStory(sessionIdRef, userId);
+  } = useDailyStory(sessionIdRef, userIdRef);
   const currentPhase = getCurrentPhaseFromProgress();
 
   const [readyToContinue, setReadyToContinue] = useState(false);
@@ -565,6 +565,20 @@ Feature tambahan:
           onWheel={resetIdle}
         >
           <Header streak={streak} />
+
+          {/* ================== DEBUG: GENERATE SUMMARY ================== */}
+          <div className="w-full flex justify-center mb-4">
+            <button
+              onClick={async () => {
+                console.log("📝 Generating summary...");
+                const summary = await generateSummary();
+                console.log("✅ Summary generated:", summary);
+              }}
+              className="bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded-md"
+            >
+              Generate Summary
+            </button>
+          </div>
 
           {/* 🔊 Audio untuk greeting daily */}
           <audio
