@@ -168,7 +168,10 @@ def init_db():
             user_id UUID NOT NULL,
             story_date DATE NOT NULL,
 
-            summary_text TEXT,
+            morning_summary TEXT,
+            afternoon_summary TEXT,
+            evening_summary TEXT,
+            night_summary TEXT,
 
             key_points JSONB,
             vocab_used JSONB,
@@ -735,10 +738,17 @@ def get_human_messages(session_prefix):
 
     return human_messages
 
-def save_summary(user_id, story_date, summary):
+def save_summary(user_id, story_date, summaries):
     """
-    Save daily story summary to DB.
-    Only summary_text is stored. Other fields are ignored.
+    Save daily story summaries (per phase) to DB.
+
+    summaries format:
+    {
+        "morning": "...",
+        "afternoon": "...",
+        "evening": "...",
+        "night": "..."
+    }
     """
 
     conn = get_db_connection()
@@ -748,17 +758,26 @@ def save_summary(user_id, story_date, summary):
         INSERT INTO daily_story_summary (
             user_id,
             story_date,
-            summary_text
+            morning_summary,
+            afternoon_summary,
+            evening_summary,
+            night_summary
         )
-        VALUES (%s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s)
         ON CONFLICT (user_id, story_date)
         DO UPDATE SET
-            summary_text = EXCLUDED.summary_text,
+            morning_summary = EXCLUDED.morning_summary,
+            afternoon_summary = EXCLUDED.afternoon_summary,
+            evening_summary = EXCLUDED.evening_summary,
+            night_summary = EXCLUDED.night_summary,
             updated_at = CURRENT_TIMESTAMP
     """, (
         user_id,
         story_date,
-        summary.get("summary_text")  # hanya simpan summary_text
+        summaries.get("morning"),
+        summaries.get("afternoon"),
+        summaries.get("evening"),
+        summaries.get("night")
     ))
 
     conn.commit()

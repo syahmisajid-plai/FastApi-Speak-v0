@@ -457,69 +457,86 @@ def is_complete(session: dict) -> bool:
 def generate_daily_summary_by_phase(messages):
     """
     Generate daily story summaries per phase from conversation messages.
-    
-    Args:
-        messages (list): list of messages, each with 'type', 'data', 'phase'
-    
+
     Returns:
-        dict: {phase: summary_text}
+        dict: {
+            "morning": "...",
+            "afternoon": "...",
+            "evening": "...",
+            "night": "..."
+        }
     """
 
-    # Ambil semua phase unik dari messages
-    phases = sorted(list({m.get("phase") for m in messages if m.get("phase")}))
+    # Fixed phase order (IMPORTANT)
+    phases = ["morning", "afternoon", "evening", "night"]
     summaries = {}
 
     for phase in phases:
         # Ambil semua pesan untuk phase ini
         msgs_phase = [m for m in messages if m.get("phase") == phase]
 
-        # Debug print
         print(f"\n=== Processing phase: {phase} ===")
+
+        # Kalau tidak ada pesan → skip tapi tetap isi None
+        if not msgs_phase:
+            print("No messages for this phase")
+            summaries[phase] = None
+            continue
+
+        # Debug print isi pesan
         for m in msgs_phase:
             print(f"Message: {m.get('data', {}).get('content','')}")
 
-        # Convert messages → readable text
+        # Convert ke text
         conversation_text = []
         for msg in msgs_phase:
             role = msg.get("type")
             content = msg.get("data", {}).get("content", "")
+
             if role == "human":
                 conversation_text.append(f"User: {content}")
             elif role == "ai":
                 conversation_text.append(f"AI: {content}")
+
         conversation_text = "\n".join(conversation_text)
 
-        # Prompt template dengan contoh summary
+        # Prompt
         prompt = f"""
-        You are an expert assistant helping a user summarize their daily stories, like a diary.
-        The user has just finished telling their day. Your task is to summarize their activities for the phase '{phase}' in a concise paragraph, clear and natural, in English.
+            You are an expert assistant helping a user summarize their daily stories like a diary.
 
-        Guidelines:
-        - Mention the activities the user did in this phase.
-        - Keep it simple and easy to read.
-        - Write it like a diary entry: "In the morning, I did ..."
+            The user has finished telling their activities for the {phase}.
 
-        Example:
+            Write a concise and natural summary in English.
 
-        Input (morning):
-        User: I wake up and drink coffee.
-        User: I go for a jog.
+            Guidelines:
+            - Describe what the user did.
+            - Keep it simple and clear.
+            - Use a diary tone.
+            - Always start with:
+            - "In the morning..." for morning
+            - "In the afternoon..." for afternoon
+            - "In the evening..." for evening
+            - "At night..." for night
 
-        Summary:
-        In the morning, I started my day with a cup of coffee and went for a jog to get some exercise.
+            Example:
+            User: I wake up and drink coffee.
+            User: I go for a jog.
 
-        Now summarize this conversation for the phase '{phase}':
+            Summary:
+            In the morning, I started my day with coffee and went for a jog.
 
-        {conversation_text}
-        """
+            Now summarize:
 
-        # Panggil model
+            {conversation_text}
+            """
+
+        # Call LLM
         response = llm.invoke(prompt)
-        summary = response.content
-        summaries[phase] = summary.strip()
+        summary = response.content.strip()
 
-        # Debug print summary
-        print(f"Summary for phase '{phase}': {summaries[phase]}")
+        summaries[phase] = summary
+
+        print(f"Summary for phase '{phase}': {summary}")
 
     return summaries
 
@@ -579,7 +596,6 @@ async def generate_daily_summary(req: SummaryRequest):
         # 5. generate summary (LLM) per phase
         print("[STEP 5] Generating summary using LLM per phase...")
 
-        # Gunakan fungsi generate_daily_summary_by_phase
         summaries = generate_daily_summary_by_phase(messages)
 
         if not summaries:
@@ -590,11 +606,14 @@ async def generate_daily_summary(req: SummaryRequest):
         for phase, text in summaries.items():
             print(f"[STEP 5 RESULT] Phase='{phase}' Summary='{text}'")
 
-        # 6. save ke DB (per phase atau sekaligus)
+        # 6. save ke DB (HANYA SEKALI ❗)
         print("[STEP 6] Saving summary to DB...")
-        for phase, text in summaries.items():
-            save_summary(req.user_id, req.story_date, {"phase": phase, "summary_text": text})
-            print(f"[STEP 6 RESULT] Summary for phase '{phase}' saved successfully")
+
+        save_summary(req.user_id, req.story_date, summaries)
+        
+        print(f"======PESAN summaries======: {summaries}")
+
+        print("[STEP 6 RESULT] All summaries saved successfully")
 
         print("[SUCCESS] Summary generated successfully")
         print("========== [END] generate_daily_summary ==========\n")
