@@ -34,7 +34,6 @@ export default function DailySummaryViewer({ userId }) {
     fetchSummary(selectedDate);
   }, [selectedDate]);
 
-  // 👉 Navigation tanggal
   const changeDate = (offset) => {
     const d = new Date(selectedDate);
     d.setDate(d.getDate() + offset);
@@ -50,16 +49,26 @@ export default function DailySummaryViewer({ userId }) {
     });
   };
 
-  return (
-    <div className="max-w-xl mx-auto p-4 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Daily Diary</h1>
+  const phases = [
+    { key: "morning_summary", label: "Morning", emoji: "🌅" },
+    { key: "afternoon_summary", label: "Afternoon", emoji: "🌤" },
+    { key: "evening_summary", label: "Evening", emoji: "🌆" },
+    { key: "night_summary", label: "Night", emoji: "🌙" },
+  ];
 
-        <div className="flex items-center gap-2">
+  return (
+    <div className="max-w-xl mx-auto p-4 text-white bg-amber-950">
+      {/* HEADER */}
+      <div className="space-y-4 mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          📖 Daily Diary
+        </h1>
+
+        {/* DATE NAV */}
+        <div className="flex items-center justify-between bg-white/10 backdrop-blur-md rounded-xl px-3 py-2 border border-white/10">
           <button
             onClick={() => changeDate(-1)}
-            className="px-2 py-1 text-sm border rounded-md"
+            className="px-3 py-1 rounded-lg hover:bg-white/10 transition"
           >
             ◀
           </button>
@@ -69,36 +78,58 @@ export default function DailySummaryViewer({ userId }) {
             value={selectedDate}
             max={today}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="border rounded-md px-2 py-1 text-sm"
+            className="
+              bg-transparent 
+              text-center 
+              text-sm 
+              outline-none
+            "
           />
 
           <button
             onClick={() => changeDate(1)}
-            className="px-2 py-1 text-sm border rounded-md"
+            className="px-3 py-1 rounded-lg hover:bg-white/10 transition"
           >
             ▶
           </button>
         </div>
+
+        {/* FORMATTED DATE */}
+        <div className="text-sm text-white/60">{formatDate(selectedDate)}</div>
       </div>
 
-      {/* Tanggal */}
-      <div className="text-sm text-gray-500">{formatDate(selectedDate)}</div>
-
-      {/* Content */}
+      {/* CONTENT */}
       {loading ? (
-        <p className="text-gray-500 text-sm">Loading...</p>
+        <div className="text-sm text-white/60 animate-pulse">
+          Loading your diary...
+        </div>
       ) : summary ? (
-        <div className="space-y-4 text-sm leading-relaxed text-gray-700">
-          {summary.morning_summary && <p>{summary.morning_summary}</p>}
+        <div className="space-y-6">
+          {phases.map((phase) => {
+            const text = summary[phase.key];
+            if (!text) return null;
 
-          {summary.afternoon_summary && <p>{summary.afternoon_summary}</p>}
+            return (
+              <div key={phase.key} className="space-y-2">
+                {/* TITLE */}
+                <div className="flex items-center gap-2 text-white/80 text-sm font-medium">
+                  <span>{phase.emoji}</span>
+                  <span>{phase.label}</span>
+                </div>
 
-          {summary.evening_summary && <p>{summary.evening_summary}</p>}
+                {/* TEXT */}
+                <p className="text-sm leading-relaxed text-white/90">{text}</p>
 
-          {summary.night_summary && <p>{summary.night_summary}</p>}
+                {/* DIVIDER */}
+                <div className="h-px bg-white/10 mt-3" />
+              </div>
+            );
+          })}
         </div>
       ) : (
-        <p className="text-gray-500 text-sm">No diary found for this date.</p>
+        <div className="text-sm text-white/50 italic">
+          No diary found for this date.
+        </div>
       )}
     </div>
   );

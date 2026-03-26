@@ -992,8 +992,8 @@ Feature tambahan:
 
       {/* 🧱 OVERLAY — showDiary */}
       {showDiary && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex justify-center items-start overflow-y-auto">
-          <div className="w-full max-w-md mt-10 bg-white text-black rounded-xl p-4">
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
+          <div className="w-11/12 max-w-md max-w-md mt-10 bg-white text-black rounded-xl p-4">
             {/* HEADER */}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold">📖 Daily Diary</h2>

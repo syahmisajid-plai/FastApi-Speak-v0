@@ -437,7 +437,7 @@ async def next_phase(req: NextPhaseRequest):
 def daily_history(session_id: str):
     return get_daily_history(session_id)
 
-@router.get("/daily-story/summary")
+@router.get("/summary")
 def get_daily_summary(user_id: str, story_date: str):
     try:
         print("\n========== [GET] daily_summary ==========")
