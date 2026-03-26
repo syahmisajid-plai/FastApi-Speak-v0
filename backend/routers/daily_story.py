@@ -502,33 +502,48 @@ def generate_daily_summary_by_phase(messages):
 
         # Prompt
         prompt = f"""
-            You are an expert assistant helping a user summarize their daily stories like a diary.
+        You are an expert assistant helping summarize a user's daily activities like a diary.
 
-            The user has finished telling their activities for the {phase}.
+        The user has finished describing their activities for the {phase}.
 
-            Write a concise and natural summary in English.
+        Your task is to write a concise, natural, and fluent summary in English.
 
-            Guidelines:
-            - Describe what the user did.
-            - Keep it simple and clear.
-            - Use a diary tone.
-            - Always start with:
-            - "In the morning..." for morning
-            - "In the afternoon..." for afternoon
-            - "In the evening..." for evening
-            - "At night..." for night
+        IMPORTANT:
+        - Do NOT use "I"
+        - Do NOT use "the user"
+        - Use a natural diary-style tone (neutral perspective)
+        - Make it sound smooth and human-like, not robotic
 
-            Example:
-            User: I wake up and drink coffee.
-            User: I go for a jog.
+        Guidelines:
+        - Clearly describe the activities
+        - Keep it simple and easy to read
+        - Combine actions naturally into one flowing sentence when possible
+        - Avoid repetitive sentence structure
+        - Vary phrasing slightly to sound natural
 
-            Summary:
-            In the morning, I started my day with coffee and went for a jog.
+        Style examples:
+        - The morning began with...
+        - The afternoon was spent...
+        - The evening focused on...
+        - The night ended with...
 
-            Now summarize:
+        Good Example:
+        Input:
+        User: I wake up and drink coffee.
+        User: I go for a jog.
 
-            {conversation_text}
-            """
+        Summary:
+        The morning began with a cup of coffee, followed by a refreshing jog.
+
+        Bad Summary (DO NOT DO):
+        - Using "I"
+        - Using "the user"
+        - Writing in a robotic or repetitive way
+
+        Now summarize the following conversation:
+
+        {conversation_text}
+        """
 
         # Call LLM
         response = llm.invoke(prompt)
