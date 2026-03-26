@@ -590,17 +590,18 @@ async def generate_daily_summary(req: SummaryRequest):
         for phase, text in summaries.items():
             print(f"[STEP 5 RESULT] Phase='{phase}' Summary='{text}'")
 
-        # 6. save ke DB
+        # 6. save ke DB (per phase atau sekaligus)
         print("[STEP 6] Saving summary to DB...")
-        save_summary(req.user_id, req.story_date, summary)
-        print("[STEP 6 RESULT] Summary saved successfully")
+        for phase, text in summaries.items():
+            save_summary(req.user_id, req.story_date, {"phase": phase, "summary_text": text})
+            print(f"[STEP 6 RESULT] Summary for phase '{phase}' saved successfully")
 
         print("[SUCCESS] Summary generated successfully")
         print("========== [END] generate_daily_summary ==========\n")
 
         return {
             "status": "generated",
-            "data": summary
+            "data": summaries
         }
 
     except Exception as e:
