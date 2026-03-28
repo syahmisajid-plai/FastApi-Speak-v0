@@ -31,7 +31,6 @@ export default function RoleplayToggleSwipe({
   onScenarioSelect,
   isOpen, // <-- dari parent
   setIsOpen, // <-- dari parent
-  setMode, // <-- props baru
   lastUserMessage,
   onFinish,
   onChecklistUpdate,
@@ -121,8 +120,6 @@ export default function RoleplayToggleSwipe({
 
       onFinish({ totalDone, totalChecklist });
 
-      if (setMode) setMode("freeTalk");
-
       setActiveChecklist(null);
     }
   }, [
@@ -132,7 +129,6 @@ export default function RoleplayToggleSwipe({
     maxTurn,
     onFinish,
     hasFinished,
-    setMode,
   ]);
 
   useEffect(() => {
@@ -216,11 +212,6 @@ export default function RoleplayToggleSwipe({
     try {
       setLoading(true);
 
-      if (!scenario) {
-        // tombol ❌
-        if (setMode) setMode("freeTalk");
-      }
-
       if (setIsOpen) setIsOpen(false);
     } catch (err) {
       console.error(err);
@@ -232,14 +223,7 @@ export default function RoleplayToggleSwipe({
   const dummyScenarioName = "Airport Check-in";
 
   return (
-    <section
-      className={`relative rounded-xl p-4 shadow transition-colors duration-500
-      ${
-        selectedScenario
-          ? "bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white"
-          : "bg-slate-900/80 text-white border border-slate-700/40"
-      }`}
-    >
+    <section className="relative rounded-xl p-4 shadow transition-colors duration-500 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white">
       <div className="relative bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
         {/* DATE & TIME */}
         <div className="absolute top-3 right-3 text-right text-[11px] text-white/70 leading-tight">
@@ -259,32 +243,31 @@ export default function RoleplayToggleSwipe({
         </div>
 
         {/* ❌ CLOSE BUTTON */}
-        {selectedScenario && (
-          <button
-            className="absolute -top-4 -right-4 w-8 h-8 flex items-center justify-center 
+        <button
+          className="absolute -top-4 -right-4 w-8 h-8 flex items-center justify-center 
             rounded-full bg-white/10!! text-white text-sm transition"
-            onClick={() => handleCloseOrSelect(null)}
-          >
-            ✕
-          </button>
-        )}
+          onClick={() => handleCloseOrSelect(null)}
+        >
+          ✕
+        </button>
+
         {/* HEADER */}
         <div className="flex items-start gap-3 pr-10">
           {/* ICON */}
           <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/20 text-lg">
-            {selectedScenario ? "🎭" : "💬"}
+            🎭
           </div>
 
           <div className="flex flex-col">
             {/* MODE BADGE */}
             <span className="text-[10px] uppercase tracking-wider text-white/70 mb-1">
-              {selectedScenario ? "Roleplay Mode" : "Free Talk"}
+              Roleplay Mode
             </span>
 
             {/* TITLE + DIFFICULTY */}
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-lg font-semibold leading-tight">
-                {selectedScenario ? selectedScenario.name : "Start speaking"}
+                {selectedScenario?.name || "Choose a scenario"}
               </p>
 
               {selectedScenario?.difficulty && (
@@ -293,13 +276,6 @@ export default function RoleplayToggleSwipe({
                 </span>
               )}
             </div>
-
-            {/* HINT */}
-            {!selectedScenario && (
-              <p className="text-xs text-white/60 mt-1">
-                Talk freely 🎙️ AI will respond
-              </p>
-            )}
 
             {/* Role */}
             {selectedScenario && (
@@ -318,7 +294,6 @@ export default function RoleplayToggleSwipe({
             bg-gradient-to-r from-purple-600 to-indigo-600 
             hover:scale-105 active:scale-95 transition"
           onClick={() => {
-            setMode("roleplay");
             setStep("category");
             setIsOpen(true);
           }}

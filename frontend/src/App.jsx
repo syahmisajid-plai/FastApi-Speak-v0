@@ -13,6 +13,7 @@ import Testcard_swipe from "./components/testcard_swipe";
 import ModeSelector from "./components/ModeSelector";
 import ContextRenderer from "./components/ContextRenderer";
 import DailySummaryViewer from "./components/DailySummaryViewer";
+import FreeTalkUI from "./components/FreeTalkUI";
 
 // ================== STYLES ==================
 import "./App.css";
@@ -589,8 +590,7 @@ Feature tambahan:
           onClick={resetIdle}
           onWheel={resetIdle}
         >
-          <Header streak={streak} />
-
+          <Header streak={streak} mode={mode} />
           {/* ================== DEBUG: Open Diary Daily Story ================== */}
           {/* <div className="w-full flex justify-center mb-2">
             <button
@@ -608,7 +608,6 @@ Feature tambahan:
               📖 Open Diary
             </button>
           </div> */}
-
           {/* ================== DEBUG: GENERATE SUMMARY ================== */}
           {/* <div className="w-full flex justify-center mb-4">
             <button
@@ -622,15 +621,13 @@ Feature tambahan:
               Generate Summary
             </button>
           </div> */}
-
           {/* 🔊 Audio untuk greeting daily */}
           <audio
             ref={audioDailyStartRef}
             src="/src/assets/daily_start.mp3"
             preload="auto"
           />
-
-          <div className="text-white">
+          {/* <div className="text-white">
             <p>Mic Volume: {volume}</p>
 
             {showPopup && (
@@ -638,15 +635,13 @@ Feature tambahan:
                 ⚠️ Mikrofon tidak terdeteksi suara!
               </div>
             )}
-          </div>
-
+          </div> */}
           {/* SUMMARY CARD */}
           {showSummary && summaryData && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
               <RoleplaySummaryCard data={summaryData} onClose={closeSummary} />
             </div>
           )}
-
           {showContext && activeContext && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
               <div className="bg-white text-black rounded-xl p-5 w-[350px] max-h-[80vh] overflow-y-auto shadow-xl">
@@ -661,7 +656,6 @@ Feature tambahan:
               </div>
             </div>
           )}
-
           {/* 🔥 TAMBAHKAN DI SINI */}
           {mode === "roleplay" &&
             selectedScenario &&
@@ -688,11 +682,10 @@ Feature tambahan:
                 📌
               </button>
             )}
+          {/* <div className="relative">
+            konten lain
 
-          <div className="relative">
-            {/* konten lain */}
-
-            {/* 🧹 CLEAR BUTTON */}
+            🧹 CLEAR BUTTON
             <button
               onClick={clearAllHistory}
               title="Clear all history"
@@ -704,19 +697,17 @@ Feature tambahan:
                 px-2 py-1
                 rounded-md
                 shadow-md
-    "
+            "
             >
               🧹
             </button>
-          </div>
-
+          </div> */}
           {mode === "dailyStory" && (
             <DailyStoryIndicator
               dailyStory={dailyStory}
               isDailyLocked={isDailyLocked}
             />
           )}
-
           {mode === "dailyStory" &&
             readyToContinue &&
             (() => {
@@ -843,7 +834,9 @@ Feature tambahan:
               );
             })()}
 
-          {mode !== "dailyStory" && (
+          {mode === "freeTalk" && <FreeTalkUI />}
+
+          {mode === "roleplay" && (
             <RoleplayToggle
               selectedScenario={selectedScenario}
               onScenarioSelect={selectScenario}
@@ -857,9 +850,7 @@ Feature tambahan:
               maxTurn={maxTurn}
             />
           )}
-
           <ModeSelector mode={mode} setMode={handleModeChange} />
-
           {showModeConfirm && (
             <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
               <div
@@ -942,7 +933,6 @@ Feature tambahan:
               </div>
             </div>
           )}
-
           {/* SESSION ID INPUT */}
           <div className="flex items-center space-x-2 text-white">
             <label htmlFor="sessionId">Session ID:</label>
@@ -963,7 +953,6 @@ Feature tambahan:
               <option value="test7">test7</option>
             </select>
           </div>
-
           <ChatSection
             lupaKata={lupaKata}
             chatHistory={chatHistory}
@@ -972,7 +961,6 @@ Feature tambahan:
             disabled={allDailyComplete}
             mode={mode}
           />
-
           <BottomActions
             isRecording={isRecording}
             showSuggestions={showSuggestions}
@@ -1002,7 +990,6 @@ Feature tambahan:
               isDailyLocked,
             }}
           />
-
           <div className="mb-48" />
         </div>
       </div>
