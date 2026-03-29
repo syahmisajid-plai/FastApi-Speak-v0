@@ -15,3 +15,5 @@ deep-translator
 psycopg2-binary
 
 google-cloud-texttospeech
+
+bcrypt==4.1.2
