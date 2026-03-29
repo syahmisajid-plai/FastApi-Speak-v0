@@ -2,6 +2,8 @@
 import os
 import sqlite3
 import psycopg2
+from psycopg2.extras import RealDictCursor
+
 import time
 from langchain_community.chat_message_histories import SQLChatMessageHistory
 
@@ -862,9 +864,14 @@ def get_summary(user_id, story_date):
     }
 
 def get_user_for_login(username_or_email: str):
-    
+
     conn = get_db_connection()
-    cursor = conn.cursor()
+
+    # 🔥 DETECT DB TYPE
+    if DATABASE_URL:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+    else:
+        cursor = conn.cursor()
 
     query = """
         SELECT
@@ -878,4 +885,18 @@ def get_user_for_login(username_or_email: str):
     """
 
     cursor.execute(query, (username_or_email, username_or_email))
-    return cursor.fetchone()
+    user = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    # 🔥 NORMALIZE OUTPUT (biar selalu dict)
+    if user and not isinstance(user, dict):
+        user = {
+            "id": user[0],
+            "email": user[1],
+            "username": user[2],
+            "password_hash": user[3],
+        }
+
+    return user
