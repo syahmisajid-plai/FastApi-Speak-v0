@@ -47,6 +47,9 @@ import useBackendPing from "./hooks/useBackendPing";
 import { normalizeForTTS } from "./utils/ttsUtils";
 import { linkBackend } from "./config";
 
+// ================== SERVICES ==================
+import { getUser, saveUser, logout } from "./services/authService";
+
 export default function SpeakingApp() {
   /*
 ========================================================
@@ -104,25 +107,32 @@ Feature tambahan:
   // ================== STATE Daily Greeting ==================
   const greetingSentRef = useRef(false);
 
-  // ================== REF AUDIO ==================
+  // ================== Login & Logout ==================
+  useEffect(() => {
+    const savedUser = getUser();
+
+    if (savedUser) {
+      console.log("🔁 Auto login:", savedUser);
+
+      setUser(savedUser);
+      setSessionId(savedUser.username);
+      setShowLogin(false);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+
+    setUser(null);
+    setSessionId(null);
+    setShowLogin(true);
+  };
 
   // ================== SESSION MANAGEMENT ==================
   const [sessionId, setSessionId] = useState("sam");
   const sessionIdRef = useRef(sessionId);
 
-  const userMap = {
-    sam: "21121b45-6987-432c-a2cd-fda17eabbd2b",
-    syifa: "51c3476b-d6a9-4d82-8bf2-64bbf53f2e50",
-    test: "1234576b-d6a9-4d82-8bf2-64bbf53f2e50",
-    test2: "3214576b-d6a9-4d82-8bf2-64bbf53f2e50",
-    test3: "4214576b-d6a9-4d82-8bf2-64bbf53f2e50",
-    test4: "5214576b-d6a9-4d82-8bf2-64bbf53f2e50",
-    test5: "6214576b-d6a9-4d82-8bf2-64bbf53f2e50",
-    test6: "7214576b-d6a9-4d82-8bf2-64bbf53f2e50",
-    test7: "8214576b-d6a9-4d82-8bf2-64bbf53f2e50",
-  };
-
-  const userId = userMap[sessionId];
+  const userId = user?.id;
   const userIdRef = useRef(userId);
 
   useEffect(() => {
@@ -675,12 +685,9 @@ Feature tambahan:
             mode={mode}
             isScrolled={isScrolled}
             dailyStory={dailyStory}
+            user={user}
+            onLogout={handleLogout}
           />
-          {/* ================== Page Login Overlay ================== */}
-          {/* Main App */}
-          <div className="text-white">
-            {user ? `Welcome ${user.username}` : "Not logged in"}
-          </div>
 
           {/* Login Overlay */}
           {showLogin && (
@@ -688,6 +695,11 @@ Feature tambahan:
               onClose={() => setShowLogin(false)}
               onLoginSuccess={(userData) => {
                 setUser(userData);
+                setSessionId(userData.username);
+
+                saveUser(userData); // 🔥 dari authService
+
+                setShowLogin(false);
               }}
             />
           )}
@@ -943,7 +955,7 @@ Feature tambahan:
               );
             })()}
           {/* SESSION ID INPUT */}
-          <div className="flex items-center space-x-2 text-white">
+          {/* <div className="flex items-center space-x-2 text-white">
             <label htmlFor="sessionId">Session ID:</label>
             <select
               id="sessionId"
@@ -961,7 +973,8 @@ Feature tambahan:
               <option value="test6">test6</option>
               <option value="test7">test7</option>
             </select>
-          </div>
+          </div> */}
+
           {mode === "freeTalk" && (
             <FreeTalkUI
               started={freeTalkStarted}

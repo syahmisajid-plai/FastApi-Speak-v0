@@ -105,7 +105,7 @@ export default function LoginOverlay({ onClose, onLoginSuccess }) {
         {/* Cancel */}
         {onClose && (
           <button
-            onClick={onClose}
+            // onClick={onClose}
             className="mt-4 w-full text-white/50 text-sm hover:text-white transition"
           >
             Cancel
