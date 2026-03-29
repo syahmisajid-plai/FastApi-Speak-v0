@@ -36,6 +36,7 @@ export default function RoleplayToggleSwipe({
   onChecklistUpdate,
   currentTurn,
   maxTurn,
+  sendInitialMessage,
 }) {
   // const difficulties = [
   //   { id: 1, name: "Easy Mode", image: easy_mode },
@@ -63,6 +64,10 @@ export default function RoleplayToggleSwipe({
     setIsOpen(false);
     if (onScenarioSelect) onScenarioSelect(scenario);
   };
+
+  const [started, setStarted] = useState(false);
+
+  const [activeScenario, setActiveScenario] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState("category");
@@ -223,87 +228,159 @@ export default function RoleplayToggleSwipe({
   const dummyScenarioName = "Airport Check-in";
 
   return (
-    <section className="relative rounded-xl p-4 shadow transition-colors duration-500 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white">
-      <div className="relative bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
-        {/* DATE & TIME */}
-        <div className="absolute top-3 right-3 text-right text-[11px] text-white/70 leading-tight">
-          <div>
-            {now.toLocaleDateString("en-US", {
-              weekday: "short",
-              day: "numeric",
-              month: "short",
-            })}
-          </div>
-          {/* <div className="font-medium">
-            {now.toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </div> */}
-        </div>
-
-        {/* ❌ CLOSE BUTTON */}
-        <button
-          className="absolute -top-4 -right-4 w-8 h-8 flex items-center justify-center 
-            rounded-full bg-white/10!! text-white text-sm transition"
-          onClick={() => handleCloseOrSelect(null)}
+    <>
+      {/* // ================== MAIN ================== */}
+      <section
+        className={`mx-4 transition-all duration-500 ${
+          started ? "mt-4" : "mt-36"
+        }`}
+      >
+        <div
+          className={`text-white border border-white/10 backdrop-blur-md transition-all duration-500
+        ${
+          started
+            ? "rounded-2xl p-4 bg-gradient-to-r from-purple-600/70 via-indigo-600/70 to-blue-600/70"
+            : "rounded-3xl p-6 bg-slate-900/70 text-center"
+        }`}
         >
-          ✕
-        </button>
+          {/* ================= BEFORE START ================= */}
+          {!started && (
+            <>
+              <div className="flex flex-col items-center">
+                <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-2xl mb-4">
+                  🎭
+                </div>
 
-        {/* HEADER */}
-        <div className="flex items-start gap-3 pr-10">
-          {/* ICON */}
-          <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/20 text-lg">
-            🎭
-          </div>
+                <p className="text-sm font-semibold">Roleplay Mode</p>
+                <p className="text-xs text-white/60 mt-1">
+                  Practice real-life conversations with AI
+                </p>
+              </div>
 
-          <div className="flex flex-col">
-            {/* MODE BADGE */}
-            <span className="text-[10px] uppercase tracking-wider text-white/70 mb-1">
-              Roleplay Mode
-            </span>
+              <button
+                onClick={() => setStarted(true)}
+                className="mt-4 w-full py-2.5! rounded-xl bg-white! text-black text-sm font-medium active:scale-[0.98] transition"
+              >
+                Start Roleplay
+              </button>
+            </>
+          )}
 
-            {/* TITLE + DIFFICULTY */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-lg font-semibold leading-tight">
-                {selectedScenario?.name || "Choose a scenario"}
-              </p>
+          {/* ================= AFTER START ================= */}
+          {started && (
+            <>
+              {/* HEADER */}
+              <div className="relative bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
+                {/* DATE */}
+                <div className="absolute top-3 right-3 text-[11px] text-white/70">
+                  {now.toLocaleDateString("en-US", {
+                    weekday: "short",
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </div>
 
-              {selectedScenario?.difficulty && (
-                <span className="px-2 py-[2px] rounded-full bg-white/10 text-white/80 text-[10px] font-semibold uppercase">
-                  {selectedScenario.difficulty}
-                </span>
+                {/* TITLE */}
+                <div className="flex items-start gap-3 pr-10">
+                  <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/20 text-lg">
+                    🎭
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] uppercase text-white/70">
+                      Roleplay Mode
+                    </span>
+
+                    <p className="text-lg font-semibold leading-tight">
+                      {activeScenario?.name || "Choose a scenario"}
+                    </p>
+
+                    {activeScenario && (
+                      <p className="text-xs text-white/70 mt-1">
+                        🙂: {activeScenario?.user_role} | 🤖:{" "}
+                        {activeScenario?.ai_role}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* FLOAT BUTTON */}
+                <button
+                  className="absolute right-3 bottom-3 w-10 h-10 flex items-center justify-center
+                  rounded-full shadow-lg bg-gradient-to-r from-purple-600 to-indigo-600 
+                  hover:scale-105 active:scale-95 transition"
+                  onClick={() => {
+                    setIsOpen(true);
+                  }}
+                >
+                  🎭
+                </button>
+              </div>
+
+              {/* Checklist */}
+              {activeScenario && activeChecklist && (
+                <div className="mt-3 bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/10 shadow-sm">
+                  {/* HEADER */}
+                  <p className="text-[11px] uppercase tracking-wide text-white/60 mb-2">
+                    🎯 Mission
+                  </p>
+
+                  {/* CONTEXT: Situation + Goal */}
+                  {(mission?.situation || mission?.goal) && (
+                    <div className="mb-3 space-y-2">
+                      {mission?.situation && (
+                        <div className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10">
+                          <p className="text-[10px] uppercase text-white/40 mb-[2px]">
+                            Situation
+                          </p>
+                          <p className="text-xs text-white/85 leading-snug">
+                            {mission.situation}
+                          </p>
+                        </div>
+                      )}
+
+                      {mission?.goal && (
+                        <div className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10">
+                          <p className="text-[10px] uppercase text-white/40 mb-[2px]">
+                            Goal
+                          </p>
+                          <p className="text-xs text-white/90 font-medium leading-snug">
+                            {mission.goal}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* DIVIDER */}
+                  <div className="h-px bg-white/10 my-2" />
+
+                  {/* CHECKLIST */}
+                  <ul className="flex flex-col gap-1.5 text-xs">
+                    {activeChecklist.map((item, i) => (
+                      <li
+                        key={i}
+                        className={`flex items-center gap-2 transition ${
+                          item.done ? "opacity-60" : "opacity-100"
+                        }`}
+                      >
+                        <span className="text-sm">
+                          {item.done ? "✔" : "⬜"}
+                        </span>
+                        <span className="text-white/90 leading-snug">
+                          {item.text}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
-            </div>
-
-            {/* Role */}
-            {selectedScenario && (
-              <p className="text-xs text-white/70 mt-1">
-                🙂: {selectedScenario?.user_role} | 🤖:{" "}
-                {selectedScenario?.ai_role}
-              </p>
-            )}
-          </div>
+            </>
+          )}
         </div>
-
-        {/* FLOATING ROLEPLAY BUTTON */}
-        <button
-          className="absolute right-3 bottom-3 w-10 h-10 flex items-center justify-center
-            rounded-full shadow-lg cursor-pointer
-            bg-gradient-to-r from-purple-600 to-indigo-600 
-            hover:scale-105 active:scale-95 transition"
-          onClick={() => {
-            setStep("category");
-            setIsOpen(true);
-          }}
-        >
-          🎭
-        </button>
-      </div>
-
+      </section>
       {/* MODAL */}
-      {isOpen && (
+      {isOpen && started && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
           <div className="w-[280px] h-[380px]  rounded-xl p-3">
             {/* STEP 1 — category SELECTION */}
@@ -457,6 +534,11 @@ export default function RoleplayToggleSwipe({
                       onChecklistUpdate(normalizedChecklist, firstStep);
                     }
                     handleCloseOrSelect(mission);
+
+                    // 🔥 INI KUNCI (UI only)
+                    setActiveScenario(mission);
+
+                    sendInitialMessage(mission);
                   }}
                 >
                   Start Roleplay 🚀
@@ -466,61 +548,6 @@ export default function RoleplayToggleSwipe({
           </div>
         </div>
       )}
-
-      {/* Checklist */}
-      {selectedScenario && activeChecklist && (
-        <div className="mt-3 bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/10 shadow-sm">
-          {/* HEADER */}
-          <p className="text-[11px] uppercase tracking-wide text-white/60 mb-2">
-            🎯 Mission
-          </p>
-
-          {/* CONTEXT: Situation + Goal */}
-          {(mission?.situation || mission?.goal) && (
-            <div className="mb-3 space-y-2">
-              {mission?.situation && (
-                <div className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[10px] uppercase text-white/40 mb-[2px]">
-                    Situation
-                  </p>
-                  <p className="text-xs text-white/85 leading-snug">
-                    {mission.situation}
-                  </p>
-                </div>
-              )}
-
-              {mission?.goal && (
-                <div className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-[10px] uppercase text-white/40 mb-[2px]">
-                    Goal
-                  </p>
-                  <p className="text-xs text-white/90 font-medium leading-snug">
-                    {mission.goal}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* DIVIDER */}
-          <div className="h-px bg-white/10 my-2" />
-
-          {/* CHECKLIST */}
-          <ul className="flex flex-col gap-1.5 text-xs">
-            {activeChecklist.map((item, i) => (
-              <li
-                key={i}
-                className={`flex items-center gap-2 transition ${
-                  item.done ? "opacity-60" : "opacity-100"
-                }`}
-              >
-                <span className="text-sm">{item.done ? "✔" : "⬜"}</span>
-                <span className="text-white/90 leading-snug">{item.text}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </section>
+    </>
   );
 }

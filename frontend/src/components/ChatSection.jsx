@@ -63,8 +63,8 @@ export default function ChatSection({
 
       <div ref={bottomRef} />
       {/* <div className="mb-96"></div>
-      <div className="mb-96"></div>
-      <div className="mb-96"></div>
+      <div className="mb-96"></div> */}
+      {/* <div className="mb-96"></div>
       <div className="mb-96"></div> */}
     </section>
   );

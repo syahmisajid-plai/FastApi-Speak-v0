@@ -1,10 +1,12 @@
 import { useState } from "react";
 
-export default function FreeTalkUI() {
-  const [started, setStarted] = useState(false);
-
+export default function FreeTalkUI({ started, setStarted }) {
   return (
-    <section className="mx-4 mt-4">
+    <section
+      className={`mx-4 transition-all duration-500 ${
+        started ? "mt-4" : "mt-36"
+      }`}
+    >
       <div
         className={`text-white border border-white/10 backdrop-blur-md transition-all duration-500
         ${

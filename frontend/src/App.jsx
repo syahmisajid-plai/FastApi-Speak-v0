@@ -81,6 +81,11 @@ Feature tambahan:
   const [showDiary, setShowDiary] = useState(false);
   const [roleplayModalOpen, setRoleplayModalOpen] = useState(false);
 
+  const [freeTalkStarted, setFreeTalkStarted] = useState(false);
+  const [dailyStarted, setDailyStarted] = useState(false);
+
+  const [isScrolled, setIsScrolled] = useState(false);
+
   // ================== Tambahkan state ==================
   const [pendingMode, setPendingMode] = useState(null);
   const [showModeConfirm, setShowModeConfirm] = useState(false);
@@ -93,7 +98,7 @@ Feature tambahan:
   // freeTalk | dailyStory | roleplay
 
   // ================== STATE Daily Greeting ==================
-  const [dailyGreetingDone, setDailyGreetingDone] = useState(false);
+  const greetingSentRef = useRef(false);
 
   // ================== REF AUDIO ==================
 
@@ -119,7 +124,9 @@ Feature tambahan:
   useEffect(() => {
     userIdRef.current = userId;
   }, [userId]);
+
   const audioDailyStartRef = useRef(null);
+  const audioFreetalkStartRef = useRef(null);
 
   // ================== Load History ==================
   const loadDailyHistory = async (session) => {
@@ -193,12 +200,28 @@ Feature tambahan:
 
   const isDailyLocked = mode === "dailyStory" && !timeAllowed;
 
+  const [isDailyEmpty, setIsDailyEmpty] = useState(null);
   useEffect(() => {
     if (mode !== "dailyStory") return;
+    const today = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Jakarta",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date()); // YYYY-MM-DD
 
-    console.log("🚀 Loading FULL daily history");
+    const sessionKey = `${sessionIdRef.current}_${userId}_daily_${today}`;
 
-    loadDailyHistory(sessionIdRef.current);
+    fetch(`${linkBackend}/daily-story/history?session_id=${sessionKey}`)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("📥 Daily history loaded:", data);
+
+        setIsDailyEmpty(!data || data.length === 0);
+      })
+      .catch(() => {
+        setIsDailyEmpty(true); // kalau error anggap kosong
+      });
   }, [mode, sessionId]);
 
   useEffect(() => {
@@ -232,6 +255,16 @@ Feature tambahan:
 
   // ================== CHAT STATE ==================
   const [chatHistory, setChatHistory] = useState([]);
+
+  // ================== Set IsScrolled ==================
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20); // threshold bebas
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // ================== ROLEPLAY CONTEXT ==================
   const scenarioRef = useRef(null);
@@ -288,6 +321,14 @@ Feature tambahan:
   const shouldSendOnEndRef = useRef(false); // 🔵 Flag untuk mengirim teks otomatis
 
   // ================== PopUp Change Mode ==================
+  const resetModeState = () => {
+    setFreeTalkStarted(false);
+    setDailyStarted(false);
+
+    // optional tapi disarankan
+    setReadyToContinue(false);
+  };
+
   const handleModeChange = (newMode) => {
     if (chatHistory.length > 0) {
       setPendingMode(newMode);
@@ -295,6 +336,7 @@ Feature tambahan:
       return;
     }
 
+    resetModeState();
     setMode(newMode);
 
     if (newMode === "roleplay") {
@@ -336,6 +378,7 @@ Feature tambahan:
     handleRoleplayCompleted, // ✅ TAMBAH
     pushNextStepToChat,
     activeContext,
+    sendInitialMessage,
   } = useRoleplay({
     sessionIdRef,
     scenarioRef,
@@ -396,11 +439,12 @@ Feature tambahan:
     .filter((msg) => msg.sender === "You")
     .slice(-1)[0]?.message;
 
-  // ================== Sapaan Pertama Daily ==================
+  // ================== Sapaan Pertama Daily / Load History Daily ==================
   useEffect(() => {
     if (mode !== "dailyStory") return; // ✅ hanya di mode dailyStory
+
+    if (!dailyStarted) return;
     if (isDailyLocked) return;
-    if (dailyGreetingDone) return; // ✅ pastikan hanya sekali
 
     const today = new Intl.DateTimeFormat("en-CA", {
       timeZone: "Asia/Jakarta",
@@ -408,14 +452,15 @@ Feature tambahan:
       month: "2-digit",
       day: "2-digit",
     }).format(new Date());
-    const sessionKey = `${sessionId}_${userId}_daily_${today}_${activePhase}`;
+    const sessionKey = `${sessionId}_${userId}_daily_${today}`;
 
     console.log("🔄 Checking first daily greeting...", { sessionKey });
 
-    fetch(`${linkBackend}/history?session_id=${sessionKey}`)
+    fetch(`${linkBackend}/daily-story/history?session_id=${sessionKey}`)
       .then((res) => res.json())
       .then((data) => {
         console.log("📥 Daily history loaded:", data);
+        console.log(data);
 
         if (data.length === 0) {
           console.log("🎉 No chat yet today → sending first greeting");
@@ -449,14 +494,45 @@ Feature tambahan:
 
           // 🎵 Mainkan audio
           audioDailyStartRef.current?.play().catch(console.error);
-          setDailyGreetingDone(true);
         } else {
           console.log("⏭ Chat already exists today → skipping greeting");
-          setDailyGreetingDone(true); // tetap tandai done supaya tidak repeat
+
+          console.log("🚀 Loading FULL daily history");
+          loadDailyHistory(sessionIdRef.current);
         }
       })
       .catch(console.error);
-  }, [mode, sessionId, dailyGreetingDone]);
+  }, [mode, sessionId, dailyStarted]);
+
+  // ================== Sapaan Freetalk ==================
+  useEffect(() => {
+    if (mode !== "freeTalk") return;
+    if (!freeTalkStarted) return;
+
+    setChatHistory((prev) => {
+      // 🔥 GUARD: cegah duplicate greeting
+      const alreadyExists = prev.some(
+        (msg) =>
+          msg.sender === "AI" &&
+          msg.message.includes("I’m here if you feel like talking"),
+      );
+
+      if (alreadyExists) return prev;
+
+      return [
+        ...prev,
+        {
+          type: "chat",
+          sender: "AI",
+          message:
+            "Hey 👋 I’m here if you feel like talking 😊 Anything you want to chat about?",
+        },
+      ];
+    });
+
+    // 🎵 Mainkan audio
+    audioFreetalkStartRef.current?.play().catch(console.error);
+  }, [mode, freeTalkStarted]);
 
   // ================== SUGGESTIONS ==================
   const { suggestions, fetchSuggestions } = useSuggestions(chatHistory); // 💡 Saran dari chat history
@@ -590,7 +666,12 @@ Feature tambahan:
           onClick={resetIdle}
           onWheel={resetIdle}
         >
-          <Header streak={streak} mode={mode} />
+          <Header
+            streak={streak}
+            mode={mode}
+            isScrolled={isScrolled}
+            dailyStory={dailyStory}
+          />
           {/* ================== DEBUG: Open Diary Daily Story ================== */}
           {/* <div className="w-full flex justify-center mb-2">
             <button
@@ -625,6 +706,12 @@ Feature tambahan:
           <audio
             ref={audioDailyStartRef}
             src="/src/assets/daily_start.mp3"
+            preload="auto"
+          />
+
+          <audio
+            ref={audioFreetalkStartRef}
+            src="/src/assets/freetalk_start.mp3"
             preload="auto"
           />
           {/* <div className="text-white">
@@ -706,6 +793,9 @@ Feature tambahan:
             <DailyStoryIndicator
               dailyStory={dailyStory}
               isDailyLocked={isDailyLocked}
+              started={dailyStarted}
+              setStarted={setDailyStarted}
+              isDailyEmpty={isDailyEmpty}
             />
           )}
           {mode === "dailyStory" &&
@@ -833,9 +923,32 @@ Feature tambahan:
                 </div>
               );
             })()}
-
-          {mode === "freeTalk" && <FreeTalkUI />}
-
+          {/* SESSION ID INPUT */}
+          <div className="flex items-center space-x-2 text-white">
+            <label htmlFor="sessionId">Session ID:</label>
+            <select
+              id="sessionId"
+              className="p-1 rounded text-white bg-gray-700"
+              value={sessionId}
+              onChange={(e) => setSessionId(e.target.value)}
+            >
+              <option value="sam">sam</option>
+              <option value="syifa">syifa</option>
+              <option value="test">test</option>
+              <option value="test2">test2</option>
+              <option value="test3">test3</option>
+              <option value="test4">test4</option>
+              <option value="test5">test5</option>
+              <option value="test6">test6</option>
+              <option value="test7">test7</option>
+            </select>
+          </div>
+          {mode === "freeTalk" && (
+            <FreeTalkUI
+              started={freeTalkStarted}
+              setStarted={setFreeTalkStarted}
+            />
+          )}
           {mode === "roleplay" && (
             <RoleplayToggle
               selectedScenario={selectedScenario}
@@ -848,6 +961,7 @@ Feature tambahan:
               onChecklistUpdate={handleChecklistUpdate}
               currentTurn={currentTurn}
               maxTurn={maxTurn}
+              sendInitialMessage={sendInitialMessage}
             />
           )}
           <ModeSelector mode={mode} setMode={handleModeChange} />
@@ -855,17 +969,17 @@ Feature tambahan:
             <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
               <div
                 className="
-    bg-white/10 
-    backdrop-blur-xl 
-    border border-white/20
-    text-white 
-    rounded-2xl 
-    p-6 
-    w-[320px] 
-    text-center 
-    space-y-5 
-    shadow-2xl
-  "
+              bg-white/10 
+              backdrop-blur-xl 
+              border border-white/20
+              text-white 
+              rounded-2xl 
+              p-6 
+              w-[320px] 
+              text-center 
+              space-y-5 
+              shadow-2xl
+            "
               >
                 {/* ICON */}
                 <div className="text-4xl">⚠️</div>
@@ -933,26 +1047,6 @@ Feature tambahan:
               </div>
             </div>
           )}
-          {/* SESSION ID INPUT */}
-          <div className="flex items-center space-x-2 text-white">
-            <label htmlFor="sessionId">Session ID:</label>
-            <select
-              id="sessionId"
-              className="p-1 rounded text-white bg-gray-700"
-              value={sessionId}
-              onChange={(e) => setSessionId(e.target.value)}
-            >
-              <option value="sam">sam</option>
-              <option value="syifa">syifa</option>
-              <option value="test">test</option>
-              <option value="test2">test2</option>
-              <option value="test3">test3</option>
-              <option value="test4">test4</option>
-              <option value="test5">test5</option>
-              <option value="test6">test6</option>
-              <option value="test7">test7</option>
-            </select>
-          </div>
           <ChatSection
             lupaKata={lupaKata}
             chatHistory={chatHistory}
@@ -961,35 +1055,38 @@ Feature tambahan:
             disabled={allDailyComplete}
             mode={mode}
           />
-          <BottomActions
-            isRecording={isRecording}
-            showSuggestions={showSuggestions}
-            suggestions={suggestions}
-            speakText={speakText}
-            lupaKata={lupaKata}
-            controlProps={{
-              isRecording,
-              isSpeaking, // ✅ TAMBAHKAN
-              forceStop, // ✅ TAMBAHKAN
-              micReady,
-              speakerReady,
-              requestAudioPermission,
-              startRecording,
-              stopRecording,
-              cancelRecording,
-              toggleSuggestion,
-              isIdle,
-              openLupaKata: () =>
-                lupaKata.toggleLupaKata(
-                  isRecording, // main recording sedang aktif
-                  speech.pauseRecording, // pause main recording sementara
-                  speech.resumeRecording, // resume setelah selesai
-                ),
-              isLupaKataActive: lupaKata.isLupaKataActive,
-              lupaKataResult: lupaKata.lupaKataResult,
-              isDailyLocked,
-            }}
-          />
+          {((mode === "freeTalk" && freeTalkStarted) ||
+            (mode === "dailyStory" && dailyStarted)) && (
+            <BottomActions
+              isRecording={isRecording}
+              showSuggestions={showSuggestions}
+              suggestions={suggestions}
+              speakText={speakText}
+              lupaKata={lupaKata}
+              controlProps={{
+                isRecording,
+                isSpeaking,
+                forceStop,
+                micReady,
+                speakerReady,
+                requestAudioPermission,
+                startRecording,
+                stopRecording,
+                cancelRecording,
+                toggleSuggestion,
+                isIdle,
+                openLupaKata: () =>
+                  lupaKata.toggleLupaKata(
+                    isRecording,
+                    speech.pauseRecording,
+                    speech.resumeRecording,
+                  ),
+                isLupaKataActive: lupaKata.isLupaKataActive,
+                lupaKataResult: lupaKata.lupaKataResult,
+                isDailyLocked,
+              }}
+            />
+          )}
           <div className="mb-48" />
         </div>
       </div>

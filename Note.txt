@@ -42,6 +42,8 @@
 
 - Setelah Masuk phase baru tambahkan ai chat baru
 
+- Perbaiki load history daily, Bagian Penanda kalau phase baru tapi belum ada chat
+
 - Prompt Kasih Contoh Memperpanjang kalimat
 
 - Migradi Logic Daily from App.jsx to useDaily

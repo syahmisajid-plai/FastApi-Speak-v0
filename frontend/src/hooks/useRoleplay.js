@@ -148,17 +148,23 @@ export default function useRoleplay({
         console.error("❌ START FAILED:", data);
         return;
       }
-
-      // ✅ initial AI message
-      setChatHistory([
-        {
-          sender: "AI",
-          message: `Hi! I'm your ${scenario.ai_role}. ${scenario.situation}`,
-        },
-      ]);
     } catch (err) {
       console.error("❌ startRoleplay error", err);
     }
+  };
+
+  // =========================
+  // Send Initial Message
+  // =========================
+  const sendInitialMessage = (scenario) => {
+    if (!scenario) return;
+
+    setChatHistory([
+      {
+        sender: "AI",
+        message: `Hi! I'm your ${scenario.ai_role}. ${scenario.situation}`,
+      },
+    ]);
   };
 
   // =========================
@@ -273,6 +279,7 @@ export default function useRoleplay({
     selectScenario,
     closeSummary,
     exitRoleplay,
+    sendInitialMessage,
 
     // 🔥 expose ke engine
     handleRoleplayCompleted,
