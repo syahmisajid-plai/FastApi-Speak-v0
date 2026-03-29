@@ -705,13 +705,13 @@ Feature tambahan:
           {/* 🔊 Audio untuk greeting daily */}
           <audio
             ref={audioDailyStartRef}
-            src="/src/assets/daily_start.mp3"
+            src="/src/public/sound/daily_start.mp3"
             preload="auto"
           />
 
           <audio
             ref={audioFreetalkStartRef}
-            src="/src/assets/freetalk_start.mp3"
+            src="/src/public/sound/freetalk_start.mp3"
             preload="auto"
           />
           {/* <div className="text-white">
