@@ -21,9 +21,9 @@ export default defineConfig({
         icons: [
           {
             src: "/airport.png",
-            sizes: "512x512",
+            sizes: "192x192",
             type: "image/png",
-            purpose: "any maskable",
+            purpose: "any",
           },
         ],
       },
