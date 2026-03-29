@@ -42,6 +42,8 @@
 
 - REFACTOR ROLEPLAY.JSX
 
+- Tambahkan fitur koreksi langsung chat user di dailyStory
+
 - Setelah Masuk phase baru tambahkan ai chat baru✅
 
 - Perbaiki load history daily, Bagian Penanda kalau phase baru tapi belum ada chat
