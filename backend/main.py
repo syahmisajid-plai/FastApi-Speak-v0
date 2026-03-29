@@ -57,6 +57,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
+        "http://localhost:4173/",
         "https://fast-api-speak-v0.vercel.app",  # frontend production
     ],
     allow_credentials=True,
