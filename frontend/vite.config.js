@@ -10,13 +10,19 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      registerType: "autoUpdate",
       manifest: {
+        name: "English Speak App",
+        short_name: "EnglishSpeak",
+        start_url: "/",
+        display: "standalone",
+        background_color: "#ffffff",
+        theme_color: "#000000",
         icons: [
           {
-            // public/
             src: "/airport.png",
             sizes: "512x512",
-            type: "image.png",
+            type: "image/png",
             purpose: "any maskable",
           },
         ],
