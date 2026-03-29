@@ -860,3 +860,22 @@ def get_summary(user_id, story_date):
         "evening_summary": row[2],
         "night_summary": row[3],
     }
+
+def get_user_for_login(username_or_email: str):
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    query = """
+        SELECT
+            id,
+            email,
+            username,
+            password_hash
+        FROM users
+        WHERE email = %s OR username = %s
+        LIMIT 1;
+    """
+
+    cursor.execute(query, (username_or_email, username_or_email))
+    return cursor.fetchone()

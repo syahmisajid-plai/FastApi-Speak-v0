@@ -14,6 +14,7 @@ import ModeSelector from "./components/ModeSelector";
 import ContextRenderer from "./components/ContextRenderer";
 import DailySummaryViewer from "./components/DailySummaryViewer";
 import FreeTalkUI from "./components/FreeTalkUI";
+import LoginOverlay from "./components/LoginOverlay";
 
 // ================== STYLES ==================
 import "./App.css";
@@ -85,6 +86,9 @@ Feature tambahan:
   const [dailyStarted, setDailyStarted] = useState(false);
 
   const [isScrolled, setIsScrolled] = useState(false);
+
+  const [showLogin, setShowLogin] = useState(true);
+  const [user, setUser] = useState(null);
 
   // ================== Tambahkan state ==================
   const [pendingMode, setPendingMode] = useState(null);
@@ -672,6 +676,22 @@ Feature tambahan:
             isScrolled={isScrolled}
             dailyStory={dailyStory}
           />
+          {/* ================== Page Login Overlay ================== */}
+          {/* Main App */}
+          <div className="text-white">
+            {user ? `Welcome ${user.username}` : "Not logged in"}
+          </div>
+
+          {/* Login Overlay */}
+          {showLogin && (
+            <LoginOverlay
+              onClose={() => setShowLogin(false)}
+              onLoginSuccess={(userData) => {
+                setUser(userData);
+              }}
+            />
+          )}
+
           {/* ================== DEBUG: Open Diary Daily Story ================== */}
           {/* <div className="w-full flex justify-center mb-2">
             <button
@@ -708,7 +728,6 @@ Feature tambahan:
             src="/src/public/sound/daily_start.mp3"
             preload="auto"
           />
-
           <audio
             ref={audioFreetalkStartRef}
             src="/src/public/sound/freetalk_start.mp3"
