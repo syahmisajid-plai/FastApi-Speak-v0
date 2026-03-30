@@ -36,7 +36,7 @@ export default function ModeSelector({
   };
 
   return (
-    <div className="fixed bottom-0 left-0 w-full flex justify-center z-40 px-4">
+    <div className="fixed bottom-2 left-0 w-full flex justify-center z-40 px-4">
       <div className="w-full max-w-md flex bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg p-1">
         {modes.map((m) => {
           const active = mode === m.key;

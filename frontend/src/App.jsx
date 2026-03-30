@@ -306,8 +306,12 @@ Feature tambahan:
     toggleDailyPhase,
     markPhaseComplete,
     completedCount,
+
+    streakDaily,
+    fetchStreakDaily,
+
     generateSummary,
-  } = useDailyStory(sessionIdRef, userIdRef);
+  } = useDailyStory(sessionIdRef, userIdRef, userId);
   const currentPhase = getCurrentPhaseFromProgress();
 
   const [readyToContinue, setReadyToContinue] = useState(false);
@@ -704,6 +708,8 @@ Feature tambahan:
             dailyStory={dailyStory}
             user={user}
             onLogout={handleLogout}
+            streakDaily={streakDaily}
+            fetchStreakDaily={fetchStreakDaily}
           />
 
           {/* Login Overlay */}
