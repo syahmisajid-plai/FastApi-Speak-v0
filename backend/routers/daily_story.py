@@ -37,6 +37,7 @@ from db import (
     get_summary,
     get_human_messages,
     save_summary,
+    get_available_dates
 )
 
 
@@ -458,6 +459,34 @@ def get_daily_summary(user_id: str, story_date: str):
 
     except Exception as e:
         print(f"[ERROR] get_daily_summary: {str(e)}")
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+    
+@router.get("/available-dates")
+def get_available_dates_endpoint(user_id: str):
+    try:
+        print("\n========== [GET] available_dates ==========")
+        print(f"[REQUEST] user_id={user_id}")
+
+        dates = get_available_dates(user_id)
+
+        print(f"[RESULT] dates={dates}")
+
+        if not dates:
+            return {
+                "status": "success",
+                "dates": []
+            }
+
+        return {
+            "status": "success",
+            "dates": dates
+        }
+
+    except Exception as e:
+        print(f"[ERROR] available_dates: {str(e)}")
         return {
             "status": "error",
             "message": str(e)

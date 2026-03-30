@@ -863,6 +863,21 @@ def get_summary(user_id, story_date):
         "night_summary": row[3],
     }
 
+def get_available_dates(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT story_date
+        FROM daily_story_summary
+        WHERE user_id = %s
+        ORDER BY story_date DESC
+    """, (user_id,))
+
+    rows = cursor.fetchall()
+
+    return [row[0].strftime("%Y-%m-%d") for row in rows]
+
 def get_user_for_login(username_or_email: str):
 
     conn = get_db_connection()
