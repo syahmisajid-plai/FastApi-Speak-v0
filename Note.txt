@@ -33,6 +33,8 @@
 
 - Cumn yang easy yang terkirim ✅
 
+-streak daily ✅
+
 - Pindahkan Logic di Roleplay.jsx ke useRoleplay.js
 
 - Tambahkan List Checklist Mengambang
