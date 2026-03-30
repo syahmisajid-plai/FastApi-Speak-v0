@@ -2,7 +2,7 @@
 
 import os
 import json
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter
@@ -697,6 +697,78 @@ async def generate_daily_summary(req: SummaryRequest):
         print(f"[ERROR] generate_daily_summary: {str(e)}")
         print("========== [FAILED] generate_daily_summary ==========\n")
 
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+def calculate_streaks(dates):
+    if not dates:
+        return 0, 0
+
+    # convert ke datetime & urutkan terbaru → lama
+    date_objs = sorted(
+        [datetime.strptime(d, "%Y-%m-%d") for d in dates],
+        reverse=True
+    )
+
+    today = datetime.now().date()
+
+    # ===== CURRENT STREAK =====
+    if date_objs[0].date() not in [today, today - timedelta(days=1)]:
+        current_streak = 0
+    else:
+        current_streak = 1
+        for i in range(1, len(date_objs)):
+            if date_objs[i-1].date() - date_objs[i].date() == timedelta(days=1):
+                current_streak += 1
+            else:
+                break
+
+    # ===== LONGEST STREAK =====
+    longest_streak = 1
+    temp_streak = 1
+
+    for i in range(1, len(date_objs)):
+        if date_objs[i-1].date() - date_objs[i].date() == timedelta(days=1):
+            temp_streak += 1
+            longest_streak = max(longest_streak, temp_streak)
+        else:
+            temp_streak = 1
+
+    return current_streak, longest_streak
+
+
+@router.get("/streak")
+def get_streak(user_id: str):
+    try:
+        print("\n========== [GET] streak ==========")
+        print(f"[REQUEST] user_id={user_id}")
+
+        # ambil data dari fungsi kamu
+        dates = get_available_dates(user_id)
+
+        # hitung streak
+        current_streak, longest_streak = calculate_streaks(dates)
+
+        today_str = datetime.now().strftime("%Y-%m-%d")
+
+        result = {
+            "status": "success",
+            "current_streak": current_streak,
+            "longest_streak": longest_streak,
+            "total_active_days": len(dates),
+            "last_active_date": dates[0] if dates else None,
+            "streak_today_done": today_str in dates,
+            "streak_status": "active" if current_streak > 0 else "broken"
+        }
+
+        print(f"[RESULT] {result}")
+
+        return result
+
+    except Exception as e:
+        print(f"[ERROR] streak: {str(e)}")
         return {
             "status": "error",
             "message": str(e)

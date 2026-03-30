@@ -15,6 +15,8 @@ export default function DailySummaryViewer({ userId }) {
   const [availableDates, setAvailableDates] = useState(new Set());
   const [weekOffset, setWeekOffset] = useState(0);
 
+  const [currentWeekDate, setCurrentWeekDate] = useState(new Date());
+
   // ================= FETCH SUMMARY =================
   const fetchSummary = async (date) => {
     try {
@@ -78,10 +80,7 @@ export default function DailySummaryViewer({ userId }) {
 
   // ================= GENERATE WEEK =================
   const generateWeek = () => {
-    const base = new Date(selectedDate);
-    base.setDate(base.getDate() + weekOffset * 7);
-
-    const monday = getMonday(base);
+    const monday = getMonday(currentWeekDate);
     const days = [];
 
     for (let i = 0; i < 7; i++) {
@@ -157,25 +156,30 @@ export default function DailySummaryViewer({ userId }) {
       {/* ================= WEEK NAV ================= */}
       <div className="flex items-center justify-between mb-4">
         <button
-          onClick={() => setWeekOffset((p) => p - 1)}
-          className="px-3! py-1! rounded-lg bg-white/5! hover:bg-white/10 active:scale-95 transition"
+          onClick={() => {
+            const d = new Date(currentWeekDate);
+            d.setDate(d.getDate() - 7);
+            setCurrentWeekDate(d);
+          }}
         >
           ◀ Week
         </button>
 
         <button
           onClick={() => {
-            setWeekOffset(0);
+            setCurrentWeekDate(new Date());
             setSelectedDate(today);
           }}
-          className="text-xs text-white/60 hover:text-white"
         >
           Today
         </button>
 
         <button
-          onClick={() => setWeekOffset((p) => p + 1)}
-          className="px-3! py-1! rounded-lg bg-white/5! hover:bg-white/10 active:scale-95 transition"
+          onClick={() => {
+            const d = new Date(currentWeekDate);
+            d.setDate(d.getDate() + 7);
+            setCurrentWeekDate(d);
+          }}
         >
           Week ▶
         </button>
