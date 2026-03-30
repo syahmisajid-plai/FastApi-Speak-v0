@@ -34,6 +34,7 @@
 - Cumn yang easy yang terkirim ✅
 
 - Pindahkan Logic di Roleplay.jsx ke useRoleplay.js
+
 - Tambahkan List Checklist Mengambang
 
 - Perbaiki sistem / kata keyword checklist roleplay

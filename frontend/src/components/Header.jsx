@@ -106,6 +106,7 @@ export default function Header({
                       rounded-xl
                       shadow-lg
                       overflow-hidden
+                      z-50
                     "
                   >
                     <div className="px-3 py-2 text-md text-gray-300 border-b border-white/10 truncate">

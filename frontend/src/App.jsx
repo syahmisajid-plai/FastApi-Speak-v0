@@ -107,6 +107,20 @@ Feature tambahan:
   // ================== STATE Daily Greeting ==================
   const greetingSentRef = useRef(false);
 
+  // ================== Reset ==================
+  const resetAppState = () => {
+    setMode("freeTalk");
+    setChatHistory([]);
+    setFreeTalkStarted(false);
+    setDailyStarted(false);
+    setRoleplayModalOpen(false);
+    setShowSuggestions(false);
+    setShowDiary(false);
+    setShowContext(false);
+    setShowModeConfirm(false);
+    setPendingMode(null);
+  };
+
   // ================== Login & Logout ==================
   useEffect(() => {
     const savedUser = getUser();
@@ -122,7 +136,7 @@ Feature tambahan:
 
   const handleLogout = () => {
     logout();
-
+    resetAppState(true);
     setUser(null);
     setSessionId(null);
     setShowLogin(true);
@@ -149,52 +163,55 @@ Feature tambahan:
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
-    }).format(new Date()); // YYYY-MM-DD
+    }).format(new Date());
+
     const sessionKey = `${session}_${userId}_daily_${today}`;
 
-    console.log("🔑 Loading daily history for sessionKey:", sessionKey);
-    //
     try {
       const res = await fetch(
         `${linkBackend}/daily-story/history?session_id=${sessionKey}`,
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
       const data = await res.json();
 
       const formatted = [];
-      let lastPhase = null;
 
-      (Array.isArray(data) ? data : []).forEach((msg) => {
-        if (!msg.content) return;
+      const phaseOrder = ["morning", "afternoon", "evening", "night"];
 
-        const phase = msg.phase;
+      // 🔥 ambil semua phase sampai activePhase
+      const visiblePhases = phaseOrder.slice(
+        0,
+        phaseOrder.indexOf(activePhase) + 1,
+      );
 
-        console.log("🧪 MSG:", msg);
-        console.log("🧪 PHASE:", msg.phase);
-
-        // 🔥 insert divider kalau phase berubah
-        if (phase && phase !== lastPhase) {
-          formatted.push({
-            type: "phase",
-            phase,
-          });
-
-          lastPhase = phase;
-        }
-
-        // 🔥 chat message
+      visiblePhases.forEach((phase) => {
+        // ✅ selalu push divider (MESKIPUN BELUM ADA CHAT)
         formatted.push({
-          type: "chat",
-          sender: msg.role === "human" ? "You" : "AI",
-          message: msg.content,
+          type: "phase",
+          phase,
+        });
+
+        // 🔥 ambil chat per phase
+        const phaseMessages = (Array.isArray(data) ? data : []).filter(
+          (msg) => msg.phase === phase,
+        );
+
+        phaseMessages.forEach((msg) => {
+          if (!msg.content) return;
+
+          formatted.push({
+            type: "chat",
+            sender: msg.role === "human" ? "You" : "AI",
+            message: msg.content,
+          });
         });
       });
 
       setChatHistory(formatted);
-      console.log("📥 Daily history loaded:", data);
     } catch (err) {
       console.error("Failed to load daily history:", err);
-      setChatHistory([]); // fallback agar .map() tetap aman
+      setChatHistory([]);
     }
   };
 
