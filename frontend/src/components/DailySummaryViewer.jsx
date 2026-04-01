@@ -15,7 +15,7 @@ export default function DailySummaryViewer({ userId }) {
   const [availableDates, setAvailableDates] = useState(new Set());
   const [weekOffset, setWeekOffset] = useState(0);
 
-  const [currentWeekDate, setCurrentWeekDate] = useState(new Date());
+  const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
 
   // ================= FETCH SUMMARY =================
   const fetchSummary = async (date) => {
@@ -78,21 +78,58 @@ export default function DailySummaryViewer({ userId }) {
     return d;
   };
 
-  // ================= GENERATE WEEK =================
-  const generateWeek = () => {
-    const monday = getMonday(currentWeekDate);
+  // // ================= GENERATE WEEK =================
+  // const generateWeek = () => {
+  //   const monday = getMonday(currentWeekDate);
+  //   const days = [];
+
+  //   for (let i = 0; i < 7; i++) {
+  //     const d = new Date(monday);
+  //     d.setDate(monday.getDate() + i);
+  //     days.push(formatLocalDate(d));
+  //   }
+
+  //   return days;
+  // };
+
+  // ================= GENERATE MONTH =================
+  const generateMonthDays = (baseDate) => {
+    const date = new Date(baseDate);
+
+    const year = date.getFullYear();
+    const month = date.getMonth();
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
     const days = [];
 
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
-      days.push(formatLocalDate(d));
+    // 1. padding kosong sebelum tanggal 1
+    const startWeekday = firstDay.getDay(); // 0=Sun ... 6=Sat
+
+    for (let i = 0; i < startWeekday; i++) {
+      days.push(null); // slot kosong
+    }
+
+    // 2. isi tanggal bulan ini
+    for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+      days.push(formatLocalDate(new Date(d)));
     }
 
     return days;
   };
 
-  const days = generateWeek();
+  const days = generateMonthDays(currentMonthDate);
+
+  const [focusMode, setFocusMode] = useState(false);
+
+  useEffect(() => {
+    if (!focusMode) {
+      setSummary(null);
+    } else {
+      fetchSummary(selectedDate);
+    }
+  }, [focusMode]);
 
   // ================= HELPERS =================
   const isActive = (date) => date === selectedDate;
@@ -153,77 +190,112 @@ export default function DailySummaryViewer({ userId }) {
         </div>
       </div>
 
-      {/* ================= WEEK NAV ================= */}
-      <div className="flex items-center justify-between mb-4">
+      {focusMode && (
         <button
-          onClick={() => {
-            const d = new Date(currentWeekDate);
-            d.setDate(d.getDate() - 7);
-            setCurrentWeekDate(d);
-          }}
+          onClick={() => setFocusMode(false)}
+          className="text-xs text-white/60 hover:text-white"
         >
-          ◀ Week
+          ← Back to calendar
         </button>
+      )}
 
-        <button
-          onClick={() => {
-            setCurrentWeekDate(new Date());
-            setSelectedDate(today);
-          }}
-        >
-          Today
-        </button>
+      {!focusMode && (
+        <>
+          {/* ================= Month NAV ================= */}
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => {
+                const d = new Date(currentMonthDate);
+                d.setMonth(d.getMonth() - 1);
+                setCurrentMonthDate(d);
+              }}
+            >
+              ◀ Month
+            </button>
 
-        <button
-          onClick={() => {
-            const d = new Date(currentWeekDate);
-            d.setDate(d.getDate() + 7);
-            setCurrentWeekDate(d);
-          }}
-        >
-          Week ▶
-        </button>
-      </div>
+            <button
+              onClick={() => {
+                setCurrentMonthDate(new Date());
+                setSelectedDate(today);
+              }}
+            >
+              Today
+            </button>
 
-      {/* ================= DATE STRIP ================= */}
-      <div className="flex justify-between gap-2 mb-6">
-        {days.map((date) => (
-          <button
-            key={date}
-            onClick={() => setSelectedDate(date)}
-            className={`
-              relative flex flex-col items-center justify-center
-              px-3! py-2! rounded-xl transition
+            <button
+              onClick={() => {
+                const d = new Date(currentMonthDate);
+                d.setMonth(d.getMonth() + 1);
+                setCurrentMonthDate(d);
+              }}
+            >
+              Month ▶
+            </button>
+          </div>
 
-              ${
-                isActive(date)
-                  ? "bg-white! text-black shadow-lg"
-                  : hasData(date)
-                    ? "bg-green-500/15! text-green-300 ring-1 ring-green-400/40"
-                    : "bg-white/5! hover:bg-white/10"
+          <div className="grid grid-cols-7 gap-2 mb-2 text-center text-[10px] text-white/40">
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+              <div key={d}>{d}</div>
+            ))}
+          </div>
+
+          {/* ================= DATE STRIP (CALENDAR GRID) ================= */}
+
+          <div className="grid grid-cols-7 gap-2 mb-6 auto-rows-fr">
+            {days.map((date, idx) => {
+              if (!date) {
+                return (
+                  <div
+                    key={idx}
+                    className="aspect-square rounded-xl bg-white/0"
+                  />
+                );
               }
 
-              ${isToday(date) ? "ring-1 ring-blue-400/50" : ""}
-            `}
-          >
-            <span className="text-[10px] opacity-70">
-              {formatWeekday(date)}
-            </span>
+              return (
+                <button
+                  key={date}
+                  onClick={() => {
+                    setSelectedDate(date);
+                    setFocusMode(true);
+                  }}
+                  className={`
+          relative flex flex-col items-center justify-center
+          px-3! py-2! rounded-xl transition
 
-            <span className="text-sm font-semibold">{formatShort(date)}</span>
+          ${
+            isActive(date)
+              ? "bg-white! text-black shadow-lg"
+              : hasData(date)
+                ? "bg-green-500/15! text-green-300 ring-1 ring-green-400/40"
+                : "bg-white/5! hover:bg-white/10"
+          }
 
-            {/* 🔥 DATA INDICATOR */}
-            {hasData(date) && (
-              <>
-                <div className="absolute inset-0 rounded-xl bg-green-400/10 blur-md" />
-                <div className="absolute top-1 right-1">
-                  <div className="w-2 h-2 bg-green-400 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
-                </div>
-              </>
-            )}
-          </button>
-        ))}
-      </div>
+          ${isToday(date) ? "ring-1 ring-blue-400/50" : ""}
+        `}
+                >
+                  <span className="text-[10px] opacity-70">
+                    {formatWeekday(date)}
+                  </span>
+
+                  <span className="text-sm font-semibold">
+                    {formatShort(date)}
+                  </span>
+
+                  {hasData(date) && (
+                    <>
+                      <div className="absolute inset-0 rounded-xl bg-green-400/10 blur-md" />
+                      <div className="absolute top-1 right-1">
+                        <div className="w-2 h-2 bg-green-400 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
+                      </div>
+                    </>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       {/* ================= CONTENT ================= */}
       {loading ? (
@@ -252,11 +324,14 @@ export default function DailySummaryViewer({ userId }) {
             );
           })}
         </div>
-      ) : (
-        <div className="text-sm text-white/40 italic">
-          No story recorded for this day.
+      ) : focusMode ? (
+        <div className="py-24 text-center">
+          <div className="text-sm text-white/60">Nothing written for today</div>
+          <div className="text-xs text-white/30 mt-1">
+            Start writing to capture your day ✍️
+          </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
