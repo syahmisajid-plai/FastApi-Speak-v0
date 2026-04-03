@@ -1,10 +1,10 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { linkBackend } from "../config";
 
 export default function useLupaKata({
-  stopMainRecording,
   setChatHistory,
   onLupaKataResult,
+  isSpeaking,
 }) {
   const [isLupaKataActive, setIsLupaKataActive] = useState(false);
   const [lupaKataHeardText, setLupaKataHeardText] = useState("");
@@ -56,6 +56,33 @@ export default function useLupaKata({
     delayCloseLupaKata();
   };
 
+  const isSpeakingRef = useRef(isSpeaking);
+
+  useEffect(() => {
+    isSpeakingRef.current = isSpeaking;
+  }, [isSpeaking]);
+
+  const tryResumeRecording = () => {
+    if (isSpeakingRef.current) {
+      console.log("⛔ Masih speaking, tunda resume");
+      return;
+    }
+
+    console.log("✅ Langsung resume (no need wait effect)");
+    resumeMainRecordingRef.current?.();
+
+    wasRecordingBeforeLupaKataRef.current = false;
+  };
+
+  useEffect(() => {
+    if (!isSpeaking && wasRecordingBeforeLupaKataRef.current) {
+      console.log("🎯 isSpeaking false → auto resume");
+
+      resumeMainRecordingRef.current?.();
+      wasRecordingBeforeLupaKataRef.current = false;
+    }
+  }, [isSpeaking]);
+
   /* ================= START ================= */
   const startLupaKata = (
     isMainRecording,
@@ -97,13 +124,13 @@ export default function useLupaKata({
       delayCloseLupaKata();
       setLupaKataHeardText("");
       // Resume main recording kalau error
-      resumeMainRecording?.();
+      tryResumeRecording();
     };
 
     recognition.onend = () => {
       if (wasRecordingBeforeLupaKataRef.current) {
-        resumeMainRecording?.();
-        wasRecordingBeforeLupaKataRef.current = false;
+        tryResumeRecording();
+        // wasRecordingBeforeLupaKataRef.current = false;
       }
     };
 
@@ -132,8 +159,8 @@ export default function useLupaKata({
 
     // ⚠️ Hanya resume main recording kalau sebelumnya record aktif
     if (wasRecordingBeforeLupaKataRef.current) {
-      resumeMainRecordingRef.current?.();
-      wasRecordingBeforeLupaKataRef.current = false;
+      tryResumeRecording();
+      // wasRecordingBeforeLupaKataRef.current = false;
     }
   };
 

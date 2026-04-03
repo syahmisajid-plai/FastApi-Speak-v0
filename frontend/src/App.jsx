@@ -602,15 +602,10 @@ Feature tambahan:
 
   // ================== 1️⃣ LUPA KATA ==================
   const lupaKata = useLupaKata({
-    stopMainRecording: () => {
-      shouldSendOnEndRef.current = false;
-      recognitionRef.current?.abort();
-      setIsRecording(false);
-    },
-
     setChatHistory, // update riwayat chat langsung
 
     onLupaKataResult: speakText, // ✅ Hasil lupa kata langsung dibacakan
+    isSpeaking,
   });
 
   // ================== 2️⃣ SPEECH RECOGNITION ==================
@@ -623,6 +618,7 @@ Feature tambahan:
     },
     onResetIdle: resetIdle, // Reset idle jika user bicara
     isLupaKataActive: lupaKata.isLupaKataActive, // Jangan rekam utama saat lupa kata aktif
+    isSpeaking,
   });
 
   // ================== DESTRUCTURING SPEECH ==================
@@ -1145,6 +1141,7 @@ Feature tambahan:
               suggestions={suggestions}
               speakText={speakText}
               lupaKata={lupaKata}
+              isSpeaking={isSpeaking}
               controlProps={{
                 isRecording,
                 isSpeaking,

@@ -10,11 +10,14 @@ export default function BottomActions({
   speakText,
   controlProps,
   lupaKata,
+  isSpeaking,
 }) {
   return (
     <div className="fixed bottom-22 lg:bottom-22 left-0 w-full px-4 space-y-4">
       {lupaKata.isLupaKataActive && <LupaKataOverlay />}
-      {isRecording && !lupaKata.isLupaKataActive && <RecordingSection />}
+      {isRecording && !isSpeaking && !lupaKata.isLupaKataActive && (
+        <RecordingSection />
+      )}
       {showSuggestions && (
         <SuggestionSection suggestions={suggestions} playAudio={speakText} />
       )}

@@ -72,7 +72,7 @@ export default function ControlSection({
             <>
               {/* Tombol Record */}
               <div className="col-start-2 col-span-2 h-16 rounded-lg font-bold transition relative">
-                {isRecording ? (
+                {isRecording && !isSpeaking ? (
                   isLupaKataActive ? (
                     <div className="w-full h-full bg-gray-400 text-gray-700 rounded-lg flex items-center justify-center font-bold">
                       🔒 Recording Locked

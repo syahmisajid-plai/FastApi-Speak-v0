@@ -7,6 +7,7 @@ export default function useSpeechRecognition({
   onFinalResult,
   onResetIdle,
   isLupaKataActive,
+  isSpeaking,
 }) {
   const transcriptRef = useRef("");
   const [liveTranscript, setLiveTranscript] = useState("");
@@ -23,6 +24,61 @@ export default function useSpeechRecognition({
   const wasRecordingBeforeLupaKataRef = useRef(false);
   const ignoreNextOnEndRef = useRef(false);
   const setPausedUI = (text) => setLiveTranscript(text); // atau callback dari parent
+
+  const isSpeakingRef = useRef(isSpeaking);
+
+  useEffect(() => {
+    isSpeakingRef.current = isSpeaking;
+  }, [isSpeaking]);
+
+  const tryStartRecording = () => {
+    if (isListeningRef.current) {
+      console.log("⚠️ Already listening, skip start");
+      return;
+    }
+
+    if (isSpeakingRef.current) {
+      console.log("⛔ Masih speaking, tunda start");
+      return;
+    }
+
+    try {
+      recognitionRef.current?.start();
+      isListeningRef.current = true;
+      setIsRecording(true);
+
+      console.log("✅ STT started");
+    } catch (err) {
+      console.error("❌ Error starting STT:", err);
+    }
+  };
+
+  useEffect(() => {
+    let timeoutId;
+
+    if (
+      !isSpeaking &&
+      wasRecordingBeforeLupaKataRef.current &&
+      !isListeningRef.current
+    ) {
+      console.log("🎯 TTS selesai, tunggu 0.5 detik sebelum start STT");
+
+      timeoutId = setTimeout(() => {
+        // double check biar aman dari race condition
+        if (!isSpeakingRef.current && !isListeningRef.current) {
+          console.log("🚀 Delay selesai, mulai STT");
+          tryStartRecording();
+          wasRecordingBeforeLupaKataRef.current = false;
+        } else {
+          console.log("⚠️ Skip start karena state berubah saat delay");
+        }
+      }, 500); // 0.5 detik
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isSpeaking]);
 
   const normalizeText = (text) =>
     text
@@ -65,10 +121,7 @@ export default function useSpeechRecognition({
       setIsCanceled(false);
       shouldSendOnEndRef.current = true;
 
-      recognitionRef.current?.start();
-
-      isListeningRef.current = true;
-      setIsRecording(true);
+      tryStartRecording();
 
       console.log("✅ recognition.start() called");
     } catch (err) {
@@ -119,9 +172,7 @@ export default function useSpeechRecognition({
   const resumeRecording = () => {
     if (!isListeningRef.current && !isLupaKataActive) {
       try {
-        recognitionRef.current?.start();
-        isListeningRef.current = true;
-        setIsRecording(true);
+        tryStartRecording();
         isPausedForLupaKataRef.current = false; // clear flag
         shouldSendOnEndRef.current = true; // aktifkan kembali pengiriman
         // ✅ liveTranscript tetap ada
@@ -170,12 +221,10 @@ export default function useSpeechRecognition({
         // ⚡ Hanya resume jika sebelumnya pause
         if (!isListeningRef.current && wasRecordingBeforeLupaKataRef.current) {
           try {
-            recognitionRef.current?.start();
-            isListeningRef.current = true;
-            setIsRecording(true);
+            tryStartRecording();
             console.log("✅ SpeechRecognition resumed after LupaKata send");
 
-            wasRecordingBeforeLupaKataRef.current = false;
+            // wasRecordingBeforeLupaKataRef.current = false;
           } catch (err) {
             console.error("❌ Error resuming SpeechRecognition:", err);
           }
