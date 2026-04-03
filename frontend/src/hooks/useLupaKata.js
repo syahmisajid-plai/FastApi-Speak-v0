@@ -68,18 +68,26 @@ export default function useLupaKata({
       return;
     }
 
-    console.log("✅ Langsung resume (no need wait effect)");
-    resumeMainRecordingRef.current?.();
+    console.log("⏳ Delay 0.5 detik sebelum resume");
 
-    wasRecordingBeforeLupaKataRef.current = false;
+    setTimeout(() => {
+      console.log("✅ Resume setelah delay");
+      resumeMainRecordingRef.current?.();
+      wasRecordingBeforeLupaKataRef.current = false;
+    }, 500);
   };
 
   useEffect(() => {
     if (!isSpeaking && wasRecordingBeforeLupaKataRef.current) {
-      console.log("🎯 isSpeaking false → auto resume");
+      console.log("🎯 isSpeaking false → auto resume (delay 0.5s)");
 
-      resumeMainRecordingRef.current?.();
-      wasRecordingBeforeLupaKataRef.current = false;
+      const timeout = setTimeout(() => {
+        resumeMainRecordingRef.current?.();
+        wasRecordingBeforeLupaKataRef.current = false;
+        console.log("✅ Auto resume setelah delay");
+      }, 500);
+
+      return () => clearTimeout(timeout); // cleanup biar aman
     }
   }, [isSpeaking]);
 

@@ -42,15 +42,25 @@ export default function useSpeechRecognition({
       return;
     }
 
-    try {
-      recognitionRef.current?.start();
-      isListeningRef.current = true;
-      setIsRecording(true);
+    console.log("⏳ Delay 0.5 detik sebelum start STT");
 
-      console.log("✅ STT started");
-    } catch (err) {
-      console.error("❌ Error starting STT:", err);
-    }
+    setTimeout(() => {
+      // double check lagi setelah delay
+      if (isListeningRef.current || isSpeakingRef.current) {
+        console.log("⚠️ Skip start karena state berubah saat delay");
+        return;
+      }
+
+      try {
+        recognitionRef.current?.start();
+        isListeningRef.current = true;
+        setIsRecording(true);
+
+        console.log("🚀 STT started setelah delay");
+      } catch (err) {
+        console.error("❌ Error starting STT:", err);
+      }
+    }, 500);
   };
 
   useEffect(() => {
