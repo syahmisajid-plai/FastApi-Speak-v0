@@ -53,7 +53,7 @@ export default function useLupaKata({
 
     // clear setelah kirim
     setLupaKataHeardText("");
-    setIsLupaKataActive(false);
+    delayCloseLupaKata();
   };
 
   /* ================= START ================= */
@@ -94,7 +94,7 @@ export default function useLupaKata({
 
     recognition.onerror = (e) => {
       console.error("LupaKata STT error:", e.error);
-      setIsLupaKataActive(false);
+      delayCloseLupaKata();
       setLupaKataHeardText("");
       // Resume main recording kalau error
       resumeMainRecording?.();
@@ -112,6 +112,13 @@ export default function useLupaKata({
     recognition.start();
   };
 
+  /* ================= Delay ================= */
+  const delayCloseLupaKata = () => {
+    setTimeout(() => {
+      setIsLupaKataActive(false);
+    }, 2000); // ⬅️ extra 2 detik
+  };
+
   /* ================= STOP ================= */
   const stopLupaKata = () => {
     recognitionRef.current?.stop();
@@ -119,7 +126,7 @@ export default function useLupaKata({
     if (lupaKataHeardText.trim()) {
       translateLupaKata(lupaKataHeardText);
     } else {
-      setIsLupaKataActive(false);
+      delayCloseLupaKata();
       setLupaKataHeardText("");
     }
 

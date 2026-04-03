@@ -712,6 +712,33 @@ Feature tambahan:
             fetchStreakDaily={fetchStreakDaily}
           />
 
+          <div className="text-white">
+            <p>Mic Volume: {volume}</p>
+            {/* 🔥 TAMBAHAN IS SPEAKING STATUS */}
+            <p>
+              Is Speaking:{" "}
+              <span className={isSpeaking ? "text-green-400" : "text-red-400"}>
+                {isSpeaking ? "true" : "false"}
+              </span>
+            </p>
+            <p>
+              IsKataActive:{" "}
+              <span
+                className={
+                  lupaKata.isLupaKataActive ? "text-green-400" : "text-red-400"
+                }
+              >
+                {lupaKata.isLupaKataActive ? "true" : "false"}
+              </span>
+            </p>
+
+            {showPopup && (
+              <div className="fixed top-5 right-5 bg-red-500 text-white px-4 py-3 rounded shadow-lg">
+                ⚠️ Mikrofon tidak terdeteksi suara!
+              </div>
+            )}
+          </div>
+
           {/* Login Overlay */}
           {showLogin && (
             <LoginOverlay
