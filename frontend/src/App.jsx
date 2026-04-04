@@ -33,6 +33,7 @@ import useRoleplay from "./hooks/useRoleplay";
 import useDailyStory from "./hooks/useDailyStory";
 import useHistoryManager from "./hooks/useHistoryManager";
 import useStreak from "./hooks/useStreak";
+import useGrammarCheck from "./hooks/useGrammarCheck";
 
 // ================== AUDIO ==================
 import useTTS_Google from "./hooks/useTTS_Google";
@@ -449,6 +450,19 @@ Feature tambahan:
     console.log("🧠 modeRef updated:", mode);
   }, [mode]);
 
+  const { checkGrammar, result } = useGrammarCheck();
+
+  useEffect(() => {
+    checkGrammar("She go to school yesterday.");
+  }, []);
+
+  useEffect(() => {
+    if (!result) return;
+
+    console.log("=== RESULT ===");
+    console.log(result);
+  }, [result]);
+
   // ================== SEND TEXT TO BACKEND ==================
   const { sendTextToBackend } = useConversationEngine({
     sessionIdRef,
@@ -708,9 +722,8 @@ Feature tambahan:
             fetchStreakDaily={fetchStreakDaily}
           />
 
-          <div className="text-white">
+          {/* <div className="text-white">
             <p>Mic Volume: {volume}</p>
-            {/* 🔥 TAMBAHAN IS SPEAKING STATUS */}
             <p>
               Is Speaking:{" "}
               <span className={isSpeaking ? "text-green-400" : "text-red-400"}>
@@ -733,7 +746,7 @@ Feature tambahan:
                 ⚠️ Mikrofon tidak terdeteksi suara!
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Login Overlay */}
           {showLogin && (

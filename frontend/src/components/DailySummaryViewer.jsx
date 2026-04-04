@@ -153,20 +153,20 @@ export default function DailySummaryViewer({ userId }) {
     }).format(new Date(date));
   };
 
-  const getWeekRangeLabel = (days) => {
-    if (!days.length) return "";
+  // const getWeekRangeLabel = (days) => {
+  //   if (!days.length) return "";
 
-    const first = new Date(days[0]);
-    const last = new Date(days[6]);
+  //   const first = new Date(days[0]);
+  //   const last = new Date(days[6]);
 
-    const format = (d) =>
-      new Intl.DateTimeFormat("en-US", {
-        month: "short",
-        day: "numeric",
-      }).format(d);
+  //   const format = (d) =>
+  //     new Intl.DateTimeFormat("en-US", {
+  //       month: "short",
+  //       day: "numeric",
+  //     }).format(d);
 
-    return `${format(first)} – ${format(last)}`;
-  };
+  //   return `${format(first)} – ${format(last)}`;
+  // };
 
   const phases = [
     { key: "morning_summary", label: "Morning", emoji: "🌅" },
@@ -186,7 +186,7 @@ export default function DailySummaryViewer({ userId }) {
         {/* 🌙 MONTH + WEEK INFO */}
         <div className="mt-1 text-xs text-white/50 flex items-center justify-between">
           <span>{getMonthLabel(days[3])}</span>
-          <span>{getWeekRangeLabel(days)}</span>
+          {/* <span>{getWeekRangeLabel(days)}</span> */}
         </div>
       </div>
 

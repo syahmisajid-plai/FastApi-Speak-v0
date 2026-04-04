@@ -20,6 +20,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables.history import RunnableWithMessageHistory
 
 import json
+import requests
 from uuid import UUID
 
 from fastapi import Query
@@ -56,6 +57,10 @@ class SummaryRequest(BaseModel):
     user_name: str
     user_id: str
     story_date: date
+
+class GrammarCheckRequest(BaseModel):
+    text: str
+    language: str = "en-US"
 
 # -----------------------------
 # SESSION PROGRESS TRACKING
@@ -99,7 +104,7 @@ def get_progress(session_id):
     return session_progress[session_id]
 
 
-# sssssssshht
+# 
 
 # -----------------------------
 # NARRATIVE DETECTION
@@ -176,6 +181,154 @@ def detect_phase(progress):
     else:
         return "night"
 
+
+# -----------------------------
+# CHECK GRAMMAR use languagetool
+# -----------------------------
+LT_URL = "https://languagetool-production-4577.up.railway.app/v2/check"
+
+def calculate_meta(matches):
+    score = 100
+
+    for m in matches:
+        issue_type = m.get("rule", {}).get("issueType")
+
+        if issue_type == "grammar":
+            score -= 20
+        elif issue_type == "misspelling":
+            score -= 10
+        else:
+            score -= 5
+
+    score = max(score, 0)
+
+    return {
+        "score": score,
+        "has_error": len(matches) > 0,
+        "error_count": len(matches)
+    }
+
+def extract_insight(data):
+    language_code = data.get("language", {}).get("code")
+
+    confidence = data.get("language", {}) \
+        .get("detectedLanguage", {}) \
+        .get("confidence", 0)
+
+    matches = data.get("matches", [])
+
+    error_count = len(matches)
+
+    has_grammar_error = any(
+        m.get("rule", {}).get("category", {}).get("id") == "GRAMMAR"
+        for m in matches
+    )
+
+    sentence_count = len(data.get("sentenceRanges", []))
+
+    is_story_like = sentence_count >= 1 and error_count > 0
+
+    return {
+        "language_code": language_code,
+        "confidence": round(confidence, 2),
+        "error_count": error_count,
+        "has_grammar_error": has_grammar_error,
+        "sentence_count": sentence_count,
+        "is_story_like": is_story_like
+    }
+
+def extract_errors(data):
+    matches = data.get("matches", [])
+
+    # ambil original text (lebih aman fallback ke input)
+    original_text = (
+        matches[0].get("sentence")
+        if matches
+        else data.get("text", "")
+    )
+
+    # ✅ kalau tidak ada error → return langsung
+    if not matches:
+        return {
+            "highlighted_sentence": original_text,
+            "corrected_sentence": original_text
+        }
+
+    highlighted_sentence = original_text
+    corrected_sentence = original_text
+
+    offset_shift = 0
+
+    for m in matches:
+        offset = m.get("offset", 0)
+        length = m.get("length", 0)
+
+        suggestions = [r["value"] for r in m.get("replacements", [])]
+        wrong_text = original_text[offset:offset + length]
+
+        best_correction = suggestions[-1] if suggestions else wrong_text
+
+        real_offset = offset + offset_shift
+
+        # highlight
+        highlighted_sentence = (
+            highlighted_sentence[:real_offset]
+            + f"[[{wrong_text}]]"
+            + highlighted_sentence[real_offset + length:]
+        )
+
+        # correction
+        corrected_sentence = (
+            corrected_sentence[:real_offset]
+            + best_correction
+            + corrected_sentence[real_offset + length:]
+        )
+
+        offset_shift += len(best_correction) - length
+
+    return {
+        "highlighted_sentence": highlighted_sentence,
+        "corrected_sentence": corrected_sentence
+    }
+
+def process_languagetool(data):
+    matches = data.get("matches", [])
+
+    correction = extract_errors(data)
+    meta = calculate_meta(matches)
+
+    return {
+        "correction": correction,
+        "meta": meta
+    }
+
+@router.post("/grammar/check")
+async def grammar_check(req: GrammarCheckRequest):
+    try:
+        # call LanguageTool
+        response = requests.post(
+            LT_URL,
+            data={
+                "text": req.text,
+                "language": req.language
+            }
+        )
+
+        data = response.json()
+
+        # process
+        result = process_languagetool(data)
+
+        return {
+            "status": "success",
+            "data": result
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
 # -----------------------------
 # DAILY STORY PROMPTS EFFICIENT
