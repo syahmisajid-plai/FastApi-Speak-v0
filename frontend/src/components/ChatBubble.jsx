@@ -5,6 +5,24 @@ export default function ChatBubble({ chat }) {
   const [translated, setTranslated] = useState(null);
   const { speakText } = useTTS_Google();
 
+  const renderHighlightedText = (text) => {
+    if (!text) return null;
+
+    const parts = text.split(/(\[\[.*?\]\])/g);
+
+    return parts.map((part, i) => {
+      if (part.startsWith("[[") && part.endsWith("]]")) {
+        const clean = part.slice(2, -2);
+        return (
+          <span key={i} className="text-red-300 font-semibold">
+            {clean}
+          </span>
+        );
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
   /* =====================
      HELPER / LUPA KATA
   ===================== */
@@ -57,7 +75,17 @@ export default function ChatBubble({ chat }) {
             : "bg-gray-200 text-gray-900 rounded-bl-none"
         }`}
       >
-        <div className="whitespace-pre-line">{chat.message}</div>
+        <div className="whitespace-pre-line">
+          {chat.isGrammar
+            ? renderHighlightedText(chat.highlighted)
+            : chat.message}
+        </div>
+
+        {chat.isGrammar && chat.highlighted !== chat.corrected && (
+          <div className="mt-2 text-xs bg-white/20 rounded p-2 border border-white/30">
+            <div className="text-green-200 font-medium">✔ {chat.corrected}</div>
+          </div>
+        )}
 
         {/* Tombol hanya untuk AI */}
         {chat.sender === "AI" && (

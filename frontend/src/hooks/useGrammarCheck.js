@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { linkBackend } from "../config";
 
 export default function useGrammarCheck() {
   const [loading, setLoading] = useState(false);
@@ -19,7 +20,7 @@ export default function useGrammarCheck() {
     setError(null);
 
     try {
-      const res = await fetch("/daily-story/grammar/check", {
+      const res = await fetch(`${linkBackend}/daily-story/grammar/check`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

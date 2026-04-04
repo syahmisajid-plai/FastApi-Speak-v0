@@ -450,10 +450,10 @@ Feature tambahan:
     console.log("🧠 modeRef updated:", mode);
   }, [mode]);
 
-  const { checkGrammar, result } = useGrammarCheck();
+  const { checkGrammar, result, loading, error } = useGrammarCheck();
 
   useEffect(() => {
-    checkGrammar("She go to school yesterday.");
+    checkGrammar("We was happy last night.");
   }, []);
 
   useEffect(() => {
@@ -471,6 +471,8 @@ Feature tambahan:
     modeRef,
     setChatHistory,
     speakText,
+
+    grammarResult: result, // 🔥 TAMBAHKAN INI
 
     onRoleplayCompleted: handleRoleplayCompleted, // ✅ FIX
 
@@ -627,8 +629,12 @@ Feature tambahan:
     recognitionRef,
     setIsRecording,
     shouldSendOnEndRef,
-    onFinalResult: (text) => {
-      sendTextToBackend(text); // ✅ SEMUA MODE LEWAT SINI
+    onFinalResult: async (text) => {
+      if (!text) return;
+
+      const grammarData = await checkGrammar(text); // ✅ ambil result
+
+      sendTextToBackend(text, grammarData); // ✅ kirim ke engine
     },
     onResetIdle: resetIdle, // Reset idle jika user bicara
     isLupaKataActive: lupaKata.isLupaKataActive, // Jangan rekam utama saat lupa kata aktif
