@@ -22,6 +22,7 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 import json
 import requests
 from uuid import UUID
+import re
 
 from fastapi import Query
 
@@ -239,47 +240,73 @@ def extract_insight(data):
 def extract_errors(data):
     matches = data.get("matches", [])
 
-    # ambil original text (lebih aman fallback ke input)
-    original_text = matches[0].get("sentence") if matches else data.get("text", "")
+    # =========================
+    # FILTER RULE
+    # =========================
+    IGNORE_KEYWORDS = {"LOWERCASE", "UPPERCASE"}
 
-    # ✅ kalau tidak ada error → return langsung
-    if not matches:
+    filtered_matches = [
+        m
+        for m in matches
+        if not any(
+            keyword in m.get("rule", {}).get("id", "") for keyword in IGNORE_KEYWORDS
+        )
+    ]
+
+    # =========================
+    # ambil original text
+    # =========================
+    original_text = data.get("text", "")
+
+    # fallback kalau tidak ada text
+    if not original_text and matches:
+        original_text = matches[0].get("sentence", "")
+
+    # =========================
+    # kalau tidak ada error
+    # =========================
+    if not filtered_matches:
         return {
             "highlighted_sentence": original_text,
             "corrected_sentence": original_text,
         }
 
+    # =========================
+    # HIGHLIGHT (reverse biar offset aman)
+    # =========================
     highlighted_sentence = original_text
+
+    for m in sorted(filtered_matches, key=lambda x: x["offset"], reverse=True):
+        offset = m.get("offset", 0)
+        length = m.get("length", 0)
+
+        wrong_text = original_text[offset : offset + length]
+
+        highlighted_sentence = (
+            highlighted_sentence[:offset]
+            + f"[[{wrong_text}]]"
+            + highlighted_sentence[offset + length :]
+        )
+
+    # =========================
+    # CORRECTION (reverse)
+    # =========================
     corrected_sentence = original_text
 
-    offset_shift = 0
-
-    for m in matches:
+    for m in sorted(filtered_matches, key=lambda x: x["offset"], reverse=True):
         offset = m.get("offset", 0)
         length = m.get("length", 0)
 
         suggestions = [r["value"] for r in m.get("replacements", [])]
-        wrong_text = original_text[offset : offset + length]
 
-        best_correction = suggestions[-1] if suggestions else wrong_text
+        # lebih aman ambil pertama
+        best_correction = suggestions[0] if suggestions else ""
 
-        real_offset = offset + offset_shift
-
-        # highlight
-        highlighted_sentence = (
-            highlighted_sentence[:real_offset]
-            + f"[[{wrong_text}]]"
-            + highlighted_sentence[real_offset + length :]
-        )
-
-        # correction
         corrected_sentence = (
-            corrected_sentence[:real_offset]
+            corrected_sentence[:offset]
             + best_correction
-            + corrected_sentence[real_offset + length :]
+            + corrected_sentence[offset + length :]
         )
-
-        offset_shift += len(best_correction) - length
 
     return {
         "highlighted_sentence": highlighted_sentence,
@@ -407,6 +434,21 @@ llm = ChatOpenAI(
 )
 
 
+def get_alternative(text: str) -> str:
+    patterns = [
+        r'You could say\s*:\s*"([^"]+)"',
+        r'You could also say\s*:\s*"([^"]+)"',
+        r'A better sentence is\s*:\s*"([^"]+)"',
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            return match.group(1)
+
+    return "Correct"
+
+
 # -----------------------------
 # STREAM DAILY STORY
 # -----------------------------
@@ -478,18 +520,28 @@ async def stream_daily_story(req: StreamRequest):
     if USE_STREAMING:
 
         def event_stream():
+            full_text = ""
 
             for chunk in runnable.stream(
                 {"input": req.input},
                 config={"configurable": {"session_id": session_key}},
             ):
+                full_text += chunk  # ⬅️ kumpulin semua chunk
                 yield f"data: {chunk}\n\n"
 
-            # send meta event after streaming
+            # -----------------------------
+            # EXTRACT ALTERNATIVE
+            # -----------------------------
+            alternative = get_alternative(full_text)
+
+            # -----------------------------
+            # META EVENT
+            # -----------------------------
             meta = {
                 "phase": phase,
                 "ready": phase_progress["ready"],
                 "completed": phase_progress["completed"],
+                "alternative": alternative,  # ⬅️ hasil dari function
             }
 
             yield f"event: meta\ndata: {json.dumps(meta)}\n\n"
