@@ -45,7 +45,7 @@ export default function useConversationEngine({
               sender: "You",
               message: msg, // original
               highlighted, // [[go]]
-              corrected,
+              // corrected,
               isGrammar: true,
             },
           ]);
@@ -83,11 +83,39 @@ export default function useConversationEngine({
       // FINAL ANSWER
       // =========================
       onStreamEnd: async (finalText, meta) => {
-        setChatHistory((prev) =>
-          prev.map((c) =>
-            c.sender === "AI-temp" ? { sender: "AI", message: finalText } : c,
-          ),
-        );
+        const alternative = meta?.alternative;
+        console.log("🧠 META:", meta);
+        console.log("✨ ALTERNATIVE:", alternative);
+        setChatHistory((prev) => {
+          let alternativeAttached = false;
+
+          return prev.map((c) => {
+            // 🔥 temp AI → AI normal
+            if (c.sender === "AI-temp") {
+              return {
+                sender: "AI",
+                message: finalText,
+              };
+            }
+
+            // 🔥 tempel alternative ke USER terakhir
+            if (
+              !alternativeAttached &&
+              c.sender === "You" &&
+              c.isGrammar &&
+              !c.alternative
+            ) {
+              alternativeAttached = true;
+
+              return {
+                ...c,
+                alternative,
+              };
+            }
+
+            return c;
+          });
+        });
 
         speakText(finalText);
 

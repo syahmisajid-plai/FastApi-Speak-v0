@@ -81,9 +81,15 @@ export default function ChatBubble({ chat }) {
             : chat.message}
         </div>
 
-        {chat.isGrammar && chat.highlighted !== chat.corrected && (
+        {chat.sender === "You" && chat.isGrammar && (
           <div className="mt-2 text-xs bg-white/20 rounded p-2 border border-white/30">
-            <div className="text-green-200 font-medium">✔ {chat.corrected}</div>
+            <div className="text-green-200 font-medium">
+              {chat.alternative ? (
+                <>✨ {chat.alternative}</>
+              ) : (
+                <span className="opacity-70 animate-pulse">✨ Thinking...</span>
+              )}
+            </div>
           </div>
         )}
 

@@ -1,21 +1,14 @@
 import requests
 
 LT_URL = "https://languagetool-production-4577.up.railway.app/v2/check"
-
-text_input = "hi can you hear me"
+text_input = "we we is human"
 
 response = requests.post(LT_URL, data={"text": text_input, "language": "en-US"})
-
 data = response.json()
 
-# =========================
-# FILTER RULE
-# =========================
-
+# Filter rules
 matches = data.get("matches", [])
-
 IGNORE_KEYWORDS = {"LOWERCASE", "UPPERCASE"}
-
 filtered_matches = [
     m
     for m in matches
@@ -24,21 +17,15 @@ filtered_matches = [
     )
 ]
 
-# =========================
-# 1. GLOBAL INSIGHT
-# =========================
+# Insight
 language_code = data.get("language", {}).get("code")
 confidence = data.get("language", {}).get("detectedLanguage", {}).get("confidence", 0)
-
 error_count = len(filtered_matches)
-
 has_grammar_error = any(
     m.get("rule", {}).get("category", {}).get("id") == "GRAMMAR"
     for m in filtered_matches
 )
-
 sentence_count = len(data.get("sentenceRanges", []))
-
 is_story_like = sentence_count >= 1 and error_count > 0
 
 insight_output = {
@@ -50,24 +37,12 @@ insight_output = {
     "is_story_like": is_story_like,
 }
 
-# =========================
-# 2. ERROR DETAIL
-# =========================
-error_outputs = []
-
+# Highlight errors
 original_text = text_input
-
-# =========================
-# Highlight ALL errors
-# =========================
 highlighted_text = original_text
-
 for m in sorted(filtered_matches, key=lambda x: x["offset"], reverse=True):
-    offset = m.get("offset", 0)
-    length = m.get("length", 0)
-
+    offset, length = m["offset"], m["length"]
     wrong_text = original_text[offset : offset + length]
-
     highlighted_text = (
         highlighted_text[:offset]
         + f"[[{wrong_text}]]"
@@ -75,37 +50,37 @@ for m in sorted(filtered_matches, key=lambda x: x["offset"], reverse=True):
     )
 
 # =========================
-# Build corrected sentence
+# Build Detected language issues dynamically
 # =========================
-corrected_sentence = original_text
-
-for m in sorted(filtered_matches, key=lambda x: x["offset"], reverse=True):
-    offset = m.get("offset", 0)
-    length = m.get("length", 0)
-
+detected_issues = []
+for m in filtered_matches:
+    wrong_text = original_text[m["offset"] : m["offset"] + m["length"]]
     suggestions = [r["value"] for r in m.get("replacements", [])]
+    if suggestions:
+        detected_issues.append(f'- "{wrong_text}" -> "{suggestions[0]}"')
 
+# Corrected sentence
+corrected_sentence = original_text
+for m in sorted(filtered_matches, key=lambda x: x["offset"], reverse=True):
+    offset, length = m["offset"], m["length"]
+    suggestions = [r["value"] for r in m.get("replacements", [])]
     best_correction = suggestions[0] if suggestions else ""
-
     corrected_sentence = (
         corrected_sentence[:offset]
         + best_correction
         + corrected_sentence[offset + length :]
     )
 
-# =========================
-# Collect error detail
-# =========================
+# Error detail
+error_outputs = []
 for m in filtered_matches:
     error_outputs.append(
         {
             "rule_id": m.get("rule", {}).get("id"),
             "issue_type": m.get("rule", {}).get("issueType"),
-            "wrong_text": original_text[
-                m.get("offset", 0) : m.get("offset", 0) + m.get("length", 0)
-            ],
-            "offset": m.get("offset"),
-            "length": m.get("length"),
+            "wrong_text": original_text[m["offset"] : m["offset"] + m["length"]],
+            "offset": m["offset"],
+            "length": m["length"],
             "suggestions": [r["value"] for r in m.get("replacements", [])],
             "best_correction": (
                 m.get("replacements", [{}])[0].get("value")
@@ -116,10 +91,16 @@ for m in filtered_matches:
         }
     )
 
-# =========================
-# OUTPUT
-# =========================
-print("=== INSIGHT OUTPUT ===")
+# Output
+
+print("=== LLM CONTEXT OUTPUT (build_llm_context style) ===")
+print(f"User sentence: {text_input}")
+print("Detected language issues:")
+for issue in detected_issues:
+    print(issue)
+print(f"Error count: {error_count}")
+
+print("\n=== INSIGHT OUTPUT ===")
 print(insight_output)
 
 print("\n=== ERROR OUTPUT ===")

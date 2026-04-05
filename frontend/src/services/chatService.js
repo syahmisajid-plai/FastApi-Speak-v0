@@ -71,6 +71,7 @@ export async function streamChat({
 
   let aiText = "";
   let buffer = "";
+  let lastMeta = null;
 
   while (true) {
     const { value, done } = await reader.read();
@@ -90,6 +91,7 @@ export async function streamChat({
 
         try {
           const meta = JSON.parse(json);
+          lastMeta = meta; // ⬅️ SIMPAN
           onMeta?.(meta);
         } catch (e) {
           console.error("Meta parse error:", e);
@@ -110,7 +112,10 @@ export async function streamChat({
         await reader.cancel();
         reader.releaseLock();
 
-        onStreamEnd(aiText, { completed: true });
+        onStreamEnd(aiText, {
+          ...lastMeta,
+          completed: true,
+        });
         return;
       }
 
@@ -136,5 +141,5 @@ export async function streamChat({
     .replace(/\s+/g, " ")
     .trim();
 
-  onStreamEnd(finalFormatted);
+  onStreamEnd(finalFormatted, lastMeta);
 }
