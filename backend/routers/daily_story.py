@@ -22,6 +22,7 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 import json
 import requests
 from uuid import UUID
+import re
 
 from fastapi import Query
 
@@ -429,6 +430,21 @@ llm = ChatOpenAI(
 )
 
 
+def get_alternative(text: str) -> str:
+    patterns = [
+        r'You could say\s*:\s*"([^"]+)"',
+        r'You could also say\s*:\s*"([^"]+)"',
+        r'A better sentence is\s*:\s*"([^"]+)"',
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            return match.group(1)
+
+    return "Correct"
+
+
 # -----------------------------
 # STREAM DAILY STORY
 # -----------------------------
@@ -505,13 +521,22 @@ async def stream_daily_story(req: StreamRequest):
                 {"input": req.input},
                 config={"configurable": {"session_id": session_key}},
             ):
+                full_text += chunk  # ⬅️ kumpulin semua chunk
                 yield f"data: {chunk}\n\n"
 
-            # send meta event after streaming
+            # -----------------------------
+            # EXTRACT ALTERNATIVE
+            # -----------------------------
+            alternative = get_alternative(full_text)
+
+            # -----------------------------
+            # META EVENT
+            # -----------------------------
             meta = {
                 "phase": phase,
                 "ready": phase_progress["ready"],
                 "completed": phase_progress["completed"],
+                "alternative": alternative,  # ⬅️ hasil dari function
             }
 
             yield f"event: meta\ndata: {json.dumps(meta)}\n\n"
