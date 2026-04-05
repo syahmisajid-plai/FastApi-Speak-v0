@@ -253,15 +253,9 @@ def extract_errors(data):
     # =========================
     original_text = data.get("text", "")
 
+    # fallback kalau tidak ada text
     if not original_text and matches:
         original_text = matches[0].get("sentence", "")
-
-    # =========================
-    # ambil confidence
-    # =========================
-    confidence = (
-        data.get("language", {}).get("detectedLanguage", {}).get("confidence", 0)
-    )
 
     # =========================
     # kalau tidak ada error
@@ -270,11 +264,10 @@ def extract_errors(data):
         return {
             "highlighted_sentence": original_text,
             "corrected_sentence": original_text,
-            "confidence": round(confidence, 2),
         }
 
     # =========================
-    # HIGHLIGHT
+    # HIGHLIGHT (reverse biar offset aman)
     # =========================
     highlighted_sentence = original_text
 
@@ -291,7 +284,7 @@ def extract_errors(data):
         )
 
     # =========================
-    # CORRECTION
+    # CORRECTION (reverse)
     # =========================
     corrected_sentence = original_text
 
@@ -300,6 +293,8 @@ def extract_errors(data):
         length = m.get("length", 0)
 
         suggestions = [r["value"] for r in m.get("replacements", [])]
+
+        # lebih aman ambil pertama
         best_correction = suggestions[0] if suggestions else ""
 
         corrected_sentence = (
@@ -311,7 +306,6 @@ def extract_errors(data):
     return {
         "highlighted_sentence": highlighted_sentence,
         "corrected_sentence": corrected_sentence,
-        "confidence": round(confidence, 2),
     }
 
 
