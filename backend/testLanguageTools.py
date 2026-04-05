@@ -1,28 +1,40 @@
 import requests
 
 LT_URL = "https://languagetool-production-4577.up.railway.app/v2/check"
-response = requests.post(
-    LT_URL,
-    data={"text": "She go to school yesterday.", "language": "en-US"}
-)
+
+text_input = "i buy a toy boring"
+
+response = requests.post(LT_URL, data={"text": text_input, "language": "en-US"})
 
 data = response.json()
 
 # =========================
-# 1. GLOBAL INSIGHT (AI PROMPT)
+# FILTER RULE
+# =========================
+IGNORE_RULES = {"I_LOWERCASE"}
+
+matches = data.get("matches", [])
+
+filtered_matches = [
+    m for m in matches if m.get("rule", {}).get("id") not in IGNORE_RULES
+]
+
+# =========================
+# 1. GLOBAL INSIGHT
 # =========================
 language_code = data.get("language", {}).get("code")
 confidence = data.get("language", {}).get("detectedLanguage", {}).get("confidence", 0)
 
-matches = data.get("matches", [])
-error_count = len(matches)
+error_count = len(filtered_matches)
 
-has_grammar_error = any(m["rule"]["category"]["id"] == "GRAMMAR" for m in matches)
+has_grammar_error = any(
+    m.get("rule", {}).get("category", {}).get("id") == "GRAMMAR"
+    for m in filtered_matches
+)
 
 sentence_count = len(data.get("sentenceRanges", []))
 
-# heuristik sederhana "story-like"
-is_story_like = sentence_count >= 1 and len(data.get("matches", [])) > 0
+is_story_like = sentence_count >= 1 and error_count > 0
 
 insight_output = {
     "language_code": language_code,
@@ -30,51 +42,74 @@ insight_output = {
     "error_count": error_count,
     "has_grammar_error": has_grammar_error,
     "sentence_count": sentence_count,
-    "is_story_like": is_story_like
+    "is_story_like": is_story_like,
 }
 
 # =========================
-# 2. ERROR DETAIL (KOREKSI KALIMAT)
+# 2. ERROR DETAIL
 # =========================
 error_outputs = []
 
-original_text = data.get("matches", [{}])[0].get("sentence") if matches else ""
+original_text = text_input
 
-corrected_sentence = original_text
+# =========================
+# Highlight ALL errors
+# =========================
+highlighted_text = original_text
 
-for m in matches:
-    rule_id = m.get("rule", {}).get("id")
-    issue_type = m.get("rule", {}).get("issueType")
-
+for m in sorted(filtered_matches, key=lambda x: x["offset"], reverse=True):
     offset = m.get("offset", 0)
     length = m.get("length", 0)
 
-    wrong_text = m.get("context", {}).get("text", "")[offset:offset + length]
+    wrong_text = original_text[offset : offset + length]
+
+    highlighted_text = (
+        highlighted_text[:offset]
+        + f"[[{wrong_text}]]"
+        + highlighted_text[offset + length :]
+    )
+
+# =========================
+# Build corrected sentence
+# =========================
+corrected_sentence = original_text
+
+for m in sorted(filtered_matches, key=lambda x: x["offset"], reverse=True):
+    offset = m.get("offset", 0)
+    length = m.get("length", 0)
 
     suggestions = [r["value"] for r in m.get("replacements", [])]
 
-    best_correction = suggestions[-1] if suggestions else wrong_text
+    best_correction = suggestions[0] if suggestions else ""
 
-    # =========================
-    # highlight error di original sentence
-    # =========================
-    highlighted = original_text[:offset] + f"[[{wrong_text}]]" + original_text[offset + length:]
+    corrected_sentence = (
+        corrected_sentence[:offset]
+        + best_correction
+        + corrected_sentence[offset + length :]
+    )
 
-    # =========================
-    # build corrected sentence
-    # =========================
-    corrected_sentence = corrected_sentence[:offset] + best_correction + corrected_sentence[offset + length:]
-
-    error_outputs.append({
-        "rule_id": rule_id,
-        "issue_type": issue_type,
-        "wrong_text": wrong_text,
-        "offset": offset,
-        "length": length,
-        "suggestions": suggestions,
-        "best_correction": best_correction,
-        "sentence": original_text
-    })
+# =========================
+# Collect error detail
+# =========================
+for m in filtered_matches:
+    error_outputs.append(
+        {
+            "rule_id": m.get("rule", {}).get("id"),
+            "issue_type": m.get("rule", {}).get("issueType"),
+            "wrong_text": original_text[
+                m.get("offset", 0) : m.get("offset", 0) + m.get("length", 0)
+            ],
+            "offset": m.get("offset"),
+            "length": m.get("length"),
+            "suggestions": [r["value"] for r in m.get("replacements", [])],
+            "best_correction": (
+                m.get("replacements", [{}])[0].get("value")
+                if m.get("replacements")
+                else ""
+            ),
+            "sentence": original_text,
+        }
+    )
 
 # =========================
 # OUTPUT
@@ -86,7 +121,7 @@ print("\n=== ERROR OUTPUT ===")
 print(error_outputs)
 
 print("\n=== ORIGINAL (HIGHLIGHTED ERROR) ===")
-print(highlighted)
+print(highlighted_text)
 
 print("\n=== CORRECTED SENTENCE ===")
 print(corrected_sentence)

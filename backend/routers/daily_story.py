@@ -30,15 +30,13 @@ from db import (
     complete_daily_story_phase,
     create_daily_story_session,
     get_daily_story_session,
-
     get_daily_history,
-
     # summary
     get_daily_session,
     get_summary,
     get_human_messages,
     save_summary,
-    get_available_dates
+    get_available_dates,
 )
 
 
@@ -49,18 +47,21 @@ router = APIRouter(prefix="/daily-story", tags=["Daily Story"])
 # MODEL
 # -----------------------------
 class StreamRequest(BaseModel):
-    user_id:str
+    user_id: str
     session_id: str
     input: str
+
 
 class SummaryRequest(BaseModel):
     user_name: str
     user_id: str
     story_date: date
 
+
 class GrammarCheckRequest(BaseModel):
     text: str
     language: str = "en-US"
+
 
 # -----------------------------
 # SESSION PROGRESS TRACKING
@@ -104,7 +105,7 @@ def get_progress(session_id):
     return session_progress[session_id]
 
 
-# 
+#
 
 # -----------------------------
 # NARRATIVE DETECTION
@@ -187,6 +188,7 @@ def detect_phase(progress):
 # -----------------------------
 LT_URL = "https://languagetool-production-4577.up.railway.app/v2/check"
 
+
 def calculate_meta(matches):
     score = 100
 
@@ -202,26 +204,22 @@ def calculate_meta(matches):
 
     score = max(score, 0)
 
-    return {
-        "score": score,
-        "has_error": len(matches) > 0,
-        "error_count": len(matches)
-    }
+    return {"score": score, "has_error": len(matches) > 0, "error_count": len(matches)}
+
 
 def extract_insight(data):
     language_code = data.get("language", {}).get("code")
 
-    confidence = data.get("language", {}) \
-        .get("detectedLanguage", {}) \
-        .get("confidence", 0)
+    confidence = (
+        data.get("language", {}).get("detectedLanguage", {}).get("confidence", 0)
+    )
 
     matches = data.get("matches", [])
 
     error_count = len(matches)
 
     has_grammar_error = any(
-        m.get("rule", {}).get("category", {}).get("id") == "GRAMMAR"
-        for m in matches
+        m.get("rule", {}).get("category", {}).get("id") == "GRAMMAR" for m in matches
     )
 
     sentence_count = len(data.get("sentenceRanges", []))
@@ -234,62 +232,88 @@ def extract_insight(data):
         "error_count": error_count,
         "has_grammar_error": has_grammar_error,
         "sentence_count": sentence_count,
-        "is_story_like": is_story_like
+        "is_story_like": is_story_like,
     }
+
 
 def extract_errors(data):
     matches = data.get("matches", [])
 
-    # ambil original text (lebih aman fallback ke input)
-    original_text = (
-        matches[0].get("sentence")
-        if matches
-        else data.get("text", "")
+    # =========================
+    # FILTER RULE
+    # =========================
+    IGNORE_RULES = {"I_LOWERCASE"}
+
+    filtered_matches = [
+        m for m in matches if m.get("rule", {}).get("id") not in IGNORE_RULES
+    ]
+
+    # =========================
+    # ambil original text
+    # =========================
+    original_text = data.get("text", "")
+
+    if not original_text and matches:
+        original_text = matches[0].get("sentence", "")
+
+    # =========================
+    # ambil confidence
+    # =========================
+    confidence = (
+        data.get("language", {}).get("detectedLanguage", {}).get("confidence", 0)
     )
 
-    # ✅ kalau tidak ada error → return langsung
-    if not matches:
+    # =========================
+    # kalau tidak ada error
+    # =========================
+    if not filtered_matches:
         return {
             "highlighted_sentence": original_text,
-            "corrected_sentence": original_text
+            "corrected_sentence": original_text,
+            "confidence": round(confidence, 2),
         }
 
+    # =========================
+    # HIGHLIGHT
+    # =========================
     highlighted_sentence = original_text
+
+    for m in sorted(filtered_matches, key=lambda x: x["offset"], reverse=True):
+        offset = m.get("offset", 0)
+        length = m.get("length", 0)
+
+        wrong_text = original_text[offset : offset + length]
+
+        highlighted_sentence = (
+            highlighted_sentence[:offset]
+            + f"[[{wrong_text}]]"
+            + highlighted_sentence[offset + length :]
+        )
+
+    # =========================
+    # CORRECTION
+    # =========================
     corrected_sentence = original_text
 
-    offset_shift = 0
-
-    for m in matches:
+    for m in sorted(filtered_matches, key=lambda x: x["offset"], reverse=True):
         offset = m.get("offset", 0)
         length = m.get("length", 0)
 
         suggestions = [r["value"] for r in m.get("replacements", [])]
-        wrong_text = original_text[offset:offset + length]
+        best_correction = suggestions[0] if suggestions else ""
 
-        best_correction = suggestions[-1] if suggestions else wrong_text
-
-        real_offset = offset + offset_shift
-
-        # highlight
-        highlighted_sentence = (
-            highlighted_sentence[:real_offset]
-            + f"[[{wrong_text}]]"
-            + highlighted_sentence[real_offset + length:]
-        )
-
-        # correction
         corrected_sentence = (
-            corrected_sentence[:real_offset]
+            corrected_sentence[:offset]
             + best_correction
-            + corrected_sentence[real_offset + length:]
+            + corrected_sentence[offset + length :]
         )
-
-        offset_shift += len(best_correction) - length
 
     return {
         "highlighted_sentence": highlighted_sentence,
-        "corrected_sentence": corrected_sentence
+        "corrected_sentence": corrected_sentence,
+        "confidence": round(confidence, 2),
     }
+
 
 def process_languagetool(data):
     matches = data.get("matches", [])
@@ -297,21 +321,15 @@ def process_languagetool(data):
     correction = extract_errors(data)
     meta = calculate_meta(matches)
 
-    return {
-        "correction": correction,
-        "meta": meta
-    }
+    return {"correction": correction, "meta": meta}
+
 
 @router.post("/grammar/check")
 async def grammar_check(req: GrammarCheckRequest):
     try:
         # call LanguageTool
         response = requests.post(
-            LT_URL,
-            data={
-                "text": req.text,
-                "language": req.language
-            }
+            LT_URL, data={"text": req.text, "language": req.language}
         )
 
         data = response.json()
@@ -319,16 +337,11 @@ async def grammar_check(req: GrammarCheckRequest):
         # process
         result = process_languagetool(data)
 
-        return {
-            "status": "success",
-            "data": result
-        }
+        return {"status": "success", "data": result}
 
     except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        return {"status": "error", "message": str(e)}
+
 
 # -----------------------------
 # DAILY STORY PROMPTS EFFICIENT
@@ -588,9 +601,11 @@ async def next_phase(req: NextPhaseRequest):
 
     return {"message": "no phase ready"}
 
+
 @router.get("/history")
 def daily_history(session_id: str):
     return get_daily_history(session_id)
+
 
 @router.get("/summary")
 def get_daily_summary(user_id: str, story_date: str):
@@ -605,18 +620,13 @@ def get_daily_summary(user_id: str, story_date: str):
         if not data:
             return {"status": "not_found"}
 
-        return {
-            "status": "success",
-            "data": data
-        }
+        return {"status": "success", "data": data}
 
     except Exception as e:
         print(f"[ERROR] get_daily_summary: {str(e)}")
-        return {
-            "status": "error",
-            "message": str(e)
-        }
-    
+        return {"status": "error", "message": str(e)}
+
+
 @router.get("/available-dates")
 def get_available_dates_endpoint(user_id: str):
     try:
@@ -628,22 +638,14 @@ def get_available_dates_endpoint(user_id: str):
         print(f"[RESULT] dates={dates}")
 
         if not dates:
-            return {
-                "status": "success",
-                "dates": []
-            }
+            return {"status": "success", "dates": []}
 
-        return {
-            "status": "success",
-            "dates": dates
-        }
+        return {"status": "success", "dates": dates}
 
     except Exception as e:
         print(f"[ERROR] available_dates: {str(e)}")
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        return {"status": "error", "message": str(e)}
+
 
 def is_complete(session: dict) -> bool:
     """
@@ -661,6 +663,7 @@ def is_complete(session: dict) -> bool:
     ]
 
     return all(session.get(field, 0) == 1 for field in required_fields)
+
 
 def generate_daily_summary_by_phase(messages):
     """
@@ -763,6 +766,7 @@ def generate_daily_summary_by_phase(messages):
 
     return summaries
 
+
 @router.post("/summary/generate")
 async def generate_daily_summary(req: SummaryRequest):
 
@@ -799,7 +803,7 @@ async def generate_daily_summary(req: SummaryRequest):
 
         # 4. ambil messages
         print("[STEP 4] Fetching messages...")
-        sessionKey = f'{req.user_name}_{req.user_id}_daily_{req.story_date}'
+        sessionKey = f"{req.user_name}_{req.user_id}_daily_{req.story_date}"
         messages = get_human_messages(sessionKey)
 
         if not messages:
@@ -833,7 +837,7 @@ async def generate_daily_summary(req: SummaryRequest):
         print("[STEP 6] Saving summary to DB...")
 
         save_summary(req.user_id, req.story_date, summaries)
-        
+
         print(f"======PESAN summaries======: {summaries}")
 
         print("[STEP 6 RESULT] All summaries saved successfully")
@@ -841,29 +845,21 @@ async def generate_daily_summary(req: SummaryRequest):
         print("[SUCCESS] Summary generated successfully")
         print("========== [END] generate_daily_summary ==========\n")
 
-        return {
-            "status": "generated",
-            "data": summaries
-        }
+        return {"status": "generated", "data": summaries}
 
     except Exception as e:
         print(f"[ERROR] generate_daily_summary: {str(e)}")
         print("========== [FAILED] generate_daily_summary ==========\n")
 
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        return {"status": "error", "message": str(e)}
+
 
 def calculate_streaks(dates):
     if not dates:
         return 0, 0
 
     # convert ke datetime & urutkan terbaru → lama
-    date_objs = sorted(
-        [datetime.strptime(d, "%Y-%m-%d") for d in dates],
-        reverse=True
-    )
+    date_objs = sorted([datetime.strptime(d, "%Y-%m-%d") for d in dates], reverse=True)
 
     today = datetime.now().date()
 
@@ -873,7 +869,7 @@ def calculate_streaks(dates):
     else:
         current_streak = 1
         for i in range(1, len(date_objs)):
-            if date_objs[i-1].date() - date_objs[i].date() == timedelta(days=1):
+            if date_objs[i - 1].date() - date_objs[i].date() == timedelta(days=1):
                 current_streak += 1
             else:
                 break
@@ -883,7 +879,7 @@ def calculate_streaks(dates):
     temp_streak = 1
 
     for i in range(1, len(date_objs)):
-        if date_objs[i-1].date() - date_objs[i].date() == timedelta(days=1):
+        if date_objs[i - 1].date() - date_objs[i].date() == timedelta(days=1):
             temp_streak += 1
             longest_streak = max(longest_streak, temp_streak)
         else:
@@ -913,7 +909,7 @@ def get_streak(user_id: str):
             "total_active_days": len(dates),
             "last_active_date": dates[0] if dates else None,
             "streak_today_done": today_str in dates,
-            "streak_status": "active" if current_streak > 0 else "broken"
+            "streak_status": "active" if current_streak > 0 else "broken",
         }
 
         print(f"[RESULT] {result}")
@@ -922,7 +918,4 @@ def get_streak(user_id: str):
 
     except Exception as e:
         print(f"[ERROR] streak: {str(e)}")
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        return {"status": "error", "message": str(e)}
