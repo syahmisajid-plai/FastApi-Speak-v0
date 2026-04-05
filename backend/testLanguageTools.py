@@ -2,7 +2,7 @@ import requests
 
 LT_URL = "https://languagetool-production-4577.up.railway.app/v2/check"
 
-text_input = "i buy a toy boring"
+text_input = "hi can you hear me"
 
 response = requests.post(LT_URL, data={"text": text_input, "language": "en-US"})
 
@@ -11,12 +11,17 @@ data = response.json()
 # =========================
 # FILTER RULE
 # =========================
-IGNORE_RULES = {"I_LOWERCASE"}
 
 matches = data.get("matches", [])
 
+IGNORE_KEYWORDS = {"LOWERCASE", "UPPERCASE"}
+
 filtered_matches = [
-    m for m in matches if m.get("rule", {}).get("id") not in IGNORE_RULES
+    m
+    for m in matches
+    if not any(
+        keyword in m.get("rule", {}).get("id", "") for keyword in IGNORE_KEYWORDS
+    )
 ]
 
 # =========================
