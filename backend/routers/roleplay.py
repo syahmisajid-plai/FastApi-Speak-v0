@@ -18,7 +18,7 @@ from db import (
     get_scenario_checklist,
     get_scenario,
     get_keywords_by_scenario,
-    get_contexts_by_scenario
+    get_contexts_by_scenario,
 )
 
 router = APIRouter(prefix="/roleplay", tags=["Roleplay"])
@@ -41,7 +41,7 @@ class StartRoleplayRequest(BaseModel):
 
 
 class StreamRequest(BaseModel):
-    user_id:str
+    user_id: str
     session_id: str
     scenario_id: int
     input: str
@@ -69,7 +69,7 @@ llm = ChatOpenAI(
 def generate_roleplay(category: str):
     try:
         scenario = get_random_scenario(category)
-        
+
         if not scenario:
             return {"error": "No scenario found"}
 
@@ -78,12 +78,11 @@ def generate_roleplay(category: str):
         context_map = {
             item["context_key"]: {
                 "type": item["context_type"],
-                "data": item["context_data"]
+                "data": item["context_data"],
             }
             for item in contexts
         }
 
-        
         checklist = get_scenario_checklist(scenario["id"]) or []
         keywords = get_keywords_by_scenario(scenario["id"])
 
@@ -98,9 +97,7 @@ def generate_roleplay(category: str):
 
             keyword_map[step].append(kw)
 
-        checklist_sorted = sorted(
-            checklist, key=lambda x: x.get("step_order", 0)
-        )
+        checklist_sorted = sorted(checklist, key=lambda x: x.get("step_order", 0))
 
         checklist_clean = [
             {
@@ -108,18 +105,18 @@ def generate_roleplay(category: str):
                 "description": item["description"],
                 "step_order": item.get("step_order", 0),
                 "keywords": keyword_map.get(item["step_key"], []),
-
                 # optional (debug / internal)
                 "context_key": item.get("context_key"),
-
                 # ✅ INI YANG PENTING
                 "context_type": (
                     context_map.get(item.get("context_key"), {}).get("type")
-                    if item.get("context_key") else None
+                    if item.get("context_key")
+                    else None
                 ),
                 "context_data": (
                     context_map.get(item.get("context_key"), {}).get("data")
-                    if item.get("context_key") else None
+                    if item.get("context_key")
+                    else None
                 ),
             }
             for item in checklist_sorted
@@ -192,7 +189,8 @@ async def stream_answer(req: StreamRequest):
     if not scenario:
         return {"error": "Scenario not found"}
 
-    session_key = f"{req.session_id}_{req.user_id}sc{req.scenario_id}"
+    # session_key = f"{req.session_id}_{req.user_id}sc{req.scenario_id}"
+    session_key = f"{req.session_id}_sc{req.scenario_id}"
     session_data = get_roleplay_session(session_key)
 
     if not session_data:
@@ -213,9 +211,7 @@ async def stream_answer(req: StreamRequest):
 
     checklist = get_scenario_checklist(req.scenario_id)
 
-    checklist_text = "\n".join(
-        [f"- {item['description']}" for item in checklist]
-    )
+    checklist_text = "\n".join([f"- {item['description']}" for item in checklist])
 
     # -----------------------------
     # SYSTEM PROMPT

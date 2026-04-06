@@ -88,6 +88,7 @@ Feature tambahan:
 
   const [freeTalkStarted, setFreeTalkStarted] = useState(false);
   const [dailyStarted, setDailyStarted] = useState(false);
+  const [rolePlayStarted, setRolePlayStarted] = useState(false);
 
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -99,6 +100,8 @@ Feature tambahan:
   const [showModeConfirm, setShowModeConfirm] = useState(false);
 
   const [activePhase, setActivePhase] = useState("morning");
+
+  const [expanded, setExpanded] = useState(false);
 
   // ================== Set Mode ==================
   const [mode, setMode] = useState("freeTalk");
@@ -114,6 +117,7 @@ Feature tambahan:
     setChatHistory([]);
     setFreeTalkStarted(false);
     setDailyStarted(false);
+    setRolePlayStarted(false);
     setRoleplayModalOpen(false);
     setShowSuggestions(false);
     setShowDiary(false);
@@ -187,7 +191,7 @@ Feature tambahan:
       );
 
       visiblePhases.forEach((phase) => {
-        // ✅ selalu push divider (MESKIPUN BELUM ADA CHAT)
+        // divider phase (harus selalu pertama untuk setiap phase)
         formatted.push({
           type: "phase",
           phase,
@@ -198,6 +202,27 @@ Feature tambahan:
           (msg) => msg.phase === phase,
         );
 
+        // 🔥 MORNING SPECIAL CASE (HARUS SETELAH DIVIDER)
+        if (phase === "morning") {
+          formatted.push({
+            type: "chat",
+            sender: "AI",
+            message:
+              "Time to share your story today 😊. How did your morning start?",
+          });
+        }
+
+        // 🔥 fallback greeting untuk phase lain
+        if (phase !== "morning") {
+          formatted.push({
+            type: "chat",
+            sender: "AI",
+            message: `Hello, Good ${phase}! How’s your ${phase} going?`,
+            isSystemGenerated: true,
+          });
+        }
+
+        // 👉 render chat messages
         phaseMessages.forEach((msg) => {
           if (!msg.content) return;
 
@@ -360,6 +385,7 @@ Feature tambahan:
   const resetModeState = () => {
     setFreeTalkStarted(false);
     setDailyStarted(false);
+    setRolePlayStarted(false);
 
     // optional tapi disarankan
     setReadyToContinue(false);
@@ -452,16 +478,16 @@ Feature tambahan:
 
   const { checkGrammar, result, loading, error } = useGrammarCheck();
 
-  useEffect(() => {
-    checkGrammar("We was happy last night.");
-  }, []);
+  // useEffect(() => {
+  //   checkGrammar("We was happy last night.");
+  // }, []);
 
-  useEffect(() => {
-    if (!result) return;
+  // useEffect(() => {
+  //   if (!result) return;
 
-    console.log("=== RESULT ===");
-    console.log(result);
-  }, [result]);
+  //   console.log("=== RESULT ===");
+  //   console.log(result);
+  // }, [result]);
 
   // ================== SEND TEXT TO BACKEND ==================
   const { sendTextToBackend } = useConversationEngine({
@@ -632,7 +658,11 @@ Feature tambahan:
     onFinalResult: async (text) => {
       if (!text) return;
 
-      const grammarData = await checkGrammar(text); // ✅ ambil result
+      let grammarData = null;
+
+      if (mode === "dailyStory") {
+        grammarData = await checkGrammar(text);
+      }
 
       sendTextToBackend(text, grammarData); // ✅ kirim ke engine
     },
@@ -901,134 +931,155 @@ Feature tambahan:
               const isLastPhase = !next;
 
               return (
-                <div className="px-3 mt-4">
+                <div className="fixed bottom-48 left-1/2 -translate-x-1/2 w-full max-w-md px-3 z-40 flex flex-col">
+                  {/* MAIN TRIGGER */}
                   <button
-                    onClick={async () => {
-                      try {
-                        const res = await fetch(
-                          `${linkBackend}/daily-story/next_phase`,
-                          {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
+                    onClick={() => setExpanded((prev) => !prev)}
+                    className={`
+                    w-10 h-10
+                    rounded-full
+                    bg-gradient-to-r from-emerald-400 to-green-600
+                    text-white
+                    shadow-lg shadow-emerald-500/30
+                    flex items-center justify-center
+                    transition-all duration-300 ease-out
+                    hover:scale-110 active:scale-95
+                    ${expanded ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"}
+                  `}
+                  >
+                    <span className="text-lg">➜</span>
+                  </button>
+                  {/* EXPANDED BUTTON */}
+                  <div
+                    className={`
+                      transition-all duration-300 origin-bottom
+                      ${expanded ? "scale-100 opacity-100 mt-2" : "scale-95 opacity-0 pointer-events-none"}
+                    `}
+                  >
+                    <button
+                      className="
+                      
+                      group
+                      bg-gradient-to-r from-emerald-500 to-green-600
+                      text-white
+                      rounded-xl
+                      py-2! px-4!
+                      shadow-md
+                      active:scale-95
+                      transition-all duration-200
+                      flex items-center justify-between
+                      text-sm
+                    "
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(
+                            `${linkBackend}/daily-story/next_phase`,
+                            {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                              },
+                              body: JSON.stringify({
+                                session_id: sessionId,
+                                user_id: userId,
+                              }),
                             },
-                            body: JSON.stringify({
-                              session_id: sessionId,
-                              user_id: userId,
-                            }),
-                          },
-                        );
+                          );
 
-                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                          if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-                        const data = await res.json();
-                        console.log("PHASE MOVED:", data);
+                          const data = await res.json();
+                          console.log("PHASE MOVED:", data);
 
-                        // ==================== HITUNG NEXT PHASE ====================
-                        const currentPhase = activePhase; // fase sekarang dari state
-                        const nextPhase = getNextPhase(currentPhase); // hitung fase selanjutnya
+                          // ==================== HITUNG NEXT PHASE ====================
+                          const currentPhase = activePhase; // fase sekarang dari state
+                          const nextPhase = getNextPhase(currentPhase); // hitung fase selanjutnya
 
-                        // ==================== UPDATE STATE ====================
-                        setActivePhase(nextPhase);
+                          // ==================== UPDATE STATE ====================
+                          setActivePhase(nextPhase);
 
-                        // ==================== INJECT KE CHAT HISTORY ====================
-                        setChatHistory((prev) => {
-                          const last = prev[prev.length - 1];
+                          // ==================== INJECT KE CHAT HISTORY ====================
+                          setChatHistory((prev) => {
+                            const last = prev[prev.length - 1];
 
-                          // ❌ prevent duplicate divider
-                          if (
-                            last?.type === "phase" &&
-                            last.phase === nextPhase
-                          ) {
-                            return prev;
-                          }
+                            // ❌ prevent duplicate divider
+                            if (
+                              last?.type === "phase" &&
+                              last.phase === nextPhase
+                            ) {
+                              return prev;
+                            }
 
-                          return [
+                            return [
+                              ...prev,
+                              {
+                                type: "phase",
+                                phase: nextPhase,
+                              },
+                            ];
+                          });
+
+                          // ==================== 👇 TAMBAHAN: AI MESSAGE TIAP PHASE ====================
+                          setChatHistory((prev) => [
                             ...prev,
                             {
-                              type: "phase",
+                              type: "ai",
                               phase: nextPhase,
+                              message:
+                                data?.ai_message ||
+                                `Hello, Good ${nextPhase}! How’s your ${nextPhase} going?`,
+                              timestamp: Date.now(),
                             },
-                          ];
-                        });
+                          ]);
 
-                        // ==================== 👇 TAMBAHAN: AI MESSAGE TIAP PHASE ====================
-                        setChatHistory((prev) => [
-                          ...prev,
-                          {
-                            type: "ai",
-                            phase: nextPhase,
-                            message:
-                              data?.ai_message ||
-                              `Hello, Good ${nextPhase}! How’s your ${nextPhase} going?`,
-                            timestamp: Date.now(),
-                          },
-                        ]);
+                          // ✅ tandai phase selesai
+                          markPhaseComplete(currentStoryPhase);
 
-                        // ✅ tandai phase selesai
-                        markPhaseComplete(currentStoryPhase);
+                          // ✅ reset tombol
+                          setReadyToContinue(false);
 
-                        // ✅ reset tombol
-                        setReadyToContinue(false);
+                          // 🎉 JIKA LAST PHASE → GENERATE SUMMARY
+                          if (isLastPhase) {
+                            console.log(
+                              "🎉 STORY FINISHED → GENERATING SUMMARY",
+                            );
 
-                        // 🎉 JIKA LAST PHASE → GENERATE SUMMARY
-                        if (isLastPhase) {
-                          console.log("🎉 STORY FINISHED → GENERATING SUMMARY");
+                            const summary = await generateSummary();
 
-                          const summary = await generateSummary();
+                            console.log("📊 FINAL SUMMARY:", summary);
 
-                          console.log("📊 FINAL SUMMARY:", summary);
-
-                          // optional UI:
-                          // setSummaryData(summary)
-                          // setShowSummary(true)
+                            // optional UI:
+                            // setSummaryData(summary)
+                            // setShowSummary(true)
+                          }
+                        } catch (err) {
+                          console.error("❌ Failed to move phase:", err);
                         }
-                      } catch (err) {
-                        console.error("❌ Failed to move phase:", err);
-                      }
-                    }}
-                    className="
-                      group
-                      w-full
-                      bg-gradient-to-r
-                      from-emerald-500
-                      to-green-600
-                      text-white
-                      rounded-2xl
-                      py-4
-                      px-4
-                      shadow-lg
-                      active:scale-95
-                      transition-all
-                      duration-200
-                      flex
-                      items-center
-                      justify-between
-                    "
-                  >
-                    {/* LEFT */}
-                    <div className="flex items-center gap-3">
-                      <div className="text-2xl">
-                        {isLastPhase ? "🎉" : "🚀"}
+                      }}
+                    >
+                      {/* LEFT */}
+                      <div className="flex items-center gap-3">
+                        <div className="text-2xl">
+                          {isLastPhase ? "🎉" : "🚀"}
+                        </div>
+
+                        <div className="flex flex-col text-left">
+                          <span className="text-xs opacity-80">
+                            Phase {currentStoryPhase} complete
+                          </span>
+
+                          <span className="font-semibold text-base leading-tight">
+                            {isLastPhase ? "Finish Story" : "Continue Story"}
+                          </span>
+                        </div>
                       </div>
 
-                      <div className="flex flex-col text-left">
-                        <span className="text-xs opacity-80">
-                          Phase {currentStoryPhase} complete
-                          {!isLastPhase && ` → ${next}`}
-                        </span>
-
-                        <span className="font-semibold text-base leading-tight">
-                          {isLastPhase ? "Finish Story" : "Continue Story"}
-                        </span>
+                      {/* RIGHT */}
+                      <div className="text-xl group-active:translate-x-1 transition">
+                        →
                       </div>
-                    </div>
-
-                    {/* RIGHT */}
-                    <div className="text-xl group-active:translate-x-1 transition">
-                      →
-                    </div>
-                  </button>
+                    </button>
+                  </div>
                 </div>
               );
             })()}
@@ -1061,6 +1112,8 @@ Feature tambahan:
           )}
           {mode === "roleplay" && (
             <RoleplayToggle
+              started={rolePlayStarted}
+              setStarted={setRolePlayStarted}
               selectedScenario={selectedScenario}
               onScenarioSelect={selectScenario}
               isOpen={roleplayModalOpen} // controlled
@@ -1166,7 +1219,8 @@ Feature tambahan:
             mode={mode}
           />
           {((mode === "freeTalk" && freeTalkStarted) ||
-            (mode === "dailyStory" && dailyStarted)) && (
+            (mode === "dailyStory" && dailyStarted) ||
+            (mode === "roleplay" && rolePlayStarted)) && (
             <BottomActions
               isRecording={isRecording}
               showSuggestions={showSuggestions}

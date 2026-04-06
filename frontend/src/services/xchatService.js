@@ -25,8 +25,6 @@ export async function streamChat({
 
   const endpoint = endpointMap[mode];
 
-  console.log("CALLING ENDPOINT:", endpoint);
-
   console.log("📤 ==================== chatService.js: ====================", {
     session_id: sessionId,
     user_id: userId,
@@ -45,9 +43,6 @@ export async function streamChat({
       scenario_id: scenarioId,
     }),
   });
-
-  console.log("STATUS:", res.status);
-  console.log("CONTENT-TYPE:", res.headers.get("content-type"));
 
   // ⭐ detect non-stream response
   const contentType = res.headers.get("content-type");
@@ -76,7 +71,6 @@ export async function streamChat({
 
   let aiText = "";
   let buffer = "";
-  let lastMeta = null;
 
   while (true) {
     const { value, done } = await reader.read();
@@ -88,7 +82,6 @@ export async function streamChat({
     buffer = events.pop(); // sisa event belum selesai
 
     for (const event of events) {
-      console.log("RAW EVENT:", event);
       // =====================
       // META EVENT
       // =====================
@@ -97,7 +90,6 @@ export async function streamChat({
 
         try {
           const meta = JSON.parse(json);
-          lastMeta = meta; // ⬅️ SIMPAN
           onMeta?.(meta);
         } catch (e) {
           console.error("Meta parse error:", e);
@@ -111,8 +103,6 @@ export async function streamChat({
       // =====================
       // const cleanChunk = event.replace(/^data:\s*/gm, "");
       const cleanChunk = event.replace(/^data:\s*/gm, "").trim();
-
-      console.log("STREAM CHUNK:", cleanChunk);
 
       if (!cleanChunk) continue;
 
@@ -146,5 +136,5 @@ export async function streamChat({
     .replace(/\s+/g, " ")
     .trim();
 
-  onStreamEnd(finalFormatted, lastMeta);
+  onStreamEnd(finalFormatted);
 }

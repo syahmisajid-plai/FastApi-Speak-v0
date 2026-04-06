@@ -9,12 +9,10 @@ export default function useConversationEngine({
   setChatHistory,
   speakText,
 
-  grammarResult,
-
   onRoleplayCompleted,
   onPhaseCompleted, // ⭐ NEW
 }) {
-  const sendTextToBackend = async (text, grammarData = null) => {
+  const sendTextToBackend = async (text) => {
     console.log("📤 ====== useConversationEngine.js =======");
     console.log("📤 SEND TEXT TRIGGERED");
     console.log("👤 userIdRef:", userIdRef);
@@ -35,24 +33,6 @@ export default function useConversationEngine({
       // USER MESSAGE
       // =========================
       onUserMessage: (msg) => {
-        if (modeRef.current === "dailyStory" && grammarData) {
-          const highlighted = grammarData.correction.highlighted_sentence;
-          const corrected = grammarData.correction.corrected_sentence;
-
-          setChatHistory((prev) => [
-            ...prev,
-            {
-              sender: "You",
-              message: msg, // original
-              highlighted, // [[go]]
-              // corrected,
-              isGrammar: true,
-            },
-          ]);
-
-          return;
-        }
-
         setChatHistory((prev) => [...prev, { sender: "You", message: msg }]);
       },
 
@@ -83,39 +63,11 @@ export default function useConversationEngine({
       // FINAL ANSWER
       // =========================
       onStreamEnd: async (finalText, meta) => {
-        const alternative = meta?.alternative;
-        console.log("🧠 META:", meta);
-        console.log("✨ ALTERNATIVE:", alternative);
-        setChatHistory((prev) => {
-          let alternativeAttached = false;
-
-          return prev.map((c) => {
-            // 🔥 temp AI → AI normal
-            if (c.sender === "AI-temp") {
-              return {
-                sender: "AI",
-                message: finalText,
-              };
-            }
-
-            // 🔥 tempel alternative ke USER terakhir
-            if (
-              !alternativeAttached &&
-              c.sender === "You" &&
-              c.isGrammar &&
-              !c.alternative
-            ) {
-              alternativeAttached = true;
-
-              return {
-                ...c,
-                alternative,
-              };
-            }
-
-            return c;
-          });
-        });
+        setChatHistory((prev) =>
+          prev.map((c) =>
+            c.sender === "AI-temp" ? { sender: "AI", message: finalText } : c,
+          ),
+        );
 
         speakText(finalText);
 

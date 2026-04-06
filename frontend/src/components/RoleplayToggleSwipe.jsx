@@ -27,6 +27,8 @@ import "swiper/css/effect-cards";
 import { linkBackend } from "../config";
 
 export default function RoleplayToggleSwipe({
+  started,
+  setStarted,
   selectedScenario,
   onScenarioSelect,
   isOpen, // <-- dari parent
@@ -64,8 +66,6 @@ export default function RoleplayToggleSwipe({
     setIsOpen(false);
     if (onScenarioSelect) onScenarioSelect(scenario);
   };
-
-  const [started, setStarted] = useState(false);
 
   const [activeScenario, setActiveScenario] = useState(null);
 
