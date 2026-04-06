@@ -60,7 +60,7 @@ export default function useSpeechRecognition({
       } catch (err) {
         console.error("❌ Error starting STT:", err);
       }
-    }, 500);
+    }, 10);
   };
 
   useEffect(() => {

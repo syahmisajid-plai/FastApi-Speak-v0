@@ -39,6 +39,8 @@ export default function RoleplayToggleSwipe({
   currentTurn,
   maxTurn,
   sendInitialMessage,
+  activeChecklist,
+  setActiveChecklist,
 }) {
   // const difficulties = [
   //   { id: 1, name: "Easy Mode", image: easy_mode },
@@ -74,7 +76,7 @@ export default function RoleplayToggleSwipe({
   // const [selectedDifficulty, setSelectedCategory] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [mission, setMission] = useState(null);
-  const [activeChecklist, setActiveChecklist] = useState(null);
+  // const [activeChecklist, setActiveChecklist] = useState(null);
 
   const [hasFinished, setHasFinished] = useState(false);
 

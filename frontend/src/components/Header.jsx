@@ -10,6 +10,7 @@ export default function Header({
 
   streakDaily,
   fetchStreakDaily,
+  activeChecklist,
 }) {
   const [openMenu, setOpenMenu] = useState(false);
   const [showSummaryDaily, setShowSummaryDaily] = useState(false);
@@ -184,6 +185,59 @@ export default function Header({
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* ================= ROLEPLAY MODE ================= */}
+        {mode === "roleplay" && isScrolled && activeChecklist && (
+          <div className="px-1 mt-2">
+            {/* HEADER */}
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[11px] text-white/70 uppercase">
+                🎭 Roleplay Checklist
+              </p>
+
+              <p className="text-[10px] text-white/50">
+                {activeChecklist.filter((i) => i.done).length} /{" "}
+                {activeChecklist.length}
+              </p>
+            </div>
+
+            {/* PROGRESS BAR */}
+            <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden mb-2">
+              <div
+                className="h-full bg-indigo-400 transition-all duration-300"
+                style={{
+                  width: `${
+                    (activeChecklist.filter((i) => i.done).length /
+                      activeChecklist.length) *
+                    100
+                  }%`,
+                }}
+              />
+            </div>
+
+            {/* CHECKLIST ITEMS */}
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {activeChecklist.map((item, i) => (
+                <div
+                  key={i}
+                  className={`
+                    min-w-[140px] px-2 py-1 rounded-lg text-[10px]
+                    border transition flex items-center gap-1
+                    ${
+                      item.done
+                        ? "bg-green-500/10 border-green-400/30 text-green-300"
+                        : "bg-white/5 border-white/10 text-white/60"
+                    }
+                  `}
+                >
+                  <span className="text-xs">{item.done ? "✔" : "⬜"}</span>
+
+                  <span className="truncate">{item.text}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </header>

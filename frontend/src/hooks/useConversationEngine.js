@@ -1,5 +1,5 @@
 // hooks/useConversationEngine.js
-import { streamChat } from "../services/xchatService";
+import { streamChat } from "../services/chatService";
 
 export default function useConversationEngine({
   sessionIdRef,

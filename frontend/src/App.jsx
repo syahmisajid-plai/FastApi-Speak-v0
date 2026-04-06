@@ -90,6 +90,8 @@ Feature tambahan:
   const [dailyStarted, setDailyStarted] = useState(false);
   const [rolePlayStarted, setRolePlayStarted] = useState(false);
 
+  const [activeChecklist, setActiveChecklist] = useState(null);
+
   const [isScrolled, setIsScrolled] = useState(false);
 
   const [showLogin, setShowLogin] = useState(true);
@@ -482,12 +484,12 @@ Feature tambahan:
   //   checkGrammar("We was happy last night.");
   // }, []);
 
-  // useEffect(() => {
-  //   if (!result) return;
+  useEffect(() => {
+    if (!result) return;
 
-  //   console.log("=== RESULT ===");
-  //   console.log(result);
-  // }, [result]);
+    console.log("=== RESULT ===");
+    console.log(result);
+  }, [result]);
 
   // ================== SEND TEXT TO BACKEND ==================
   const { sendTextToBackend } = useConversationEngine({
@@ -660,7 +662,7 @@ Feature tambahan:
 
       let grammarData = null;
 
-      if (mode === "dailyStory") {
+      if (modeRef.current === "dailyStory") {
         grammarData = await checkGrammar(text);
       }
 
@@ -756,6 +758,7 @@ Feature tambahan:
             onLogout={handleLogout}
             streakDaily={streakDaily}
             fetchStreakDaily={fetchStreakDaily}
+            activeChecklist={activeChecklist}
           />
 
           {/* <div className="text-white">
@@ -1125,6 +1128,8 @@ Feature tambahan:
               currentTurn={currentTurn}
               maxTurn={maxTurn}
               sendInitialMessage={sendInitialMessage}
+              activeChecklist={activeChecklist}
+              setActiveChecklist={setActiveChecklist}
             />
           )}
           <ModeSelector mode={mode} setMode={handleModeChange} />

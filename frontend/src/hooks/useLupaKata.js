@@ -63,9 +63,11 @@ export default function useLupaKata({
   }, [isSpeaking]);
 
   const tryResumeRecording = () => {
-    if (isSpeakingRef.current) {
+    if (!isSpeakingRef.current) {
       console.log("⛔ Masih speaking, tunda resume");
       return;
+    } else {
+      console.log("⛔ ============ ULULULULU ============");
     }
 
     console.log("⏳ Delay 0.5 detik sebelum resume");
