@@ -35,6 +35,9 @@
 
 -streak daily ✅
 
+- update DAILY_TOPICS
+- setelah masuk phase baru daily, ada kata kata dari AI
+
 - Pindahkan Logic di Roleplay.jsx ke useRoleplay.js
 
 - Tambahkan List Checklist Mengambang

@@ -414,7 +414,7 @@ DAILY_TOPICS = {
         "their first activities in the morning",
     ],
     "afternoon": [
-        "what they did before lunch",
+        "how their afternoon started",
         "their lunch",
         "their afternoon activities",
     ],

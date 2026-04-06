@@ -952,6 +952,19 @@ Feature tambahan:
                           ];
                         });
 
+                        // ==================== 👇 TAMBAHAN: AI MESSAGE TIAP PHASE ====================
+                        setChatHistory((prev) => [
+                          ...prev,
+                          {
+                            type: "ai",
+                            phase: nextPhase,
+                            message:
+                              data?.ai_message ||
+                              `Hello, Good ${nextPhase}! How’s your ${nextPhase} going?`,
+                            timestamp: Date.now(),
+                          },
+                        ]);
+
                         // ✅ tandai phase selesai
                         markPhaseComplete(currentStoryPhase);
 

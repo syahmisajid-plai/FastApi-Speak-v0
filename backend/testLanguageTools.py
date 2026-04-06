@@ -1,7 +1,7 @@
 import requests
 
 LT_URL = "https://languagetool-production-4577.up.railway.app/v2/check"
-text_input = "we we is human"
+text_input = "i just drink water"
 
 response = requests.post(LT_URL, data={"text": text_input, "language": "en-US"})
 data = response.json()
