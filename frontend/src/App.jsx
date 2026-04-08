@@ -14,6 +14,7 @@ import ModeSelector from "./components/ModeSelector";
 import ContextRenderer from "./components/ContextRenderer";
 import DailySummaryViewer from "./components/DailySummaryViewer";
 import FreeTalkUI from "./components/FreeTalkUI";
+import VocabUI from "./components/VocabUI";
 import LoginOverlay from "./components/LoginOverlay";
 
 // ================== STYLES ==================
@@ -34,6 +35,7 @@ import useDailyStory from "./hooks/useDailyStory";
 import useHistoryManager from "./hooks/useHistoryManager";
 import useStreak from "./hooks/useStreak";
 import useGrammarCheck from "./hooks/useGrammarCheck";
+import useVocabEngine from "./hooks/useVocabEngine";
 
 // ================== AUDIO ==================
 import useTTS_Google from "./hooks/useTTS_Google";
@@ -108,7 +110,7 @@ Feature tambahan:
   // ================== Set Mode ==================
   const [mode, setMode] = useState("freeTalk");
   const modeRef = useRef(mode);
-  // freeTalk | dailyStory | roleplay
+  // freeTalk | dailyStory | roleplay | vocab
 
   // ================== STATE Daily Greeting ==================
   const greetingSentRef = useRef(false);
@@ -242,6 +244,22 @@ Feature tambahan:
       setChatHistory([]);
     }
   };
+
+  // ================== Vocab ==================
+  const {
+    vocab,
+    example, // 🔥 single example for UI
+    examples, // optional (kalau mau debug/list)
+    exampleIndex, // 🔥 untuk UI progress
+    phase,
+    feedback,
+    handleSpeech,
+    next,
+    setPhase,
+    progress,
+    showDice,
+    startSession,
+  } = useVocabEngine();
 
   // ================== Lock Daily ==================
   const [timeAllowed, setTimeAllowed] = useState(false);
@@ -660,6 +678,12 @@ Feature tambahan:
     onFinalResult: async (text) => {
       if (!text) return;
 
+      if (modeRef.current === "vocab") {
+        console.log("🧠 Vocab mode → handle locally");
+        handleSpeech(text); // 🔥 kirim ke vocab engine
+        return;
+      }
+
       let grammarData = null;
 
       if (modeRef.current === "dailyStory") {
@@ -741,7 +765,9 @@ Feature tambahan:
             ? "bg-linear-to-b from-gray-800 to-gray-900"
             : mode === "roleplay"
               ? "bg-linear-to-b from-purple-400 to-indigo-600"
-              : "bg-linear-to-b  from-slate-900 to-blue-950"
+              : mode === "vocab"
+                ? "bg-linear-to-b from-slate-900 to-indigo-950"
+                : "bg-linear-to-b from-slate-900 to-blue-950"
         }`}
       >
         <div
@@ -1132,6 +1158,28 @@ Feature tambahan:
               setActiveChecklist={setActiveChecklist}
             />
           )}
+
+          {mode === "vocab" && (
+            <VocabUI
+              vocab={vocab}
+              example={example}
+              examples={examples}
+              exampleIndex={exampleIndex} // 🔥 untuk UI progress
+              phase={phase}
+              feedback={feedback}
+              next={next}
+              setPhase={setPhase}
+              progress={progress}
+              showDice={showDice}
+              startSession={startSession}
+              // 🔥 TAMBAHAN
+              startRecording={startRecording}
+              stopRecording={stopRecording}
+              isRecording={isRecording}
+              liveTranscript={liveTranscript}
+            />
+          )}
+
           <ModeSelector mode={mode} setMode={handleModeChange} />
           {showModeConfirm && (
             <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
@@ -1215,14 +1263,16 @@ Feature tambahan:
               </div>
             </div>
           )}
-          <ChatSection
-            lupaKata={lupaKata}
-            chatHistory={chatHistory}
-            liveTranscript={liveTranscript}
-            bottomRef={bottomRef}
-            disabled={allDailyComplete}
-            mode={mode}
-          />
+          {mode !== "vocab" && (
+            <ChatSection
+              lupaKata={lupaKata}
+              chatHistory={chatHistory}
+              liveTranscript={liveTranscript}
+              bottomRef={bottomRef}
+              disabled={allDailyComplete}
+              mode={mode}
+            />
+          )}
           {((mode === "freeTalk" && freeTalkStarted) ||
             (mode === "dailyStory" && dailyStarted) ||
             (mode === "roleplay" && rolePlayStarted)) && (

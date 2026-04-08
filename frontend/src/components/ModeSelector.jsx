@@ -9,6 +9,7 @@ export default function ModeSelector({
   // const [lockedMode, setLockedMode] = useState(null); // mode yang sedang dikunci
 
   const modes = [
+    { key: "vocab", icon: "🧠", label: "Vocab", color: "indigo" },
     { key: "dailyStory", icon: "📖", label: "Story", color: "emerald" },
     { key: "freeTalk", icon: "💬", label: "Talk", color: "blue" },
     { key: "roleplay", icon: "🎭", label: "Roleplay", color: "purple" },
@@ -19,6 +20,7 @@ export default function ModeSelector({
       "bg-gradient-to-r from-emerald-500 to-emerald-300 ring-emerald-300",
     blue: "bg-gradient-to-r from-blue-500 to-blue-300 ring-blue-300",
     purple: "bg-gradient-to-r from-purple-500 to-purple-300 ring-purple-300",
+    indigo: "bg-gradient-to-r from-indigo-500 to-indigo-300 ring-indigo-300",
   };
 
   const handleModeChange = (m) => {
