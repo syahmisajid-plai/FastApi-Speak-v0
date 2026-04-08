@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState, useMemo } from "react";
+import { linkBackend } from "../config";
 
 // =========================
 // FALLBACK VOCAB
@@ -46,7 +47,12 @@ const defaultVocab = [
 // ENGINE
 // =========================
 export default function useVocabEngine(vocabList = null) {
-  const data = apiVocab?.length ? apiVocab : defaultVocab;
+  //   const data = apiVocab?.length ? apiVocab : defaultVocab;
+
+  const [apiVocab, setApiVocab] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const data = apiVocab;
 
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState("wordIntro");
@@ -55,9 +61,6 @@ export default function useVocabEngine(vocabList = null) {
 
   const [showDice, setShowDice] = useState(false);
   const [exampleIndex, setExampleIndex] = useState(0);
-
-  const [apiVocab, setApiVocab] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   // =========================
   // CURRENT VOCAB
