@@ -122,9 +122,9 @@ export default function useVocabEngine(vocabList = null) {
     }
   }, [apiVocab]);
 
-  // =========================
+  // ==========================
   // NORMALIZE
-  // =========================
+  // ==========================
   const normalize = (text) =>
     text
       ?.toLowerCase()
