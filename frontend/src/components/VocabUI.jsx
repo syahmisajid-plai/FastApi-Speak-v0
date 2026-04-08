@@ -128,10 +128,36 @@ export default function VocabUI({
                     {/* SHOW WORD */}
                     {phase === "wordIntro" && (
                       <div className="text-center space-y-4 animate-pop">
-                        <h3 className="text-4xl font-extrabold text-indigo-300">
-                          {vocab.word}
-                        </h3>
-                        <p className="text-sm text-white/70">{vocab.meaning}</p>
+                        <div className="text-center space-y-3 animate-pop">
+                          {/* WORD */}
+                          <h3 className="text-4xl font-extrabold text-indigo-300 tracking-tight">
+                            {vocab.word}
+                          </h3>
+
+                          {/* MEANING */}
+                          <p className="text-sm text-white/60 italic">
+                            {vocab.meaning}
+                          </p>
+
+                          {/* META BADGES */}
+                          <div className="flex justify-center gap-2 pt-2">
+                            <span
+                              className="px-3 py-1 text-xs rounded-full
+                              bg-white/5 border border-white/10 text-white/70
+                              backdrop-blur-md"
+                            >
+                              {vocab.type}
+                            </span>
+
+                            <span
+                              className="px-3 py-1 text-xs rounded-full
+                            bg-indigo-500/10 border border-indigo-400/20
+                            text-indigo-300 backdrop-blur-md"
+                            >
+                              Level {vocab.level}
+                            </span>
+                          </div>
+                        </div>
 
                         <Button
                           onClick={() => {
@@ -147,64 +173,78 @@ export default function VocabUI({
                     {/* SPEAKING PHASE */}
                     {(phase === "guidedPractice" ||
                       phase === "makeSentence") && (
-                      <div className="flex flex-col items-center space-y-4 animate-pop">
-                        <h3 className="font-semibold text-center text-lg">
+                      <div className="flex flex-col items-center gap-6 animate-pop">
+                        {/* HEADER */}
+                        <h3 className="font-semibold text-center text-lg text-white/90">
                           {phase === "guidedPractice"
                             ? "📖 Ucapkan Kalimat Ini"
                             : "✍️ Buat Kalimat Sendiri"}
                         </h3>
 
-                        {phase === "guidedPractice" ? (
-                          <div className="bg-white/5 p-4 rounded-lg text-sm text-center text-indigo-200">
-                            {example}
-                          </div>
-                        ) : (
-                          <div className="text-2xl font-bold text-indigo-300">
-                            {vocab.word}
-                          </div>
-                        )}
+                        {/* TARGET CARD */}
+                        <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+                          {phase === "guidedPractice" ? (
+                            <p className="text-sm text-indigo-200 leading-relaxed">
+                              {example}
+                            </p>
+                          ) : (
+                            <p className="text-xl font-bold text-indigo-300">
+                              {vocab.word}
+                            </p>
+                          )}
+                        </div>
 
                         {/* MIC BUTTON */}
-                        <button
-                          onClick={() =>
-                            isRecording ? stopRecording() : startRecording()
-                          }
-                          disabled={!canSpeak}
-                          className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl 
-                          transition-all duration-300 shadow-lg border border-white/10
-                          ${
-                            isRecording
-                              ? "bg-indigo-500/30! text-indigo-300 scale-110 animate-pulse"
-                              : "bg-white/5! text-white/80 hover:bg-white/10! hover:scale-105"
-                          } ${!canSpeak ? "opacity-30" : ""}`}
-                        >
-                          {isRecording ? "⏹" : "🎤"}
-                        </button>
+                        <div className="flex flex-col items-center gap-2">
+                          <button
+                            onClick={() =>
+                              isRecording ? stopRecording() : startRecording()
+                            }
+                            disabled={!canSpeak}
+                            className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl 
+                              transition-all duration-300 shadow-lg border border-white/10
+                              ${
+                                isRecording
+                                  ? "bg-indigo-500/30! text-indigo-300 scale-110 animate-pulse"
+                                  : "bg-white/5! text-white/80 hover:bg-white/10 hover:scale-105"
+                              } ${!canSpeak ? "opacity-30" : ""}`}
+                          >
+                            {isRecording ? "⏹" : "🎤"}
+                          </button>
 
-                        <p className="text-xs text-white/50 text-center">
-                          {isRecording
-                            ? "Sedang mendengarkan..."
-                            : "Tap mic lalu mulai bicara"}
-                        </p>
-
-                        {liveTranscript && (
-                          <p className="text-sm text-white/70 italic text-center">
-                            "{liveTranscript}"
+                          <p className="text-xs text-white/50 text-center">
+                            {isRecording
+                              ? "Mendengarkan..."
+                              : "Tap untuk mulai berbicara"}
                           </p>
+                        </div>
+
+                        {/* TRANSCRIPT */}
+                        {liveTranscript && (
+                          <div className="text-center">
+                            <p className="text-sm text-white/60">
+                              Kamu berkata:
+                            </p>
+                            <p className="text-sm text-white/80 italic">
+                              "{liveTranscript}"
+                            </p>
+                          </div>
                         )}
 
+                        {/* FEEDBACK */}
                         {feedback && (
-                          <p
-                            className={`text-sm font-medium text-center ${
+                          <div
+                            className={`text-sm font-medium text-center px-3 py-1 rounded-full
+                            ${
                               feedback.includes("Benar") ||
                               feedback.includes("Bagus") ||
                               feedback.includes("Lanjut")
-                                ? "text-green-400"
-                                : "text-red-400"
+                                ? "bg-green-500/10 text-green-400"
+                                : "bg-blue-500/10 text-blue-400"
                             }`}
                           >
                             {feedback}
-                          </p>
+                          </div>
                         )}
                       </div>
                     )}

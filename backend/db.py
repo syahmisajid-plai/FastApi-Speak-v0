@@ -207,6 +207,31 @@ def init_db():
     #     """
     # )
 
+        # =========================
+    # VOCAB TABLE
+    # =========================
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS vocab (
+            id INTEGER PRIMARY KEY,
+            word TEXT NOT NULL UNIQUE,
+            meaning TEXT NOT NULL,
+            type TEXT NOT NULL,
+            level TEXT NOT NULL
+        )
+    """)
+
+    # =========================
+    # VOCAB EXAMPLES TABLE
+    # =========================
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS vocab_examples (
+            id SERIAL PRIMARY KEY,
+            vocab_id INTEGER NOT NULL,
+            example TEXT NOT NULL,
+            FOREIGN KEY (vocab_id) REFERENCES vocab (id) ON DELETE CASCADE
+        )
+    """)
+
 
     conn.commit()
     conn.close()

@@ -1,53 +1,50 @@
 import { useRef, useEffect, useState, useMemo } from "react";
 
-// 🔥 fallback dummy
+// =========================
+// FALLBACK VOCAB
+// =========================
 const defaultVocab = [
   {
+    id: 1,
     word: "happy",
     meaning: "merasa senang",
+    type: "adjective",
+    level: "A1",
     examples: [
       "i am happy",
-      "she is happy",
-      "they are happy",
-      "we feel happy",
-      "i feel very happy",
+      "she is very happy",
+      "they are happy with the result",
     ],
   },
   {
+    id: 2,
     word: "eat",
     meaning: "makan",
-    examples: [
-      "i eat rice",
-      "they eat together",
-      "we eat lunch",
-      "she eats fruit",
-      "i eat breakfast",
-    ],
+    type: "verb",
+    level: "A1",
+    examples: ["i eat rice", "they eat together", "she eats fruit"],
   },
   {
+    id: 3,
     word: "go",
     meaning: "pergi",
-    examples: [
-      "i go home",
-      "we go to school",
-      "they go there",
-      "she goes to market",
-      "i go now",
-    ],
+    type: "verb",
+    level: "A1",
+    examples: ["i go home", "we go to school", "she goes to market"],
   },
   {
+    id: 4,
     word: "like",
     meaning: "suka",
-    examples: [
-      "i like coffee",
-      "i like music",
-      "she likes tea",
-      "they like it",
-      "we like this game",
-    ],
+    type: "verb",
+    level: "A1",
+    examples: ["i like coffee", "she likes tea", "we like this game"],
   },
 ];
 
+// =========================
+// ENGINE
+// =========================
 export default function useVocabEngine(vocabList = null) {
   const data = vocabList?.length ? vocabList : defaultVocab;
 
@@ -57,23 +54,17 @@ export default function useVocabEngine(vocabList = null) {
   const [feedback, setFeedback] = useState("");
 
   const [showDice, setShowDice] = useState(false);
-
-  // 🔥 NEW: track example progress
   const [exampleIndex, setExampleIndex] = useState(0);
 
   // =========================
-  // SAFE VOCAB
+  // CURRENT VOCAB
   // =========================
   const vocab = data[index] || null;
+  const examples = useMemo(() => vocab?.examples || [], [vocab?.id]);
+  const example = examples[exampleIndex] || "";
 
   // =========================
-  // SEQUENTIAL EXAMPLE (1 BY 1)
-  // =========================
-  const example = vocab?.examples?.[exampleIndex] || "";
-  const examples = useMemo(() => vocab?.examples || [], [index]);
-
-  // =========================
-  // REFS (anti stale state)
+  // REFS (avoid stale state)
   // =========================
   const phaseRef = useRef(phase);
   const vocabRef = useRef(vocab);
@@ -102,7 +93,7 @@ export default function useVocabEngine(vocabList = null) {
   }, [attempt]);
 
   // =========================
-  // NORMALIZE TEXT
+  // NORMALIZE
   // =========================
   const normalize = (text) =>
     text
@@ -111,7 +102,7 @@ export default function useVocabEngine(vocabList = null) {
       .trim();
 
   // =========================
-  // HANDLE SPEECH
+  // SPEECH HANDLER
   // =========================
   const handleSpeech = (text) => {
     const currentPhase = phaseRef.current;
@@ -125,54 +116,41 @@ export default function useVocabEngine(vocabList = null) {
     const user = normalize(text);
     const target = normalize(currentExamples[currentExampleIndex]);
 
-    console.log("=== 🧠 VOCAB DEBUG ===");
-    console.log("PHASE:", currentPhase);
-    console.log("👤 USER:", user);
-    console.log("🎯 TARGET:", target);
-    console.log("📍 EXAMPLE INDEX:", currentExampleIndex);
-
     const isCorrect = user === target;
 
-    console.log("✅ MATCH RESULT:", isCorrect);
-    console.log("======================");
-
     // =========================
-    // LISTEN EXAMPLE (SEQUENTIAL DRILL)
+    // GUIDED PRACTICE
     // =========================
     if (currentPhase === "guidedPractice") {
       if (isCorrect) {
-        setFeedback("✅ Benar!");
-
         const nextIndex = currentExampleIndex + 1;
 
-        // 🔥 masih ada example berikutnya
-        if (nextIndex < currentVocab.examples.length) {
+        setFeedback("✅ Correct!");
+        setAttempt(0);
+
+        if (nextIndex < currentExamples.length) {
           setExampleIndex(nextIndex);
-          setAttempt(0);
-          setFeedback("➡️ Lanjut example berikutnya");
         } else {
-          // 🔥 selesai semua example
           setExampleIndex(0);
-          setAttempt(0);
           setPhase("makeSentence");
-          setFeedback("🎯 Semua example selesai!");
+          setFeedback("🎯 All examples done!");
         }
       } else {
         if (currentAttempt === 0) {
-          setFeedback("❌ Coba lagi");
+          setFeedback("❌ Try again");
           setAttempt(1);
         } else {
           const nextIndex = currentExampleIndex + 1;
 
-          if (nextIndex < currentVocab.examples.length) {
+          setAttempt(0);
+
+          if (nextIndex < currentExamples.length) {
             setExampleIndex(nextIndex);
-            setAttempt(0);
-            setFeedback("➡️ Lanjut example berikutnya");
+            setFeedback("➡️ Next example");
           } else {
             setExampleIndex(0);
-            setAttempt(0);
             setPhase("makeSentence");
-            setFeedback("🎯 Lanjut ke sentence!");
+            setFeedback("🎯 Move to sentence");
           }
         }
       }
@@ -184,11 +162,7 @@ export default function useVocabEngine(vocabList = null) {
     else if (currentPhase === "makeSentence") {
       const containsWord = user.includes(currentVocab.word.toLowerCase());
 
-      if (containsWord) {
-        setFeedback("🔥 Bagus!");
-      } else {
-        setFeedback("👍 Oke, tapi coba pakai katanya ya");
-      }
+      setFeedback(containsWord ? "🔥 Good!" : "👍 Try using the target word");
 
       setPhase("completed");
     }
@@ -197,7 +171,7 @@ export default function useVocabEngine(vocabList = null) {
   // =========================
   // NEXT VOCAB
   // =========================
-  const next = async () => {
+  const next = () => {
     setShowDice(true);
 
     setFeedback("");
@@ -205,19 +179,26 @@ export default function useVocabEngine(vocabList = null) {
     setExampleIndex(0);
     setPhase("wordIntro");
 
-    await new Promise((r) => setTimeout(r, 1000));
-
-    setIndex((i) => i + 1);
-
-    setShowDice(false);
+    setTimeout(() => {
+      setIndex((i) => i + 1);
+    }, 1000);
   };
+
+  // =========================
+  // DICE TIMER
+  // =========================
+  useEffect(() => {
+    if (!showDice) return;
+
+    const t = setTimeout(() => {
+      setShowDice(false);
+    }, 1000);
+
+    return () => clearTimeout(t);
+  }, [showDice]);
 
   const startSession = () => {
     setShowDice(true);
-
-    setTimeout(() => {
-      setShowDice(false);
-    }, 1000);
   };
 
   // =========================
@@ -227,9 +208,9 @@ export default function useVocabEngine(vocabList = null) {
 
   return {
     vocab,
-    example, // 🔥 single example for UI
-    examples, // optional (kalau mau debug/list)
-    exampleIndex, // 🔥 untuk UI progress
+    example,
+    examples,
+    exampleIndex,
     phase,
     feedback,
     progress,
