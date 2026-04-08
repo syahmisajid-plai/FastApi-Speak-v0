@@ -940,3 +940,57 @@ def get_user_for_login(username_or_email: str):
         }
 
     return user
+
+
+def get_all_vocab():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # =========================
+    # JOIN vocab + examples
+    # =========================
+    cursor.execute("""
+        SELECT 
+            v.id,
+            v.word,
+            v.meaning,
+            v.type,
+            v.level,
+            ve.example
+        FROM vocab v
+        LEFT JOIN vocab_examples ve
+        ON v.id = ve.vocab_id
+        ORDER BY v.id;
+    """)
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    # =========================
+    # transform ke format JSON
+    # =========================
+    vocab_map = {}
+
+    for row in rows:
+        vocab_id = row[0]
+        word = row[1]
+        meaning = row[2]
+        type_ = row[3]
+        level = row[4]
+        example = row[5]
+
+        if vocab_id not in vocab_map:
+            vocab_map[vocab_id] = {
+                "id": vocab_id,
+                "word": word,
+                "meaning": meaning,
+                "type": type_,
+                "level": level,
+                "examples": []
+            }
+
+        if example:
+            vocab_map[vocab_id]["examples"].append(example)
+
+    return list(vocab_map.values())

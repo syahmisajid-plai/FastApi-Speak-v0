@@ -46,7 +46,7 @@ const defaultVocab = [
 // ENGINE
 // =========================
 export default function useVocabEngine(vocabList = null) {
-  const data = vocabList?.length ? vocabList : defaultVocab;
+  const data = apiVocab?.length ? apiVocab : defaultVocab;
 
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState("wordIntro");
@@ -56,10 +56,13 @@ export default function useVocabEngine(vocabList = null) {
   const [showDice, setShowDice] = useState(false);
   const [exampleIndex, setExampleIndex] = useState(0);
 
+  const [apiVocab, setApiVocab] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   // =========================
   // CURRENT VOCAB
   // =========================
-  const vocab = data[index] || null;
+  const vocab = data?.length ? data[index] : null;
   const examples = useMemo(() => vocab?.examples || [], [vocab?.id]);
   const example = examples[exampleIndex] || "";
 
@@ -91,6 +94,33 @@ export default function useVocabEngine(vocabList = null) {
   useEffect(() => {
     attemptRef.current = attempt;
   }, [attempt]);
+
+  useEffect(() => {
+    const fetchVocab = async () => {
+      try {
+        const res = await fetch(`${linkBackend}/vocab/all`);
+        const json = await res.json();
+
+        if (json?.data?.length) {
+          setApiVocab(json.data);
+        }
+      } catch (err) {
+        console.log("❌ Failed to fetch vocab:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVocab();
+  }, []);
+
+  useEffect(() => {
+    if (apiVocab.length) {
+      setIndex(0);
+      setExampleIndex(0);
+      setPhase("wordIntro");
+    }
+  }, [apiVocab]);
 
   // =========================
   // NORMALIZE
