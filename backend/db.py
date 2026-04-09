@@ -1009,3 +1009,44 @@ def get_all_vocab():
             })
 
     return list(vocab_map.values())
+
+def mark_vocab_completed(user_id: str, vocab_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            INSERT OR IGNORE INTO user_completed_vocab (user_id, vocab_id)
+            VALUES (?, ?)
+        """, (user_id, vocab_id))
+
+        conn.commit()
+
+        return {
+            "user_id": user_id,
+            "vocab_id": vocab_id,
+            "status": "completed"
+        }
+
+    except Exception as e:
+        conn.rollback()
+        raise e
+
+    finally:
+        conn.close()
+
+def is_vocab_completed(user_id: str, vocab_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT 1
+        FROM user_completed_vocab
+        WHERE user_id = ? AND vocab_id = ?
+        LIMIT 1
+    """, (user_id, vocab_id))
+
+    result = cursor.fetchone()
+    conn.close()
+
+    return result is not None
