@@ -947,7 +947,7 @@ def get_all_vocab():
     cursor = conn.cursor()
 
     # =========================
-    # JOIN vocab + examples
+    # JOIN vocab + examples + translation
     # =========================
     cursor.execute("""
         SELECT 
@@ -956,7 +956,8 @@ def get_all_vocab():
             v.meaning,
             v.type,
             v.level,
-            ve.example
+            ve.example,
+            ve.translation
         FROM vocab v
         LEFT JOIN vocab_examples ve
         ON v.id = ve.vocab_id
@@ -964,7 +965,6 @@ def get_all_vocab():
     """)
 
     rows = cursor.fetchall()
-
     conn.close()
 
     # =========================
@@ -974,23 +974,24 @@ def get_all_vocab():
 
     for row in rows:
         vocab_id = row[0]
-        word = row[1]
-        meaning = row[2]
-        type_ = row[3]
-        level = row[4]
-        example = row[5]
 
         if vocab_id not in vocab_map:
             vocab_map[vocab_id] = {
                 "id": vocab_id,
-                "word": word,
-                "meaning": meaning,
-                "type": type_,
-                "level": level,
+                "word": row[1],
+                "meaning": row[2],
+                "type": row[3],
+                "level": row[4],
                 "examples": []
             }
 
+        example = row[5]
+        translation = row[6]
+
         if example:
-            vocab_map[vocab_id]["examples"].append(example)
+            vocab_map[vocab_id]["examples"].append({
+                "en": example,
+                "id": translation if translation else ""
+            })
 
     return list(vocab_map.values())
