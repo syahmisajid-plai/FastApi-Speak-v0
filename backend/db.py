@@ -1036,3 +1036,21 @@ def mark_vocab_completed(user_id: str, vocab_id: int):
 
     finally:
         conn.close()
+
+def get_completed_vocab_ids(user_id: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT vocab_id
+            FROM user_completed_vocab
+            WHERE user_id = %s
+        """, (user_id,))
+
+        rows = cursor.fetchall()
+
+        return [r[0] for r in rows]
+
+    finally:
+        conn.close()

@@ -1,7 +1,7 @@
 import useVocabList from "../hooks/useVocabList";
 
-export default function VocabList({ onClose }) {
-  const { vocabList, loading } = useVocabList();
+export default function VocabList({ onClose, userId }) {
+  const { vocabList, loading } = useVocabList(userId);
 
   return (
     <div className="fixed inset-0 z-50">
@@ -33,7 +33,12 @@ export default function VocabList({ onClose }) {
             {vocabList.map((item) => (
               <div
                 key={item.id}
-                className="bg-white/5 border border-white/10 rounded-xl p-4 hover:scale-[1.02] transition"
+                className={`border border-white/10 rounded-xl p-4 transition
+      ${
+        item.isCompleted
+          ? "bg-white/5 opacity-40 blur-[1px] pointer-events-none"
+          : "bg-white/5 hover:scale-[1.02]"
+      }`}
               >
                 <h2 className="text-white font-semibold">{item.word}</h2>
 
@@ -48,7 +53,20 @@ export default function VocabList({ onClose }) {
                   </span>
                 </div>
 
-                <button className="mt-3 w-full py-1 text-sm bg-green-500/10 text-green-400 rounded">
+                {/* 🔒 optional badge */}
+                {item.isCompleted && (
+                  <p className="text-xs text-green-400 mt-2">✔ Completed</p>
+                )}
+
+                <button
+                  className={`mt-3 w-full py-1! text-sm rounded
+                    ${
+                      item.isCompleted
+                        ? "bg-gray-500/10! text-gray-500 cursor-not-allowed"
+                        : "bg-green-500/10! text-green-400"
+                    }`}
+                  disabled={item.isCompleted}
+                >
                   Practice
                 </button>
               </div>

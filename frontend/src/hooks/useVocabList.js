@@ -1,19 +1,31 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { linkBackend } from "../config";
 
-export default function useVocabList() {
+export default function useVocabList(userId) {
   const [vocabList, setVocabList] = useState([]);
+  const [completedIds, setCompletedIds] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchVocab = async () => {
-      try {
-        const res = await fetch(`${linkBackend}/vocab/all`);
-        const json = await res.json();
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
 
-        if (json?.data?.length) {
-          setVocabList(json.data);
-        }
+    const fetchData = async () => {
+      setLoading(true); // penting supaya reset tiap userId berubah
+
+      try {
+        const [vocabRes, completedRes] = await Promise.all([
+          fetch(`${linkBackend}/vocab/all`),
+          fetch(`${linkBackend}/vocab/completed-ids/${userId}`),
+        ]);
+
+        const vocabJson = await vocabRes.json();
+        const completedJson = await completedRes.json();
+
+        setVocabList(vocabJson.data || []);
+        setCompletedIds(completedJson.completed_vocab_ids || []);
       } catch (err) {
         console.log("❌ Failed:", err);
       } finally {
@@ -21,8 +33,21 @@ export default function useVocabList() {
       }
     };
 
-    fetchVocab();
-  }, []);
+    fetchData();
+  }, [userId]);
 
-  return { vocabList, loading };
+  // 🔥 merge status
+  const enrichedVocabList = useMemo(() => {
+    const completedSet = new Set(completedIds);
+
+    return vocabList.map((v) => ({
+      ...v,
+      isCompleted: completedSet.has(v.id),
+    }));
+  }, [vocabList, completedIds]);
+
+  return {
+    vocabList: enrichedVocabList,
+    loading,
+  };
 }

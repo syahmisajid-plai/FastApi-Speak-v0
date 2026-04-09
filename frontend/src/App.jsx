@@ -798,7 +798,12 @@ Feature tambahan:
           />
 
           {/* VOCAB LIST */}
-          {showVocab && <VocabList onClose={() => setShowVocab(false)} />}
+          {showVocab && (
+            <VocabList
+              onClose={() => setShowVocab(false)}
+              userId={userIdRef.current}
+            />
+          )}
           {/* <div className="text-white">
             <p>Mic Volume: {volume}</p>
             <p>
