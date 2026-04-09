@@ -16,6 +16,7 @@ import DailySummaryViewer from "./components/DailySummaryViewer";
 import FreeTalkUI from "./components/FreeTalkUI";
 import VocabUI from "./components/VocabUI";
 import LoginOverlay from "./components/LoginOverlay";
+import VocabList from "./components/VocabList";
 
 // ================== STYLES ==================
 import "./App.css";
@@ -98,6 +99,8 @@ Feature tambahan:
 
   const [showLogin, setShowLogin] = useState(true);
   const [user, setUser] = useState(null);
+
+  const [showVocab, setShowVocab] = useState(false);
 
   // ================== Tambahkan state ==================
   const [pendingMode, setPendingMode] = useState(null);
@@ -261,6 +264,11 @@ Feature tambahan:
     showDice,
     startSession,
   } = useVocabEngine();
+
+  // showVocab List
+  useEffect(() => {
+    document.body.style.overflow = showVocab ? "hidden" : "auto";
+  }, [showVocab]);
 
   // ================== Lock Daily ==================
   const [timeAllowed, setTimeAllowed] = useState(false);
@@ -786,8 +794,11 @@ Feature tambahan:
             streakDaily={streakDaily}
             fetchStreakDaily={fetchStreakDaily}
             activeChecklist={activeChecklist}
+            onOpenVocab={() => setShowVocab(true)}
           />
 
+          {/* VOCAB LIST */}
+          {showVocab && <VocabList onClose={() => setShowVocab(false)} />}
           {/* <div className="text-white">
             <p>Mic Volume: {volume}</p>
             <p>
@@ -813,7 +824,6 @@ Feature tambahan:
               </div>
             )}
           </div> */}
-
           {/* Login Overlay */}
           {showLogin && (
             <LoginOverlay
@@ -828,7 +838,6 @@ Feature tambahan:
               }}
             />
           )}
-
           {/* ================== DEBUG: Open Diary Daily Story ================== */}
           {/* <div className="w-full flex justify-center mb-2">
             <button
@@ -1133,7 +1142,6 @@ Feature tambahan:
               <option value="test7">test7</option>
             </select>
           </div> */}
-
           {mode === "freeTalk" && (
             <FreeTalkUI
               started={freeTalkStarted}
@@ -1159,7 +1167,6 @@ Feature tambahan:
               setActiveChecklist={setActiveChecklist}
             />
           )}
-
           {mode === "vocab" && (
             <VocabUI
               vocab={vocab}
@@ -1181,7 +1188,6 @@ Feature tambahan:
               liveTranscript={liveTranscript}
             />
           )}
-
           <ModeSelector mode={mode} setMode={handleModeChange} />
           {showModeConfirm && (
             <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">

@@ -233,6 +233,19 @@ def init_db():
         )
     """)
 
+    # =========================
+    # USER COMPLETED VOCAB TABLE
+    # =========================
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_completed_vocab (
+            user_id TEXT NOT NULL,
+            vocab_id INTEGER NOT NULL,
+
+            PRIMARY KEY (user_id, vocab_id),
+            FOREIGN KEY (vocab_id) REFERENCES vocab (id) ON DELETE CASCADE
+        )
+    """)
+
 
     conn.commit()
     conn.close()

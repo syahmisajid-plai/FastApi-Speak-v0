@@ -11,6 +11,7 @@ export default function Header({
   streakDaily,
   fetchStreakDaily,
   activeChecklist,
+  onOpenVocab,
 }) {
   const [openMenu, setOpenMenu] = useState(false);
   const [showSummaryDaily, setShowSummaryDaily] = useState(false);
@@ -82,6 +83,23 @@ export default function Header({
                 "
               >
                 📖 Open<span className="hidden sm:inline">Diary</span>
+              </button>
+            )}
+
+            {mode === "vocab" && (
+              <button
+                onClick={onOpenVocab}
+                className="
+              px-3! py-1.5!
+              rounded-full
+              bg-blue-500/10!
+              text-xs text-blue-400
+              hover:bg-blue-500/20!
+              transition
+              flex items-center gap-1
+            "
+              >
+                📚 <span className="hidden sm:inline">Vocab</span>
               </button>
             )}
 
