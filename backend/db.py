@@ -1016,8 +1016,10 @@ def mark_vocab_completed(user_id: str, vocab_id: int):
 
     try:
         cursor.execute("""
-            INSERT OR IGNORE INTO user_completed_vocab (user_id, vocab_id)
-            VALUES (?, ?)
+            INSERT INTO user_completed_vocab (user_id, vocab_id)
+            VALUES (%s, %s)
+            ON CONFLICT (user_id, vocab_id)
+            DO NOTHING
         """, (user_id, vocab_id))
 
         conn.commit()
