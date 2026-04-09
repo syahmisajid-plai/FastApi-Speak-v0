@@ -34,11 +34,11 @@ export default function VocabList({ onClose, userId }) {
               <div
                 key={item.id}
                 className={`border border-white/10 rounded-xl p-4 transition
-      ${
-        item.isCompleted
-          ? "bg-white/5 opacity-40 blur-[1px] pointer-events-none"
-          : "bg-white/5 hover:scale-[1.02]"
-      }`}
+                ${
+                  item.isCompleted
+                    ? "bg-white/5 hover:scale-[1.02]"
+                    : "bg-white/5 opacity-40 blur-[1px] pointer-events-none"
+                }`}
               >
                 <h2 className="text-white font-semibold">{item.word}</h2>
 
