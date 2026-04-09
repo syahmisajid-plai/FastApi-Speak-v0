@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from db import get_all_vocab, mark_vocab_completed, is_vocab_completed
+from db import get_all_vocab, mark_vocab_completed
 
 router = APIRouter(prefix="/vocab", tags=["Vocab"])
 
@@ -42,33 +42,8 @@ def complete_vocab(payload: VocabCompleteRequest):
         }
 
     except Exception as e:
-        print("❌ COMPLETE ERROR:", e)
+        print("❌ COMPLETE ERROR:", str(e))
         raise HTTPException(
             status_code=500,
-            detail="Failed to mark vocab as completed"
-        )
-
-
-# =========================
-# CHECK COMPLETION STATUS
-# =========================
-@router.get("/check-completed")
-def check_vocab_completed(user_id: str, vocab_id: int):
-    try:
-        status = is_vocab_completed(user_id, vocab_id)
-
-        return {
-            "success": True,
-            "data": {
-                "user_id": user_id,
-                "vocab_id": vocab_id,
-                "is_completed": status
-            }
-        }
-
-    except Exception as e:
-        print("❌ CHECK ERROR:", e)
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to check vocab status"
+            detail=str(e)
         )

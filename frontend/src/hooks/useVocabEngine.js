@@ -46,18 +46,30 @@ const defaultVocab = [
 // =========================
 // ENGINE
 // =========================
-export default function useVocabEngine(vocabList = null) {
+export default function useVocabEngine(userIdRef) {
   //   const data = apiVocab?.length ? apiVocab : defaultVocab;
 
   const [apiVocab, setApiVocab] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const shuffledData = useMemo(() => {
+  const [completedMap, setCompletedMap] = useState({});
+
+  const filteredData = useMemo(() => {
     if (!apiVocab.length) return [];
-    return [...apiVocab].sort(() => Math.random() - 0.5);
-  }, [apiVocab]);
+
+    return apiVocab.filter((v) => !completedMap[v.id]);
+  }, [apiVocab, completedMap]);
+
+  const shuffledData = useMemo(() => {
+    if (!filteredData.length) return [];
+    return [...filteredData].sort(() => Math.random() - 0.5);
+  }, [filteredData]);
 
   const data = shuffledData;
+
+  useEffect(() => {
+    setIndex(0);
+  }, [shuffledData]);
 
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState("wordIntro");
@@ -71,7 +83,7 @@ export default function useVocabEngine(vocabList = null) {
   // CURRENT VOCAB
   // =========================
   const vocab = data?.length ? data[index % data.length] : null;
-  const examples = useMemo(() => vocab?.examples || [], [vocab?.id]);
+  const examples = useMemo(() => vocab?.examples || [], [vocab]);
   const exampleObj = examples[exampleIndex] || {};
   const example = exampleObj.en || "";
   const translation = exampleObj.id || "";
@@ -131,6 +143,65 @@ export default function useVocabEngine(vocabList = null) {
       setPhase("wordIntro");
     }
   }, [apiVocab]);
+
+  // =========================
+  // UPDATE VOCAB USER
+  // =========================
+  const markCompleted = async (userId, vocabId) => {
+    try {
+      console.log("🔥 [MARK COMPLETED] REQUEST:");
+      console.log("➡️ userId:", userId);
+      console.log("➡️ vocabId:", vocabId);
+      console.log("➡️ payload:", {
+        user_id: userId,
+        vocab_id: vocabId,
+      });
+
+      const res = await fetch(`${linkBackend}/vocab/complete`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          vocab_id: vocabId,
+        }),
+      });
+
+      console.log("📡 response status:", res.status);
+
+      const data = await res.json().catch(() => null);
+
+      console.log("📦 response body:", data);
+
+      setCompletedMap((prev) => ({
+        ...prev,
+        [vocabId]: true,
+      }));
+    } catch (err) {
+      console.log("❌ mark completed error:", err);
+    }
+  };
+
+  const hasMarkedRef = useRef(false);
+
+  useEffect(() => {
+    if (phase !== "completed") {
+      hasMarkedRef.current = false;
+      return;
+    }
+
+    if (hasMarkedRef.current) return;
+
+    hasMarkedRef.current = true;
+
+    const vocabId = vocabRef.current?.id;
+    const userId = userIdRef?.current || "user123";
+
+    if (vocabId) {
+      markCompleted(userId, vocabId);
+    }
+  }, [phase]);
 
   // ==========================
   // NORMALIZE
@@ -247,8 +318,7 @@ export default function useVocabEngine(vocabList = null) {
   // =========================
   // PROGRESS
   // =========================
-  const progress = `${index + 1}/${data.length}`;
-
+  const progress = data.length ? `${index + 1}/${data.length}` : "0/0";
   return {
     vocab,
     example,

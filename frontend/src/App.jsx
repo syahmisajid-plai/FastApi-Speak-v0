@@ -263,7 +263,7 @@ Feature tambahan:
     progress,
     showDice,
     startSession,
-  } = useVocabEngine();
+  } = useVocabEngine(userIdRef);
 
   // showVocab List
   useEffect(() => {

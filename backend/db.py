@@ -1034,19 +1034,3 @@ def mark_vocab_completed(user_id: str, vocab_id: int):
 
     finally:
         conn.close()
-
-def is_vocab_completed(user_id: str, vocab_id: int):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT 1
-        FROM user_completed_vocab
-        WHERE user_id = ? AND vocab_id = ?
-        LIMIT 1
-    """, (user_id, vocab_id))
-
-    result = cursor.fetchone()
-    conn.close()
-
-    return result is not None
