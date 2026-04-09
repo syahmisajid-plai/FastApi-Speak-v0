@@ -207,7 +207,7 @@ def init_db():
     #     """
     # )
 
-        # =========================
+    # =========================
     # VOCAB TABLE
     # =========================
     cursor.execute("""
@@ -228,6 +228,7 @@ def init_db():
             id SERIAL PRIMARY KEY,
             vocab_id INTEGER NOT NULL,
             example TEXT NOT NULL,
+            translation TEXT,
             FOREIGN KEY (vocab_id) REFERENCES vocab (id) ON DELETE CASCADE
         )
     """)

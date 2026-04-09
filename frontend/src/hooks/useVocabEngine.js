@@ -52,7 +52,12 @@ export default function useVocabEngine(vocabList = null) {
   const [apiVocab, setApiVocab] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const data = apiVocab;
+  const shuffledData = useMemo(() => {
+    if (!apiVocab.length) return [];
+    return [...apiVocab].sort(() => Math.random() - 0.5);
+  }, [apiVocab]);
+
+  const data = shuffledData;
 
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState("wordIntro");
@@ -65,9 +70,11 @@ export default function useVocabEngine(vocabList = null) {
   // =========================
   // CURRENT VOCAB
   // =========================
-  const vocab = data?.length ? data[index] : null;
+  const vocab = data?.length ? data[index % data.length] : null;
   const examples = useMemo(() => vocab?.examples || [], [vocab?.id]);
-  const example = examples[exampleIndex] || "";
+  const exampleObj = examples[exampleIndex] || {};
+  const example = exampleObj.en || "";
+  const translation = exampleObj.id || "";
 
   // =========================
   // REFS (avoid stale state)
@@ -146,10 +153,13 @@ export default function useVocabEngine(vocabList = null) {
 
     if (!currentVocab) return;
 
-    const user = normalize(text);
-    const target = normalize(currentExamples[currentExampleIndex]);
+    if (!currentExamples[currentExampleIndex]) return;
 
-    const isCorrect = user === target;
+    const user = normalize(text);
+    const target = normalize(currentExamples[currentExampleIndex]?.en);
+
+    const isCorrect =
+      user === target || user.includes(target) || target.includes(user);
 
     // =========================
     // GUIDED PRACTICE
@@ -242,6 +252,7 @@ export default function useVocabEngine(vocabList = null) {
   return {
     vocab,
     example,
+    translation,
     examples,
     exampleIndex,
     phase,

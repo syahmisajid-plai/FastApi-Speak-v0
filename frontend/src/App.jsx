@@ -249,6 +249,7 @@ Feature tambahan:
   const {
     vocab,
     example, // 🔥 single example for UI
+    translation,
     examples, // optional (kalau mau debug/list)
     exampleIndex, // 🔥 untuk UI progress
     phase,
@@ -1163,6 +1164,7 @@ Feature tambahan:
             <VocabUI
               vocab={vocab}
               example={example}
+              translation={translation}
               examples={examples}
               exampleIndex={exampleIndex} // 🔥 untuk UI progress
               phase={phase}

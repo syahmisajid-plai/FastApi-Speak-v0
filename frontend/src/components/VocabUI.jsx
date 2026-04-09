@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 export default function VocabUI({
   vocab,
   example,
+  translation,
   exampleIndex,
   phase,
   feedback,
@@ -184,9 +185,19 @@ export default function VocabUI({
                         {/* TARGET CARD */}
                         <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-center">
                           {phase === "guidedPractice" ? (
-                            <p className="text-sm text-indigo-200 leading-relaxed">
-                              {example}
-                            </p>
+                            <div className="space-y-2">
+                              {/* English */}
+                              <p className="text-sm text-indigo-200 leading-relaxed">
+                                {example}
+                              </p>
+
+                              {/* Indonesian */}
+                              {translation && (
+                                <p className="text-xs text-white/50 italic">
+                                  {translation}
+                                </p>
+                              )}
+                            </div>
                           ) : (
                             <p className="text-xl font-bold text-indigo-300">
                               {vocab.word}
