@@ -40,6 +40,12 @@
 
 - setelah masuk phase baru daily, ada kata kata dari AI✅
 
+- Button pre-next perbaiki jadi tiap phase
+
+- Daily dibuka 24 Jam (Tambahkan Lagi Jam untuk Batasan Phase Daily)
+
+- Perbaiki Promp Freeuse Talk
+
 - Pindahkan Logic di Roleplay.jsx ke useRoleplay.js
 
 - Tambahkan List Checklist Mengambang

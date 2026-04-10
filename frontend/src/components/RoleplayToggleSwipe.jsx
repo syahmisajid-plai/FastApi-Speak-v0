@@ -80,6 +80,8 @@ export default function RoleplayToggleSwipe({
 
   const [hasFinished, setHasFinished] = useState(false);
 
+  const [isMissionOpen, setIsMissionOpen] = useState(true);
+
   // Checklist Selesai
   useEffect(() => {
     if (!activeChecklist || !onFinish || hasFinished) return;
@@ -322,59 +324,78 @@ export default function RoleplayToggleSwipe({
               {/* Checklist */}
               {activeScenario && activeChecklist && (
                 <div className="mt-3 bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/10 shadow-sm">
-                  {/* HEADER */}
-                  <p className="text-[11px] uppercase tracking-wide text-white/60 mb-2">
-                    🎯 Mission
-                  </p>
+                  {/* HEADER + TOGGLE */}
+                  <div
+                    className="flex items-center justify-between cursor-pointer"
+                    onClick={() => setIsMissionOpen(!isMissionOpen)}
+                  >
+                    <p className="text-[11px] uppercase tracking-wide text-white/60">
+                      🎯 Mission
+                    </p>
 
-                  {/* CONTEXT: Situation + Goal */}
-                  {(mission?.situation || mission?.goal) && (
-                    <div className="mb-3 space-y-2">
-                      {mission?.situation && (
-                        <div className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10">
-                          <p className="text-[10px] uppercase text-white/40 mb-[2px]">
-                            Situation
-                          </p>
-                          <p className="text-xs text-white/85 leading-snug">
-                            {mission.situation}
-                          </p>
+                    {/* ICON PANAH (rotate animasi) */}
+                    <span
+                      className={`text-white/60 text-sm transition-transform duration-300 ${
+                        isMissionOpen ? "rotate-180" : "rotate-0"
+                      }`}
+                    >
+                      ▼
+                    </span>
+                  </div>
+
+                  {/* CONTENT */}
+                  {isMissionOpen && (
+                    <>
+                      {/* CONTEXT: Situation + Goal */}
+                      {(mission?.situation || mission?.goal) && (
+                        <div className="mt-3 mb-3 space-y-2">
+                          {mission?.situation && (
+                            <div className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10">
+                              <p className="text-[10px] uppercase text-white/40 mb-[2px]">
+                                Situation
+                              </p>
+                              <p className="text-xs text-white/85 leading-snug">
+                                {mission.situation}
+                              </p>
+                            </div>
+                          )}
+
+                          {mission?.goal && (
+                            <div className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10">
+                              <p className="text-[10px] uppercase text-white/40 mb-[2px]">
+                                Goal
+                              </p>
+                              <p className="text-xs text-white/90 font-medium leading-snug">
+                                {mission.goal}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       )}
 
-                      {mission?.goal && (
-                        <div className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10">
-                          <p className="text-[10px] uppercase text-white/40 mb-[2px]">
-                            Goal
-                          </p>
-                          <p className="text-xs text-white/90 font-medium leading-snug">
-                            {mission.goal}
-                          </p>
-                        </div>
-                      )}
-                    </div>
+                      {/* DIVIDER */}
+                      <div className="h-px bg-white/10 my-2" />
+
+                      {/* CHECKLIST */}
+                      <ul className="flex flex-col gap-1.5 text-xs">
+                        {activeChecklist.map((item, i) => (
+                          <li
+                            key={i}
+                            className={`flex items-center gap-2 transition ${
+                              item.done ? "opacity-60" : "opacity-100"
+                            }`}
+                          >
+                            <span className="text-sm">
+                              {item.done ? "✔" : "⬜"}
+                            </span>
+                            <span className="text-white/90 leading-snug">
+                              {item.text}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
                   )}
-
-                  {/* DIVIDER */}
-                  <div className="h-px bg-white/10 my-2" />
-
-                  {/* CHECKLIST */}
-                  <ul className="flex flex-col gap-1.5 text-xs">
-                    {activeChecklist.map((item, i) => (
-                      <li
-                        key={i}
-                        className={`flex items-center gap-2 transition ${
-                          item.done ? "opacity-60" : "opacity-100"
-                        }`}
-                      >
-                        <span className="text-sm">
-                          {item.done ? "✔" : "⬜"}
-                        </span>
-                        <span className="text-white/90 leading-snug">
-                          {item.text}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
                 </div>
               )}
             </>

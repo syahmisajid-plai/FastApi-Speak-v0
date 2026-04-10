@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 const DailyStoryIndicator = ({
-  dailyStory,
+  progressData,
   isDailyLocked,
   started,
   setStarted,
@@ -33,7 +33,7 @@ const DailyStoryIndicator = ({
     return () => clearInterval(interval);
   }, []);
 
-  const completedCount = phases.filter((p) => dailyStory[p.key]).length;
+  const completedCount = phases.filter((p) => progressData[p.key]).length;
   const progress = (completedCount / phases.length) * 100;
 
   const todayDate = new Date().toLocaleDateString("en-US", {
@@ -120,7 +120,7 @@ const DailyStoryIndicator = ({
             {/* Phases */}
             <div className="grid grid-cols-4 gap-2">
               {phases.map((p) => {
-                const done = dailyStory[p.key];
+                const done = progressData[p.key];
                 const isUnlocked = unlockNext;
 
                 if (!done && unlockNext) unlockNext = false;

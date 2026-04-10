@@ -961,7 +961,7 @@ Feature tambahan:
           </div> */}
           {mode === "dailyStory" && (
             <DailyStoryIndicator
-              dailyStory={dailyStory}
+              progressData={progressData}
               isDailyLocked={isDailyLocked}
               started={dailyStarted}
               setStarted={setDailyStarted}
@@ -1078,6 +1078,23 @@ Feature tambahan:
 
                           // ✅ tandai phase selesai
                           markPhaseComplete(currentStoryPhase);
+
+                          setProgressData((prev) => {
+                            const updated = {
+                              ...prev,
+                              [currentStoryPhase]: true,
+                            };
+
+                            const allDone = Object.values(updated).every(
+                              (v) => v === true,
+                            );
+
+                            if (allDone) {
+                              console.log("🎉 All phases completed!");
+                            }
+
+                            return updated;
+                          });
 
                           // ✅ reset tombol
                           setReadyToContinue(false);
