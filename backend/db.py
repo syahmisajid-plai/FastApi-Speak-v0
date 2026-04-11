@@ -30,9 +30,14 @@ def init_db():
         raise Exception("Cannot connect to the database")
 
     cursor = conn.cursor()
-    cursor.execute("""
-        CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-    """)
+
+    if DATABASE_URL:
+        print("Init for PostgreSQL")
+        cursor.execute('CREATE EXTENSION IF NOT EXISTS "pgcrypto";')
+    else:
+        print("Init for SQLite")
+        # SQLite tidak perlu extension ini
+        pass
     
     cursor.execute(
         """
@@ -141,50 +146,52 @@ def init_db():
     # -----------------------------
     # NEW: USER
     # -----------------------------
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id UUID PRIMARY KEY,
-            email VARCHAR(255) UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
+    if DATABASE_URL:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id UUID PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
 
-            username VARCHAR(100),
-            full_name VARCHAR(255),
-            avatar_url TEXT,
+                username VARCHAR(100),
+                full_name VARCHAR(255),
+                avatar_url TEXT,
 
-            language_level VARCHAR(50),
+                language_level VARCHAR(50),
 
-            last_active_at TIMESTAMP,
+                last_active_at TIMESTAMP,
 
-            preferred_language VARCHAR(10) DEFAULT 'en',
-            daily_reminder_time TIME,
-            notification_enabled BOOLEAN DEFAULT TRUE,
+                preferred_language VARCHAR(10) DEFAULT 'en',
+                daily_reminder_time TIME,
+                notification_enabled BOOLEAN DEFAULT TRUE,
 
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    """)
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS daily_story_summary (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            user_id UUID NOT NULL,
-            story_date DATE NOT NULL,
+    if DATABASE_URL:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS daily_story_summary (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id UUID NOT NULL,
+                story_date DATE NOT NULL,
 
-            morning_summary TEXT,
-            afternoon_summary TEXT,
-            evening_summary TEXT,
-            night_summary TEXT,
+                morning_summary TEXT,
+                afternoon_summary TEXT,
+                evening_summary TEXT,
+                night_summary TEXT,
 
-            key_points JSONB,
-            vocab_used JSONB,
-            mistakes JSONB,
+                key_points JSONB,
+                vocab_used JSONB,
+                mistakes JSONB,
 
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-            CONSTRAINT unique_user_story_date UNIQUE (user_id, story_date)
-        );
-    """)
+                CONSTRAINT unique_user_story_date UNIQUE (user_id, story_date)
+            );
+        """)
 
     # # -----------------------------
     # # NEW: Message Store

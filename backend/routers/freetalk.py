@@ -16,9 +16,10 @@ class FreeTalkRequest(BaseModel):
     session_id: str
     input: str
 
+USE_STREAMING = True  # 🔴 matikan dulu streaming
 
 # LLM
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7, streaming=USE_STREAMING)
 
 
 def run_freetalk(session_id: str, user_id: str, user_message: str):
