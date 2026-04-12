@@ -186,7 +186,7 @@ def detect_phase(progress):
         return "night"
 
 
-# -----------------------------
+# ------------------------------
 # CHECK GRAMMAR use languagetool
 # -----------------------------
 LT_URL = "https://languagetool-production-4577.up.railway.app/v2/check"
@@ -347,6 +347,7 @@ async def grammar_check(req: GrammarCheckRequest):
 # -----------------------------
 # DAILY STORY PROMPTS EFFICIENT
 # -----------------------------
+
 
 # Gabungkan rules + topik saat memanggil
 def get_daily_prompt(session: str) -> str:
