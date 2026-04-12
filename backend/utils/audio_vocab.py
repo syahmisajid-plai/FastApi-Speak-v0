@@ -16,15 +16,9 @@ BUCKET = "audio"
 
 def file_exists(path: str):
     try:
-        folder = os.path.dirname(path)
-        filename = os.path.basename(path)
-
-        res = supabase.storage.from_(BUCKET).list(folder, limit=1000)
-
-        return any(f["name"] == filename for f in res)
-
-    except Exception as e:
-        print("❌ Check error:", e)
+        supabase.storage.from_(BUCKET).download(path)
+        return True
+    except:
         return False
 
 
@@ -34,13 +28,14 @@ def upload_audio(path: str, audio_bytes: bytes):
         audio_bytes,
         {
             "content-type": "audio/mpeg",
-            "upsert": True,  # penting!
+            "upsert": "true",
         },
     )
 
 
 def get_public_url(path: str):
-    return supabase.storage.from_(BUCKET).get_public_url(path)
+    res = supabase.storage.from_(BUCKET).get_public_url(path)
+    return res["publicUrl"]
 
 
 def generate_tts_audio(text: str):
@@ -84,7 +79,7 @@ def get_audio_url(word: str):
         return get_public_url(path)
 
     # 2. generate TTS
-    audio_bytes = generate_tts_audio(word)
+    audio_bytes = generate_tts_audio(clean_word)
 
     # 3. upload ke storage
     upload_audio(path, audio_bytes)
