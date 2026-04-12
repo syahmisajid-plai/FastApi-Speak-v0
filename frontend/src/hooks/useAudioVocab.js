@@ -10,9 +10,19 @@ export default function useAudioVocab() {
     setLoading(true);
     setError(null);
 
+    console.log("[TTS AUDIO VOCAB REQUEST] word:", word);
+    console.log(
+      "[TTS AUDIO VOCAB REQUEST] url:",
+      `${linkBackend}/audio/${word}`,
+    );
+
     try {
       const res = await fetch(`${linkBackend}/audio/${word}`);
+
+      console.log("[TTS RESPONSE STATUS]:", res.status);
+
       const data = await res.json();
+      console.log("[TTS AUDIO VOCAB RESPONSE DATA]:", data);
 
       if (!data.success) {
         throw new Error(data.message || "Failed to get audio");
@@ -20,7 +30,7 @@ export default function useAudioVocab() {
 
       return data.audio_url;
     } catch (err) {
-      console.error("Audio error:", err);
+      console.error("[TTS AUDIO VOCAB ERROR]:", err);
       setError(err.message);
       return null;
     } finally {

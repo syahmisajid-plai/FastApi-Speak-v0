@@ -75,9 +75,13 @@ def get_audio_url(word: str):
 
     # 1. cek storage
     if file_exists(path):
+        print("CACHE HIT")
         return get_public_url(path)
 
+    print("CACHE MISS")
+
     # 2. generate TTS
+    print(f"GENERATE: {word}")
     audio_bytes = generate_tts_audio(word)
 
     # 3. upload ke storage
