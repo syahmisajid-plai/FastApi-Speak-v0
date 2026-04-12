@@ -34,8 +34,7 @@ def upload_audio(path: str, audio_bytes: bytes):
 
 
 def get_public_url(path: str):
-    res = supabase.storage.from_(BUCKET).get_public_url(path)
-    return res["publicUrl"]
+    return supabase.storage.from_(BUCKET).get_public_url(path)
 
 
 def generate_tts_audio(text: str):
@@ -79,7 +78,7 @@ def get_audio_url(word: str):
         return get_public_url(path)
 
     # 2. generate TTS
-    audio_bytes = generate_tts_audio(clean_word)
+    audio_bytes = generate_tts_audio(word)
 
     # 3. upload ke storage
     upload_audio(path, audio_bytes)
