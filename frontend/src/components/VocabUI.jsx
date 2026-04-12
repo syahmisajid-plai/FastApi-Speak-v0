@@ -21,16 +21,6 @@ export default function VocabUI({
 }) {
   if (!vocab) return null;
 
-  // AUDIO
-  const { playAudio, loading } = useAudioVocab();
-  useEffect(() => {
-    if (!started || !vocab) return;
-
-    if (phase === "wordIntro") {
-      playAudio(vocab.word);
-    }
-  }, [phase, vocab, started]);
-
   // useEffect(() => {
   //   if (!started) return;
 
@@ -40,6 +30,16 @@ export default function VocabUI({
   // }, [phase, example, started]);
 
   const [started, setStarted] = useState(false);
+
+  // AUDIO
+  const { playAudio, loading } = useAudioVocab();
+  useEffect(() => {
+    if (!started || !vocab) return;
+
+    if (phase === "wordIntro") {
+      playAudio(vocab.word);
+    }
+  }, [phase, vocab, started]);
 
   useEffect(() => {
     console.log("🔥 PHASE UPDATED:", phase);

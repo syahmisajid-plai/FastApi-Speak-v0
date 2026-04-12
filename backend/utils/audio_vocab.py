@@ -69,8 +69,15 @@ def normalize_word(word: str):
 
 def get_audio_url(word: str):
     # normalize biar konsisten
+
     clean_word = normalize_word(word)
     path = f"word/{clean_word}.mp3"
+
+    print("WORD:", word)
+    print("clean_word:", clean_word)
+    print("PATH:", path)
+    print("SUPABASE_URL:", SUPABASE_URL)
+    print("SUPABASE_KEY exists:", SUPABASE_KEY is not None)
 
     # 1. cek storage
     if file_exists(path):
