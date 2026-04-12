@@ -6,7 +6,7 @@
 - Ada Jeda Update Roleplay, Kunci Mode Lain (Atau ada icon Pindah Mode) ✅
 - Warna Tiap Mode Beda ✅
 
-- Ganti Stage Clear UI History
+- Ganti Stage Clear UI History ✅
 
 - Kunci Stage Daily sampe jam 16.00 ✅ (tambahkan ON OF Development (blm)) 
 - Prompt Sesuaikan ini sudah di ujung hari (Mode Daily)
@@ -17,7 +17,7 @@
 -- Record lalu Translated, belum lock recording ✅
 -- beri jeda suara translated baru lanjutkan record 
 
-- Prompt Free Talk & Roleplay Mission
+- Prompt Free Talk ✅ & Roleplay Mission
 
 -Roleplay Mission -> pilihan kesulitan -> animasi sistem random tema -> muncucl card mission (tema, skenario, tingkat kesulitan, mission, checklist penyelesaian)
 -Tombol Bawah roleplay blum fix langsung loncat ke summary mission
@@ -33,21 +33,21 @@
 
 - Cumn yang easy yang terkirim ✅
 
--streak daily ✅
+- streak daily ✅
 
 - update DAILY_TOPICS ✅
 
 - setelah masuk phase baru daily, ada kata kata dari AI✅
 
-- Button pre-next perbaiki jadi tiap phase
+- Button pre-next perbaiki jadi tiap phase ✅
 
 - Daily dibuka 24 Jam (Tambahkan Lagi Jam untuk Batasan Phase Daily)
 
-- Perbaiki Promp Freeuse Talk
+- Perbaiki Promp Freeuse Talk ✅
 
 - Pindahkan Logic di Roleplay.jsx ke useRoleplay.js
 
-- Tambahkan List Checklist Mengambang
+- Tambahkan List Checklist Mengambang ✅
 
 - Perbaiki sistem / kata keyword checklist roleplay
 
@@ -55,7 +55,7 @@
 
 - REFACTOR ROLEPLAY.JSX
 
-- Tambahkan fitur koreksi langsung chat user di dailyStory
+- Tambahkan fitur koreksi langsung chat user di dailyStory ✅
 
 - Setelah Masuk phase baru tambahkan ai chat baru✅
 

@@ -1,7 +1,46 @@
+import { useState, useMemo } from "react";
 import useVocabList from "../hooks/useVocabList";
 
 export default function VocabList({ onClose, userId }) {
   const { vocabList, loading } = useVocabList(userId);
+
+  // ✅ state filter
+  const [selectedType, setSelectedType] = useState("all");
+  const [selectedLevel, setSelectedLevel] = useState("all");
+
+  const [completedFilter, setCompletedFilter] = useState("all");
+
+  // ✅ ambil unique value
+  const types = useMemo(() => {
+    return [
+      ...new Set(
+        vocabList.flatMap((item) => item.type.split("/").map((t) => t.trim())),
+      ),
+    ];
+  }, [vocabList]);
+
+  const levels = useMemo(
+    () => [...new Set(vocabList.map((item) => item.level))],
+    [vocabList],
+  );
+
+  // ✅ filter logic
+  const filteredList = useMemo(() => {
+    return vocabList.filter((item) => {
+      const matchType =
+        selectedType === "all" || item.type.split("/").includes(selectedType);
+
+      const matchLevel =
+        selectedLevel === "all" || item.level === selectedLevel;
+
+      const matchCompleted =
+        completedFilter === "all" ||
+        (completedFilter === "completed" && item.isCompleted) ||
+        (completedFilter === "not_completed" && !item.isCompleted);
+
+      return matchType && matchLevel && matchCompleted;
+    });
+  }, [vocabList, selectedType, selectedLevel, completedFilter]);
 
   return (
     <div className="fixed inset-0 z-50">
@@ -25,12 +64,66 @@ export default function VocabList({ onClose, userId }) {
           </button>
         </div>
 
+        {/* ✅ FILTER SECTION */}
+        {!loading && (
+          <div className="flex flex-wrap gap-3 mb-6">
+            {/* Completed */}
+            <select
+              value={completedFilter}
+              onChange={(e) => setCompletedFilter(e.target.value)}
+              className="bg-white/10 text-white px-3 py-2 rounded-lg w-[48%] md:w-auto"
+            >
+              <option value="all" className="text-black bg-white">
+                All Status
+              </option>
+              <option value="completed" className="text-black bg-white">
+                Completed
+              </option>
+              <option value="not_completed" className="text-black bg-white">
+                Not Completed
+              </option>
+            </select>
+
+            {/* TYPE */}
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="bg-white/10 text-white px-3 py-2 rounded-lg w-[48%] md:w-auto"
+            >
+              <option value="all" className="text-black bg-white">
+                All Types
+              </option>
+              {types.map((t) => (
+                <option key={t} value={t} className="text-black bg-white">
+                  {t}
+                </option>
+              ))}
+            </select>
+
+            {/* LEVEL */}
+            <select
+              value={selectedLevel}
+              onChange={(e) => setSelectedLevel(e.target.value)}
+              className="bg-white/10 text-white px-3 py-2 rounded-lg w-[48%] md:w-auto"
+            >
+              <option value="all" className="text-black bg-white">
+                All Levels
+              </option>
+              {levels.map((l) => (
+                <option key={l} value={l} className="text-black bg-white">
+                  {l}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* LOADING */}
         {loading ? (
           <p className="text-gray-400">Loading...</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {vocabList.map((item) => (
+            {filteredList.map((item) => (
               <div
                 key={item.id}
                 className={`border border-white/10 rounded-xl p-4 transition
@@ -53,7 +146,6 @@ export default function VocabList({ onClose, userId }) {
                   </span>
                 </div>
 
-                {/* 🔒 optional badge */}
                 {item.isCompleted && (
                   <p className="text-xs text-green-400 mt-2">✔ Completed</p>
                 )}

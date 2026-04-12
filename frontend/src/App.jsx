@@ -876,12 +876,12 @@ Feature tambahan:
           {/* 🔊 Audio untuk greeting daily */}
           <audio
             ref={audioDailyStartRef}
-            src="/src/public/sound/daily_start.mp3"
+            src="/src/assets/sound/daily_start.mp3"
             preload="auto"
           />
           <audio
             ref={audioFreetalkStartRef}
-            src="/src/public/sound/freetalk_start.mp3"
+            src="/src/assets/sound/freetalk_start.mp3"
             preload="auto"
           />
           {/* <div className="text-white">
@@ -1041,6 +1041,9 @@ Feature tambahan:
 
                           // ==================== UPDATE STATE ====================
                           setActivePhase(nextPhase);
+
+                          // ✅ reset trigger button ke kondisi awal (collapsed)
+                          setExpanded(false);
 
                           // ==================== INJECT KE CHAT HISTORY ====================
                           setChatHistory((prev) => {

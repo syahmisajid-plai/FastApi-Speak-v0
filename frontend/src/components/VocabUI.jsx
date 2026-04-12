@@ -163,7 +163,10 @@ export default function VocabUI({
                         <Button
                           onClick={() => {
                             setPhase("guidedPractice");
-                            startRecording();
+
+                            setTimeout(() => {
+                              startRecording();
+                            }, 100);
                           }}
                         >
                           Mulai Practice →

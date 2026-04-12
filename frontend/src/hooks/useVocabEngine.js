@@ -60,9 +60,13 @@ export default function useVocabEngine(userIdRef) {
     return apiVocab.filter((v) => !completedMap[v.id]);
   }, [apiVocab, completedMap]);
 
-  const shuffledData = useMemo(() => {
-    if (!filteredData.length) return [];
-    return [...filteredData].sort(() => Math.random() - 0.5);
+  const [shuffledData, setShuffledData] = useState([]);
+
+  useEffect(() => {
+    if (!filteredData.length) return;
+
+    const shuffled = [...filteredData].sort(() => Math.random() - 0.5);
+    setShuffledData(shuffled);
   }, [filteredData]);
 
   const data = shuffledData;
@@ -137,6 +141,29 @@ export default function useVocabEngine(userIdRef) {
   }, []);
 
   useEffect(() => {
+    const userId = userIdRef?.current;
+    if (!userId) return;
+
+    const fetchCompleted = async () => {
+      try {
+        const res = await fetch(`${linkBackend}/vocab/completed-ids/${userId}`);
+        const json = await res.json();
+
+        const map = {};
+        json.completed_vocab_ids.forEach((id) => {
+          map[id] = true;
+        });
+
+        setCompletedMap(map);
+      } catch (err) {
+        console.log("❌ failed fetch completed:", err);
+      }
+    };
+
+    fetchCompleted();
+  }, [userIdRef?.current]); // 🔥 penting
+
+  useEffect(() => {
     if (apiVocab.length) {
       setIndex(0);
       setExampleIndex(0);
@@ -196,7 +223,7 @@ export default function useVocabEngine(userIdRef) {
     hasMarkedRef.current = true;
 
     const vocabId = vocabRef.current?.id;
-    const userId = userIdRef?.current || "user123";
+    const userId = userIdRef?.current;
 
     if (vocabId) {
       markCompleted(userId, vocabId);
@@ -285,9 +312,14 @@ export default function useVocabEngine(userIdRef) {
   // =========================
   // NEXT VOCAB
   // =========================
-  const next = () => {
-    setShowDice(true);
+  const isTransitioningRef = useRef(false);
 
+  const next = () => {
+    if (isTransitioningRef.current) return;
+
+    isTransitioningRef.current = true;
+
+    setShowDice(true);
     setFeedback("");
     setAttempt(0);
     setExampleIndex(0);
@@ -295,6 +327,7 @@ export default function useVocabEngine(userIdRef) {
 
     setTimeout(() => {
       setIndex((i) => i + 1);
+      isTransitioningRef.current = false;
     }, 1000);
   };
 
@@ -312,6 +345,9 @@ export default function useVocabEngine(userIdRef) {
   }, [showDice]);
 
   const startSession = () => {
+    setIndex(0);
+    setExampleIndex(0);
+    setPhase("wordIntro");
     setShowDice(true);
   };
 
