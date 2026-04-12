@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import useAudioVocab from "../hooks/useAudioVocab";
 
 export default function VocabUI({
   vocab,
@@ -19,6 +20,24 @@ export default function VocabUI({
   startSession,
 }) {
   if (!vocab) return null;
+
+  // AUDIO
+  const { playAudio, loading } = useAudioVocab();
+  useEffect(() => {
+    if (!started || !vocab) return;
+
+    if (phase === "wordIntro") {
+      playAudio(vocab.word);
+    }
+  }, [phase, vocab, started]);
+
+  // useEffect(() => {
+  //   if (!started) return;
+
+  //   if (phase === "guidedPractice" && example) {
+  //     playAudio(example);
+  //   }
+  // }, [phase, example, started]);
 
   const [started, setStarted] = useState(false);
 
@@ -131,9 +150,18 @@ export default function VocabUI({
                       <div className="text-center space-y-4 animate-pop">
                         <div className="text-center space-y-3 animate-pop">
                           {/* WORD */}
-                          <h3 className="text-4xl font-extrabold text-indigo-300 tracking-tight">
-                            {vocab.word}
-                          </h3>
+                          <div className="flex flex-col items-center gap-2">
+                            <h3 className="text-4xl font-extrabold text-indigo-300 tracking-tight">
+                              {vocab.word}
+                            </h3>
+
+                            <button
+                              onClick={() => playAudio(vocab.word)}
+                              className="text-xs px-3 py-1 rounded-full bg-white/10 hover:bg-white/20"
+                            >
+                              🔊 Play
+                            </button>
+                          </div>
 
                           {/* MEANING */}
                           <p className="text-sm text-white/60 italic">
