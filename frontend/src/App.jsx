@@ -35,7 +35,7 @@ import useRoleplay from "./hooks/useRoleplay";
 import useDailyStory from "./hooks/useDailyStory";
 import useHistoryManager from "./hooks/useHistoryManager";
 import useStreak from "./hooks/useStreak";
-import useGrammarCheck from "./hooks/useGrammarCheck";
+// import useGrammarCheck from "./hooks/useGrammarCheck";
 import useVocabEngine from "./hooks/useVocabEngine";
 
 // ================== AUDIO ==================
@@ -505,18 +505,18 @@ Feature tambahan:
     console.log("🧠 modeRef updated:", mode);
   }, [mode]);
 
-  const { checkGrammar, result, loading, error } = useGrammarCheck();
+  // const { checkGrammar, result, loading, error } = useGrammarCheck();
 
   // useEffect(() => {
   //   checkGrammar("We was happy last night.");
   // }, []);
 
-  useEffect(() => {
-    if (!result) return;
+  // useEffect(() => {
+  //   if (!result) return;
 
-    console.log("=== RESULT ===");
-    console.log(result);
-  }, [result]);
+  //   console.log("=== RESULT ===");
+  //   console.log(result);
+  // }, [result]);
 
   // ================== SEND TEXT TO BACKEND ==================
   const { sendTextToBackend } = useConversationEngine({
@@ -527,7 +527,7 @@ Feature tambahan:
     setChatHistory,
     speakText,
 
-    grammarResult: result, // 🔥 TAMBAHKAN INI
+    // grammarResult: result, // 🔥 TAMBAHKAN INI
 
     onRoleplayCompleted: handleRoleplayCompleted, // ✅ FIX
 
@@ -693,13 +693,15 @@ Feature tambahan:
         return;
       }
 
-      let grammarData = null;
+      // let grammarData = null;
 
-      if (modeRef.current === "dailyStory") {
-        grammarData = await checkGrammar(text);
-      }
+      // if (modeRef.current === "dailyStory") {
+      //   grammarData = await checkGrammar(text);
+      // }
 
-      sendTextToBackend(text, grammarData); // ✅ kirim ke engine
+      // sendTextToBackend(text, grammarData); // ✅ kirim ke engine
+
+      sendTextToBackend(text);
     },
     onResetIdle: resetIdle, // Reset idle jika user bicara
     isLupaKataActive: lupaKata.isLupaKataActive, // Jangan rekam utama saat lupa kata aktif

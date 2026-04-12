@@ -9,12 +9,12 @@ export default function useConversationEngine({
   setChatHistory,
   speakText,
 
-  grammarResult,
+  // grammarResult,
 
   onRoleplayCompleted,
   onPhaseCompleted, // ⭐ NEW
 }) {
-  const sendTextToBackend = async (text, grammarData = null) => {
+  const sendTextToBackend = async (text) => {
     console.log("📤 ====== useConversationEngine.js =======");
     console.log("📤 SEND TEXT TRIGGERED");
     console.log("👤 userIdRef:", userIdRef);
@@ -35,24 +35,6 @@ export default function useConversationEngine({
       // USER MESSAGE
       // =========================
       onUserMessage: (msg) => {
-        if (modeRef.current === "dailyStory" && grammarData) {
-          const highlighted = grammarData.correction.highlighted_sentence;
-          const corrected = grammarData.correction.corrected_sentence;
-
-          setChatHistory((prev) => [
-            ...prev,
-            {
-              sender: "You",
-              message: msg, // original
-              highlighted, // [[go]]
-              // corrected,
-              isGrammar: true,
-            },
-          ]);
-
-          return;
-        }
-
         setChatHistory((prev) => [...prev, { sender: "You", message: msg }]);
       },
 
@@ -99,12 +81,7 @@ export default function useConversationEngine({
             }
 
             // 🔥 tempel alternative ke USER terakhir
-            if (
-              !alternativeAttached &&
-              c.sender === "You" &&
-              c.isGrammar &&
-              !c.alternative
-            ) {
+            if (!alternativeAttached && c.sender === "You" && !c.alternative) {
               alternativeAttached = true;
 
               return {
