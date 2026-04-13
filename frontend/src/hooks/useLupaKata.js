@@ -5,6 +5,7 @@ export default function useLupaKata({
   setChatHistory,
   onLupaKataResult,
   isSpeaking,
+  userIdRef,
 }) {
   const [isLupaKataActive, setIsLupaKataActive] = useState(false);
   const [lupaKataHeardText, setLupaKataHeardText] = useState("");
@@ -22,6 +23,7 @@ export default function useLupaKata({
   /* ================= TRANSLATE ================= */
   const translateLupaKata = async (indoText) => {
     try {
+      const userId = userIdRef?.current;
       const res = await fetch(`${linkBackend}/translate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -29,6 +31,7 @@ export default function useLupaKata({
           text: indoText,
           source_lang: "id",
           target_lang: "en",
+          user_id: userId,
         }),
       });
 

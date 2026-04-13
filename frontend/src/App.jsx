@@ -678,6 +678,8 @@ Feature tambahan:
 
     onLupaKataResult: speakText, // ✅ Hasil lupa kata langsung dibacakan
     isSpeaking,
+
+    userIdRef,
   });
 
   // ================== 2️⃣ SPEECH RECOGNITION ==================

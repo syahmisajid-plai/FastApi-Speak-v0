@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import DailySummaryViewer from "./DailySummaryViewer";
+import TranslationHistoryModal from "./TranslationHistoryModal";
 
 export default function Header({
   mode,
@@ -312,109 +313,11 @@ export default function Header({
           </div>
         </div>
       )}
-      {/* 🔥 TRANSLATION HISTORY MODAL */}
-      {showHistory && (
-        <div
-          onClick={() => setShowHistory(false)}
-          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-md px-4"
-          >
-            {/* CLOSE */}
-            <button
-              onClick={() => setShowHistory(false)}
-              className="absolute -top-10 right-4 text-white text-sm"
-            >
-              ✕
-            </button>
 
-            <div className="bg-black/80 border border-white/10 rounded-xl p-4 text-white">
-              <h3 className="text-sm font-semibold mb-3">
-                🕘 Translation History
-              </h3>
-
-              {/* 🔥 DATA (SIAP DIGANTI API) */}
-              {(() => {
-                const pages = [
-                  [
-                    "hello → halo how are you how are you how are you → apa kabar apa kabar apa kabar",
-                    "how are you how are you how are you → apa kabar apa kabar apa kabar how are you how are you how are you → apa kabar apa kabar apa kabar",
-                    "how are you how are you how are you → apa kabar apa kabar apa kabar",
-                    "how are you how are you how are you → apa kabar apa kabar apa kabar how are you how are you how are you → apa kabar apa kabar apa kabar",
-                    "how are you → apa kabar how are you how are you how are you → apa kabar apa kabar apa kabar ",
-                    "how are you how are you how are you → apa kabar apa kabar apa kabar",
-                    "how are you how are you how are you → apa kabar apa kabar apa kabar",
-                  ],
-                  [
-                    "good morning → selamat pagi",
-                    "good night → selamat malam",
-                    "see you → sampai jumpa",
-                    "good morning → selamat pagi",
-                    "good night → selamat malam",
-                    "see you → sampai jumpa",
-                    "how are you how are you how are you → apa kabar apa kabar apa kabar",
-                    "thank you → terima kasih",
-                    "hello → halo",
-                    "how are you how are you how are you → apa kabar apa kabar apa kabar",
-                  ],
-                ];
-
-                return (
-                  <>
-                    {/* 🔥 PAGE CONTENT */}
-                    <div className="min-h-[100px]">
-                      <div className="space-y-2 text-xs text-gray-300">
-                        {pages[page].map((item, i) => (
-                          <div key={i} className="p-2 bg-white/5 rounded">
-                            {item}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* 🔥 BUTTON NAV */}
-                    <div className="flex justify-between mt-3">
-                      <button
-                        onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-                        disabled={page === 0}
-                        className="text-xs px-3 py-1 bg-white/10 rounded disabled:opacity-30"
-                      >
-                        ← Prev
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          setPage((prev) =>
-                            Math.min(prev + 1, pages.length - 1),
-                          )
-                        }
-                        disabled={page === pages.length - 1}
-                        className="text-xs px-3 py-1 bg-white/10 rounded disabled:opacity-30"
-                      >
-                        Next →
-                      </button>
-                    </div>
-
-                    {/* 🔥 INDICATOR */}
-                    <div className="flex justify-center gap-1 mt-3">
-                      {pages.map((_, i) => (
-                        <div
-                          key={i}
-                          className={`w-2 h-2 rounded-full ${
-                            page === i ? "bg-white/50" : "bg-white/20"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
+      <TranslationHistoryModal
+        show={showHistory}
+        onClose={() => setShowHistory(false)}
+      />
     </>
   );
 }

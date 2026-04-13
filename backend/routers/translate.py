@@ -15,6 +15,7 @@ class TranslateRequest(BaseModel):
     text: str
     source_lang: str
     target_lang: str
+    user_id: str
 
 
 # class TextPayload(BaseModel):
@@ -39,7 +40,7 @@ async def translate_id_en(payload: TranslateRequest):
 
     # 2. SAVE TO HISTORY (MVP USER ID DUMMY)
     save_translation_history(
-        user_id="demo-user",  # nanti ganti JWT auth
+        user_id=payload.user_id,  # nanti ganti JWT auth
         source_text=payload.text,
         translated_text=translated,
         source_lang=payload.source_lang,
