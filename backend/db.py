@@ -193,25 +193,6 @@ def init_db():
             );
         """)
 
-        # -----------------------------
-        # NEW: Translation History
-        # -----------------------------
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS translation_history (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-            user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-
-            source_text TEXT NOT NULL,
-            translated_text TEXT NOT NULL,
-
-            source_lang VARCHAR(10),
-            target_lang VARCHAR(10),
-
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-        """)
-
     # # -----------------------------
     # # NEW: Message Store
     # # -----------------------------
@@ -270,6 +251,27 @@ def init_db():
             PRIMARY KEY (user_id, vocab_id),
             FOREIGN KEY (vocab_id) REFERENCES vocab (id) ON DELETE CASCADE
         )
+    """)
+
+    # -----------------------------
+    # NEW: Translation History
+    # -----------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS translation_history (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+
+        source_text TEXT NOT NULL,
+        translated_text TEXT NOT NULL,
+
+        source_lang VARCHAR(10),
+        target_lang VARCHAR(10),
+            
+        is_favorite BOOLEAN DEFAULT FALSE,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
     """)
 
 
@@ -1079,4 +1081,85 @@ def get_completed_vocab_ids(user_id: str):
         return [r[0] for r in rows]
 
     finally:
+        conn.close()
+
+# =========================
+# save_translation_history
+# =========================
+def save_translation_history(
+    user_id: str,
+    source_text: str,
+    translated_text: str,
+    source_lang: str,
+    target_lang: str
+):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            INSERT INTO translation_history (
+                user_id,
+                source_text,
+                translated_text,
+                source_lang,
+                target_lang
+            )
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id;
+        """, (
+            user_id,
+            source_text,
+            translated_text,
+            source_lang,
+            target_lang
+        ))
+
+        row = cursor.fetchone()
+        conn.commit()
+
+        return row[0]
+
+    except Exception as e:
+        conn.rollback()
+        print("❌ SAVE TRANSLATION ERROR:", e)
+        return None
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def get_translation_history(user_id: str, limit: int = 20, offset: int = 0):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT
+                id,
+                source_text,
+                translated_text,
+                is_favorite
+            FROM translation_history
+            WHERE user_id = %s
+            ORDER BY created_at DESC
+            LIMIT %s OFFSET %s;
+        """, (user_id, limit, offset))
+
+        rows = cursor.fetchall()
+
+        return [
+            {
+                "id": r[0],
+                "source_text": r[1],
+                "translated_text": r[2],
+                "is_favorite": r[3],
+                "created_at": r[4],
+            }
+            for r in rows
+        ]
+
+    finally:
+        cursor.close()
         conn.close()
