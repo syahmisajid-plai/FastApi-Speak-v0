@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { linkBackend } from "../config";
 
 export default function useTranslationHistory(userId, limit = 10) {
   const [data, setData] = useState([]);
@@ -18,7 +19,7 @@ export default function useTranslationHistory(userId, limit = 10) {
         const offset = pageNumber * limit;
 
         const res = await fetch(
-          `http://localhost:8000/translation-history/${userId}?limit=${limit}&offset=${offset}`,
+          `${linkBackend}/translation-history/${userId}?limit=${limit}&offset=${offset}`,
         );
 
         if (!res.ok) {

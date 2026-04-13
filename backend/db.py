@@ -1112,7 +1112,7 @@ def save_translation_history(
             source_text,
             translated_text,
             source_lang,
-            target_lang
+            target_lang,
         ))
 
         row = cursor.fetchone()

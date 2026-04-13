@@ -42,8 +42,8 @@ export default function useLupaKata({
         {
           sender: "Helper",
           type: "result",
-          indo: data.indo,
-          english: data.english,
+          indo: data.source, // ✅ FIX
+          english: data.translated, // ✅ FIX
         },
       ]);
 

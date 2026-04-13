@@ -317,6 +317,7 @@ export default function Header({
       <TranslationHistoryModal
         show={showHistory}
         onClose={() => setShowHistory(false)}
+        userId={user?.id}
       />
     </>
   );
