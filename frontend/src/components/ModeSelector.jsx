@@ -13,14 +13,16 @@ export default function ModeSelector({
     { key: "dailyStory", icon: "📖", label: "Story", color: "emerald" },
     { key: "freeTalk", icon: "💬", label: "Talk", color: "blue" },
     { key: "roleplay", icon: "🎭", label: "Roleplay", color: "purple" },
+    { key: "ielts", icon: "📝", label: "IELTS", color: "rose" },
   ];
 
   const modeStyles = {
+    indigo: "bg-gradient-to-r from-indigo-500 to-indigo-300 ring-indigo-300",
     emerald:
       "bg-gradient-to-r from-emerald-500 to-emerald-300 ring-emerald-300",
     blue: "bg-gradient-to-r from-blue-500 to-blue-300 ring-blue-300",
     purple: "bg-gradient-to-r from-purple-500 to-purple-300 ring-purple-300",
-    indigo: "bg-gradient-to-r from-indigo-500 to-indigo-300 ring-indigo-300",
+    rose: "bg-gradient-to-r from-rose-500 to-rose-300 ring-rose-300",
   };
 
   const handleModeChange = (m) => {
@@ -38,7 +40,7 @@ export default function ModeSelector({
   };
 
   return (
-    <div className="fixed bottom-2 left-0 w-full flex justify-center z-40 px-4">
+    <div className="fixed bottom-2 left-0 w-full flex justify-center z-51 px-4">
       <div className="w-full max-w-md flex bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg p-1">
         {modes.map((m) => {
           const active = mode === m.key;

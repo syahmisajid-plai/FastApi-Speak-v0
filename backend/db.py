@@ -193,6 +193,25 @@ def init_db():
             );
         """)
 
+        # -----------------------------
+        # NEW: Translation History
+        # -----------------------------
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS translation_history (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+            user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+
+            source_text TEXT NOT NULL,
+            translated_text TEXT NOT NULL,
+
+            source_lang VARCHAR(10),
+            target_lang VARCHAR(10),
+
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """)
+
     # # -----------------------------
     # # NEW: Message Store
     # # -----------------------------

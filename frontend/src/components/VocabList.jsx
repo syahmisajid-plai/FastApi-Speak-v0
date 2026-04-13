@@ -54,7 +54,7 @@ export default function VocabList({ onClose, userId }) {
       <div className="relative z-10 h-full overflow-y-auto p-6">
         {/* HEADER */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-white">📚 Vocabulary</h1>
+          <h2 className="text-4xl font-bold text-white">📚 Vocabulary</h2>
 
           <button
             onClick={onClose}

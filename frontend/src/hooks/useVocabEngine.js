@@ -1,47 +1,6 @@
+// useVocabEngine.js
 import { useRef, useEffect, useState, useMemo } from "react";
 import { linkBackend } from "../config";
-
-// =========================
-// FALLBACK VOCAB
-// =========================
-const defaultVocab = [
-  {
-    id: 1,
-    word: "happy",
-    meaning: "merasa senang",
-    type: "adjective",
-    level: "A1",
-    examples: [
-      "i am happy",
-      "she is very happy",
-      "they are happy with the result",
-    ],
-  },
-  {
-    id: 2,
-    word: "eat",
-    meaning: "makan",
-    type: "verb",
-    level: "A1",
-    examples: ["i eat rice", "they eat together", "she eats fruit"],
-  },
-  {
-    id: 3,
-    word: "go",
-    meaning: "pergi",
-    type: "verb",
-    level: "A1",
-    examples: ["i go home", "we go to school", "she goes to market"],
-  },
-  {
-    id: 4,
-    word: "like",
-    meaning: "suka",
-    type: "verb",
-    level: "A1",
-    examples: ["i like coffee", "she likes tea", "we like this game"],
-  },
-];
 
 // =========================
 // ENGINE
@@ -326,7 +285,7 @@ export default function useVocabEngine(userIdRef) {
     setPhase("wordIntro");
 
     setTimeout(() => {
-      setIndex((i) => i + 1);
+      // setIndex((i) => i + 1);
       isTransitioningRef.current = false;
     }, 1000);
   };

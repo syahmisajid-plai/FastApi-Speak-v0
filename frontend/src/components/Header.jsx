@@ -16,6 +16,12 @@ export default function Header({
   const [openMenu, setOpenMenu] = useState(false);
   const [showSummaryDaily, setShowSummaryDaily] = useState(false);
 
+  const [showHistory, setShowHistory] = useState(false);
+
+  const [showStreakDetail, setShowStreakDetail] = useState(false);
+
+  const [page, setPage] = useState(0);
+
   // =========================
   // FETCH STREAK ONLY FOR DAILY MODE
   // =========================
@@ -47,8 +53,12 @@ export default function Header({
     mode === "dailyStory"
       ? "bg-white/5"
       : mode === "roleplay"
-        ? "bg-indigo-700/40"
-        : "bg-slate-900/70";
+        ? "bg-indigo-900/30"
+        : mode === "vocab"
+          ? "bg-slate-900/70"
+          : mode === "ielts"
+            ? "bg-rose-600/20"
+            : "bg-slate-900/70";
 
   let unlockNext = true;
 
@@ -86,6 +96,50 @@ export default function Header({
               </button>
             )}
 
+            {/* 🔥 STREAK ONLY DAILY STORY */}
+            {mode === "dailyStory" && (
+              <div className="flex items-center gap-2">
+                {/* 🔥 CURRENT */}
+                <button
+                  onClick={() => setShowStreakDetail((prev) => !prev)}
+                  className="
+                    px-2! py-1! rounded-full
+                    bg-orange-500/10! text-orange-400 text-xs
+                    flex items-center gap-1
+                    hover:bg-orange-500/20! transition
+                  "
+                >
+                  🔥 <span>{streakDaily?.current ?? 0}</span>
+                </button>
+
+                {showStreakDetail && (
+                  <div
+                    onClick={() => setShowStreakDetail(false)}
+                    className="fixed inset-0 z-[999]"
+                  >
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="
+                        absolute top-16 right-4
+                        bg-black/80 border border-white/10
+                        rounded-xl p-3 text-white text-xs w-40
+                      "
+                    >
+                      <div className="flex justify-between mb-1">
+                        <span>🔥 Current</span>
+                        <span>{streakDaily?.current ?? 0}</span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span>🏆 Best</span>
+                        <span>{streakDaily?.longest ?? 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {mode === "vocab" && (
               <button
                 onClick={onOpenVocab}
@@ -103,37 +157,14 @@ export default function Header({
               </button>
             )}
 
-            {/* 🔥 STREAK ONLY DAILY STORY */}
-            {mode === "dailyStory" && (
-              <div className="flex items-center gap-2">
-                {/* 🔥 CURRENT */}
-                <div
-                  className="
-                    px-2 py-1 rounded-full
-                    bg-orange-500/10 text-orange-400 text-xs
-                    flex items-center gap-1
-                  "
-                >
-                  🔥 <span>{streakDaily?.current ?? 0}</span>
-                </div>
-
-                {/* 🏆 LONGEST (ALWAYS VISIBLE BUT COMPACT ON MOBILE) */}
-                <div
-                  className="
-                    px-2 py-1 rounded-full
-                    bg-yellow-500/10 text-yellow-400 text-xs
-                    flex items-center gap-1
-                  "
-                >
-                  🏆
-                  <span className="hidden sm:inline">
-                    {streakDaily?.longest ?? 0}
-                  </span>
-                  {/* mobile version */}
-                  <span className="sm:hidden">{streakDaily?.longest ?? 0}</span>
-                </div>
-              </div>
-            )}
+            {/* 🕘 TRANSLATION HISTORY */}
+            <button
+              onClick={() => setShowHistory(true)}
+              title="Translation History"
+              className="w-8 h-8 rounded-full bg-white/10 text-white hover:bg-white/20 transition flex items-center justify-center"
+            >
+              🕘
+            </button>
 
             {/* USER */}
             {user && (
@@ -278,6 +309,109 @@ export default function Header({
             </button>
 
             <DailySummaryViewer userId={user?.id} />
+          </div>
+        </div>
+      )}
+      {/* 🔥 TRANSLATION HISTORY MODAL */}
+      {showHistory && (
+        <div
+          onClick={() => setShowHistory(false)}
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md px-4"
+          >
+            {/* CLOSE */}
+            <button
+              onClick={() => setShowHistory(false)}
+              className="absolute -top-10 right-4 text-white text-sm"
+            >
+              ✕
+            </button>
+
+            <div className="bg-black/80 border border-white/10 rounded-xl p-4 text-white">
+              <h3 className="text-sm font-semibold mb-3">
+                🕘 Translation History
+              </h3>
+
+              {/* 🔥 DATA (SIAP DIGANTI API) */}
+              {(() => {
+                const pages = [
+                  [
+                    "hello → halo how are you how are you how are you → apa kabar apa kabar apa kabar",
+                    "how are you how are you how are you → apa kabar apa kabar apa kabar how are you how are you how are you → apa kabar apa kabar apa kabar",
+                    "how are you how are you how are you → apa kabar apa kabar apa kabar",
+                    "how are you how are you how are you → apa kabar apa kabar apa kabar how are you how are you how are you → apa kabar apa kabar apa kabar",
+                    "how are you → apa kabar how are you how are you how are you → apa kabar apa kabar apa kabar ",
+                    "how are you how are you how are you → apa kabar apa kabar apa kabar",
+                    "how are you how are you how are you → apa kabar apa kabar apa kabar",
+                  ],
+                  [
+                    "good morning → selamat pagi",
+                    "good night → selamat malam",
+                    "see you → sampai jumpa",
+                    "good morning → selamat pagi",
+                    "good night → selamat malam",
+                    "see you → sampai jumpa",
+                    "how are you how are you how are you → apa kabar apa kabar apa kabar",
+                    "thank you → terima kasih",
+                    "hello → halo",
+                    "how are you how are you how are you → apa kabar apa kabar apa kabar",
+                  ],
+                ];
+
+                return (
+                  <>
+                    {/* 🔥 PAGE CONTENT */}
+                    <div className="min-h-[100px]">
+                      <div className="space-y-2 text-xs text-gray-300">
+                        {pages[page].map((item, i) => (
+                          <div key={i} className="p-2 bg-white/5 rounded">
+                            {item}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 🔥 BUTTON NAV */}
+                    <div className="flex justify-between mt-3">
+                      <button
+                        onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
+                        disabled={page === 0}
+                        className="text-xs px-3 py-1 bg-white/10 rounded disabled:opacity-30"
+                      >
+                        ← Prev
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          setPage((prev) =>
+                            Math.min(prev + 1, pages.length - 1),
+                          )
+                        }
+                        disabled={page === pages.length - 1}
+                        className="text-xs px-3 py-1 bg-white/10 rounded disabled:opacity-30"
+                      >
+                        Next →
+                      </button>
+                    </div>
+
+                    {/* 🔥 INDICATOR */}
+                    <div className="flex justify-center gap-1 mt-3">
+                      {pages.map((_, i) => (
+                        <div
+                          key={i}
+                          className={`w-2 h-2 rounded-full ${
+                            page === i ? "bg-white/50" : "bg-white/20"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
           </div>
         </div>
       )}

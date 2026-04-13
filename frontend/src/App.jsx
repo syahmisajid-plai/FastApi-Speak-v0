@@ -17,6 +17,7 @@ import FreeTalkUI from "./components/FreeTalkUI";
 import VocabUI from "./components/VocabUI";
 import LoginOverlay from "./components/LoginOverlay";
 import VocabList from "./components/VocabList";
+import ComingSoon from "./components/ComingSoon";
 
 // ================== STYLES ==================
 import "./App.css";
@@ -778,7 +779,9 @@ Feature tambahan:
               ? "bg-linear-to-b from-purple-400 to-indigo-600"
               : mode === "vocab"
                 ? "bg-linear-to-b from-slate-900 to-indigo-950"
-                : "bg-linear-to-b from-slate-900 to-blue-950"
+                : mode === "ielts"
+                  ? "bg-linear-to-b from-rose-300 to-rose-500"
+                  : "bg-linear-to-b from-slate-900 to-blue-950"
         }`}
       >
         <div
@@ -1215,6 +1218,7 @@ Feature tambahan:
               liveTranscript={liveTranscript}
             />
           )}
+
           <ModeSelector mode={mode} setMode={handleModeChange} />
           {showModeConfirm && (
             <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
@@ -1345,6 +1349,8 @@ Feature tambahan:
           <div className="mb-48" />
         </div>
       </div>
+
+      {mode === "ielts" && <ComingSoon />}
 
       {/* Overlay untuk daily complete */}
       {mode === "dailyStory" && allDailyComplete && (
