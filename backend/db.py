@@ -1164,3 +1164,30 @@ def get_translation_history(user_id: str, limit: int = 20, offset: int = 0):
     finally:
         cursor.close()
         conn.close()
+
+
+def update_translation_favorite(history_id: str, is_favorite: bool):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            UPDATE translation_history
+            SET is_favorite = %s
+            WHERE id = %s
+            RETURNING id
+        """, (is_favorite, history_id))
+
+        result = cursor.fetchone()
+        conn.commit()
+
+        return result is not None
+
+    except Exception as e:
+        conn.rollback()
+        print("Error:", e)
+        return False
+
+    finally:
+        cursor.close()
+        conn.close()

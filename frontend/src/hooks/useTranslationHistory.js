@@ -10,16 +10,7 @@ export default function useTranslationHistory(userId, limit = 10) {
 
   const fetchHistory = useCallback(
     async (pageNumber = 0, append = false) => {
-      console.log("🚀 fetchHistory called");
-
-      if (!userId) {
-        console.log("❌ userId tidak ada:", userId);
-        return;
-      }
-
-      console.log("👤 userId:", userId);
-      console.log("📄 pageNumber:", pageNumber);
-      console.log("➕ append:", append);
+      if (!userId) return;
 
       try {
         setLoading(true);
@@ -27,15 +18,9 @@ export default function useTranslationHistory(userId, limit = 10) {
 
         const offset = pageNumber * limit;
 
-        console.log("📦 limit:", limit);
-        console.log("📍 offset:", offset);
-
-        const url = `${linkBackend}/translation-history/${userId}?limit=${limit}&offset=${offset}`;
-        console.log("🌐 fetch URL:", url);
-
-        const res = await fetch(url);
-
-        console.log("📡 response status:", res.status);
+        const res = await fetch(
+          `${linkBackend}/translation-history/${userId}?limit=${limit}&offset=${offset}`,
+        );
 
         if (!res.ok) {
           throw new Error("Failed to fetch translation history");
@@ -43,27 +28,15 @@ export default function useTranslationHistory(userId, limit = 10) {
 
         const json = await res.json();
 
-        console.log("📥 raw response:", json);
-
         const newData = json.data || [];
 
-        console.log("📊 newData length:", newData.length);
-        console.log("📊 newData sample:", newData[0]);
-
-        setData((prev) => {
-          const result = append ? [...prev, ...newData] : newData;
-          console.log("🧠 updated data length:", result.length);
-          return result;
-        });
+        setData((prev) => (append ? [...prev, ...newData] : newData));
 
         setHasMore(newData.length === limit);
-        console.log("🔁 hasMore:", newData.length === limit);
       } catch (err) {
-        console.log("🔥 ERROR:", err);
         setError(err.message || "Unknown error");
       } finally {
         setLoading(false);
-        console.log("✅ fetch selesai");
       }
     },
     [userId, limit],
@@ -81,7 +54,7 @@ export default function useTranslationHistory(userId, limit = 10) {
 
     const next = page + 1;
     setPage(next);
-    fetchHistory(next, true);
+    fetchHistory(next, false);
   };
 
   // prev page (simple version: refetch)

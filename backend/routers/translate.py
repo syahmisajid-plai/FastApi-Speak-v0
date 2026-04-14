@@ -1,8 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from deep_translator import GoogleTranslator
 
-from db import save_translation_history, get_translation_history
+
+from db import save_translation_history, get_translation_history, update_translation_favorite
 
 # Router instance
 router = APIRouter()
@@ -17,6 +18,8 @@ class TranslateRequest(BaseModel):
     target_lang: str
     user_id: str
 
+class FavoriteRequest(BaseModel):
+    is_favorite: bool
 
 # class TextPayload(BaseModel):
 #     text: str
@@ -65,4 +68,20 @@ def fetch_history(user_id: str, limit: int = 20, offset: int = 0):
     return {
         "user_id": user_id,
         "data": history
+    }
+
+@router.patch("/translation-history/{history_id}/favorite")
+def update_favorite(history_id: str, payload: FavoriteRequest):
+    updated = update_translation_favorite(
+        history_id=history_id,
+        is_favorite=payload.is_favorite
+    )
+
+    if not updated:
+        raise HTTPException(status_code=404, detail="Data not found")
+
+    return {
+        "message": "Favorite updated",
+        "history_id": history_id,
+        "is_favorite": payload.is_favorite
     }

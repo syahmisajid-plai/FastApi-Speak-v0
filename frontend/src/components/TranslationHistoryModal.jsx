@@ -3,14 +3,14 @@ import useTranslationHistory from "../hooks/useTranslationHistory";
 
 export default function TranslationHistoryModal({ show, onClose, userId }) {
   const { data, page, loading, hasMore, nextPage, prevPage, error } =
-    useTranslationHistory(userId);
+    useTranslationHistory(userId, 8);
 
   if (!show) return null;
 
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm"
     >
       <div
         onClick={(e) => e.stopPropagation()}
