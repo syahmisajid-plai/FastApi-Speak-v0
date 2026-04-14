@@ -43,7 +43,7 @@ export default function useLupaKata({
           sender: "Helper",
           type: "result",
           indo: data.source, // ✅ FIX
-          english: data.translated, // ✅ FIX
+          english: data.translated, // ✅ FIXX
 
           history_id: data.history_id,
           is_favorite: false,
