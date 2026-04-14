@@ -47,8 +47,8 @@ export default function useLupaKata({
         },
       ]);
 
-      if (data.english) {
-        onLupaKataResult?.(data.english);
+      if (data.translated) {
+        onLupaKataResult?.(data.translated);
       }
     } catch (err) {
       console.error("❌ Translate error:", err);

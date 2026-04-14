@@ -15,7 +15,7 @@ export default function AudioUnlockOverlay({ onUnlock, onFinish }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden pointer-events-none">
+    <div className="fixed inset-0 z-99 overflow-hidden pointer-events-none">
       {/* TOP */}
       <div
         className={`absolute top-0 left-0 w-full h-1/2 bg-black

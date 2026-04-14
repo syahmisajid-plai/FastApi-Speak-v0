@@ -10,7 +10,16 @@ export default function useTranslationHistory(userId, limit = 10) {
 
   const fetchHistory = useCallback(
     async (pageNumber = 0, append = false) => {
-      if (!userId) return;
+      console.log("🚀 fetchHistory called");
+
+      if (!userId) {
+        console.log("❌ userId tidak ada:", userId);
+        return;
+      }
+
+      console.log("👤 userId:", userId);
+      console.log("📄 pageNumber:", pageNumber);
+      console.log("➕ append:", append);
 
       try {
         setLoading(true);
@@ -18,9 +27,15 @@ export default function useTranslationHistory(userId, limit = 10) {
 
         const offset = pageNumber * limit;
 
-        const res = await fetch(
-          `${linkBackend}/translation-history/${userId}?limit=${limit}&offset=${offset}`,
-        );
+        console.log("📦 limit:", limit);
+        console.log("📍 offset:", offset);
+
+        const url = `${linkBackend}/translation-history/${userId}?limit=${limit}&offset=${offset}`;
+        console.log("🌐 fetch URL:", url);
+
+        const res = await fetch(url);
+
+        console.log("📡 response status:", res.status);
 
         if (!res.ok) {
           throw new Error("Failed to fetch translation history");
@@ -28,15 +43,27 @@ export default function useTranslationHistory(userId, limit = 10) {
 
         const json = await res.json();
 
+        console.log("📥 raw response:", json);
+
         const newData = json.data || [];
 
-        setData((prev) => (append ? [...prev, ...newData] : newData));
+        console.log("📊 newData length:", newData.length);
+        console.log("📊 newData sample:", newData[0]);
+
+        setData((prev) => {
+          const result = append ? [...prev, ...newData] : newData;
+          console.log("🧠 updated data length:", result.length);
+          return result;
+        });
 
         setHasMore(newData.length === limit);
+        console.log("🔁 hasMore:", newData.length === limit);
       } catch (err) {
+        console.log("🔥 ERROR:", err);
         setError(err.message || "Unknown error");
       } finally {
         setLoading(false);
+        console.log("✅ fetch selesai");
       }
     },
     [userId, limit],

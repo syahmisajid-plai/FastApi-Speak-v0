@@ -1140,7 +1140,8 @@ def get_translation_history(user_id: str, limit: int = 20, offset: int = 0):
                 id,
                 source_text,
                 translated_text,
-                is_favorite
+                is_favorite,
+                created_at
             FROM translation_history
             WHERE user_id = %s
             ORDER BY created_at DESC
