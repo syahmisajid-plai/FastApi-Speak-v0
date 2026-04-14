@@ -44,6 +44,9 @@ export default function useLupaKata({
           type: "result",
           indo: data.source, // ✅ FIX
           english: data.translated, // ✅ FIX
+
+          history_id: data.history_id,
+          is_favorite: false,
         },
       ]);
 
