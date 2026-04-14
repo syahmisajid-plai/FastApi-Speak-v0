@@ -71,6 +71,44 @@ export default function useTranslationHistory(userId, limit = 10) {
     fetchHistory(page, false);
   };
 
+  // ================= FAVORIT =================
+  const toggleFavorite = async (id, currentValue) => {
+    try {
+      // 🔥 Optimistic update dulu (biar UI langsung berubah)
+      setData((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, is_favorite: !currentValue } : item,
+        ),
+      );
+
+      const res = await fetch(
+        `${linkBackend}/translation-history/${id}/favorite`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            is_favorite: !currentValue,
+          }),
+        },
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to update favorite");
+      }
+    } catch (err) {
+      console.error(err);
+
+      // ❗ rollback kalau gagal
+      setData((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, is_favorite: currentValue } : item,
+        ),
+      );
+    }
+  };
+
   return {
     data,
     page,
@@ -80,5 +118,6 @@ export default function useTranslationHistory(userId, limit = 10) {
     nextPage,
     prevPage,
     refresh,
+    toggleFavorite,
   };
 }

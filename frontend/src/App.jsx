@@ -38,6 +38,7 @@ import useHistoryManager from "./hooks/useHistoryManager";
 import useStreak from "./hooks/useStreak";
 // import useGrammarCheck from "./hooks/useGrammarCheck";
 import useVocabEngine from "./hooks/useVocabEngine";
+import useTranslationHistory from "./hooks/useTranslationHistory";
 
 // ================== AUDIO ==================
 import useTTS_Google from "./hooks/useTTS_Google";
@@ -682,6 +683,8 @@ Feature tambahan:
     userIdRef,
   });
 
+  const { data, toggleFavorite } = useTranslationHistory(userId);
+
   // ================== 2️⃣ SPEECH RECOGNITION ==================
   const speech = useSpeechRecognition({
     recognitionRef,
@@ -1312,6 +1315,8 @@ Feature tambahan:
               bottomRef={bottomRef}
               disabled={allDailyComplete}
               mode={mode}
+              data={data}
+              toggleFavorite={toggleFavorite}
             />
           )}
           {((mode === "freeTalk" && freeTalkStarted) ||

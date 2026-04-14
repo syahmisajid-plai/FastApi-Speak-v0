@@ -1,7 +1,7 @@
 import { useState } from "react";
 import useTTS_Google from "../hooks/useTTS_Google";
 
-export default function ChatBubble({ chat }) {
+export default function ChatBubble({ chat, toggleFavorite }) {
   const [translated, setTranslated] = useState(null);
   const { speakText } = useTTS_Google();
 
@@ -88,6 +88,15 @@ export default function ChatBubble({ chat }) {
               🌐
             </button>
           </>
+        )}
+
+        {chat.sender === "AI" && chat.history_id && (
+          <button
+            onClick={() => toggleFavorite(chat.history_id, chat.is_favorite)}
+            className="absolute top-1 left-1 text-xs"
+          >
+            {chat.is_favorite ? "⭐" : "☆"}
+          </button>
         )}
 
         {translated && chat.sender === "AI" && (

@@ -42,8 +42,8 @@ async def translate_id_en(payload: TranslateRequest):
     ).translate(payload.text)
 
     # 2. SAVE TO HISTORY (MVP USER ID DUMMY)
-    save_translation_history(
-        user_id=payload.user_id,  # nanti ganti JWT auth
+    history_id = save_translation_history(
+        user_id=payload.user_id,
         source_text=payload.text,
         translated_text=translated,
         source_lang=payload.source_lang,
@@ -53,7 +53,8 @@ async def translate_id_en(payload: TranslateRequest):
     # 3. RESPONSE
     return {
         "source": payload.text,
-        "translated": translated
+        "translated": translated,
+        "history_id": history_id
     }
 
 @router.get("/translation-history/{user_id}")

@@ -7,6 +7,8 @@ export default function ChatSection({
   bottomRef,
   disabled = false, // 🔒 tambahkan prop disabled
   mode,
+  data,
+  toggleFavorite,
 }) {
   return (
     <section className="relative rounded-xl p-4 shadow flex flex-col space-y-2 max-h-max overflow-y-auto">
@@ -40,7 +42,14 @@ export default function ChatSection({
         }
 
         // 💬 CHAT BUBBLE
-        return <ChatBubble key={idx} chat={chat} />;
+        return (
+          <ChatBubble
+            key={idx}
+            chat={chat}
+            data={data}
+            toggleFavorite={toggleFavorite}
+          />
+        );
       })}
 
       {/* Live transcript */}
