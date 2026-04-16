@@ -29,12 +29,25 @@ export default function ChatBubble({ chat, toggleFavorite }) {
                   🔊 Play
                 </button>
 
-                <button
+                {/* <button
                   onClick={() => console.log("Use this:", chat.english)}
                   className="text-xs bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600"
                 >
                   ➕ Pakai
-                </button>
+                </button> */}
+
+                {chat.history_id && (
+                  <button
+                    onClick={() =>
+                      toggleFavorite(chat.history_id, chat.is_favorite ?? false)
+                    }
+                    className="text-sm ml-1 px-2 py-1 rounded bg-yellow-100 hover:bg-yellow-200 transition flex items-center gap-1"
+                  >
+                    {(chat.is_favorite ?? false)
+                      ? "⭐ Favorited"
+                      : "☆ Favorite"}
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -88,15 +101,6 @@ export default function ChatBubble({ chat, toggleFavorite }) {
               🌐
             </button>
           </>
-        )}
-
-        {chat.sender === "AI" && chat.history_id && (
-          <button
-            onClick={() => toggleFavorite(chat.history_id, chat.is_favorite)}
-            className="absolute top-1 left-1 text-xs"
-          >
-            {chat.is_favorite ? "⭐" : "☆"}
-          </button>
         )}
 
         {translated && chat.sender === "AI" && (

@@ -1,7 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { linkBackend } from "../config";
 
-export default function useTranslationHistory(userId, limit = 10) {
+export default function useTranslationHistory(
+  userId,
+  limit = 10,
+  favoriteOnly = false,
+) {
   const [data, setData] = useState([]);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -19,7 +23,7 @@ export default function useTranslationHistory(userId, limit = 10) {
         const offset = pageNumber * limit;
 
         const res = await fetch(
-          `${linkBackend}/translation-history/${userId}?limit=${limit}&offset=${offset}`,
+          `${linkBackend}/translation-history/${userId}?limit=${limit}&offset=${offset}&favorite_only=${favoriteOnly}`,
         );
 
         if (!res.ok) {
@@ -39,14 +43,14 @@ export default function useTranslationHistory(userId, limit = 10) {
         setLoading(false);
       }
     },
-    [userId, limit],
+    [userId, limit, favoriteOnly],
   );
 
   // initial load
   useEffect(() => {
     setPage(0);
     fetchHistory(0, false);
-  }, [userId]);
+  }, [userId, favoriteOnly]);
 
   // next page
   const nextPage = () => {

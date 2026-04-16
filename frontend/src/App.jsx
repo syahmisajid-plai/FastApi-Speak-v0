@@ -18,6 +18,7 @@ import VocabUI from "./components/VocabUI";
 import LoginOverlay from "./components/LoginOverlay";
 import VocabList from "./components/VocabList";
 import ComingSoon from "./components/ComingSoon";
+import OverlayFeedback from "./components/OverlayFeedback";
 
 // ================== STYLES ==================
 import "./App.css";
@@ -265,6 +266,7 @@ Feature tambahan:
     progress,
     showDice,
     startSession,
+    completedCountVocab,
   } = useVocabEngine(userIdRef);
 
   // showVocab List
@@ -683,7 +685,27 @@ Feature tambahan:
     userIdRef,
   });
 
+  const [overlayFavoritTranslated, setOverlayFavoritTranslated] =
+    useState(null);
+
   const { data, toggleFavorite } = useTranslationHistory(userId);
+
+  const handleToggleFavorite = (id, currentValue) => {
+    toggleFavorite(id, currentValue);
+
+    setChatHistory((prev) =>
+      prev.map((c) =>
+        c.history_id === id ? { ...c, is_favorite: !currentValue } : c,
+      ),
+    );
+
+    // 🔥 overlay feedback
+    setOverlayFavoritTranslated(
+      !currentValue ? "⭐ Added to Favorites" : "☆ Removed from Favorites",
+    );
+
+    setTimeout(() => setOverlayFavoritTranslated(null), 1200);
+  };
 
   // ================== 2️⃣ SPEECH RECOGNITION ==================
   const speech = useSpeechRecognition({
@@ -805,7 +827,10 @@ Feature tambahan:
             fetchStreakDaily={fetchStreakDaily}
             activeChecklist={activeChecklist}
             onOpenVocab={() => setShowVocab(true)}
+            completedCountVocab={completedCountVocab}
           />
+
+          <OverlayFeedback message={overlayFavoritTranslated} />
 
           {/* VOCAB LIST */}
           {showVocab && (
@@ -1316,7 +1341,7 @@ Feature tambahan:
               disabled={allDailyComplete}
               mode={mode}
               data={data}
-              toggleFavorite={toggleFavorite}
+              toggleFavorite={handleToggleFavorite}
             />
           )}
           {((mode === "freeTalk" && freeTalkStarted) ||

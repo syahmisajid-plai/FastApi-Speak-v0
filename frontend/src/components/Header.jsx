@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import DailySummaryViewer from "./DailySummaryViewer";
 import TranslationHistoryModal from "./TranslationHistoryModal";
 
+import UsageDashboard from "./UsageDashboard";
+
 export default function Header({
   mode,
   isScrolled,
@@ -13,6 +15,7 @@ export default function Header({
   fetchStreakDaily,
   activeChecklist,
   onOpenVocab,
+  completedCountVocab,
 }) {
   const [openMenu, setOpenMenu] = useState(false);
   const [showSummaryDaily, setShowSummaryDaily] = useState(false);
@@ -22,6 +25,8 @@ export default function Header({
   const [showStreakDetail, setShowStreakDetail] = useState(false);
 
   const [page, setPage] = useState(0);
+
+  const [showCostDashboard, setShowCostDashboard] = useState(false);
 
   // =========================
   // FETCH STREAK ONLY FOR DAILY MODE
@@ -145,16 +150,20 @@ export default function Header({
               <button
                 onClick={onOpenVocab}
                 className="
-              px-3! py-1.5!
-              rounded-full
-              bg-blue-500/10!
-              text-xs text-blue-400
-              hover:bg-blue-500/20!
-              transition
-              flex items-center gap-1
-            "
+                px-3! py-1.5!
+                rounded-full
+                bg-blue-500/10!
+                text-xs text-blue-400
+                hover:bg-blue-500/20!
+                transition
+                flex items-center gap-1
+              "
               >
                 📚 <span className="hidden sm:inline">Vocab</span>
+                {/* 🔥 COUNTER */}
+                <span className="ml-1 text-blue-300 font-medium">
+                  {completedCountVocab ?? 0}
+                </span>
               </button>
             )}
 
@@ -166,6 +175,24 @@ export default function Header({
             >
               🕘
             </button>
+
+            {/* COST MONITORING DASHBOARD */}
+            {user?.id === "21121b45-6987-432c-a2cd-fda17eabbd2b" &&
+              mode === "freeTalk" && (
+                <button
+                  onClick={() => setShowCostDashboard(true)}
+                  className="
+                  px-3! py-1.5!
+                  rounded-full
+                  bg-green-500/10! text-green-400
+                  text-xs
+                  hover:bg-green-500/20!
+                  transition
+                "
+                >
+                  📊 <span className="hidden sm:inline">Usage</span>
+                </button>
+              )}
 
             {/* USER */}
             {user && (
@@ -319,6 +346,30 @@ export default function Header({
         onClose={() => setShowHistory(false)}
         userId={user?.id}
       />
+
+      {/* COST MONITORING DASHBOARD */}
+      {showCostDashboard && (
+        <div
+          onClick={() => setShowCostDashboard(false)}
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-4xl px-4"
+          >
+            <button
+              onClick={() => setShowCostDashboard(false)}
+              className="absolute -top-10 right-4 text-white text-sm"
+            >
+              ✕
+            </button>
+
+            <div className="bg-black/80 rounded-2xl p-4">
+              <UsageDashboard />
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

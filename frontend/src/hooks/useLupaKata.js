@@ -166,17 +166,20 @@ export default function useLupaKata({
   const stopLupaKata = () => {
     recognitionRef.current?.stop();
 
-    if (lupaKataHeardText.trim()) {
-      translateLupaKata(lupaKataHeardText);
-    } else {
-      delayCloseLupaKata();
-      setLupaKataHeardText("");
+    const text = lupaKataHeardText.trim();
+
+    // 🔥 1. LANGSUNG UPDATE UI (INI KUNCI)
+    setLupaKataHeardText("");
+    setIsLupaKataActive(false); // ⬅️ langsung close, JANGAN delay
+
+    // 🔥 2. BARU PROSES TRANSLATE
+    if (text) {
+      translateLupaKata(text);
     }
 
-    // ⚠️ Hanya resume main recording kalau sebelumnya record aktif
+    // 🔥 3. Resume recording
     if (wasRecordingBeforeLupaKataRef.current) {
       tryResumeRecording();
-      // wasRecordingBeforeLupaKataRef.current = false;
     }
   };
 

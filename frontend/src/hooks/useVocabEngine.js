@@ -311,6 +311,13 @@ export default function useVocabEngine(userIdRef) {
   };
 
   // =========================
+  // JUMLAH KATA SELESAI
+  // =========================
+  const completedCountVocab = useMemo(() => {
+    return Object.keys(completedMap).length;
+  }, [completedMap]);
+
+  // =========================
   // PROGRESS
   // =========================
   const progress = data.length ? `${index + 1}/${data.length}` : "0/0";
@@ -329,5 +336,6 @@ export default function useVocabEngine(userIdRef) {
     setPhase,
     showDice,
     startSession,
+    completedCountVocab,
   };
 }

@@ -1,11 +1,18 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import useTranslationHistory from "../hooks/useTranslationHistory";
 
 export default function TranslationHistoryModal({ show, onClose, userId }) {
-  const { data, page, loading, hasMore, nextPage, prevPage, error } =
-    useTranslationHistory(userId, 8);
+  const [showFavoriteOnly, setShowFavoriteOnly] = useState(false);
+
+  const { data, page, loading, hasMore, nextPage, prevPage, error, refresh } =
+    useTranslationHistory(userId, 8, showFavoriteOnly);
 
   if (!show) return null;
+
+  const filteredData = showFavoriteOnly
+    ? data.filter((item) => item.is_favorite)
+    : data;
 
   return (
     <div
@@ -25,7 +32,31 @@ export default function TranslationHistoryModal({ show, onClose, userId }) {
         </button>
 
         <div className="bg-black/80 border border-white/10 rounded-xl p-4 text-white">
-          <h3 className="text-sm font-semibold mb-3">🕘 Translation History</h3>
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-sm font-semibold">🕘 Translation History</h3>
+
+            <div className="flex bg-white/10 rounded-full p-1 text-xs">
+              <button
+                onClick={() => setShowFavoriteOnly(false)}
+                className={`px-3! py-1! rounded-full transition ${
+                  !showFavoriteOnly ? "bg-white! text-black" : "text-white/70"
+                }`}
+              >
+                📄 All
+              </button>
+
+              <button
+                onClick={() => setShowFavoriteOnly(true)}
+                className={`px-3! py-1! rounded-full transition ${
+                  showFavoriteOnly
+                    ? "bg-yellow-400! text-black"
+                    : "text-white/70"
+                }`}
+              >
+                ⭐ Favorite
+              </button>
+            </div>
+          </div>
 
           {/* ERROR */}
           {error && <div className="text-red-400 text-xs mb-2">{error}</div>}
@@ -37,10 +68,12 @@ export default function TranslationHistoryModal({ show, onClose, userId }) {
 
           {/* DATA */}
           <div className="min-h-[120px] space-y-2 text-xs text-gray-300">
-            {data.length === 0 && !loading ? (
-              <div className="text-gray-500">No history yet</div>
+            {filteredData.length === 0 && !loading ? (
+              <div className="text-gray-500">
+                {showFavoriteOnly ? "No favorite yet" : "No history yet"}
+              </div>
             ) : (
-              data.map((item) => (
+              filteredData.map((item) => (
                 <div key={item.id} className="p-2 bg-white/5 rounded">
                   <span className="text-white">{item.source_text}</span> →{" "}
                   {item.translated_text}
@@ -63,7 +96,7 @@ export default function TranslationHistoryModal({ show, onClose, userId }) {
 
             <button
               onClick={nextPage}
-              disabled={!hasMore || loading}
+              disabled={showFavoriteOnly || !hasMore || loading}
               className="text-xs px-3 py-1 bg-white/10 rounded disabled:opacity-30"
             >
               Next →
