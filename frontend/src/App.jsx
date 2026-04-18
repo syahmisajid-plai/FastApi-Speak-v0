@@ -171,86 +171,6 @@ Feature tambahan:
   const audioDailyStartRef = useRef(null);
   const audioFreetalkStartRef = useRef(null);
 
-  // ================== Load History ==================
-  const loadDailyHistory = async (session) => {
-    const today = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Jakarta",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date());
-
-    const sessionKey = `${session}_${userId}_daily_${today}`;
-
-    try {
-      const res = await fetch(
-        `${linkBackend}/daily-story/history?session_id=${sessionKey}`,
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const data = await res.json();
-
-      const formatted = [];
-
-      const phaseOrder = ["morning", "afternoon", "evening", "night"];
-
-      // 🔥 ambil semua phase sampai activePhase
-      const visiblePhases = phaseOrder.slice(
-        0,
-        phaseOrder.indexOf(activePhase) + 1,
-      );
-
-      visiblePhases.forEach((phase) => {
-        // divider phase (harus selalu pertama untuk setiap phase)
-        formatted.push({
-          type: "phase",
-          phase,
-        });
-
-        // 🔥 ambil chat per phase
-        const phaseMessages = (Array.isArray(data) ? data : []).filter(
-          (msg) => msg.phase === phase,
-        );
-
-        // 🔥 MORNING SPECIAL CASE (HARUS SETELAH DIVIDER)
-        if (phase === "morning") {
-          formatted.push({
-            type: "chat",
-            sender: "AI",
-            message:
-              "Time to share your story today 😊. How did your morning start?",
-          });
-        }
-
-        // 🔥 fallback greeting untuk phase lain
-        if (phase !== "morning") {
-          formatted.push({
-            type: "chat",
-            sender: "AI",
-            message: `Hello, Good ${phase}! How’s your ${phase} going?`,
-            isSystemGenerated: true,
-          });
-        }
-
-        // 👉 render chat messages
-        phaseMessages.forEach((msg) => {
-          if (!msg.content) return;
-
-          formatted.push({
-            type: "chat",
-            sender: msg.role === "human" ? "You" : "AI",
-            message: msg.content,
-          });
-        });
-      });
-
-      setChatHistory(formatted);
-    } catch (err) {
-      console.error("Failed to load daily history:", err);
-      setChatHistory([]);
-    }
-  };
-
   // ================== Vocab ==================
   const {
     vocab,
@@ -290,53 +210,13 @@ Feature tambahan:
 
   const isDailyLocked = mode === "dailyStory" && !timeAllowed;
 
+  // ==================== CEK setIsDailyEmpty ====================
   const [isDailyEmpty, setIsDailyEmpty] = useState(null);
-  useEffect(() => {
-    if (mode !== "dailyStory") return;
-    const today = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Jakarta",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date()); // YYYY-MM-DD
-
-    const sessionKey = `${sessionIdRef.current}_${userId}_daily_${today}`;
-
-    fetch(`${linkBackend}/daily-story/history?session_id=${sessionKey}`)
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("📥 Daily history loaded:", data);
-
-        setIsDailyEmpty(!data || data.length === 0);
-      })
-      .catch(() => {
-        setIsDailyEmpty(true); // kalau error anggap kosong
-      });
-  }, [mode, sessionId]);
 
   useEffect(() => {
     if (mode !== "dailyStory") return;
 
-    const url = `${linkBackend}/daily-story/progress?session_id=${sessionId}&user_id=${userId}`;
-
-    console.log("🌐 Fetching:", url);
-
-    fetch(url)
-      .then((res) => {
-        console.log("📡 Raw response:", res);
-        return res.json();
-      })
-      .then((data) => {
-        console.log("📥 Response data:", data);
-
-        const phase = getCurrentPhaseFromProgress(data);
-        console.log("🧠 Detected phase:", phase);
-
-        setActivePhase(phase);
-      })
-      .catch((err) => {
-        console.error("❌ Fetch error:", err);
-      });
+    checkIsDailyEmpty(sessionIdRef.current).then(setIsDailyEmpty);
   }, [mode, sessionId]);
 
   useEffect(() => {
@@ -360,6 +240,14 @@ Feature tambahan:
   const scenarioRef = useRef(null);
 
   // ================== DAILY STORY ==================
+  // Di dalam component
+  const [progressData, setProgressData] = useState({
+    morning: false,
+    afternoon: false,
+    evening: false,
+    night: false,
+  });
+
   const {
     dailyStory,
     toggleDailyPhase,
@@ -370,40 +258,37 @@ Feature tambahan:
     fetchStreakDaily,
 
     generateSummary,
-  } = useDailyStory(sessionIdRef, userIdRef, userId);
+    loadDailyHistory,
+    checkIsDailyEmpty,
+    fetchDailyProgress,
+    initDailySession,
+    nextPhaseRequest,
+  } = useDailyStory(
+    sessionIdRef,
+    userIdRef,
+    userId,
+    activePhase,
+    setActivePhase,
+    setChatHistory,
+    setProgressData,
+  );
   const currentPhase = getCurrentPhaseFromProgress();
 
   const [readyToContinue, setReadyToContinue] = useState(false);
   const [currentStoryPhase, setCurrentStoryPhase] = useState(null);
 
-  // Di dalam component
-  const [progressData, setProgressData] = useState({
-    morning: false,
-    afternoon: false,
-    evening: false,
-    night: false,
-  });
-
   useEffect(() => {
-    if (mode === "dailyStory") {
-      const url = `${linkBackend}/daily-story/progress?session_id=${sessionId}&user_id=${userId}`;
+    if (mode !== "dailyStory") return;
 
-      console.log("🌐 Fetching URL:", url);
+    let isActive = true;
 
-      fetch(url)
-        .then((res) => res.json())
-        .then((data) => {
-          console.log("📥 Daily Story Progress fetched:", data);
+    fetchDailyProgress(sessionId, userId).then(() => {
+      if (!isActive) return;
+    });
 
-          for (const phase in data) {
-            if (data[phase]) {
-              markPhaseComplete(phase);
-            }
-          }
-          setProgressData(data); // update state
-        })
-        .catch((err) => console.error(err));
-    }
+    return () => {
+      isActive = false;
+    };
   }, [mode, sessionId, userId]);
 
   // nanti di render:
@@ -551,68 +436,48 @@ Feature tambahan:
 
   // ================== Sapaan Pertama Daily / Load History Daily ==================
   useEffect(() => {
-    if (mode !== "dailyStory") return; // ✅ hanya di mode dailyStory
-
+    if (mode !== "dailyStory") return;
     if (!dailyStarted) return;
     if (isDailyLocked) return;
 
-    const today = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Jakarta",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date());
-    const sessionKey = `${sessionId}_${userId}_daily_${today}`;
+    let isActive = true;
 
-    console.log("🔄 Checking first daily greeting...", { sessionKey });
+    initDailySession({ sessionId, userId }).then((result) => {
+      if (!isActive) return;
 
-    fetch(`${linkBackend}/daily-story/history?session_id=${sessionKey}`)
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("📥 Daily history loaded:", data);
-        console.log(data);
+      if (result.type === "EMPTY") {
+        setChatHistory((prev) => {
+          const last = prev[prev.length - 1];
 
-        if (data.length === 0) {
-          console.log("🎉 No chat yet today → sending first greeting");
+          if (last?.type === "phase" && last.phase === "morning") {
+            return prev;
+          }
 
-          setChatHistory((prev) => {
-            const last = prev[prev.length - 1];
+          return [
+            ...prev,
+            { type: "phase", phase: "morning" },
+            {
+              type: "chat",
+              sender: "AI",
+              message:
+                "Time to share your story today 😊. How did your morning start?",
+            },
+          ];
+        });
 
-            // ❌ prevent duplicate kalau sudah ada
-            if (last?.type === "phase" && last.phase === "morning") {
-              return prev;
-            }
+        // 🔊 tetap di parent
+        audioDailyStartRef.current?.play().catch(console.error);
+      }
 
-            return [
-              ...prev,
+      if (result.type === "HAS_DATA") {
+        loadDailyHistory(sessionIdRef.current);
+      }
+    });
 
-              // 🔥 phase divider dulu
-              {
-                type: "phase",
-                phase: "morning",
-              },
-
-              // 🔥 baru chat AI
-              {
-                type: "chat",
-                sender: "AI",
-                message:
-                  "Time to share your story today 😊. How did your morning start?",
-              },
-            ];
-          });
-
-          // 🎵 Mainkan audio
-          audioDailyStartRef.current?.play().catch(console.error);
-        } else {
-          console.log("⏭ Chat already exists today → skipping greeting");
-
-          console.log("🚀 Loading FULL daily history");
-          loadDailyHistory(sessionIdRef.current);
-        }
-      })
-      .catch(console.error);
-  }, [mode, sessionId, dailyStarted]);
+    return () => {
+      isActive = false;
+    };
+  }, [mode, sessionId, dailyStarted, isDailyLocked]);
 
   // ================== Sapaan Freetalk ==================
   useEffect(() => {
@@ -1050,109 +915,70 @@ Feature tambahan:
                       text-sm
                     "
                       onClick={async () => {
-                        try {
-                          const res = await fetch(
-                            `${linkBackend}/daily-story/next_phase`,
-                            {
-                              method: "POST",
-                              headers: {
-                                "Content-Type": "application/json",
-                              },
-                              body: JSON.stringify({
-                                session_id: sessionId,
-                                user_id: userId,
-                              }),
-                            },
-                          );
+                        const data = await nextPhaseRequest(sessionId, userId);
+                        if (!data) return;
 
-                          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        const currentPhase = activePhase;
+                        const nextPhase = getNextPhase(currentPhase);
 
-                          const data = await res.json();
-                          console.log("PHASE MOVED:", data);
+                        // 🔥 update phase
+                        setActivePhase(nextPhase);
 
-                          // ==================== HITUNG NEXT PHASE ====================
-                          const currentPhase = activePhase; // fase sekarang dari state
-                          const nextPhase = getNextPhase(currentPhase); // hitung fase selanjutnya
+                        // 🔥 reset UI
+                        setExpanded(false);
+                        setReadyToContinue(false);
 
-                          // ==================== UPDATE STATE ====================
-                          setActivePhase(nextPhase);
+                        // 🔥 update chat (SATU setState saja)
+                        setChatHistory((prev) => {
+                          const last = prev[prev.length - 1];
+                          const updated = [...prev];
 
-                          // ✅ reset trigger button ke kondisi awal (collapsed)
-                          setExpanded(false);
-
-                          // ==================== INJECT KE CHAT HISTORY ====================
-                          setChatHistory((prev) => {
-                            const last = prev[prev.length - 1];
-
-                            // ❌ prevent duplicate divider
-                            if (
-                              last?.type === "phase" &&
-                              last.phase === nextPhase
-                            ) {
-                              return prev;
-                            }
-
-                            return [
-                              ...prev,
-                              {
-                                type: "phase",
-                                phase: nextPhase,
-                              },
-                            ];
-                          });
-
-                          // ==================== 👇 TAMBAHAN: AI MESSAGE TIAP PHASE ====================
-                          setChatHistory((prev) => [
-                            ...prev,
-                            {
-                              type: "ai",
+                          // prevent duplicate divider
+                          if (
+                            !(
+                              last?.type === "phase" && last.phase === nextPhase
+                            )
+                          ) {
+                            updated.push({
+                              type: "phase",
                               phase: nextPhase,
-                              message:
-                                data?.ai_message ||
-                                `Hello, Good ${nextPhase}! How’s your ${nextPhase} going?`,
-                              timestamp: Date.now(),
-                            },
-                          ]);
+                            });
+                          }
 
-                          // ✅ tandai phase selesai
-                          markPhaseComplete(currentStoryPhase);
-
-                          setProgressData((prev) => {
-                            const updated = {
-                              ...prev,
-                              [currentStoryPhase]: true,
-                            };
-
-                            const allDone = Object.values(updated).every(
-                              (v) => v === true,
-                            );
-
-                            if (allDone) {
-                              console.log("🎉 All phases completed!");
-                            }
-
-                            return updated;
+                          updated.push({
+                            type: "ai",
+                            phase: nextPhase,
+                            message:
+                              data?.ai_message ||
+                              `Hello, Good ${nextPhase}! How’s your ${nextPhase} going?`,
+                            timestamp: Date.now(),
                           });
 
-                          // ✅ reset tombol
-                          setReadyToContinue(false);
+                          return updated;
+                        });
 
-                          // 🎉 JIKA LAST PHASE → GENERATE SUMMARY
-                          if (isLastPhase) {
-                            console.log(
-                              "🎉 STORY FINISHED → GENERATING SUMMARY",
-                            );
+                        // 🔥 update progress
+                        markPhaseComplete(currentPhase);
 
-                            const summary = await generateSummary();
+                        setProgressData((prev) => {
+                          const updated = {
+                            ...prev,
+                            [currentPhase]: true,
+                          };
 
-                            console.log("📊 FINAL SUMMARY:", summary);
-
-                            // optional UI:
-                            // setSummaryData(summary)
-                            // setShowSummary(true)
+                          if (Object.values(updated).every(Boolean)) {
+                            console.log("🎉 All phases completed!");
                           }
-                        } catch (err) {
-                          console.error("❌ Failed to move phase:", err);
+
+                          return updated;
+                        });
+
+                        // 🔥 summary
+                        if (isLastPhase) {
+                          console.log("🎉 STORY FINISHED → GENERATING SUMMARY");
+
+                          const summary = await generateSummary();
+                          console.log("📊 FINAL SUMMARY:", summary);
                         }
                       }}
                     >

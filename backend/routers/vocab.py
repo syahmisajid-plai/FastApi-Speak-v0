@@ -1,3 +1,5 @@
+# routers/vocab.py
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from db import get_all_vocab, mark_vocab_completed, get_completed_vocab_ids

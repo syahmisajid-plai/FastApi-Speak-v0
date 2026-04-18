@@ -71,6 +71,8 @@
 
 - Lock Record saat daily selesai ✅
 
+- Fix Calender View Incosistent
+
 - Inject Context_data ke Propmt (tapi saat step tertentu)
 
 - Database Penyelesaian Roleplay Mission
