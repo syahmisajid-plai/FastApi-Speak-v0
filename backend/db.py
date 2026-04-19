@@ -989,11 +989,13 @@ def get_daily_history(session_id):
     for role, message, metadata in rows:
         try:
             phase = metadata.get("phase") if metadata else None
+            alternative = metadata.get("alternative") if metadata else None
 
             history.append({
                 "role": role,
                 "content": message,
                 "phase": phase,
+                "alternative":alternative,
             })
 
         except Exception as e:
@@ -1315,7 +1317,7 @@ def get_messages(session_id):
         FROM conversation_messages
         WHERE session_id = %s
         ORDER BY created_at DESC
-        LIMIT 20
+        LIMIT 10
         """,
         (session_id,),
     )
