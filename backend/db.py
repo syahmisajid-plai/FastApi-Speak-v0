@@ -5,7 +5,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 import time
-from langchain_community.chat_message_histories import SQLChatMessageHistory
+# from langchain_community.chat_message_histories import SQLChatMessageHistory
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -514,13 +514,13 @@ def get_contexts_by_scenario(scenario_id):
 
     return results
 
-def get_session_history(session_id: str):
-    if DATABASE_URL:
-        conn = DATABASE_URL
-    else:
-        conn = "sqlite:///chat_history.db"
+# def get_session_history(session_id: str):
+#     if DATABASE_URL:
+#         conn = DATABASE_URL
+#     else:
+#         conn = "sqlite:///chat_history.db"
 
-    return SQLChatMessageHistory(session_id=session_id, connection_string=conn)
+#     return SQLChatMessageHistory(session_id=session_id, connection_string=conn)
 
 
 def get_db_connection():
@@ -1323,3 +1323,18 @@ def get_messages(session_id):
     conn.close()
 
     return rows[::-1]  # balik urutan
+
+def clear_session_messages(session_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        DELETE FROM conversation_messages
+        WHERE session_id = %s
+        """,
+        (session_id,),
+    )
+
+    conn.commit()
+    conn.close()

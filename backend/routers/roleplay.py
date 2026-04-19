@@ -9,8 +9,9 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
 from db import (
-    get_session_history,
+
     get_messages, save_message,
+    clear_session_messages,
     create_roleplay_session,
     get_roleplay_session,
     increment_turn,
@@ -158,11 +159,12 @@ def start_roleplay(req: StartRoleplayRequest):
     if not scenario:
         return {"error": "Scenario not found"}
 
-    session_key = f"{req.session_id}_sc{req.scenario_id}"
+    session_key = f"{req.session_id}_{req.user_id}_sc{req.scenario_id}_roleplay"
 
-    history = get_session_history(session_key)
-    history.clear()
+    # 🔥 HAPUS history lama dari DB
+    clear_session_messages(session_key)
 
+    # tetap pakai ini
     create_roleplay_session(
         session_key=session_key,
         scenario_id=req.scenario_id,

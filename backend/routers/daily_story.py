@@ -31,7 +31,6 @@ import re
 from fastapi import Query
 
 from db import (
-    get_session_history,
     get_messages, save_message,
     complete_daily_story_phase,
     create_daily_story_session,
