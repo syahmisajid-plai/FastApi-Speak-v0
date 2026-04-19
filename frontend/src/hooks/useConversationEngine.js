@@ -1,6 +1,19 @@
 // hooks/useConversationEngine.js
 import { streamChat } from "../services/chatService";
 
+function extractAlternative(text) {
+  const match = text.match(/You could say:\s*"?([^"\n]+)"?/i);
+
+  return match ? match[1].trim() : null;
+}
+
+function cleanAIText(text) {
+  return text
+    .replace(/You could say:\s*"?[^"\n]+"?/i, "")
+    .replace(/\n{2,}/g, "\n")
+    .trim();
+}
+
 export default function useConversationEngine({
   sessionIdRef,
   userIdRef,
@@ -65,28 +78,63 @@ export default function useConversationEngine({
       // FINAL ANSWER
       // =========================
       onStreamEnd: async (finalText, meta) => {
-        const alternative = meta?.alternative;
-        console.log("🧠 META:", meta);
-        console.log("✨ ALTERNATIVE:", alternative);
+        const mode = modeRef.current?.toLowerCase();
+
+        const isFreetalk = mode === "freetalk";
+        const isDailyStory = mode === "dailystory";
+
+        console.log("🧭 MODE RAW:", modeRef.current);
+        console.log("🧭 MODE NORMALIZED:", mode);
+        console.log("📖 isDailyStory:", isDailyStory);
+
+        let cleanText = finalText;
+        let alternative = null;
+
+        if (isDailyStory) {
+          alternative = meta?.alternative;
+          console.log(
+            " ========================= MODE DAILY =============================  🧠:",
+            alternative,
+          );
+        }
+
+        if (isFreetalk) {
+          const extracted = extractAlternative(finalText);
+
+          if (extracted) {
+            alternative = extracted;
+          }
+
+          console.log(
+            " ========================= MODE FREETALK =============================  🧠:",
+            alternative,
+          );
+        }
+
+        const safeAlternative = isFreetalk
+          ? alternative || "Nice 👍"
+          : alternative;
+
+        console.log("🧠 RAW:", finalText);
+        console.log("🧾 FULL META:", meta);
+        console.log("🧾 META alternative:", meta?.alternative);
         setChatHistory((prev) => {
           let alternativeAttached = false;
 
           return prev.map((c) => {
-            // 🔥 temp AI → AI normal
             if (c.sender === "AI-temp") {
               return {
                 sender: "AI",
-                message: finalText,
+                message: cleanText,
               };
             }
 
-            // 🔥 tempel alternative ke USER terakhir
             if (!alternativeAttached && c.sender === "You" && !c.alternative) {
               alternativeAttached = true;
 
               return {
                 ...c,
-                alternative,
+                alternative: safeAlternative,
               };
             }
 

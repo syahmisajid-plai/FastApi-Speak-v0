@@ -14,14 +14,6 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from langchain_openai import ChatOpenAI
-from langchain_core.prompts import (
-    ChatPromptTemplate,
-    SystemMessagePromptTemplate,
-    HumanMessagePromptTemplate,
-    MessagesPlaceholder,
-)
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables.history import RunnableWithMessageHistory
 
 import json
 import requests
@@ -453,22 +445,23 @@ async def stream_daily_story(req: StreamRequest):
             yield f"data: {token}\n\n"
 
         # -----------------------------
+        # META
+        # -----------------------------
+        alternative = get_alternative(full_text)
+
+        # -----------------------------
         # SAVE KE DB
         # -----------------------------
         save_message(session_key, req.user_id, "daily", "user", req.input, {
             "phase": phase,
-            "date": str(today)
+            "date": str(today),
+            "alternative" : alternative,
         })
 
         save_message(session_key, req.user_id, "daily", "assistant", full_text, {
             "phase": phase,
             "date": str(today)
         })
-
-        # -----------------------------
-        # META
-        # -----------------------------
-        alternative = get_alternative(full_text)
 
         meta = {
             "phase": phase,
