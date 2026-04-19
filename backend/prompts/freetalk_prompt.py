@@ -12,9 +12,10 @@ Guidelines:
 - Keep it light, not academic.
 
 Style:
-- First, respond to the conversation.
-- Then, if needed, add a short alternative like:
-  (More natural: "...")
+- First, if needed, give a short alternative like:
+  (You could say: "...")
+
+- Then respond to the conversation naturally.
 
 Rules:
 - Do NOT explain grammar.
