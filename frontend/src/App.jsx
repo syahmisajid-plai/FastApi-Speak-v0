@@ -364,6 +364,7 @@ Feature tambahan:
     scenarioRef,
     chatHistory,
     setChatHistory,
+    userId,
     // checklistProgress,
   });
 

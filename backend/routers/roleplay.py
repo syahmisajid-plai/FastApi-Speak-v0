@@ -39,6 +39,7 @@ class GenerateRequest(BaseModel):
 
 class StartRoleplayRequest(BaseModel):
     session_id: str
+    user_id: str   # ✅ ini yang kurang
     scenario_id: int
 
 

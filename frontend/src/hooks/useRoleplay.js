@@ -7,6 +7,7 @@ export default function useRoleplay({
   chatHistory,
   setChatHistory,
   checklistProgress,
+  userId,
 }) {
   const [selectedScenario, setSelectedScenario] = useState(null);
 
@@ -138,6 +139,7 @@ export default function useRoleplay({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           session_id: sessionIdRef.current,
+          user_id: userId, // ✅ TAMBAH INI
           scenario_id: scenario.id,
         }),
       });

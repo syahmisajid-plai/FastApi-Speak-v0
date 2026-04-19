@@ -850,27 +850,28 @@ def get_human_messages(session_id):
         """
         SELECT message, metadata
         FROM conversation_messages
-        WHERE session_id = %s
+        WHERE session_id LIKE %s
         AND role = 'user'
-        ORDER BY created_at ASC
+        ORDER BY created_at DESC
+        LIMIT 20
         """,
-        (session_id,),
+        (session_id + "%",),
     )
 
     rows = cursor.fetchall()
     conn.close()
 
+    rows = rows[::-1]  # balik ke urutan normal (old → new)
+
     human_messages = []
 
     for message, metadata in rows:
         try:
-            phase = None
-            if metadata:
-                phase = metadata.get("phase")
+            phase = metadata.get("phase") if isinstance(metadata, dict) else None
 
             human_messages.append({
-                "type": "human",
-                "data": {"content": message},
+                "role": "user",
+                "content": message,
                 "phase": phase,
             })
 

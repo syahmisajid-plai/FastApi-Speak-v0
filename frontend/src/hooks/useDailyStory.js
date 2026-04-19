@@ -183,7 +183,12 @@ export default function useDailyStory(
 
           formatted.push({
             type: "chat",
-            sender: msg.role === "human" ? "You" : "AI",
+            sender:
+              msg.role === "user"
+                ? "You"
+                : msg.role === "assistant"
+                  ? "AI"
+                  : "System",
             message: msg.content,
           });
         });
