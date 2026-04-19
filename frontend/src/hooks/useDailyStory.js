@@ -190,6 +190,7 @@ export default function useDailyStory(
                   ? "AI"
                   : "System",
             message: msg.content,
+            alternative: msg.alternative || null, // ⭐ ADD THIS
           });
         });
       });
