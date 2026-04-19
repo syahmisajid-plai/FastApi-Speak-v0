@@ -5,6 +5,8 @@ import json
 from datetime import datetime, date, timedelta
 from zoneinfo import ZoneInfo
 
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+
 from prompts.daily_prompt import DAILY_RULES, DAILY_TOPICS
 
 from fastapi import APIRouter
@@ -30,6 +32,7 @@ from fastapi import Query
 
 from db import (
     get_session_history,
+    get_messages, save_message,
     complete_daily_story_phase,
     create_daily_story_session,
     get_daily_story_session,
@@ -382,6 +385,17 @@ def get_alternative(text: str) -> str:
 
     return "Correct"
 
+def get_history_for_llm(session_id):
+    rows = get_messages(session_id)  # dari DB
+
+    history = []
+    for role, content in rows:
+        if role == "user":
+            history.append(HumanMessage(content=content))
+        elif role == "assistant":
+            history.append(AIMessage(content=content))
+
+    return history
 
 # -----------------------------
 # STREAM DAILY STORY
@@ -390,27 +404,20 @@ def get_alternative(text: str) -> str:
 async def stream_daily_story(req: StreamRequest):
 
     today = datetime.now(ZoneInfo("Asia/Jakarta")).date()
-
     base_session_key = f"{req.session_id}_{req.user_id}_daily_{today}"
 
     progress = get_progress(base_session_key)
-
     phase = detect_phase(progress)
 
     session_key = f"{base_session_key}_{phase}"
-
-    # tetap gunakan base_session_key untuk update progress
     phase_progress = progress[phase]
 
-    # progress["turns"] += 1
-    # progress["words"] += len(req.input.split())
-    # progress["transcript"] += " " + req.input
-
-    phase_progress = progress[phase]
+    # -----------------------------
+    # UPDATE PROGRESS
+    # -----------------------------
     phase_progress["turns"] += 1
     phase_progress["words"] += len(req.input.split())
     phase_progress["transcript"] += " " + req.input
-    # keep last 200 chars only
     phase_progress["transcript"] = phase_progress["transcript"][-200:]
 
     if not phase_progress["ready"] and check_completion(phase_progress):
@@ -424,78 +431,56 @@ async def stream_daily_story(req: StreamRequest):
 
     base_prompt = get_daily_prompt(phase)
 
-    system_prompt = SystemMessagePromptTemplate.from_template(base_prompt)
+    # 🔥 ambil history dari DB
+    history_messages = get_history_for_llm(session_key)
 
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            system_prompt,
-            MessagesPlaceholder(variable_name="history"),
-            HumanMessagePromptTemplate.from_template("{input}"),
+    # -----------------------------
+    # STREAM RESPONSE
+    # -----------------------------
+    async def event_stream():
+        full_text = ""
+
+        messages = [
+            SystemMessage(content=base_prompt),
+            *history_messages,
+            HumanMessage(content=req.input),
         ]
-    )
 
-    chain = prompt | llm | StrOutputParser()
+        response = llm.stream(messages)
 
-    runnable = RunnableWithMessageHistory(
-        chain,
-        get_session_history,
-        input_messages_key="input",
-        history_messages_key="history",
-    )
+        for chunk in response:
+            token = chunk.content or ""
+            full_text += token
+            yield f"data: {token}\n\n"
 
-    # -----------------------------
-    # CHECK COMPLETION
-    # -----------------------------
-    completed = phase_progress["completed"]
+        # -----------------------------
+        # SAVE KE DB
+        # -----------------------------
+        save_message(session_key, req.user_id, "daily", "user", req.input, {
+            "phase": phase,
+            "date": str(today)
+        })
 
-    # -----------------------------
-    # RESPONSE
-    # -----------------------------
-    if USE_STREAMING:
+        save_message(session_key, req.user_id, "daily", "assistant", full_text, {
+            "phase": phase,
+            "date": str(today)
+        })
 
-        def event_stream():
-            full_text = ""
+        # -----------------------------
+        # META
+        # -----------------------------
+        alternative = get_alternative(full_text)
 
-            for chunk in runnable.stream(
-                {"input": req.input},
-                config={"configurable": {"session_id": session_key}},
-            ):
-                full_text += chunk  # ⬅️ kumpulin semua chunk
-                yield f"data: {chunk}\n\n"
-
-            # -----------------------------
-            # EXTRACT ALTERNATIVE
-            # -----------------------------
-            alternative = get_alternative(full_text)
-
-            # -----------------------------
-            # META EVENT
-            # -----------------------------
-            meta = {
-                "phase": phase,
-                "ready": phase_progress["ready"],
-                "completed": phase_progress["completed"],
-                "alternative": alternative,  # ⬅️ hasil dari function
-            }
-
-            yield f"event: meta\ndata: {json.dumps(meta)}\n\n"
-
-        return StreamingResponse(event_stream(), media_type="text/event-stream")
-
-    else:
-
-        # NON STREAM MODE
-        response = runnable.invoke(
-            {"input": req.input},
-            config={"configurable": {"session_id": session_key}},
-        )
-
-        return {
-            "text": response,
+        meta = {
             "phase": phase,
             "ready": phase_progress["ready"],
             "completed": phase_progress["completed"],
+            "alternative": alternative,
         }
+
+        yield f"event: meta\ndata: {json.dumps(meta)}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 #

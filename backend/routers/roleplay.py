@@ -6,10 +6,11 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
 from db import (
     get_session_history,
+    get_messages, save_message,
     create_roleplay_session,
     get_roleplay_session,
     increment_turn,
@@ -180,7 +181,6 @@ def start_roleplay(req: StartRoleplayRequest):
 # STREAM ROLEPLAY RESPONSE
 # -----------------------------
 
-
 @router.post("/stream_answer")
 async def stream_answer(req: StreamRequest):
 
@@ -189,8 +189,8 @@ async def stream_answer(req: StreamRequest):
     if not scenario:
         return {"error": "Scenario not found"}
 
-    # session_key = f"{req.session_id}_{req.user_id}sc{req.scenario_id}"
-    session_key = f"{req.session_id}_sc{req.scenario_id}"
+    session_key = f"{req.session_id}_{req.user_id}_sc{req.scenario_id}_roleplay"
+    # session_key = f"{req.session_id}_sc{req.scenario_id}"
     session_data = get_roleplay_session(session_key)
 
     if not session_data:
@@ -238,9 +238,19 @@ async def stream_answer(req: StreamRequest):
     Keep responses short.
     """
 
+    # 🔥 ambil history dari DB
+    rows = get_messages(session_key)
+
+    history_messages = []
+    for role, content in rows:
+        if role == "user":
+            history_messages.append(HumanMessage(content=content))
+        elif role == "assistant":
+            history_messages.append(AIMessage(content=content))
+
     messages = [
         SystemMessage(content=system_prompt),
-        *get_session_history(session_key).messages,
+        *history_messages,
         HumanMessage(content=req.input),
     ]
 
@@ -259,15 +269,26 @@ async def stream_answer(req: StreamRequest):
             full_text += token
             yield f"data: {token}\n\n"
 
-        # update turn
+        # -----------------------------
+        # UPDATE TURN
+        # -----------------------------
         increment_turn(session_key)
 
         if is_final_turn:
             complete_roleplay(session_key)
             yield "data: __ROLEPLAY_END__\n\n"
 
-        history = get_session_history(session_key)
-        history.add_user_message(req.input)
-        history.add_ai_message(full_text)
+        # -----------------------------
+        # SAVE KE DB
+        # -----------------------------
+        save_message(session_key, req.user_id, "roleplay", "user", req.input, {
+            "scenario_id": req.scenario_id,
+            "turn": next_turn
+        })
+
+        save_message(session_key, req.user_id, "roleplay", "assistant", full_text, {
+            "scenario_id": req.scenario_id,
+            "turn": next_turn
+        })
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")

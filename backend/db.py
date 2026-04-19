@@ -1287,3 +1287,39 @@ def update_translation_favorite(history_id: str, is_favorite: bool):
     finally:
         cursor.close()
         conn.close()
+
+def save_message(session_id, user_id, mode, role, message, metadata=None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO conversation_messages
+        (session_id, user_id, mode, role, message, metadata)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """,
+        (session_id, user_id, mode, role, message, metadata or {}),
+    )
+
+    conn.commit()
+    conn.close()
+
+def get_messages(session_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT role, message
+        FROM conversation_messages
+        WHERE session_id = %s
+        ORDER BY created_at DESC
+        LIMIT 20
+        """,
+        (session_id,),
+    )
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return rows[::-1]  # balik urutan
