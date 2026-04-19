@@ -4,6 +4,9 @@ import sqlite3
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
+from psycopg2.extras import Json
+
+
 import time
 # from langchain_community.chat_message_histories import SQLChatMessageHistory
 
@@ -1298,7 +1301,7 @@ def save_message(session_id, user_id, mode, role, message, metadata=None):
         (session_id, user_id, mode, role, message, metadata)
         VALUES (%s, %s, %s, %s, %s, %s)
         """,
-        (session_id, user_id, mode, role, message, metadata or {}),
+        (session_id, user_id, mode, role, message, Json(metadata or {})),
     )
 
     conn.commit()
