@@ -795,52 +795,79 @@ def get_summary(user_id, story_date):
 
 import json
 
-def get_human_messages(session_prefix):
+# def get_human_messages(session_prefix):
+#     conn = get_db_connection()
+#     cursor = conn.cursor()
+
+#     cursor.execute(
+#         """
+#         SELECT message, session_id 
+#         FROM message_store 
+#         WHERE session_id LIKE %s
+#         ORDER BY id ASC
+#         """,
+#         (session_prefix + "%",),
+#     )
+
+
+#     rows = cursor.fetchall()
+#     conn.close()
+
+#     human_messages = []
+
+#     for r in rows:
+#         try:
+#             data = json.loads(r[0])
+#             if data.get("type") != "human":
+#                 continue  # skip AI messages
+
+#             content = data.get("data", {}).get("content", "")
+
+#             session_id = r[1]
+#             # ambil phase dari session_id
+#             parts = session_id.split("_")
+#             phase = parts[-1] if len(parts) > 0 else None
+
+#             human_messages.append({
+#                 "type": "human",
+#                 "data": {"content": content},
+#                 "phase": phase,
+#             })
+
+#         except Exception as e:
+#             print("Parse error:", e)
+
+#     return human_messages
+
+def get_human_messages(session_id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    if DATABASE_URL:
-        cursor.execute(
-            """
-            SELECT message, session_id 
-            FROM message_store 
-            WHERE session_id LIKE %s
-            ORDER BY id ASC
-            """,
-            (session_prefix + "%",),
-        )
-    else:
-        cursor.execute(
-            """
-            SELECT message, session_id 
-            FROM message_store 
-            WHERE session_id LIKE ?
-            ORDER BY id ASC
-            """,
-            (session_prefix + "%",),
-        )
+    cursor.execute(
+        """
+        SELECT message, metadata
+        FROM conversation_messages
+        WHERE session_id = %s
+        AND role = 'user'
+        ORDER BY created_at ASC
+        """,
+        (session_id,),
+    )
 
     rows = cursor.fetchall()
     conn.close()
 
     human_messages = []
 
-    for r in rows:
+    for message, metadata in rows:
         try:
-            data = json.loads(r[0])
-            if data.get("type") != "human":
-                continue  # skip AI messages
-
-            content = data.get("data", {}).get("content", "")
-
-            session_id = r[1]
-            # ambil phase dari session_id
-            parts = session_id.split("_")
-            phase = parts[-1] if len(parts) > 0 else None
+            phase = None
+            if metadata:
+                phase = metadata.get("phase")
 
             human_messages.append({
                 "type": "human",
-                "data": {"content": content},
+                "data": {"content": message},
                 "phase": phase,
             })
 
@@ -893,52 +920,79 @@ def save_summary(user_id, story_date, summaries):
 
     conn.commit()
 
-def get_daily_history(session_prefix):
+# def get_daily_history(session_prefix):
+#     conn = get_db_connection()
+#     cursor = conn.cursor()
+
+#     cursor.execute(
+#         """
+#         SELECT message, session_id 
+#         FROM message_store 
+#         WHERE session_id LIKE %s
+#         ORDER BY id ASC
+#         """,
+#         (session_prefix + "%",),
+#     )
+
+
+#     rows = cursor.fetchall()
+#     conn.close()
+
+#     history = []
+
+#     for r in rows:
+#         try:
+#             data = json.loads(r[0])
+#             role = data.get("type", "ai")
+#             content = data.get("data", {}).get("content", "")
+
+#             session_id = r[1]
+
+#             # 🔥 ambil phase dari session_id
+#             parts = session_id.split("_")
+#             phase = parts[-1] if len(parts) > 0 else None
+
+#             history.append({
+#                 "role": role,
+#                 "content": content,
+#                 "phase": phase,  # ✅ INI YANG PENTING
+#             })
+
+#         except Exception as e:
+#             print("Parse error:", e)
+
+#     return history
+
+def get_daily_history(session_id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    if DATABASE_URL:
-        cursor.execute(
-            """
-            SELECT message, session_id 
-            FROM message_store 
-            WHERE session_id LIKE %s
-            ORDER BY id ASC
-            """,
-            (session_prefix + "%",),
-        )
-    else:
-        cursor.execute(
-            """
-            SELECT message, session_id 
-            FROM message_store 
-            WHERE session_id LIKE ?
-            ORDER BY id ASC
-            """,
-            (session_prefix + "%",),
-        )
+    cursor.execute(
+        """
+        SELECT role, message, metadata
+        FROM conversation_messages
+        WHERE session_id = %s
+        ORDER BY created_at ASC
+        """,
+        (session_id,),
+    )
 
     rows = cursor.fetchall()
     conn.close()
 
     history = []
 
-    for r in rows:
+    for role, message, metadata in rows:
         try:
-            data = json.loads(r[0])
-            role = data.get("type", "ai")
-            content = data.get("data", {}).get("content", "")
+            phase = None
 
-            session_id = r[1]
-
-            # 🔥 ambil phase dari session_id
-            parts = session_id.split("_")
-            phase = parts[-1] if len(parts) > 0 else None
+            if metadata and "phase" in metadata:
+                phase = metadata["phase"]
 
             history.append({
                 "role": role,
-                "content": content,
-                "phase": phase,  # ✅ INI YANG PENTING
+                "content": message,
+                "phase": phase,
             })
 
         except Exception as e:
