@@ -243,6 +243,7 @@ export default function useDailyStory(
 
   const initDailySession = async ({ sessionId, userId }) => {
     const sessionKey = `${sessionId}_${userId}_daily_${today}`;
+    console.log("sessionKey:", sessionKey);
 
     try {
       const res = await fetch(
@@ -250,6 +251,8 @@ export default function useDailyStory(
       );
 
       const data = await res.json();
+
+      console.log("🔥 RAW DATA:", data);
 
       if (!data || data.length === 0) {
         // 🔥 return signal: perlu greeting

@@ -974,10 +974,10 @@ def get_daily_history(session_id):
         """
         SELECT role, message, metadata
         FROM conversation_messages
-        WHERE session_id = %s
+        WHERE session_id LIKE %s
         ORDER BY created_at ASC
         """,
-        (session_id,),
+        (session_id + "%",),
     )
 
     rows = cursor.fetchall()
@@ -987,10 +987,7 @@ def get_daily_history(session_id):
 
     for role, message, metadata in rows:
         try:
-            phase = None
-
-            if metadata and "phase" in metadata:
-                phase = metadata["phase"]
+            phase = metadata.get("phase") if metadata else None
 
             history.append({
                 "role": role,
