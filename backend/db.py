@@ -296,6 +296,26 @@ def init_db():
         );
     """)
 
+    # -----------------------------
+    # NEW: History Messages
+    # -----------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS conversation_messages (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+        session_id TEXT NOT NULL,
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+
+        mode TEXT NOT NULL,              -- freetalk / daily / roleplay / vocab
+        role TEXT NOT NULL,              -- user / assistant / system
+
+        message TEXT NOT NULL,
+
+        metadata JSONB DEFAULT '{}'::jsonb,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
 
     conn.commit()
     conn.close()

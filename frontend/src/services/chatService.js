@@ -24,6 +24,7 @@ export async function streamChat({
   };
 
   const endpoint = endpointMap[mode];
+  const fullUrl = `${linkBackend}${endpoint}`;
 
   console.log("📤 ==================== chatService.js: ====================", {
     session_id: sessionId,
@@ -31,6 +32,7 @@ export async function streamChat({
     input: text,
     scenario_id: scenarioId,
     mode,
+    endpoint,
   });
 
   const res = await fetch(`${linkBackend}${endpoint}`, {
