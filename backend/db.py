@@ -320,6 +320,38 @@ def init_db():
     );
     """)
 
+    # -----------------------------
+    # API USAGE LOGS (Monitoring Cost & Usage)
+    # -----------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS api_usage_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+        user_id TEXT,
+        session_id TEXT,
+
+        endpoint TEXT,
+        feature TEXT,
+        method TEXT,
+
+        status_code INT,
+        duration_ms INT,
+
+        tokens_input INT DEFAULT 0,
+        tokens_output INT DEFAULT 0,
+
+        characters INT DEFAULT 0,
+
+        stt_cost FLOAT DEFAULT 0,
+        llm_cost FLOAT DEFAULT 0,
+        tts_cost FLOAT DEFAULT 0,
+
+        total_cost FLOAT DEFAULT 0,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
     conn.commit()
     conn.close()
 
