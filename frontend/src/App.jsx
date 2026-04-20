@@ -1073,6 +1073,7 @@ Feature tambahan:
               stopRecording={stopRecording}
               isRecording={isRecording}
               liveTranscript={liveTranscript}
+              user_id={userId}
             />
           )}
 

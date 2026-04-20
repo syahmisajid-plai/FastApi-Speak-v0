@@ -18,6 +18,8 @@ export default function VocabUI({
   liveTranscript,
   examples, // optional (kalau mau debug / progress)
   startSession,
+
+  user_id,
 }) {
   if (!vocab) return null;
 
@@ -32,7 +34,7 @@ export default function VocabUI({
   const [started, setStarted] = useState(false);
 
   // AUDIO
-  const { playAudio, loading } = useAudioVocab();
+  const { playAudio, loading } = useAudioVocab(user_id);
   useEffect(() => {
     if (!started || !vocab) return;
 

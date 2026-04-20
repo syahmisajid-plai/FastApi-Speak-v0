@@ -1373,3 +1373,52 @@ def clear_session_messages(session_id):
 
     conn.commit()
     conn.close()
+
+def insert_api_log(data):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO api_usage_logs (
+            user_id,
+            session_id,
+            endpoint,
+            feature,
+            method,
+            status_code,
+            duration_ms,
+            tokens_input,
+            tokens_output,
+            characters,
+            stt_cost,
+            llm_cost,
+            tts_cost,
+            total_cost
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """,
+        (
+            data.get("user_id"),
+            data.get("session_id"),
+            data.get("endpoint"),
+            data.get("feature"),
+            data.get("method"),
+            data.get("status_code"),
+            data.get("duration_ms"),
+
+            data.get("tokens_input", 0),
+            data.get("tokens_output", 0),
+
+            data.get("characters", 0),
+
+            data.get("stt_cost", 0),
+            data.get("llm_cost", 0),
+            data.get("tts_cost", 0),
+
+            data.get("total_cost", 0),
+        ),
+    )
+
+    conn.commit()
+    conn.close()

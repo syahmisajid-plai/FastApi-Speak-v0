@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { linkBackend } from "../config";
 
-export default function useAudioVocab() {
+export default function useAudioVocab(user_id) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -17,7 +17,9 @@ export default function useAudioVocab() {
     );
 
     try {
-      const res = await fetch(`${linkBackend}/audio/${word}`);
+      const res = await fetch(
+        `${linkBackend}/audio/${word}?user_id=${user_id}`,
+      );
 
       console.log("[TTS RESPONSE STATUS]:", res.status);
 
