@@ -1,23 +1,46 @@
 import React, { useMemo, useState } from "react";
+import { useCostSummary } from "../hooks/useCostSummary";
 
 export default function UsageDashboard() {
   const [search, setSearch] = useState("");
 
-  const data = [
-    { user: "user_1", cost: 12.5 },
-    { user: "user_2", cost: 8.2 },
-    { user: "user_3", cost: 5.1 },
-    { user: "user_4", cost: 15.3 },
-  ];
+  const { data, loading, error, refetch } = useCostSummary();
+
+  // mapping backend → frontend format
+  const formattedData = useMemo(() => {
+    return (data || []).map((d) => ({
+      user: d.user_id,
+      cost: d.total_cost,
+    }));
+  }, [data]);
 
   const filteredData = useMemo(() => {
-    return data.filter((d) =>
+    return formattedData.filter((d) =>
       d.user.toLowerCase().includes(search.toLowerCase()),
     );
-  }, [search]);
+  }, [search, formattedData]);
 
   const totalCost = filteredData.reduce((acc, d) => acc + d.cost, 0);
   const topUser = [...filteredData].sort((a, b) => b.cost - a.cost)[0];
+
+  if (loading) {
+    return (
+      <div className="p-4 text-white">
+        <p>Loading usage data...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-red-400">
+        <p>Error: {error}</p>
+        <button onClick={refetch} className="underline">
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 max-h-[80vh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
@@ -59,14 +82,14 @@ export default function UsageDashboard() {
         </div>
       </div>
 
-      {/* SIMPLE BAR VISUAL (NO LIB) */}
+      {/* BAR CHART */}
       <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-6">
         <h2 className="text-lg font-semibold mb-4">Cost per User</h2>
 
         <div className="space-y-3">
           {filteredData.map((item, i) => {
-            const max = Math.max(...filteredData.map((d) => d.cost));
-            const width = (item.cost / max) * 100;
+            const max = Math.max(...filteredData.map((d) => d.cost || 0));
+            const width = max ? (item.cost / max) * 100 : 0;
 
             return (
               <div key={i}>
@@ -74,6 +97,7 @@ export default function UsageDashboard() {
                   <span>{item.user}</span>
                   <span>${item.cost.toFixed(2)}</span>
                 </div>
+
                 <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-green-400 transition-all duration-500"
@@ -98,6 +122,7 @@ export default function UsageDashboard() {
                 <th className="py-2">Cost ($)</th>
               </tr>
             </thead>
+
             <tbody>
               {filteredData.map((item, index) => (
                 <tr
