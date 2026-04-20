@@ -1422,3 +1422,33 @@ def insert_api_log(data):
 
     conn.commit()
     conn.close()
+
+def get_user_cost_summary():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT 
+            user_id,
+            COALESCE(SUM(stt_cost), 0) AS stt_cost,
+            COALESCE(SUM(llm_cost), 0) AS llm_cost,
+            COALESCE(SUM(tts_cost), 0) AS tts_cost,
+            COALESCE(SUM(total_cost), 0) AS total_cost
+        FROM api_usage_logs
+        GROUP BY user_id
+        ORDER BY total_cost DESC
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        {
+            "user_id": r[0],
+            "stt_cost": r[1],
+            "llm_cost": r[2],
+            "tts_cost": r[3],
+            "total_cost": r[4],
+        }
+        for r in rows
+    ]

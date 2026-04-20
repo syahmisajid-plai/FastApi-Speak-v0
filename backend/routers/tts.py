@@ -9,6 +9,11 @@ import os
 from google.cloud import texttospeech
 from config import client_tts  # client TTS dari config.py
 
+from db import insert_api_log
+
+import time
+from utils.monitoring_cost import calculate_all_costs
+
 router = APIRouter()
 
 
@@ -24,33 +29,37 @@ class TextPayload(BaseModel):
 # -----------------------------
 @router.post("/tts-stream")
 async def tts_stream(payload: TextPayload):
+
+    start_time = time.time()
+
     print("📥 Received text:", repr(payload.text))
 
-    # Bersihkan teks
+    # -----------------------------
+    # CLEAN TEXT
+    # -----------------------------
     clean_text = " ".join(payload.text.split())
-
-    # Ganti apostrophe Unicode ke ASCII
     clean_text = clean_text.replace("’", "'")
 
-    # Gabungkan It 's -> It's, He 's -> He's, dsb
     clean_text = re.sub(
-        r"\b(I|i|You|you|He|he|She|she|It|it|We|we|They|they) 's\b", r"\1's", clean_text
+        r"\b(I|i|You|you|He|he|She|she|It|it|We|we|They|they) 's\b",
+        r"\1's",
+        clean_text
     )
 
-    # Hapus tanda kutip literal (optional)
     clean_text = clean_text.replace('"', "")
 
     print("📤 Cleaned text:", repr(clean_text))
 
-    # 1️⃣ Siapkan input TTS
+    # -----------------------------
+    # TTS CONFIG
+    # -----------------------------
     synthesis_input = texttospeech.SynthesisInput(text=clean_text)
 
-    # 2️⃣ Pilih suara
     voice = texttospeech.VoiceSelectionParams(
-        language_code="en-US", name="en-US-Standard-F"
+        language_code="en-US",
+        name="en-US-Standard-F"
     )
 
-    # 3️⃣ Konfigurasi audio
     audio_config = texttospeech.AudioConfig(
         audio_encoding=texttospeech.AudioEncoding.MP3,
         effects_profile_id=["small-bluetooth-speaker-class-device"],
@@ -58,15 +67,53 @@ async def tts_stream(payload: TextPayload):
         pitch=1,
     )
 
-    # 4️⃣ Generate audio
+    # -----------------------------
+    # GENERATE AUDIO
+    # -----------------------------
     response = client_tts.synthesize_speech(
-        input=synthesis_input, voice=voice, audio_config=audio_config
+        input=synthesis_input,
+        voice=voice,
+        audio_config=audio_config
     )
 
-    # 5️⃣ Simpan hasil ke memory
     audio_stream = BytesIO(response.audio_content)
 
-    # 6️⃣ Kirim sebagai streaming response
+    # =============================
+    # COST + MONITORING
+    # =============================
+
+    duration_ms = int((time.time() - start_time) * 1000)
+
+    characters = len(clean_text)
+
+    tts_cost = calculate_tts_cost(characters)
+
+    log_data = {
+        "user_id": getattr(payload, "user_id", None),  # optional kalau kamu kirim
+        "session_id": None,
+        "endpoint": "/tts-stream",
+        "feature": "tts",
+        "method": "POST",
+
+        "status_code": 200,
+        "duration_ms": duration_ms,
+
+        "tokens_input": 0,
+        "tokens_output": 0,
+
+        "characters": characters,
+
+        "stt_cost": 0,
+        "llm_cost": 0,
+        "tts_cost": tts_cost,
+        "total_cost": tts_cost,
+    }
+
+    insert_api_log(log_data)
+
+    # -----------------------------
+    # RETURN STREAM
+    # -----------------------------
     return StreamingResponse(
         audio_stream,
         media_type="audio/mpeg",
