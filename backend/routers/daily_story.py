@@ -5,6 +5,8 @@ import json
 from datetime import datetime, date, timedelta
 from zoneinfo import ZoneInfo
 
+import time
+
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
 from prompts.daily_prompt import DAILY_RULES, DAILY_TOPICS
@@ -22,6 +24,8 @@ import re
 
 from fastapi import Query
 
+from utils.monitoring_cost import calculate_all_costs  # function yang tadi kita buat
+
 from db import (
     get_messages, save_message,
     complete_daily_story_phase,
@@ -34,6 +38,7 @@ from db import (
     get_human_messages,
     save_summary,
     get_available_dates,
+    insert_api_log,
 )
 
 
@@ -394,6 +399,8 @@ def get_history_for_llm(session_id):
 @router.post("/stream_answer")
 async def stream_daily_story(req: StreamRequest):
 
+    start_time = time.time()
+
     today = datetime.now(ZoneInfo("Asia/Jakarta")).date()
     base_session_key = f"{req.session_id}_{req.user_id}_daily_{today}"
 
@@ -449,6 +456,15 @@ async def stream_daily_story(req: StreamRequest):
         # -----------------------------
         alternative = get_alternative(full_text)
 
+        meta = {
+            "phase": phase,
+            "ready": phase_progress["ready"],
+            "completed": phase_progress["completed"],
+            "alternative": alternative,
+        }        
+
+        yield f"event: meta\ndata: {json.dumps(meta)}\n\n"
+
         # -----------------------------
         # SAVE KE DB
         # -----------------------------
@@ -463,14 +479,44 @@ async def stream_daily_story(req: StreamRequest):
             "date": str(today)
         })
 
-        meta = {
-            "phase": phase,
-            "ready": phase_progress["ready"],
-            "completed": phase_progress["completed"],
-            "alternative": alternative,
+        # =============================
+        # COST + USAGE TRACKING
+        # =============================
+
+        duration_ms = int((time.time() - start_time) * 1000)
+
+        costs = calculate_all_costs(
+            system_prompt=base_prompt,
+            history_messages=history_messages,
+            user_input=req.input,
+            llm_output=full_text,
+            tts_characters=0
+        )
+
+        log_data = {
+            "user_id": req.user_id,
+            "session_id": session_key,
+            "endpoint": "/stream_answer",
+            "feature": "daily_story",
+            "method": "POST",
+
+            "status_code": 200,
+            "duration_ms": duration_ms,
+
+            "tokens_input": costs["tokens_input"],
+            "tokens_output": costs["tokens_output"],
+
+            "characters": 0,
+
+            "stt_cost": costs["stt_cost"],
+            "llm_cost": costs["llm_cost"],
+            "tts_cost": costs["tts_cost"],
+            "total_cost": costs["total_cost"],
         }
 
-        yield f"event: meta\ndata: {json.dumps(meta)}\n\n"
+        insert_api_log(log_data)
+
+        
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 

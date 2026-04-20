@@ -280,24 +280,24 @@ def init_db():
     # -----------------------------
     # NEW: USAGE LOGS (OPENAI + TTS)
     # -----------------------------
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS usage_logs (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    # cursor.execute("""
+    #     CREATE TABLE IF NOT EXISTS usage_logs (
+    #         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    #         user_id UUID REFERENCES users(id) ON DELETE CASCADE,
 
-            service TEXT NOT NULL,
-            endpoint TEXT NOT NULL,
+    #         service TEXT NOT NULL,
+    #         endpoint TEXT NOT NULL,
 
-            tokens_input INTEGER DEFAULT 0,
-            tokens_output INTEGER DEFAULT 0,
-            characters INTEGER DEFAULT 0,
-            duration_seconds FLOAT,
+    #         tokens_input INTEGER DEFAULT 0,
+    #         tokens_output INTEGER DEFAULT 0,
+    #         characters INTEGER DEFAULT 0,
+    #         duration_seconds FLOAT,
 
-            cost FLOAT NOT NULL,
+    #         cost FLOAT NOT NULL,
 
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    """)
+    #         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    #     );
+    # """)
 
     # -----------------------------
     # NEW: History Messages
