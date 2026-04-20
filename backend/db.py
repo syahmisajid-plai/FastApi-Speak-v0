@@ -327,7 +327,7 @@ def init_db():
     CREATE TABLE IF NOT EXISTS api_usage_logs (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-        user_id TEXT,
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
         session_id TEXT,
 
         endpoint TEXT,
