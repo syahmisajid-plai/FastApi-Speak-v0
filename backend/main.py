@@ -21,6 +21,7 @@ from routers import (
     auth_routes,
     vocab,
     audio_vocab,
+    summary_cost,
 )
 
 
@@ -97,6 +98,8 @@ app.include_router(freetalk.router)
 app.include_router(auth_routes.router)
 app.include_router(vocab.router)
 app.include_router(audio_vocab.router)
+app.include_router(summary_cost.router)
+
 
 
 # Set path ke service account GCP
