@@ -24,7 +24,7 @@ import re
 
 from fastapi import Query
 
-from utils.monitoring_cost import calculate_all_costs  # function yang tadi kita buat
+from utils.monitoring_cost import calculate_all_costs
 
 from db import (
     get_messages, save_message,
@@ -751,87 +751,117 @@ def generate_daily_summary_by_phase(messages):
 @router.post("/summary/generate")
 async def generate_daily_summary(req: SummaryRequest):
 
+    start_time = time.time()
+
     try:
         print("\n========== [START] generate_daily_summary ==========")
         print(f"[REQUEST] user_id={req.user_id}, story_date={req.story_date}")
 
         # 1. ambil session
-        print("[STEP 1] Fetching session...")
         session = get_daily_session(req.user_id, req.story_date)
-        print(f"[STEP 1 RESULT] session={session}")
 
         if not session:
-            print("[EXIT] Session not found")
             return {"status": "session_not_found"}
 
         # 2. validasi completion
-        print("[STEP 2] Checking completion...")
         complete = is_complete(session)
-        print(f"[STEP 2 RESULT] is_complete={complete}")
 
         if not complete:
-            print("[EXIT] Session not complete")
             return {"status": "not_complete"}
 
         # 3. cek summary sudah ada
-        print("[STEP 3] Checking existing summary...")
         existing = get_summary(req.user_id, req.story_date)
-        print(f"[STEP 3 RESULT] existing={existing}")
 
         if existing:
-            print("[EXIT] Summary already exists")
             return {"status": "already_exists", "data": existing}
 
         # 4. ambil messages
-        print("[STEP 4] Fetching messages...")
         sessionKey = f"{req.user_name}_{req.user_id}_daily_{req.story_date}"
         messages = get_human_messages(sessionKey)
 
         if not messages:
-            print("[STEP 4 RESULT] No messages found")
             return {"status": "no_messages"}
 
-        print(f"[STEP 4 RESULT] total_messages={len(messages)}")
-
-        # Loop untuk menampilkan isi pesan lengkap
-        for i, msg in enumerate(messages, start=1):
-            print(f"Message {i}: {msg}")
-
-        if not messages:
-            print("[EXIT] No messages found")
-            return {"status": "no_messages"}
-
-        # 5. generate summary (LLM) per phase
-        print("[STEP 5] Generating summary using LLM per phase...")
-
+        # 5. generate summary
         summaries = generate_daily_summary_by_phase(messages)
 
         if not summaries:
-            print("[EXIT] Failed to generate any summary")
             return {"status": "failed_to_generate"}
 
-        # Debug print semua phase summary
-        for phase, text in summaries.items():
-            print(f"[STEP 5 RESULT] Phase='{phase}' Summary='{text}'")
-
-        # 6. save ke DB (HANYA SEKALI ❗)
-        print("[STEP 6] Saving summary to DB...")
-
+        # 6. save ke DB
         save_summary(req.user_id, req.story_date, summaries)
 
-        print(f"======PESAN summaries======: {summaries}")
+        # =============================
+        # COST + MONITORING
+        # =============================
 
-        print("[STEP 6 RESULT] All summaries saved successfully")
+        duration_ms = int((time.time() - start_time) * 1000)
 
-        print("[SUCCESS] Summary generated successfully")
-        print("========== [END] generate_daily_summary ==========\n")
+        # gabungkan semua text untuk estimation
+        input_text = "\n".join([str(m) for m in messages])
+        output_text = "\n".join([str(v) for v in summaries.values()])
+
+        costs = calculate_all_costs(
+            system_prompt="daily_summary_generation",
+            history_messages=[],
+            user_input=input_text,
+            llm_output=output_text,
+            tts_characters=0
+        )
+
+        log_data = {
+            "user_id": req.user_id,
+            "session_id": sessionKey,
+            "endpoint": "/summary/generate",
+            "feature": "daily_summary",
+            "method": "POST",
+
+            "status_code": 200,
+            "duration_ms": duration_ms,
+
+            "tokens_input": costs["tokens_input"],
+            "tokens_output": costs["tokens_output"],
+
+            "characters": 0,
+
+            "stt_cost": costs["stt_cost"],
+            "llm_cost": costs["llm_cost"],
+            "tts_cost": costs["tts_cost"],
+            "total_cost": costs["total_cost"],
+        }
+
+        insert_api_log(log_data)
 
         return {"status": "generated", "data": summaries}
 
     except Exception as e:
-        print(f"[ERROR] generate_daily_summary: {str(e)}")
-        print("========== [FAILED] generate_daily_summary ==========\n")
 
+        duration_ms = int((time.time() - start_time) * 1000)
+
+        log_data = {
+            "user_id": req.user_id,
+            "session_id": f"{req.user_name}_{req.user_id}_daily_{req.story_date}",
+            "endpoint": "/summary/generate",
+            "feature": "daily_summary",
+            "method": "POST",
+
+            "status_code": 500,
+            "duration_ms": duration_ms,
+
+            "tokens_input": 0,
+            "tokens_output": 0,
+
+            "characters": 0,
+
+            "stt_cost": 0,
+            "llm_cost": 0,
+            "tts_cost": 0,
+            "total_cost": 0,
+        }
+
+        insert_api_log(log_data)
+
+        print(f"[ERROR] generate_daily_summary: {str(e)}")
         return {"status": "error", "message": str(e)}
 
 
