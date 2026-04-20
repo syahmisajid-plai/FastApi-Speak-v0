@@ -6,23 +6,41 @@ export default function UsageDashboard() {
 
   const { data, loading, error, refetch } = useCostSummary();
 
-  // mapping backend → frontend format
+  // =========================
+  // FORMAT DATA DARI BACKEND
+  // =========================
   const formattedData = useMemo(() => {
     return (data || []).map((d) => ({
       user: d.user_id,
-      cost: d.total_cost,
+      llmCost: d.llm_cost,
+      ttsCost: d.tts_cost,
+      totalCost: d.total_cost,
     }));
   }, [data]);
 
+  // =========================
+  // FILTER SEARCH
+  // =========================
   const filteredData = useMemo(() => {
     return formattedData.filter((d) =>
       d.user.toLowerCase().includes(search.toLowerCase()),
     );
   }, [search, formattedData]);
 
-  const totalCost = filteredData.reduce((acc, d) => acc + d.cost, 0);
-  const topUser = [...filteredData].sort((a, b) => b.cost - a.cost)[0];
+  // =========================
+  // SUMMARY METRICS
+  // =========================
+  const totalCost = filteredData.reduce((acc, d) => acc + d.totalCost, 0);
+  const totalLLM = filteredData.reduce((acc, d) => acc + d.llmCost, 0);
+  const totalTTS = filteredData.reduce((acc, d) => acc + d.ttsCost, 0);
 
+  const topUser = [...filteredData].sort(
+    (a, b) => b.totalCost - a.totalCost,
+  )[0];
+
+  // =========================
+  // LOADING STATE
+  // =========================
   if (loading) {
     return (
       <div className="p-4 text-white">
@@ -31,6 +49,9 @@ export default function UsageDashboard() {
     );
   }
 
+  // =========================
+  // ERROR STATE
+  // =========================
   if (error) {
     return (
       <div className="p-4 text-red-400">
@@ -44,11 +65,13 @@ export default function UsageDashboard() {
 
   return (
     <div className="p-4 max-h-[80vh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-      {/* HEADER */}
+      {/* ================= HEADER ================= */}
       <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">📊 Usage Dashboard</h1>
-          <p className="text-sm text-gray-400">Monitor API usage & cost</p>
+          <p className="text-sm text-gray-400">
+            Monitor API usage & cost (LLM + TTS)
+          </p>
         </div>
 
         <input
@@ -60,42 +83,45 @@ export default function UsageDashboard() {
         />
       </div>
 
-      {/* SUMMARY */}
+      {/* ================= SUMMARY ================= */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur">
           <p className="text-sm text-gray-400">Total Cost</p>
           <h2 className="text-2xl font-semibold mt-1">
-            ${totalCost.toFixed(2)}
+            ${totalCost.toFixed(8)}
           </h2>
         </div>
 
         <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur">
-          <p className="text-sm text-gray-400">Total Users</p>
-          <h2 className="text-2xl font-semibold mt-1">{filteredData.length}</h2>
+          <p className="text-sm text-gray-400">LLM Cost</p>
+          <h2 className="text-2xl font-semibold mt-1">
+            ${totalLLM.toFixed(8)}
+          </h2>
         </div>
 
         <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur">
-          <p className="text-sm text-gray-400">Top User</p>
+          <p className="text-sm text-gray-400">TTS Cost</p>
           <h2 className="text-2xl font-semibold mt-1">
-            {topUser?.user || "-"}
+            ${totalTTS.toFixed(8)}
           </h2>
         </div>
       </div>
 
-      {/* BAR CHART */}
+      {/* ================= BAR CHART ================= */}
       <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-6">
         <h2 className="text-lg font-semibold mb-4">Cost per User</h2>
 
         <div className="space-y-3">
           {filteredData.map((item, i) => {
-            const max = Math.max(...filteredData.map((d) => d.cost || 0));
-            const width = max ? (item.cost / max) * 100 : 0;
+            const max = Math.max(...filteredData.map((d) => d.totalCost || 0));
+
+            const width = max ? (item.totalCost / max) * 100 : 0;
 
             return (
               <div key={i}>
                 <div className="flex justify-between text-xs text-gray-300 mb-1">
                   <span>{item.user}</span>
-                  <span>${item.cost.toFixed(2)}</span>
+                  <span>${item.totalCost.toFixed(8)}</span>
                 </div>
 
                 <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
@@ -110,7 +136,7 @@ export default function UsageDashboard() {
         </div>
       </div>
 
-      {/* TABLE */}
+      {/* ================= TABLE ================= */}
       <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
         <h2 className="text-lg font-semibold mb-4">User Usage</h2>
 
@@ -119,7 +145,9 @@ export default function UsageDashboard() {
             <thead>
               <tr className="border-b border-white/10 text-gray-400">
                 <th className="py-2">User</th>
-                <th className="py-2">Cost ($)</th>
+                <th className="py-2">LLM</th>
+                <th className="py-2">TTS</th>
+                <th className="py-2">Total</th>
               </tr>
             </thead>
 
@@ -130,7 +158,11 @@ export default function UsageDashboard() {
                   className="border-b border-white/5 hover:bg-white/5 transition"
                 >
                   <td className="py-2">{item.user}</td>
-                  <td className="py-2">${item.cost.toFixed(2)}</td>
+                  <td className="py-2">${item.llmCost.toFixed(8)}</td>
+                  <td className="py-2">${item.ttsCost.toFixed(8)}</td>
+                  <td className="py-2 font-semibold">
+                    ${item.totalCost.toFixed(8)}
+                  </td>
                 </tr>
               ))}
             </tbody>
