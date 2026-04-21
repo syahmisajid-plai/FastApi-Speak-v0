@@ -1,6 +1,6 @@
 # routers/tts.py
 from fastapi import APIRouter
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response
 from pydantic import BaseModel
 from io import BytesIO
 import re
@@ -114,8 +114,16 @@ async def tts_stream(payload: TextPayload):
     # -----------------------------
     # RETURN STREAM
     # -----------------------------
-    return StreamingResponse(
-        audio_stream,
+    # return StreamingResponse(
+    #     audio_stream,
+    #     media_type="audio/mpeg",
+    #     headers={"Content-Disposition": "inline; filename=output.mp3"},
+    # )
+
+    return Response(
+        content=response.audio_content,
         media_type="audio/mpeg",
-        headers={"Content-Disposition": "inline; filename=output.mp3"},
+        headers={
+            "Content-Disposition": "inline; filename=output.mp3"
+        }
     )
