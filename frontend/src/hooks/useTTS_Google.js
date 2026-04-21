@@ -38,29 +38,18 @@ export default function useTTS_Google() {
   const speakText = async (text) => {
     if (!text) return;
 
-    console.group("🔊 [TTS] speakText START");
-    console.log("📄 Text:", text);
-    console.log("📊 isSpeaking:", isSpeaking);
-    console.log("🎧 currentAudioRef:", currentAudioRef.current);
-
-    const startTime = performance.now();
+    console.log("🔊 speakText called");
+    console.log("Current speaking state:", isSpeaking);
+    console.log("Existing audio ref:", currentAudioRef.current);
 
     try {
       let audio;
-      let url;
 
-      // =========================
-      // CACHE CHECK
-      // =========================
       if (audioCache.current.has(text)) {
-        console.log("♻️ Cache HIT");
-
-        url = audioCache.current.get(text);
-        audio = new Audio(url);
+        console.log("♻️ Using cached audio");
+        audio = audioCache.current.get(text);
       } else {
-        console.log("🌐 Cache MISS → Fetching TTS...");
-
-        const fetchStart = performance.now();
+        console.log("🌐 Fetching new TTS audio");
 
         const res = await fetch(`${linkBackend}/tts-stream`, {
           method: "POST",
@@ -68,103 +57,47 @@ export default function useTTS_Google() {
           body: JSON.stringify({ text }),
         });
 
-        console.log("📡 Fetch status:", res.status);
-        console.log("📡 Headers:", Object.fromEntries(res.headers.entries()));
-
-        if (!res.ok) {
-          throw new Error(`Fetch failed: ${res.status}`);
-        }
-
         const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
 
-        console.log("📦 Blob size:", blob.size, "bytes");
-        console.log("📦 Blob type:", blob.type);
-
-        url = URL.createObjectURL(blob);
-
-        console.log("🎵 Blob URL created:", url);
-
-        audioCache.current.set(text, url);
-
-        console.log(
-          "⏱ Fetch duration:",
-          (performance.now() - fetchStart).toFixed(2),
-          "ms",
-        );
+        console.log("🎵 Created blob URL:", url);
 
         audio = new Audio(url);
+        audioCache.current.set(text, audio);
       }
 
-      // =========================
-      // AUDIO SETUP
-      // =========================
       currentAudioRef.current = audio;
       setIsSpeaking(true);
 
-      console.log("🎧 Audio object created");
-      console.log("   readyState:", audio.readyState);
-      console.log("   networkState:", audio.networkState);
-
-      audio.onloadedmetadata = () => {
-        console.log("📀 Metadata loaded");
-        console.log("   duration:", audio.duration);
-      };
-
-      audio.oncanplay = () => {
-        console.log("▶️ Audio can play");
-      };
-
-      audio.onplay = () => {
-        console.log("▶️ Playback started");
-      };
-
       audio.onended = () => {
-        console.log("🔚 Playback ended");
-
+        console.log("🔚 audio onended fired");
         cleanupAudio(audio);
         currentAudioRef.current = null;
         setIsSpeaking(false);
-
-        console.log(
-          "⏱ Total play duration:",
-          (performance.now() - startTime).toFixed(2),
-          "ms",
-        );
-
-        console.groupEnd();
       };
 
       audio.onerror = (e) => {
-        console.error("🔥 AUDIO ERROR");
-        console.error("Event:", e);
-        console.error("Audio src:", audio.src);
-        console.error("readyState:", audio.readyState);
-        console.error("networkState:", audio.networkState);
-
+        console.error("🔥 audio error:", e);
         setIsSpeaking(false);
-        console.groupEnd();
       };
 
-      // =========================
-      // PLAY
-      // =========================
+      // 🚫 MODE TEST: JANGAN PLAY AUDIO
       if (MUTE_TTS) {
-        console.warn("🔇 TTS MUTED → skip play()");
-        console.groupEnd();
+        console.log("🔇 TTS MUTED (testing mode), skipping audio.play()");
+
+        // simulasi audio selesai
+        setTimeout(() => {
+          audio.onended && audio.onended();
+        }, 500);
+
         return;
       }
 
-      console.log("▶️ Calling audio.play()...");
-
+      console.log("▶️ About to play audio");
       await audio.play();
-
-      console.log("✅ audio.play() SUCCESS");
+      console.log("✅ audio.play resolved");
     } catch (err) {
-      console.error("❌ TTS ERROR");
-      console.error("Message:", err.message);
-      console.error("Full error:", err);
-
-      console.groupEnd();
+      console.error("❌ speakText error:", err);
       setIsSpeaking(false);
     }
   };

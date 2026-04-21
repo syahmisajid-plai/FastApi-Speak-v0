@@ -12,7 +12,7 @@ from config import client_tts  # client TTS dari config.py
 from db import insert_api_log
 
 import time
-from utils.monitoring_cost import calculate_all_costs
+from utils.monitoring_cost import calculate_tts_cost
 
 router = APIRouter()
 
