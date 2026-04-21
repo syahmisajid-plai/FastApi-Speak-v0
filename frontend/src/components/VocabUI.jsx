@@ -71,47 +71,45 @@ export default function VocabUI({
   return (
     <div>
       {/* ================= BEFORE START ================= */}
-      {!started && (
-        <section className="mx-4 mt-36 transition-all duration-500">
-          <div
-            className="text-white border border-white/10 backdrop-blur-xl rounded-3xl p-6 text-center 
+      <section className="mx-4 mt-36 transition-all duration-500">
+        <div
+          className="text-white border border-white/10 backdrop-blur-xl rounded-3xl p-6 text-center 
                   bg-gradient-to-b from-slate-900/80 to-indigo-900/60 
                   shadow-lg shadow-black/30"
-          >
-            <div className="flex flex-col items-center">
-              <div
-                className="w-14 h-14 rounded-2xl 
+        >
+          <div className="flex flex-col items-center">
+            <div
+              className="w-14 h-14 rounded-2xl 
                       bg-gradient-to-br from-indigo-500/20 to-white/10 
                       flex items-center justify-center text-2xl mb-4 
                       border border-white/10"
-              >
-                🧠
-              </div>
-
-              <p className="text-sm font-semibold tracking-wide">Vocab Mode</p>
-
-              <p className="text-xs text-white/60 mt-1">
-                Learn new words step by step
-              </p>
+            >
+              🧠
             </div>
 
-            <button
-              onClick={() => {
-                setStarted(true);
-                startSession();
-              }}
-              className="mt-5 w-full py-2.5! rounded-xl 
+            <p className="text-sm font-semibold tracking-wide">Vocab Mode</p>
+
+            <p className="text-xs text-white/60 mt-1">
+              Learn new words step by step
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              setStarted(true);
+              startSession();
+            }}
+            className="mt-5 w-full py-2.5! rounded-xl 
                  bg-gradient-to-r from-indigo-500 to-indigo-600 
                  hover:from-indigo-400 hover:to-indigo-500
                  text-white text-sm font-medium 
                  active:scale-[0.98] transition-all duration-200
                  shadow-md shadow-indigo-900/40"
-            >
-              Learn New Words
-            </button>
-          </div>
-        </section>
-      )}
+          >
+            Learn New Words
+          </button>
+        </div>
+      </section>
 
       {/* ================= AFTER START ================= */}
       {started && (
