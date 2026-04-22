@@ -2,6 +2,9 @@ import React, { useMemo, useState } from "react";
 import { useCostSummary } from "../hooks/useCostSummary";
 
 export default function UsageDashboard() {
+  // =========================
+  // Search
+  // =========================
   const [search, setSearch] = useState("");
 
   const { data, loading, error, refetch } = useCostSummary();
@@ -45,6 +48,19 @@ export default function UsageDashboard() {
   }, [search, formattedData]);
 
   // =========================
+  // USER USAGE
+  // =========================
+  const [page, setPage] = useState(0);
+  const ITEMS_PER_PAGE = 5;
+
+  const paginatedData = useMemo(() => {
+    const start = page * ITEMS_PER_PAGE;
+    return filteredData.slice(start, start + ITEMS_PER_PAGE);
+  }, [page, filteredData]);
+
+  const totalPage = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+
+  // =========================
   // SUMMARY METRICS
   // =========================
   const totalCost = filteredData.reduce((acc, d) => acc + d.totalCost, 0);
@@ -81,13 +97,13 @@ export default function UsageDashboard() {
   }
 
   return (
-    <div className="p-3 md:p-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white min-h-screen">
+    <div className="p-3 md:p-4 bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 text-white ">
       {/* ================= HEADER ================= */}
       <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-semibold">
+          <h2 className="text-2xl md:text-2xl font-semibold">
             📊 Usage Dashboard
-          </h1>
+          </h2>
           <p className="text-xs md:text-sm text-gray-400">
             Monitor API usage & cost (LLM + TTS)
           </p>
@@ -103,27 +119,28 @@ export default function UsageDashboard() {
       </div>
 
       {/* ================= SUMMARY ================= */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+      <div className="grid grid-cols-3 gap-2 md:gap-3 mb-5">
         {[
           {
-            label: "Total Cost",
+            label: "Total",
             value: totalCost,
           },
           {
-            label: "LLM Cost",
+            label: "LLM",
             value: totalLLM,
           },
           {
-            label: "TTS Cost",
+            label: "TTS",
             value: totalTTS,
           },
         ].map((item, i) => (
           <div
             key={i}
-            className="bg-white/5 border border-white/10 rounded-xl p-3 md:p-4 backdrop-blur"
+            className="bg-white/5 border border-white/10 rounded-lg p-2 md:p-4 backdrop-blur text-center"
           >
-            <p className="text-xs md:text-sm text-gray-400">{item.label}</p>
-            <h2 className="text-lg md:text-2xl font-semibold mt-1 break-all">
+            <p className="text-[10px] md:text-sm text-gray-400">{item.label}</p>
+
+            <h2 className="text-[12px] md:text-2xl font-semibold mt-1 leading-tight">
               {formatRupiah(item.value)}
             </h2>
           </div>
@@ -196,31 +213,56 @@ export default function UsageDashboard() {
         </div>
       </div>
 
-      {/* MOBILE CARD */}
-      <div className="md:hidden space-y-3">
-        {filteredData.map((item, index) => (
-          <div
-            key={index}
-            className="bg-white/5 border border-white/10 rounded-xl p-3"
-          >
-            <p className="text-sm font-semibold truncate">{item.name}</p>
+      {/* MOBILE TABLE */}
+      <div className="md:hidden bg-white/5 border border-white/10 rounded-xl p-2">
+        <h2 className="text-sm font-semibold mb-2">User Usage</h2>
 
-            <div className="mt-2 text-xs text-gray-300 space-y-1">
-              <div className="flex justify-between">
-                <span>LLM</span>
-                <span>{formatRupiah(item.llmCost)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>TTS</span>
-                <span>{formatRupiah(item.ttsCost)}</span>
-              </div>
-              <div className="flex justify-between font-semibold text-white">
-                <span>Total</span>
-                <span>{formatRupiah(item.totalCost)}</span>
-              </div>
-            </div>
-          </div>
-        ))}
+        <table className="w-full table-fixed text-[10px]">
+          <thead>
+            <tr className="border-b border-white/10 text-gray-400">
+              <th className="py-1 w-[35%]">User</th>
+              <th className="py-1 w-[20%]">LLM</th>
+              <th className="py-1 w-[20%]">TTS</th>
+              <th className="py-1 w-[25%]">Total</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {paginatedData.map((item, index) => (
+              <tr key={index} className="border-b border-white/5">
+                <td className="py-1 truncate">{item.name}</td>
+                <td className="py-1 truncate">{formatRupiah(item.llmCost)}</td>
+                <td className="py-1 truncate">{formatRupiah(item.ttsCost)}</td>
+                <td className="py-1 font-semibold truncate">
+                  {formatRupiah(item.totalCost)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* PAGINATION */}
+        <div className="flex justify-between items-center mt-2">
+          <button
+            onClick={() => setPage((p) => Math.max(p - 1, 0))}
+            disabled={page === 0}
+            className="px-2 py-1 text-[10px] bg-white/10 rounded disabled:opacity-30"
+          >
+            ◀
+          </button>
+
+          <span className="text-[10px] text-gray-400">
+            {totalPage === 0 ? 0 : page + 1} / {totalPage}
+          </span>
+
+          <button
+            onClick={() => setPage((p) => (p < totalPage - 1 ? p + 1 : p))}
+            disabled={page >= totalPage - 1}
+            className="px-2 py-1 text-[10px] bg-white/10 rounded disabled:opacity-30"
+          >
+            ▶
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -111,16 +111,6 @@ async def tts_stream(payload: TextPayload):
         "total_cost": tts_cost,
     }
 
-    print("🔥 BEFORE INSERT")
-    print("🔥 LOG DATA:", log_data)
-    
-
-    try:
-        insert_api_log(log_data)
-        print("✅ INSERT SUCCESS")
-    except Exception as e:
-        print("❌ INSERT FAILED:", str(e))
-
     # -----------------------------
     # RETURN STREAM
     # -----------------------------

@@ -21,7 +21,13 @@ export default function VocabUI({
 
   user_id,
 }) {
-  if (!vocab) return null;
+  if (!vocab) {
+    return (
+      <section className="mx-4 mt-36 text-white text-center">
+        <p className="text-sm text-white/60">Loading vocab...</p>
+      </section>
+    );
+  }
 
   // useEffect(() => {
   //   if (!started) return;
