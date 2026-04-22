@@ -113,6 +113,7 @@ async def tts_stream(payload: TextPayload):
 
     print("🔥 BEFORE INSERT")
     print("🔥 LOG DATA:", log_data)
+    
 
     try:
         insert_api_log(log_data)
