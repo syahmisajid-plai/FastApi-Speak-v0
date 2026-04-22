@@ -94,7 +94,7 @@ async def tts_stream(payload: TextPayload):
         "user_id": payload.user_id,
         "session_id": None,
         "endpoint": "/tts-stream",
-        "feature": payload.mode or "tts",
+        "feature": payload.mode or "tts_google",
         "method": "POST",
 
         "status_code": 200,
