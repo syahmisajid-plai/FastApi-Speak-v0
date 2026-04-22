@@ -1,6 +1,8 @@
 # routers/freetalk.py
 
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
+import json
 from pydantic import BaseModel
 
 from langchain_openai import ChatOpenAI
@@ -27,95 +29,93 @@ USE_STREAMING = True  # 🔴 matikan dulu streaming
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7, streaming=USE_STREAMING)
 
 
-def run_freetalk(session_id: str, user_id: str, user_message: str):
-    start_time = time.time()
-    try:
-        session_key = f"{session_id}_{user_id}_freetalk"
-
-        # -----------------------------
-        # 1. Ambil history dari DB
-        # -----------------------------
-        rows = get_messages(session_key)  # [(role, message), ...]
-
-        history_messages = []
-        for role, content in rows:
-            if role == "user":
-                history_messages.append(HumanMessage(content=content))
-            elif role == "assistant":
-                history_messages.append(AIMessage(content=content))
-
-        # -----------------------------
-        # 2. Susun messages ke LLM
-        # -----------------------------
-        messages = [
-            SystemMessage(content=FREE_TALK_PROMPT),
-            *history_messages,
-            HumanMessage(content=user_message),
-        ]
-
-        # -----------------------------
-        # 3. Generate response
-        # -----------------------------
-        response = llm.invoke(messages)
-        answer = response.content
-
-        # -----------------------------
-        # 4. Simpan ke DB
-        # -----------------------------
-        save_message(session_key, user_id, "freetalk", "user", user_message)
-        save_message(session_key, user_id, "freetalk", "assistant", response.content)
-
-        # =============================
-        # 5. COST TRACKING
-        # =============================
-
-        duration_ms = int((time.time() - start_time) * 1000)
-
-        costs = calculate_all_costs(
-            system_prompt=FREE_TALK_PROMPT,
-            history_messages=history_messages,
-            user_input=user_message,
-            llm_output=answer,
-            tts_characters=0
-        )
-
-        log_data = {
-            "user_id": user_id,
-            "session_id": session_key,
-            "endpoint": "/freetalk",
-            "feature": "freetalk",
-            "method": "POST",
-
-            "status_code": 200,
-            "duration_ms": duration_ms,
-
-            "tokens_input": costs["tokens_input"],
-            "tokens_output": costs["tokens_output"],
-
-            "characters": 0,
-
-            "stt_cost": costs["stt_cost"],
-            "llm_cost": costs["llm_cost"],
-            "tts_cost": costs["tts_cost"],
-            "total_cost": costs["total_cost"],
-        }
-
-        insert_api_log(log_data)
-
-        return answer
-
-    except Exception as e:
-        print("❌ FREETALK ERROR:", e)
-        return "Sorry, something went wrong."
-
-
 @router.post("/stream_answer")
 def free_talk(req: FreeTalkRequest):
 
-    reply = run_freetalk(
-        session_id=req.session_id,
-        user_id=req.user_id,
-        user_message=req.input
-    )
+    start_time = time.time()
 
-    return {"text": reply}
+    session_key = f"{req.session_id}_{req.user_id}_freetalk"
+
+    # =============================
+    # 1. Ambil history
+    # =============================
+    rows = get_messages(session_key)
+
+    history_messages = []
+    for role, content in rows:
+        if role == "user":
+            history_messages.append(HumanMessage(content=content))
+        elif role == "assistant":
+            history_messages.append(AIMessage(content=content))
+
+    # =============================
+    # 2. Susun messages
+    # =============================
+    messages = [
+        SystemMessage(content=FREE_TALK_PROMPT),
+        *history_messages,
+        HumanMessage(content=req.input),
+    ]
+
+    # =============================
+    # 3. STREAMING GENERATOR 🔥
+    # =============================
+    def event_generator():
+        full_text = ""
+
+        try:
+            # 🔥 STREAM TOKEN
+            for chunk in llm.stream(messages):
+                token = chunk.content or ""
+                full_text += token
+
+                yield f"data: {token}\n\n"
+
+            # =============================
+            # 4. SETELAH SELESAI
+            # =============================
+
+            # ✅ save DB
+            save_message(session_key, req.user_id, "freetalk", "user", req.input)
+            save_message(session_key, req.user_id, "freetalk", "assistant", full_text)
+
+            # ✅ cost tracking
+            duration_ms = int((time.time() - start_time) * 1000)
+
+            costs = calculate_all_costs(
+                system_prompt=FREE_TALK_PROMPT,
+                history_messages=history_messages,
+                user_input=req.input,
+                llm_output=full_text,
+                tts_characters=0
+            )
+
+            log_data = {
+                "user_id": req.user_id,
+                "session_id": session_key,
+                "endpoint": "/freetalk",
+                "feature": "freetalk",
+                "method": "POST",
+                "status_code": 200,
+                "duration_ms": duration_ms,
+                "tokens_input": costs["tokens_input"],
+                "tokens_output": costs["tokens_output"],
+                "characters": 0,
+                "stt_cost": costs["stt_cost"],
+                "llm_cost": costs["llm_cost"],
+                "tts_cost": costs["tts_cost"],
+                "total_cost": costs["total_cost"],
+            }
+
+            insert_api_log(log_data)
+
+            # =============================
+            # 5. OPTIONAL: KIRIM META
+            # =============================
+            yield f"event: meta\ndata: {json.dumps({'done': True})}\n\n"
+
+        except Exception as e:
+            print("❌ STREAM ERROR:", e)
+            yield f"data: Sorry, something went wrong.\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")

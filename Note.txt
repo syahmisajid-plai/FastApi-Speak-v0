@@ -53,6 +53,10 @@
 
 - Kata - Kata Pembuka✅
 
+- Respone AI nya jadi lama
+
+- Logic Vocab kadang tombol harus ditekan beberapa kali
+
 - REFACTOR ROLEPLAY.JSX
 
 - Tambahkan fitur koreksi langsung chat user di dailyStory ✅

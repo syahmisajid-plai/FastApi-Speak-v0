@@ -404,7 +404,7 @@ export default function RoleplayToggleSwipe({
       </section>
       {/* MODAL */}
       {isOpen && started && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+        <div className="fixed inset-0 z-52 flex items-center justify-center bg-black/80">
           <div className="w-[280px] h-[380px]  rounded-xl p-3">
             {/* STEP 1 — category SELECTION */}
             {step === "category" && (
