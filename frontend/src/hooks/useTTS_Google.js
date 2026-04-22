@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { linkBackend } from "../config";
 
-export default function useTTS_Google(userId, mode) {
+export default function useTTS_Google(userIdRef, mode) {
   const audioCache = useRef(new Map());
   const currentAudioRef = useRef(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -51,14 +51,20 @@ export default function useTTS_Google(userId, mode) {
       } else {
         console.log("🌐 Fetching new TTS audio");
 
+        const payload = {
+          text,
+          user_id: userIdRef.current,
+          mode: mode,
+        };
+
+        console.log("📤 TTS PAYLOAD:", payload);
+        console.log("📤 user_id type:", userIdRef.current);
+        console.log("📤 mode:", mode);
+
         const res = await fetch(`${linkBackend}/tts-stream`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text,
-            user_id: userId,
-            mode: mode,
-          }),
+          body: JSON.stringify(payload),
         });
 
         const blob = await res.blob();

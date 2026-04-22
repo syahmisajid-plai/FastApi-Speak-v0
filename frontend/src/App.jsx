@@ -337,7 +337,7 @@ Feature tambahan:
   const { volume, showPopup } = useMicMonitor();
 
   // ================== HOOKS ==================
-  const { speakText, isSpeaking, forceStop } = useTTS_Google(userId, mode); // 🗣️ Text-to-Speech
+  const { speakText, isSpeaking, forceStop } = useTTS_Google(userIdRef, mode); // 🗣️ Text-to-Speech
 
   // ================== RolePlay ==================
   // const [checklistProgress, setChecklistProgress] = useState({

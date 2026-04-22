@@ -91,7 +91,7 @@ async def tts_stream(payload: TextPayload):
     tts_cost = calculate_tts_cost(characters)
 
     log_data = {
-        "user_id": payload.user_id,
+        "user_id": getattr(payload, "user_id", None),  # optional kalau kamu kirim
         "session_id": None,
         "endpoint": "/tts-stream",
         "feature": payload.mode or "tts_google",
@@ -111,7 +111,14 @@ async def tts_stream(payload: TextPayload):
         "total_cost": tts_cost,
     }
 
-    insert_api_log(log_data)
+    print("🔥 BEFORE INSERT")
+    print("🔥 LOG DATA:", log_data)
+
+    try:
+        insert_api_log(log_data)
+        print("✅ INSERT SUCCESS")
+    except Exception as e:
+        print("❌ INSERT FAILED:", str(e))
 
     # -----------------------------
     # RETURN STREAM
