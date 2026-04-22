@@ -22,6 +22,8 @@ router = APIRouter()
 # -----------------------------
 class TextPayload(BaseModel):
     text: str
+    user_id: str | None = None
+    mode: str | None = None
 
 
 # -----------------------------
@@ -89,10 +91,10 @@ async def tts_stream(payload: TextPayload):
     tts_cost = calculate_tts_cost(characters)
 
     log_data = {
-        "user_id": getattr(payload, "user_id", None),  # optional kalau kamu kirim
+        "user_id": payload.user_id,
         "session_id": None,
         "endpoint": "/tts-stream",
-        "feature": "tts",
+        "feature": payload.mode or "tts",
         "method": "POST",
 
         "status_code": 200,

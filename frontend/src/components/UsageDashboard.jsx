@@ -11,6 +11,7 @@ export default function UsageDashboard() {
   // =========================
   const formattedData = useMemo(() => {
     return (data || []).map((d) => ({
+      name: d.full_name,
       user: d.user_id,
       llmCost: d.llm_cost,
       ttsCost: d.tts_cost,
@@ -19,14 +20,27 @@ export default function UsageDashboard() {
   }, [data]);
 
   // =========================
+  // Dollar to Rupiah
+  // =========================
+  const EXCHANGE_RATE = 17203;
+
+  const formatRupiah = (value) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      maximumFractionDigits: 0,
+    }).format(value * EXCHANGE_RATE);
+  };
+
+  // =========================
   // FILTER SEARCH
   // =========================
   const filteredData = useMemo(() => {
     const keyword = search?.toLowerCase() || "";
 
     return formattedData.filter((d) => {
-      if (!d?.user) return false;
-      return d.user.toLowerCase().includes(keyword);
+      if (!d?.name) return false;
+      return d.name.toLowerCase().includes(keyword);
     });
   }, [search, formattedData]);
 
@@ -110,7 +124,7 @@ export default function UsageDashboard() {
           >
             <p className="text-xs md:text-sm text-gray-400">{item.label}</p>
             <h2 className="text-lg md:text-2xl font-semibold mt-1 break-all">
-              ${item.value.toFixed(8)}
+              {formatRupiah(item.value)}
             </h2>
           </div>
         ))}
@@ -130,8 +144,8 @@ export default function UsageDashboard() {
             return (
               <div key={i}>
                 <div className="flex justify-between text-[10px] md:text-xs text-gray-300 mb-1">
-                  <span className="truncate max-w-[60%]">{item.user}</span>
-                  <span>${item.totalCost.toFixed(6)}</span>
+                  <span className="truncate max-w-[60%]">{item.name}</span>
+                  <span>{formatRupiah(item.totalCost)}</span>
                 </div>
 
                 <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
@@ -169,11 +183,11 @@ export default function UsageDashboard() {
                   key={index}
                   className="border-b border-white/5 hover:bg-white/5 transition"
                 >
-                  <td className="py-2">{item.user}</td>
-                  <td className="py-2">${item.llmCost.toFixed(8)}</td>
-                  <td className="py-2">${item.ttsCost.toFixed(8)}</td>
+                  <td className="py-2">{item.name}</td>
+                  <td className="py-2">{formatRupiah(item.llmCost)}</td>
+                  <td className="py-2">{formatRupiah(item.ttsCost)}</td>
                   <td className="py-2 font-semibold">
-                    ${item.totalCost.toFixed(8)}
+                    {formatRupiah(item.totalCost)}
                   </td>
                 </tr>
               ))}
@@ -189,20 +203,20 @@ export default function UsageDashboard() {
             key={index}
             className="bg-white/5 border border-white/10 rounded-xl p-3"
           >
-            <p className="text-sm font-semibold truncate">{item.user}</p>
+            <p className="text-sm font-semibold truncate">{item.name}</p>
 
             <div className="mt-2 text-xs text-gray-300 space-y-1">
               <div className="flex justify-between">
                 <span>LLM</span>
-                <span>${item.llmCost.toFixed(6)}</span>
+                <span>{formatRupiah(item.llmCost)}</span>
               </div>
               <div className="flex justify-between">
                 <span>TTS</span>
-                <span>${item.ttsCost.toFixed(6)}</span>
+                <span>{formatRupiah(item.ttsCost)}</span>
               </div>
               <div className="flex justify-between font-semibold text-white">
                 <span>Total</span>
-                <span>${item.totalCost.toFixed(6)}</span>
+                <span>{formatRupiah(item.totalCost)}</span>
               </div>
             </div>
           </div>
