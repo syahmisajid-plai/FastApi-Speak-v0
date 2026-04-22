@@ -22,9 +22,12 @@ export default function UsageDashboard() {
   // FILTER SEARCH
   // =========================
   const filteredData = useMemo(() => {
-    return formattedData.filter((d) =>
-      d.user.toLowerCase().includes(search.toLowerCase()),
-    );
+    const keyword = search?.toLowerCase() || "";
+
+    return formattedData.filter((d) => {
+      if (!d?.user) return false;
+      return d.user.toLowerCase().includes(keyword);
+    });
   }, [search, formattedData]);
 
   // =========================
@@ -64,12 +67,14 @@ export default function UsageDashboard() {
   }
 
   return (
-    <div className="p-4 max-h-[80vh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+    <div className="p-3 md:p-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white min-h-screen">
       {/* ================= HEADER ================= */}
       <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">📊 Usage Dashboard</h1>
-          <p className="text-sm text-gray-400">
+          <h1 className="text-xl md:text-2xl font-semibold">
+            📊 Usage Dashboard
+          </h1>
+          <p className="text-xs md:text-sm text-gray-400">
             Monitor API usage & cost (LLM + TTS)
           </p>
         </div>
@@ -79,49 +84,54 @@ export default function UsageDashboard() {
           placeholder="Search user..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-white outline-none focus:ring-2 focus:ring-white/20"
+          className="w-full md:w-64 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-white outline-none focus:ring-2 focus:ring-white/20"
         />
       </div>
 
       {/* ================= SUMMARY ================= */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur">
-          <p className="text-sm text-gray-400">Total Cost</p>
-          <h2 className="text-2xl font-semibold mt-1">
-            ${totalCost.toFixed(8)}
-          </h2>
-        </div>
-
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur">
-          <p className="text-sm text-gray-400">LLM Cost</p>
-          <h2 className="text-2xl font-semibold mt-1">
-            ${totalLLM.toFixed(8)}
-          </h2>
-        </div>
-
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur">
-          <p className="text-sm text-gray-400">TTS Cost</p>
-          <h2 className="text-2xl font-semibold mt-1">
-            ${totalTTS.toFixed(8)}
-          </h2>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+        {[
+          {
+            label: "Total Cost",
+            value: totalCost,
+          },
+          {
+            label: "LLM Cost",
+            value: totalLLM,
+          },
+          {
+            label: "TTS Cost",
+            value: totalTTS,
+          },
+        ].map((item, i) => (
+          <div
+            key={i}
+            className="bg-white/5 border border-white/10 rounded-xl p-3 md:p-4 backdrop-blur"
+          >
+            <p className="text-xs md:text-sm text-gray-400">{item.label}</p>
+            <h2 className="text-lg md:text-2xl font-semibold mt-1 break-all">
+              ${item.value.toFixed(8)}
+            </h2>
+          </div>
+        ))}
       </div>
 
       {/* ================= BAR CHART ================= */}
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Cost per User</h2>
+      <div className="bg-white/5 border border-white/10 rounded-xl p-3 md:p-4 mb-5">
+        <h2 className="text-base md:text-lg font-semibold mb-3">
+          Cost per User
+        </h2>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {filteredData.map((item, i) => {
             const max = Math.max(...filteredData.map((d) => d.totalCost || 0));
-
             const width = max ? (item.totalCost / max) * 100 : 0;
 
             return (
               <div key={i}>
-                <div className="flex justify-between text-xs text-gray-300 mb-1">
-                  <span>{item.user}</span>
-                  <span>${item.totalCost.toFixed(8)}</span>
+                <div className="flex justify-between text-[10px] md:text-xs text-gray-300 mb-1">
+                  <span className="truncate max-w-[60%]">{item.user}</span>
+                  <span>${item.totalCost.toFixed(6)}</span>
                 </div>
 
                 <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
@@ -137,7 +147,9 @@ export default function UsageDashboard() {
       </div>
 
       {/* ================= TABLE ================= */}
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+
+      {/* DESKTOP TABLE */}
+      <div className="hidden md:block bg-white/5 border border-white/10 rounded-xl p-4">
         <h2 className="text-lg font-semibold mb-4">User Usage</h2>
 
         <div className="overflow-x-auto">
@@ -168,6 +180,33 @@ export default function UsageDashboard() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* MOBILE CARD */}
+      <div className="md:hidden space-y-3">
+        {filteredData.map((item, index) => (
+          <div
+            key={index}
+            className="bg-white/5 border border-white/10 rounded-xl p-3"
+          >
+            <p className="text-sm font-semibold truncate">{item.user}</p>
+
+            <div className="mt-2 text-xs text-gray-300 space-y-1">
+              <div className="flex justify-between">
+                <span>LLM</span>
+                <span>${item.llmCost.toFixed(6)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>TTS</span>
+                <span>${item.ttsCost.toFixed(6)}</span>
+              </div>
+              <div className="flex justify-between font-semibold text-white">
+                <span>Total</span>
+                <span>${item.totalCost.toFixed(6)}</span>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
