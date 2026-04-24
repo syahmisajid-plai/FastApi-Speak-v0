@@ -191,32 +191,43 @@ export default function VocabUI({
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-center gap-3 pt-3">
+                          <div className="flex items-center justify-center gap-2 pt-3 flex-nowrap">
                             {/* SECONDARY ACTION */}
                             <button
-                              onClick={() => {
-                                skipbutton();
-                              }}
-                              className="text-xs px-3! py-2! rounded-xl 
-                              bg-white/5! hover:bg-white/10! 
-                              border border-white/10 text-white/60
-                              transition-all"
+                              onClick={skipbutton}
+                              className="
+                              text-xs! md:text-base! px-4! py-2! rounded-xl
+                              bg-white/10! hover:bg-white/15! active:bg-white/20!
+                              text-white/80 hover:text-white
+                              border border-white/15 hover:border-white/25
+                              shadow-sm hover:shadow
+                              transition-all duration-200
+                              whitespace-nowrap shrink-0
+                              active:scale-[0.98]
+                              "
                             >
-                              ✓ Sudah tahu
+                              ✓ I already know
                             </button>
 
                             {/* MAIN CTA */}
-                            <Button
+                            <button
                               onClick={() => {
                                 setPhase("guidedPractice");
-
-                                setTimeout(() => {
-                                  startRecording();
-                                }, 100);
+                                setTimeout(() => startRecording(), 100);
                               }}
+                              className="
+                              text-xs! md:text-base! px-4! py-2! rounded-xl
+                              bg-green-500! hover:bg-green-600! active:bg-green-700!
+                              text-white font-medium
+                              border border-white/10
+                              transition-all duration-200
+                              whitespace-nowrap shrink-0
+                              shadow-sm hover:shadow-md
+                              active:scale-[0.98]
+                            "
                             >
-                              Mulai Practice →
-                            </Button>
+                              Start Practice →
+                            </button>
                           </div>
                         </div>
                       )}
