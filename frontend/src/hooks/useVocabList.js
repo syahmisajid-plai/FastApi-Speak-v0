@@ -3,7 +3,7 @@ import { linkBackend } from "../config";
 
 export default function useVocabList(userId) {
   const [vocabList, setVocabList] = useState([]);
-  const [completedIds, setCompletedIds] = useState([]);
+  const [statusMap, setStatusMap] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,7 +25,12 @@ export default function useVocabList(userId) {
         const completedJson = await completedRes.json();
 
         setVocabList(vocabJson.data || []);
-        setCompletedIds(completedJson.completed_vocab_ids || []);
+        const map = {};
+        (completedJson.completed_vocab_ids || []).forEach((item) => {
+          map[item.vocab_id] = item.status;
+        });
+
+        setStatusMap(map);
       } catch (err) {
         console.log("❌ Failed:", err);
       } finally {
@@ -38,13 +43,11 @@ export default function useVocabList(userId) {
 
   // 🔥 merge status
   const enrichedVocabList = useMemo(() => {
-    const completedSet = new Set(completedIds);
-
     return vocabList.map((v) => ({
       ...v,
-      isCompleted: completedSet.has(v.id),
+      status: statusMap[v.id] || "learning",
     }));
-  }, [vocabList, completedIds]);
+  }, [vocabList, statusMap]);
 
   return {
     vocabList: enrichedVocabList,

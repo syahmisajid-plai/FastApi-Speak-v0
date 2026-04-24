@@ -109,8 +109,8 @@ export default function useVocabEngine(userIdRef) {
         const json = await res.json();
 
         const map = {};
-        json.completed_vocab_ids.forEach((id) => {
-          map[id] = true;
+        json.completed_vocab_ids.forEach((item) => {
+          map[item.vocab_id] = item.status;
         });
 
         setCompletedMap(map);
@@ -162,7 +162,7 @@ export default function useVocabEngine(userIdRef) {
 
       setCompletedMap((prev) => ({
         ...prev,
-        [vocabId]: true,
+        [vocabId]: "completed",
       }));
     } catch (err) {
       console.log("❌ mark completed error:", err);

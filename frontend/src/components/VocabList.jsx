@@ -3,12 +3,13 @@ import useVocabList from "../hooks/useVocabList";
 
 export default function VocabList({ onClose, userId }) {
   const { vocabList, loading } = useVocabList(userId);
+  console.log(userId);
 
   // ✅ state filter
   const [selectedType, setSelectedType] = useState("all");
   const [selectedLevel, setSelectedLevel] = useState("all");
 
-  const [completedFilter, setCompletedFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   // ✅ ambil unique value
   const types = useMemo(() => {
@@ -33,15 +34,12 @@ export default function VocabList({ onClose, userId }) {
       const matchLevel =
         selectedLevel === "all" || item.level === selectedLevel;
 
-      const matchCompleted =
-        completedFilter === "all" ||
-        completedFilter === "completed" ||
-        ("knwon" && item.isCompleted) ||
-        (completedFilter === "not_completed" && !item.isCompleted);
+      const matchStatus =
+        statusFilter === "all" || item.status === statusFilter;
 
-      return matchType && matchLevel && matchCompleted;
+      return matchType && matchLevel && matchStatus;
     });
-  }, [vocabList, selectedType, selectedLevel, completedFilter]);
+  }, [vocabList, selectedType, selectedLevel, statusFilter]);
 
   return (
     <div className="fixed inset-0 z-50">
@@ -70,18 +68,21 @@ export default function VocabList({ onClose, userId }) {
           <div className="flex flex-wrap gap-3 mb-6">
             {/* Completed */}
             <select
-              value={completedFilter}
-              onChange={(e) => setCompletedFilter(e.target.value)}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
               className="bg-white/10 text-white px-3 py-2 rounded-lg w-[48%] md:w-auto"
             >
               <option value="all" className="text-black bg-white">
                 All Status
               </option>
+              <option value="learning" className="text-black bg-white">
+                Learning
+              </option>
               <option value="completed" className="text-black bg-white">
                 Completed
               </option>
-              <option value="not_completed" className="text-black bg-white">
-                Not Completed
+              <option value="known" className="text-black bg-white">
+                Known
               </option>
             </select>
 
@@ -124,14 +125,20 @@ export default function VocabList({ onClose, userId }) {
           <p className="text-gray-400">Loading...</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {filteredList.map((item) => (
+            {filteredList.map((item) => {
+              const isCompleted = item.status === "completed";
+              const isKnown = item.status === "known";
+              const isLearning = item.status === "learning";
+
               <div
                 key={item.id}
                 className={`border border-white/10 rounded-xl p-4 transition
                 ${
-                  item.isCompleted
-                    ? "bg-white/5 hover:scale-[1.02]"
-                    : "bg-white/5 opacity-40 blur-[1px] pointer-events-none"
+                  isCompleted
+                    ? "bg-green-500/5"
+                    : isKnown
+                      ? "bg-blue-500/5"
+                      : "bg-white/5 opacity-50"
                 }`}
               >
                 <h2 className="text-white font-semibold">{item.word}</h2>
@@ -158,12 +165,12 @@ export default function VocabList({ onClose, userId }) {
                         ? "bg-gray-500/10! text-gray-500 cursor-not-allowed"
                         : "bg-green-500/10! text-green-400"
                     }`}
-                  disabled={item.isCompleted}
+                  disabled={isCompleted || isKnown}
                 >
                   Practice
                 </button>
-              </div>
-            ))}
+              </div>;
+            })}
           </div>
         )}
       </div>

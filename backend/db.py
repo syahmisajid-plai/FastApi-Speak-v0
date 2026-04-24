@@ -1203,14 +1203,20 @@ def get_completed_vocab_ids(user_id: str):
 
     try:
         cursor.execute("""
-            SELECT vocab_id
+            SELECT vocab_id, status
             FROM user_completed_vocab
             WHERE user_id = %s
         """, (user_id,))
 
         rows = cursor.fetchall()
 
-        return [r[0] for r in rows]
+        return [
+            {
+                "vocab_id": r[0],
+                "status": r[1]
+            }
+            for r in rows
+        ]
 
     finally:
         conn.close()
