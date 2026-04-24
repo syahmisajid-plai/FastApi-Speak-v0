@@ -1,9 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import useVocabList from "../hooks/useVocabList";
 
 export default function VocabList({ onClose, userId }) {
   const { vocabList, loading } = useVocabList(userId);
-  console.log(userId);
 
   // ✅ state filter
   const [selectedType, setSelectedType] = useState("all");
@@ -130,46 +129,52 @@ export default function VocabList({ onClose, userId }) {
               const isKnown = item.status === "known";
               const isLearning = item.status === "learning";
 
-              <div
-                key={item.id}
-                className={`border border-white/10 rounded-xl p-4 transition
-                ${
-                  isCompleted
-                    ? "bg-green-500/5"
-                    : isKnown
-                      ? "bg-blue-500/5"
-                      : "bg-white/5 opacity-50"
-                }`}
-              >
-                <h2 className="text-white font-semibold">{item.word}</h2>
-
-                <p className="text-gray-400 text-sm">{item.meaning}</p>
-
-                <div className="flex gap-2 mt-2">
-                  <span className="text-xs bg-blue-500/10 text-blue-400 px-2 py-1 rounded">
-                    {item.type}
-                  </span>
-                  <span className="text-xs bg-purple-500/10 text-purple-400 px-2 py-1 rounded">
-                    {item.level}
-                  </span>
-                </div>
-
-                {item.isCompleted && (
-                  <p className="text-xs text-green-400 mt-2">✔ Completed</p>
-                )}
-
-                <button
-                  className={`mt-3 w-full py-1! text-sm rounded
-                    ${
-                      item.isCompleted
-                        ? "bg-gray-500/10! text-gray-500 cursor-not-allowed"
-                        : "bg-green-500/10! text-green-400"
-                    }`}
-                  disabled={isCompleted || isKnown}
+              return (
+                <div
+                  key={item.id}
+                  className={`border border-white/10 rounded-xl p-4 transition
+        ${
+          isCompleted
+            ? "bg-green-500/5"
+            : isKnown
+              ? "bg-blue-500/5"
+              : "bg-white/5 opacity-50"
+        }`}
                 >
-                  Practice
-                </button>
-              </div>;
+                  <h2 className="text-white font-semibold">{item.word}</h2>
+
+                  <p className="text-gray-400 text-sm">{item.meaning}</p>
+
+                  <div className="flex gap-2 mt-2">
+                    <span className="text-xs bg-blue-500/10 text-blue-400 px-2 py-1 rounded">
+                      {item.type}
+                    </span>
+                    <span className="text-xs bg-purple-500/10 text-purple-400 px-2 py-1 rounded">
+                      {item.level}
+                    </span>
+                  </div>
+
+                  {isCompleted && (
+                    <p className="text-xs text-green-400 mt-2">✔ Completed</p>
+                  )}
+
+                  {isKnown && (
+                    <p className="text-xs text-blue-400 mt-2">✔ Known</p>
+                  )}
+
+                  <button
+                    className={`mt-3 w-full py-1 text-sm rounded
+          ${
+            isCompleted || isKnown
+              ? "bg-gray-500/10 text-gray-500 cursor-not-allowed"
+              : "bg-green-500/10 text-green-400"
+          }`}
+                    disabled={isCompleted || isKnown}
+                  >
+                    Practice
+                  </button>
+                </div>
+              );
             })}
           </div>
         )}

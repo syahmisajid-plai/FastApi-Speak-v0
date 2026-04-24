@@ -334,11 +334,6 @@ export default function useVocabEngine(userIdRef) {
       });
 
       const data = await res.json().catch(() => null);
-
-      setCompletedMap((prev) => ({
-        ...prev,
-        [vocabId]: "known",
-      }));
     } catch (err) {
       console.log("❌ mark known error:", err);
     }
@@ -348,8 +343,14 @@ export default function useVocabEngine(userIdRef) {
     const vocabId = vocabRef.current?.id;
     const userId = userIdRef?.current;
 
-    markKnown(userId, vocabId);
+    // 🔥 update UI dulu
+    setCompletedMap((prev) => ({
+      ...prev,
+      [vocabId]: "known",
+    }));
+
     next();
+    markKnown(userId, vocabId);
   };
 
   // =========================

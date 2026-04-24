@@ -24,18 +24,11 @@ export default function VocabUI({
 }) {
   // vocab = false;
 
-  // useEffect(() => {
-  //   if (!started) return;
-
-  //   if (phase === "guidedPractice" && example) {
-  //     playAudio(example);
-  //   }
-  // }, [phase, example, started]);
-
   const [started, setStarted] = useState(false);
 
   // AUDIO
   const { playAudio, loading } = useAudioVocab(user_id);
+
   useEffect(() => {
     if (!started || !vocab) return;
 
