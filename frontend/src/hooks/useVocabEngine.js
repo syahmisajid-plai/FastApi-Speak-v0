@@ -318,6 +318,41 @@ export default function useVocabEngine(userIdRef) {
   }, [completedMap]);
 
   // =========================
+  // SKIP BUTTON
+  // =========================
+  const markKnown = async (userId, vocabId) => {
+    try {
+      const res = await fetch(`${linkBackend}/vocab/known`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          vocab_id: vocabId,
+        }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      setCompletedMap((prev) => ({
+        ...prev,
+        [vocabId]: "known",
+      }));
+    } catch (err) {
+      console.log("❌ mark known error:", err);
+    }
+  };
+
+  const skipbutton = () => {
+    const vocabId = vocabRef.current?.id;
+    const userId = userIdRef?.current;
+
+    markKnown(userId, vocabId);
+    next();
+  };
+
+  // =========================
   // PROGRESS
   // =========================
   const progress = data.length ? `${index + 1}/${data.length}` : "0/0";
@@ -337,5 +372,6 @@ export default function useVocabEngine(userIdRef) {
     showDice,
     startSession,
     completedCountVocab,
+    skipbutton,
   };
 }

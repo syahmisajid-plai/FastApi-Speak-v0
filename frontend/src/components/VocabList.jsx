@@ -35,7 +35,8 @@ export default function VocabList({ onClose, userId }) {
 
       const matchCompleted =
         completedFilter === "all" ||
-        (completedFilter === "completed" && item.isCompleted) ||
+        completedFilter === "completed" ||
+        ("knwon" && item.isCompleted) ||
         (completedFilter === "not_completed" && !item.isCompleted);
 
       return matchType && matchLevel && matchCompleted;

@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from db import get_all_vocab, mark_vocab_completed, get_completed_vocab_ids
+from db import get_all_vocab, mark_vocab, get_completed_vocab_ids
 
 router = APIRouter(prefix="/vocab", tags=["Vocab"])
 
@@ -35,7 +35,11 @@ def get_vocab_list():
 @router.post("/complete")
 def complete_vocab(payload: VocabCompleteRequest):
     try:
-        result = mark_vocab_completed(payload.user_id, payload.vocab_id)
+        result = mark_vocab(
+            payload.user_id,
+            payload.vocab_id,
+            "completed"
+        )
 
         return {
             "success": True,
@@ -45,6 +49,28 @@ def complete_vocab(payload: VocabCompleteRequest):
 
     except Exception as e:
         print("❌ COMPLETE ERROR:", str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+    
+@router.post("/known")
+def known_vocab(payload: VocabCompleteRequest):
+    try:
+        result = mark_vocab(
+            payload.user_id,
+            payload.vocab_id,
+            "known"
+        )
+
+        return {
+            "success": True,
+            "message": "Vocab marked as known",
+            "data": result
+        }
+
+    except Exception as e:
+        print("❌ KNOWN ERROR:", str(e))
         raise HTTPException(
             status_code=500,
             detail=str(e)

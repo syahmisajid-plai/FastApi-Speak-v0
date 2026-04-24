@@ -11,7 +11,7 @@
 - Kunci Stage Daily sampe jam 16.00 ✅ (tambahkan ON OF Development (blm)) 
 - Prompt Sesuaikan ini sudah di ujung hari (Mode Daily)
 
-- Translated saat Recording
+- Translated saat Recording ✅
 -- Record belum ada kata tidak bisa cancel / send ✅
 -- Translated biasa tetap kembali ke Recording ✅
 -- Record lalu Translated, belum lock recording ✅
@@ -19,7 +19,7 @@
 
 - Prompt Free Talk ✅ & Roleplay Mission
 
--Roleplay Mission -> pilihan kesulitan -> animasi sistem random tema -> muncucl card mission (tema, skenario, tingkat kesulitan, mission, checklist penyelesaian)
+-Roleplay Mission -> pilihan kesulitan -> animasi sistem random tema -> muncucl card mission (tema, skenario, tingkat kesulitan, mission, checklist penyelesaian) ✅
 -Tombol Bawah roleplay blum fix langsung loncat ke summary mission
 
 -backend roleplay yang baru belum

@@ -20,14 +20,9 @@ export default function VocabUI({
   startSession,
 
   user_id,
+  skipbutton,
 }) {
-  if (!vocab) {
-    return (
-      <section className="mx-4 mt-36 text-white text-center">
-        <p className="text-sm text-white/60">Loading vocab...</p>
-      </section>
-    );
-  }
+  // vocab = false;
 
   // useEffect(() => {
   //   if (!started) return;
@@ -87,10 +82,10 @@ export default function VocabUI({
           <div>
             <div className="flex flex-col items-center">
               <div
-                className="w-14 h-14 rounded-2xl 
+                className={`w-14 h-14 rounded-2xl 
                       bg-gradient-to-br from-indigo-500/20 to-white/10 
                       flex items-center justify-center text-2xl mb-4 
-                      border border-white/10"
+                      border border-white/10 ${!vocab ? "animate-pulse" : ""}`}
               >
                 🧠
               </div>
@@ -104,17 +99,28 @@ export default function VocabUI({
 
             <button
               onClick={() => {
-                setStarted(true);
-                startSession();
+                if (vocab) {
+                  setStarted(true);
+                  startSession();
+                }
               }}
+              disabled={!vocab}
               className="mt-5 w-full py-2.5! rounded-xl 
-                 bg-gradient-to-r from-indigo-500 to-indigo-600 
-                 hover:from-indigo-400 hover:to-indigo-500
-                 text-white text-sm font-medium 
-                 active:scale-[0.98] transition-all duration-200
-                 shadow-md shadow-indigo-900/40"
+              bg-gradient-to-r from-indigo-500 to-indigo-600 
+            text-white text-sm font-medium 
+              active:scale-[0.98] transition-all duration-200
+              shadow-md shadow-indigo-900/40
+              flex items-center justify-center gap-2
+              disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Learn New Words
+              {!vocab ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+                  <span>Loading...</span>
+                </>
+              ) : (
+                "Learn New Words"
+              )}
             </button>
           </div>
         )}
@@ -192,17 +198,33 @@ export default function VocabUI({
                             </div>
                           </div>
 
-                          <Button
-                            onClick={() => {
-                              setPhase("guidedPractice");
+                          <div className="flex items-center justify-center gap-3 pt-3">
+                            {/* SECONDARY ACTION */}
+                            <button
+                              onClick={() => {
+                                skipbutton();
+                              }}
+                              className="text-xs px-3! py-2! rounded-xl 
+                              bg-white/5! hover:bg-white/10! 
+                              border border-white/10 text-white/60
+                              transition-all"
+                            >
+                              ✓ Sudah tahu
+                            </button>
 
-                              setTimeout(() => {
-                                startRecording();
-                              }, 100);
-                            }}
-                          >
-                            Mulai Practice →
-                          </Button>
+                            {/* MAIN CTA */}
+                            <Button
+                              onClick={() => {
+                                setPhase("guidedPractice");
+
+                                setTimeout(() => {
+                                  startRecording();
+                                }, 100);
+                              }}
+                            >
+                              Mulai Practice →
+                            </Button>
+                          </div>
                         </div>
                       )}
 

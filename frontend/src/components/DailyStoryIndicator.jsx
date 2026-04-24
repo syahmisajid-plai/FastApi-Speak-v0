@@ -64,7 +64,11 @@ const DailyStoryIndicator = ({
         {!started && (
           <>
             <div className="flex flex-col items-center">
-              <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-2xl mb-4">
+              <div
+                className={`w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-2xl mb-4 ${
+                  isDailyEmpty === null ? "animate-pulse" : ""
+                }`}
+              >
                 📖
               </div>
 
@@ -75,14 +79,22 @@ const DailyStoryIndicator = ({
             </div>
 
             <button
-              onClick={() => setStarted(true)}
-              className="mt-4 w-full py-2.5! rounded-xl bg-white! text-black text-sm font-medium active:scale-[0.98] transition"
+              onClick={() => {
+                if (isDailyEmpty !== null) setStarted(true);
+              }}
+              disabled={isDailyEmpty === null}
+              className="mt-4 w-full py-2.5! rounded-xl bg-white! text-black text-sm font-medium active:scale-[0.98] transition flex items-center justify-center gap-2 disabled:opacity-70"
             >
-              {isDailyEmpty === null
-                ? "Loading..."
-                : isDailyEmpty
-                  ? "Start Story"
-                  : "Continue Story"}
+              {isDailyEmpty === null ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
+                  <span>Loading...</span>
+                </>
+              ) : isDailyEmpty ? (
+                "Start Story"
+              ) : (
+                "Continue Story"
+              )}
             </button>
           </>
         )}

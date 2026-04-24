@@ -187,6 +187,7 @@ Feature tambahan:
     showDice,
     startSession,
     completedCountVocab,
+    skipbutton,
   } = useVocabEngine(userIdRef);
 
   // showVocab List
@@ -1074,6 +1075,7 @@ Feature tambahan:
               isRecording={isRecording}
               liveTranscript={liveTranscript}
               user_id={userId}
+              skipbutton={skipbutton}
             />
           )}
 

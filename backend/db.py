@@ -250,6 +250,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS user_completed_vocab (
             user_id TEXT NOT NULL,
             vocab_id INTEGER NOT NULL,
+            status TEXT DEFAULT 'completed',
 
             PRIMARY KEY (user_id, vocab_id),
             FOREIGN KEY (vocab_id) REFERENCES vocab (id) ON DELETE CASCADE
@@ -1169,24 +1170,24 @@ def get_all_vocab():
 
     return list(vocab_map.values())
 
-def mark_vocab_completed(user_id: str, vocab_id: int):
+def mark_vocab(user_id: str, vocab_id: int, status: str = "completed"):
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
         cursor.execute("""
-            INSERT INTO user_completed_vocab (user_id, vocab_id)
-            VALUES (%s, %s)
+            INSERT INTO user_completed_vocab (user_id, vocab_id, status)
+            VALUES (%s, %s, %s)
             ON CONFLICT (user_id, vocab_id)
-            DO NOTHING
-        """, (user_id, vocab_id))
+            DO UPDATE SET status = EXCLUDED.status
+        """, (user_id, vocab_id, status))
 
         conn.commit()
 
         return {
             "user_id": user_id,
             "vocab_id": vocab_id,
-            "status": "completed"
+            "status": status
         }
 
     except Exception as e:
