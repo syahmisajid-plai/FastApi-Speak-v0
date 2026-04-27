@@ -8,7 +8,7 @@ export default function ChatBubble({ chat, toggleFavorite }) {
   const { translate } = useTranslate();
 
   /* =====================
-     HELPER / LUPA KATA
+  HELPER / LUPA KATA
   ===================== */
   if (chat.sender === "Helper") {
     return (
@@ -98,6 +98,12 @@ export default function ChatBubble({ chat, toggleFavorite }) {
 
             <button
               onClick={async () => {
+                // kalau sudah ada hasil → klik lagi untuk hide
+                if (translated) {
+                  setTranslated(null);
+                  return;
+                }
+
                 const res = await translate(chat.message);
 
                 if (res?.translated) {
@@ -112,7 +118,12 @@ export default function ChatBubble({ chat, toggleFavorite }) {
         )}
 
         {translated && chat.sender === "AI" && (
-          <div className="mt-2 text-xs italic text-green-700">{translated}</div>
+          <div className="mt-2 text-xs p-2 rounded-lg bg-blue-50 border-l-4 border-blue-400">
+            <div className="text-[10px] text-gray-500 mb-1">
+              🌐 English → Indonesia
+            </div>
+            <div className="italic text-blue-700">{translated}</div>
+          </div>
         )}
       </div>
     </div>
