@@ -1,17 +1,6 @@
 // hooks/useConversationEngine.js
 import { streamChat } from "../services/chatService";
 
-function extractAlternative(text) {
-  const match = text.match(/You could say\s*:?\s*"?\s*([\s\S]*?)\s*"?\s*$/i);
-
-  if (!match) return null;
-
-  return match[1]
-    .split(/[.!?]/)[0] // ambil 1 kalimat pertama
-    .replace(/^["']|["']$/g, "")
-    .trim();
-}
-
 function cleanAIText(text) {
   return text
     .replace(/You could say:\s*"?[^"\n]+"?/i, "")
@@ -103,11 +92,7 @@ export default function useConversationEngine({
         }
 
         if (isFreetalk) {
-          const extracted = extractAlternative(finalText);
-
-          if (extracted) {
-            alternative = extracted;
-          }
+          alternative = meta?.alternative;
 
           console.log(
             " ========================= MODE FREETALK =============================  🧠:",

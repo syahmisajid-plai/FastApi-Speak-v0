@@ -81,8 +81,23 @@ def free_talk(req: FreeTalkRequest):
 
                 yield f"data: {token}\n\n"
             
+            print("\n================ RAW FULL TEXT ================\n")
+            print(full_text)
+            print("\n==============================================\n")
+
             alternative = extract_alternative(full_text)
+
+            print("\n================ ALTERNATIVE DEBUG ================\n")
+            print("EXTRACTED ALTERNATIVE:", alternative)
+            print("\n==================================================\n")
+
+
             clean_text = re.sub(r"You could say\s*:?\s*.*", "", full_text, flags=re.I).strip()
+            print("\n================ CLEAN TEXT ================\n")
+            print(clean_text)
+            print("\n===========================================\n")
+
+
 
             # =============================
             # 4. SETELAH SELESAI
