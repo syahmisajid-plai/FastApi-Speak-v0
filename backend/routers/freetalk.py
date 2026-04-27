@@ -140,12 +140,14 @@ def free_talk(req: FreeTalkRequest):
             # =============================
             # 5. OPTIONAL: KIRIM META
             # =============================
-            yield f"event: meta\ndata: {json.dumps({
-                'done': True,
-                'alternative': alternative,
-                'text': clean_text
-            })}\n\n"
+            meta = {
+                "done": True,
+                "alternative": alternative,
+                "text": clean_text
+            }
 
+            yield f"event: meta\ndata: {json.dumps(meta)}\n\n"
+            
         except Exception as e:
             print("❌ STREAM ERROR:", e)
             yield f"data: Sorry, something went wrong.\n\n"
