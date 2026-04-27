@@ -1,9 +1,11 @@
 import { useState } from "react";
 import useTTS_Google from "../hooks/useTTS_Google";
+import useTranslate from "../hooks/useTranslate";
 
 export default function ChatBubble({ chat, toggleFavorite }) {
   const [translated, setTranslated] = useState(null);
   const { speakText } = useTTS_Google();
+  const { translate } = useTranslate();
 
   /* =====================
      HELPER / LUPA KATA
@@ -95,7 +97,17 @@ export default function ChatBubble({ chat, toggleFavorite }) {
             </button>
 
             <button
-              onClick={() => toggleTranslate(chat.message)}
+              onClick={async () => {
+                const res = await translate({
+                  text: chat.message,
+                  source_lang: "en",
+                  target_lang: "id",
+                });
+
+                if (res?.translated) {
+                  setTranslated(res.translated);
+                }
+              }}
               className="absolute top-1 right-1 text-xs bg-gray-300 px-2 py-0.5 rounded hover:bg-gray-400"
             >
               🌐

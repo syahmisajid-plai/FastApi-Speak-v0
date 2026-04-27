@@ -88,3 +88,26 @@ def update_favorite(history_id: str, payload: FavoriteRequest):
         "history_id": history_id,
         "is_favorite": payload.is_favorite
     }
+
+# =========================
+# TRANSLATE EN -> ID (NO DB)
+# =========================
+@router.post("/translate/en-id")
+async def translate_en_id(payload: TranslateRequest):
+
+    if not payload.text:
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    try:
+        translated = GoogleTranslator(
+            source="en",
+            target="id"
+        ).translate(payload.text)
+
+        return {
+            "source": payload.text,
+            "translated": translated
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Translation failed")

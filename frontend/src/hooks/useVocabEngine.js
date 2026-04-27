@@ -290,8 +290,22 @@ export default function useVocabEngine(userIdRef) {
   // =========================
   // NEXT VOCAB
   // =========================
+  const getNextIndex = (current) => {
+    if (!data.length) return 0;
+
+    let i = current + 1;
+    let tries = 0;
+
+    while (completedMap[data[i % data.length]?.id] && tries < data.length) {
+      i++;
+      tries++;
+    }
+
+    return i;
+  };
+
   const next = () => {
-    setIndex((i) => i + 1); // 🔥 ini inti
+    setIndex((i) => getNextIndex(i));
 
     setFeedback("");
     setAttempt(0);
