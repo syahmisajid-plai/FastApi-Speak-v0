@@ -2,9 +2,14 @@
 import { streamChat } from "../services/chatService";
 
 function extractAlternative(text) {
-  const match = text.match(/You could say:\s*"?([^"\n]+)"?/i);
+  const match = text.match(/You could say\s*:?\s*"?\s*([\s\S]*?)\s*"?\s*$/i);
 
-  return match ? match[1].trim() : null;
+  if (!match) return null;
+
+  return match[1]
+    .split(/[.!?]/)[0] // ambil 1 kalimat pertama
+    .replace(/^["']|["']$/g, "")
+    .trim();
 }
 
 function cleanAIText(text) {
@@ -87,7 +92,6 @@ export default function useConversationEngine({
         console.log("🧭 MODE NORMALIZED:", mode);
         console.log("📖 isDailyStory:", isDailyStory);
 
-        let cleanText = finalText;
         let alternative = null;
 
         if (isDailyStory) {
@@ -110,6 +114,8 @@ export default function useConversationEngine({
             alternative,
           );
         }
+
+        const cleanText = cleanAIText(finalText);
 
         const safeAlternative = isFreetalk
           ? alternative || "Nice 👍"

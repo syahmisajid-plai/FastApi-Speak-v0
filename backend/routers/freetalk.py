@@ -12,6 +12,8 @@ from db import get_messages, save_message, insert_api_log
 from prompts.freetalk_prompt import FREE_TALK_PROMPT
 
 import time
+import re
+
 from utils.monitoring_cost import calculate_all_costs
 
 
@@ -22,6 +24,14 @@ class FreeTalkRequest(BaseModel):
     user_id:str
     session_id: str
     input: str
+
+
+def extract_alternative(text: str):
+    match = re.search(r"You could say\s*:?\s*\"?\s*(.*?)\s*\"?$", text, re.S | re.I)
+    if not match:
+        return None
+
+    return match.group(1).split(".")[0].strip()
 
 USE_STREAMING = True  # 🔴 matikan dulu streaming
 
@@ -70,6 +80,9 @@ def free_talk(req: FreeTalkRequest):
                 full_text += token
 
                 yield f"data: {token}\n\n"
+            
+            alternative = extract_alternative(full_text)
+            clean_text = re.sub(r"You could say\s*:?\s*.*", "", full_text, flags=re.I).strip()
 
             # =============================
             # 4. SETELAH SELESAI
@@ -112,7 +125,11 @@ def free_talk(req: FreeTalkRequest):
             # =============================
             # 5. OPTIONAL: KIRIM META
             # =============================
-            yield f"event: meta\ndata: {json.dumps({'done': True})}\n\n"
+            yield f"event: meta\ndata: {json.dumps({
+                'done': True,
+                'alternative': alternative,
+                'text': clean_text
+            })}\n\n"
 
         except Exception as e:
             print("❌ STREAM ERROR:", e)
