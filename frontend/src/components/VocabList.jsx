@@ -10,6 +10,12 @@ export default function VocabList({ onClose, userId }) {
 
   const [statusFilter, setStatusFilter] = useState("all");
 
+  useEffect(() => {
+    if (!loading) {
+      console.log("📦 vocabList:", vocabList);
+    }
+  }, [vocabList, loading]);
+
   // ✅ ambil unique value
   const types = useMemo(() => {
     return [

@@ -13,26 +13,33 @@ export default function useVocabEngine(userIdRef) {
 
   const [completedMap, setCompletedMap] = useState({});
 
-  const filteredData = useMemo(() => {
-    if (!apiVocab.length) return [];
+  // const filteredData = useMemo(() => {
+  //   if (!apiVocab.length) return [];
 
-    return apiVocab.filter((v) => !completedMap[v.id]);
-  }, [apiVocab, completedMap]);
+  //   return apiVocab.filter((v) => !completedMap[v.id]);
+  // }, [apiVocab, completedMap]);
 
   const [shuffledData, setShuffledData] = useState([]);
 
-  useEffect(() => {
-    if (!filteredData.length) return;
+  // useEffect(() => {
+  //   if (!filteredData.length) return;
 
-    const shuffled = [...filteredData].sort(() => Math.random() - 0.5);
+  //   const shuffled = [...filteredData].sort(() => Math.random() - 0.5);
+  //   setShuffledData(shuffled);
+  // }, [filteredData]);
+
+  useEffect(() => {
+    if (!apiVocab.length) return;
+
+    const shuffled = [...apiVocab].sort(() => Math.random() - 0.5);
     setShuffledData(shuffled);
-  }, [filteredData]);
+  }, [apiVocab]);
 
   const data = shuffledData;
 
-  useEffect(() => {
-    setIndex(0);
-  }, [shuffledData]);
+  // useEffect(() => {
+  //   setIndex(0);
+  // }, [shuffledData]);
 
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState("wordIntro");
@@ -45,7 +52,19 @@ export default function useVocabEngine(userIdRef) {
   // =========================
   // CURRENT VOCAB
   // =========================
-  const vocab = data?.length ? data[index % data.length] : null;
+  const vocab = useMemo(() => {
+    if (!data.length) return null;
+
+    let i = index;
+    let tries = 0;
+
+    while (completedMap[data[i % data.length]?.id] && tries < data.length) {
+      i++;
+      tries++;
+    }
+
+    return data[i % data.length];
+  }, [data, index, completedMap]);
   const examples = useMemo(() => vocab?.examples || [], [vocab]);
   const exampleObj = examples[exampleIndex] || {};
   const example = exampleObj.en || "";
@@ -271,23 +290,17 @@ export default function useVocabEngine(userIdRef) {
   // =========================
   // NEXT VOCAB
   // =========================
-  const isTransitioningRef = useRef(false);
-
   const next = () => {
-    if (isTransitioningRef.current) return;
+    setIndex((i) => i + 1); // 🔥 ini inti
 
-    isTransitioningRef.current = true;
-
-    setShowDice(true);
     setFeedback("");
     setAttempt(0);
     setExampleIndex(0);
     setPhase("wordIntro");
 
     setTimeout(() => {
-      // setIndex((i) => i + 1);
-      isTransitioningRef.current = false;
-    }, 1000);
+      setShowDice(true);
+    }, 0);
   };
 
   // =========================
