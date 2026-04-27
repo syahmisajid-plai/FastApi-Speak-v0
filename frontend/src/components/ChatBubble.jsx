@@ -98,11 +98,7 @@ export default function ChatBubble({ chat, toggleFavorite }) {
 
             <button
               onClick={async () => {
-                const res = await translate({
-                  text: chat.message,
-                  source_lang: "en",
-                  target_lang: "id",
-                });
+                const res = await translate(chat.message);
 
                 if (res?.translated) {
                   setTranslated(res.translated);

@@ -1,25 +1,15 @@
-// hooks/useTranslate.js
 import { linkBackend } from "../config";
 
-export default function useTranslate(userIdRef) {
-  const translate = async ({
-    text,
-    source_lang = "auto",
-    target_lang = "id",
-  }) => {
+export default function useTranslate() {
+  const translate = async (text) => {
     try {
-      const userId = userIdRef?.current;
-
-      const res = await fetch(`${linkBackend}/translate`, {
+      const res = await fetch(`${linkBackend}/translate/en-id`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           text,
-          source_lang,
-          target_lang,
-          user_id: userId,
         }),
       });
 
