@@ -9,7 +9,7 @@ export default function ModeSelector({
   // const [lockedMode, setLockedMode] = useState(null); // mode yang sedang dikunci
 
   const modes = [
-    { key: "vocab", icon: "🧠", label: "Vocab", color: "indigo" },
+    { key: "vocab", icon: "🧠", label: "Learn", color: "indigo" },
     { key: "dailyStory", icon: "📖", label: "Story", color: "emerald" },
     { key: "freeTalk", icon: "💬", label: "Talk", color: "blue" },
     { key: "roleplay", icon: "🎭", label: "Roleplay", color: "purple" },
@@ -61,7 +61,7 @@ export default function ModeSelector({
                       ? `${modeStyles[m.color]} text-white shadow-2xl scale-105 ring-2 animate-slow-pulse`
                       : ""
                   }
-${!active ? "text-white/60 hover:text-white hover:bg-white/10" : ""}
+                  ${!active ? "text-white/60 hover:text-white hover:bg-white/10" : ""}
                 `}
                 title={
                   locked

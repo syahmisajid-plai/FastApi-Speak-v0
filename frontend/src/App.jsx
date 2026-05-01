@@ -19,6 +19,7 @@ import LoginOverlay from "./components/LoginOverlay";
 import VocabList from "./components/VocabList";
 import ComingSoon from "./components/ComingSoon";
 import OverlayFeedback from "./components/OverlayFeedback";
+import LearnUI from "./components/LearnUI";
 
 // ================== STYLES ==================
 import "./App.css";
@@ -1055,7 +1056,7 @@ Feature tambahan:
               setActiveChecklist={setActiveChecklist}
             />
           )}
-          {mode === "vocab" && (
+          {/* {mode === "vocab" && (
             <VocabUI
               vocab={vocab}
               example={example}
@@ -1077,7 +1078,35 @@ Feature tambahan:
               user_id={userId}
               skipbutton={skipbutton}
             />
+          )} */}
+
+          {mode === "vocab" && (
+            <LearnUI
+              vocabProps={{
+                vocab: vocab,
+                example: example,
+                translation: translation,
+                examples: examples,
+                exampleIndex: exampleIndex, // 🔥 untuk UI progress
+                phase: phase,
+                feedback: feedback,
+                next: next,
+                setPhase: setPhase,
+                progress: progress,
+                showDice: showDice,
+                startSession: startSession,
+                // 🔥 TAMBAHAN
+                startRecording: startRecording,
+                stopRecording: stopRecording,
+                isRecording: isRecording,
+                liveTranscript: liveTranscript,
+                user_id: userId,
+                skipbutton: skipbutton,
+              }}
+            />
           )}
+
+          {/* {mode === "vocab" && <LearnUI />} */}
 
           <ModeSelector mode={mode} setMode={handleModeChange} />
           {showModeConfirm && (

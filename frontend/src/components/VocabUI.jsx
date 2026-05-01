@@ -26,6 +26,16 @@ export default function VocabUI({
 
   const [started, setStarted] = useState(false);
 
+  useEffect(() => {
+    if (vocab) {
+      const timer = setTimeout(() => {
+        setStarted(true);
+      }, 3000); // ⏱️ 3 detik
+
+      return () => clearTimeout(timer);
+    }
+  }, [vocab]);
+
   // AUDIO
   const { playAudio, loading } = useAudioVocab(user_id);
 
@@ -63,7 +73,7 @@ export default function VocabUI({
   };
 
   return (
-    <section className="mx-4 mt-36 transition-all duration-500">
+    <section className="mx-4 transition-all duration-500">
       <div
         className={`text-white border border-white/10 backdrop-blur-xl rounded-3xl p-6 text-center 
         bg-linear-to-b from-slate-900/80 to-indigo-900/60 
@@ -72,49 +82,24 @@ export default function VocabUI({
       >
         {/* ================= BEFORE START ================= */}
         {!started && (
-          <div>
-            <div className="flex flex-col items-center">
-              <div
-                className={`w-14 h-14 rounded-2xl 
-                      bg-gradient-to-br from-indigo-500/20 to-white/10 
-                      flex items-center justify-center text-2xl mb-4 
-                      border border-white/10 ${!vocab ? "animate-pulse" : ""}`}
-              >
-                🧠
-              </div>
-
-              <p className="text-sm font-semibold tracking-wide">Vocab Mode</p>
-
-              <p className="text-xs text-white/60 mt-1">
-                Learn new words step by step
-              </p>
+          <div className="flex flex-col items-center py-8">
+            <div
+              className="w-12 h-12 rounded-xl 
+              bg-gradient-to-br from-indigo-500/20 to-white/10 
+              flex items-center justify-center text-xl 
+              border border-white/10 animate-pulse"
+            >
+              🧠
             </div>
 
-            <button
-              onClick={() => {
-                if (vocab) {
-                  setStarted(true);
-                  startSession();
-                }
-              }}
-              disabled={!vocab}
-              className="mt-5 w-full py-2.5! rounded-xl 
-              bg-gradient-to-r from-indigo-500 to-indigo-600 
-            text-white text-sm font-medium 
-              active:scale-[0.98] transition-all duration-200
-              shadow-md shadow-indigo-900/40
-              flex items-center justify-center gap-2
-              disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              {!vocab ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
-                  <span>Loading...</span>
-                </>
-              ) : (
-                "Learn New Words"
-              )}
-            </button>
+            <p className="text-sm font-medium mt-4">
+              Getting your words ready...
+            </p>
+
+            <div className="flex items-center gap-2 mt-2 text-xs text-white/60">
+              <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              Preparing your practice
+            </div>
           </div>
         )}
 

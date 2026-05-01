@@ -51,11 +51,15 @@
 
 - Perbaiki sistem / kata keyword checklist roleplay
 
+- Tambahkan feedback jawaban user seperti poin flunecy, dll
+
 - Kata - Kata Pembuka✅
 
-- Respone AI nya jadi lama
+- Respone AI nya jadi lama ✅
 
-- Logic Vocab kadang tombol harus ditekan beberapa kali
+- Logic Vocab kadang tombol harus ditekan beberapa kali ✅
+
+- Tambahkan alternative ke database
 
 - REFACTOR ROLEPLAY.JSX
 
