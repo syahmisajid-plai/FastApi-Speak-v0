@@ -22,7 +22,7 @@ export default function SentenceUI() {
 
   return (
     <div className="p-6 max-w-xl mx-auto space-y-6 mt-36 text-white">
-      {/* STEP 1: CONTEXT */}
+      {/* STEP 1: CONTEXT  */}
       {step === 0 && (
         <div>
           <h2 className="text-xl font-bold mb-2">🎬 Situation</h2>
