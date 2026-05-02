@@ -2,7 +2,7 @@ import { useState } from "react";
 import VocabUI from "./VocabUI";
 import SentenceUI from "./SentenceUI";
 
-export default function LearnUI({ vocabProps }) {
+export default function LearnUI({ vocabProps, sentenceProps }) {
   const [started, setStarted] = useState(false);
 
   const [showVocab, setShowVocab] = useState(false);
@@ -121,7 +121,7 @@ export default function LearnUI({ vocabProps }) {
               : "opacity-0 translate-y-2 pointer-events-none"
           }`}
         >
-          <VocabUI {...vocabProps} />
+          {showVocab && <VocabUI {...vocabProps} />}
         </div>
       </div>
 
@@ -133,7 +133,7 @@ export default function LearnUI({ vocabProps }) {
             : "opacity-0 translate-y-2 pointer-events-none"
         }`}
       >
-        <SentenceUI />
+        {showSentence && <SentenceUI {...sentenceProps} />}
       </div>
     </section>
   );

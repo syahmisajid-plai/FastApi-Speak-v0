@@ -1103,6 +1103,12 @@ Feature tambahan:
                 user_id: userId,
                 skipbutton: skipbutton,
               }}
+              sentenceProps={{
+                startRecording: startRecording,
+                stopRecording: stopRecording,
+                isRecording: isRecording,
+                liveTranscript: liveTranscript,
+              }}
             />
           )}
 
