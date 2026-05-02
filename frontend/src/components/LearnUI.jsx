@@ -1,6 +1,6 @@
 import { useState } from "react";
 import VocabUI from "./VocabUI";
-import SentencesUI from "./SentencesUI";
+import SentenceUI from "./SentenceUI";
 
 export default function LearnUI({ vocabProps }) {
   const [started, setStarted] = useState(false);
@@ -133,7 +133,7 @@ export default function LearnUI({ vocabProps }) {
             : "opacity-0 translate-y-2 pointer-events-none"
         }`}
       >
-        <SentencesUI />
+        <SentenceUI />
       </div>
     </section>
   );
