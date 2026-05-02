@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function SentenceUI() {
+export default function SentencesUI() {
   const [step, setStep] = useState(0);
   const [userAnswer, setUserAnswer] = useState("");
 
