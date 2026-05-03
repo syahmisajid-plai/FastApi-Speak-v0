@@ -5,6 +5,7 @@ export default function SentenceUI({
   lesson,
   loading,
   refetch,
+  completeLesson,
 
   startRecording,
   stopRecording,
@@ -17,41 +18,55 @@ export default function SentenceUI({
 
   const [finalTranscript, setFinalTranscript] = useState("");
 
-  const context =
-    "Your friend invites you to a party, but you are not sure you want to go.";
+  // const context =
+  //   "Your friend invites you to a party, but you are not sure you want to go.";
 
-  const idealAnswers = [
-    "I’m not sure I can make it.",
-    "Let me think about it.",
-  ];
+  if (loading) {
+    return <div className="text-white text-center mt-20">Loading...</div>;
+  }
 
-  const alternative = [
-    "I’m not sure I can come.",
-    "I’m not sure about that.",
-    "I’m not sure if I’m free.",
-  ];
+  if (!lesson) {
+    return <div className="text-white text-center mt-20">No lesson</div>;
+  }
 
-  const pattern_display = "I’m not sure...";
+  const context = lesson.context;
+  const questionShadowing = lesson.partner_utterance;
+  const idealAnswers = [lesson.key_expression]; // 🔥 utama
+  const alternative = lesson.alternatives || [];
+  const pattern_display = lesson.pattern_display;
+  const insight = lesson.insight;
+  const keywords = lesson.keywords || [];
 
-  // const shortenSentence = (sentence) => {
-  //   return sentence.split(" ").slice(0, 3).join(" ") + "...";
-  // };
+  const patterns = keywords.length > 0 ? keywords : [pattern_display];
 
-  // const shortened = idealAnswers
-  //   .slice(0, 2)
-  //   .map((ans) => shortenSentence(ans))
-  //   .join('" or "');
+  const normalize = (text) => {
+    return text
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, "") // hapus tanda baca
+      .replace(/\s+/g, " ") // rapihin spasi
+      .trim();
+  };
 
-  const questionShadowing = "Hey, I’m having a party. Want to come?";
+  const extractCore = (text) => {
+    const cleaned = normalize(text);
+
+    // ambil 2–3 kata pertama sebagai "inti"
+    return cleaned.split(" ").slice(0, 3).join(" ");
+  };
 
   const getFeedback = () => {
     if (!finalTranscript) return "";
 
-    const userText = finalTranscript.toLowerCase();
+    const userText = normalize(finalTranscript);
 
-    const patterns = ["not sure", "let me think"];
+    const patterns_feedback = [
+      lesson.key_expression,
+      ...(lesson.alternatives || []),
+    ];
 
-    const isUsingTarget = patterns.some((p) => userText.includes(p));
+    const cores = patterns_feedback.map(extractCore);
+
+    const isUsingTarget = cores.some((core) => userText.includes(core));
 
     if (isUsingTarget) {
       return {
@@ -428,7 +443,7 @@ export default function SentenceUI({
             </p>
 
             <p className="text-lg font-semibold text-white">
-              I’m not sure I can make it.
+              {lesson.key_expression}
             </p>
           </div>
 
@@ -439,7 +454,7 @@ export default function SentenceUI({
             </p>
 
             <p className="text-base font-medium text-white">
-              I’m not sure + something
+              {pattern_display}
             </p>
 
             <p className="text-xs text-white/60">
@@ -462,14 +477,15 @@ export default function SentenceUI({
 
           {/* ================= INSIGHT ================= */}
           <div className="bg-indigo-500/10 border border-indigo-400/20 rounded-xl p-4 text-sm text-white/80 leading-relaxed">
-            💡 Instead of saying <span className="italic">“No”</span> directly,
-            native speakers often soften their response to sound more polite.
+            💡 {insight}
           </div>
 
           {/* ================= ACTION ================= */}
           <button
-            onClick={nextStep}
-            className="w-full bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl py-3 font-medium transition"
+            onClick={async () => {
+              await completeLesson();
+              setStep(0);
+            }}
           >
             ✅ Next Sentence →
           </button>

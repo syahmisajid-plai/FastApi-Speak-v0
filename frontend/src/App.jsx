@@ -202,6 +202,7 @@ Feature tambahan:
     lesson,
     loading: loadingSentence,
     refetch,
+    completeLesson,
   } = useSentenceLesson(userId);
 
   // ================== Lock Daily ==================

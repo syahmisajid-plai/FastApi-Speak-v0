@@ -17,6 +17,8 @@ export default function useSentenceLesson(userId) {
       const res = await fetch(`${linkBackend}/sentence-lessons/next/${userId}`);
       const json = await res.json();
 
+      console.log("📦 API Response:", json);
+
       if (json.success) {
         setLesson(json.data);
       } else {
@@ -30,7 +32,31 @@ export default function useSentenceLesson(userId) {
     }
   }, [userId]);
 
-  // auto fetch saat pertama load / user berubah
+  // 🔥 MARK COMPLETED + NEXT
+  const completeLesson = useCallback(async () => {
+    if (!userId || !lesson) return;
+
+    try {
+      await fetch(`${linkBackend}/sentence-lessons/complete`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          lesson_id: lesson.id,
+        }),
+      });
+
+      console.log("✅ Lesson completed:", lesson.id);
+
+      // 🔥 ambil lesson berikutnya
+      await fetchLesson();
+    } catch (err) {
+      console.log("❌ Complete lesson error:", err);
+    }
+  }, [userId, lesson, fetchLesson]);
+
   useEffect(() => {
     fetchLesson();
   }, [fetchLesson]);
@@ -38,6 +64,7 @@ export default function useSentenceLesson(userId) {
   return {
     lesson,
     loading,
-    refetch: fetchLesson, // 🔥 untuk tombol "Next"
+    refetch: fetchLesson,
+    completeLesson, // 🔥 NEW
   };
 }
