@@ -1554,3 +1554,41 @@ def get_random_uncompleted_lesson(user_id):
         "function_type": row[8],
         "tags": row[9],
     }
+
+def mark_lesson_completed(user_id, lesson_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO user_lesson_progress (user_id, lesson_id, is_completed)
+        VALUES (%s, %s, TRUE)
+        ON CONFLICT (user_id, lesson_id)
+        DO UPDATE SET
+            is_completed = TRUE,
+            updated_at = CURRENT_TIMESTAMP
+    """, (user_id, lesson_id))
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "user_id": user_id,
+        "lesson_id": lesson_id,
+        "status": "completed"
+    }
+
+def get_completed_lesson_ids(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT lesson_id
+        FROM user_lesson_progress
+        WHERE user_id = %s
+        AND is_completed = TRUE
+    """, (user_id,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [r[0] for r in rows]
