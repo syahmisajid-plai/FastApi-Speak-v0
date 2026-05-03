@@ -354,7 +354,7 @@ def init_db():
     """)
 
     # -----------------------------
-    # LESSONS (Core Learning System)
+    # SENTENCE LESSONS (Core Learning System)
     # -----------------------------
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS sentence_lessons (
