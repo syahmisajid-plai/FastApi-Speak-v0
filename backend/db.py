@@ -353,6 +353,31 @@ def init_db():
     );
     """)
 
+    # -----------------------------
+    # LESSONS (Core Learning System)
+    # -----------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS sentence_lessons (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        context TEXT NOT NULL,
+
+        partner_utterance TEXT NOT NULL,
+
+        key_expression TEXT NOT NULL,
+        pattern_display TEXT NOT NULL,
+        insight TEXT,
+
+        alternatives JSONB DEFAULT '[]'::jsonb,
+
+        keywords JSONB DEFAULT '[]'::jsonb,
+
+        function_type TEXT,
+        tags JSONB DEFAULT '[]'::jsonb,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
     conn.commit()
     conn.close()
 
