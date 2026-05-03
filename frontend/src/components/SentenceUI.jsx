@@ -2,6 +2,10 @@
 import { useState } from "react";
 
 export default function SentenceUI({
+  lesson,
+  loading,
+  refetch,
+
   startRecording,
   stopRecording,
   liveTranscript,

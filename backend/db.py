@@ -1508,3 +1508,49 @@ def get_user_cost_summary():
         }
         for r in rows
     ]
+
+def get_random_uncompleted_lesson(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT 
+            sl.id,
+            sl.context,
+            sl.partner_utterance,
+            sl.key_expression,
+            sl.pattern_display,
+            sl.insight,
+            sl.alternatives,
+            sl.keywords,
+            sl.function_type,
+            sl.tags
+        FROM sentence_lessons sl
+        LEFT JOIN user_lesson_progress ulp
+            ON sl.id = ulp.lesson_id
+            AND ulp.user_id = %s
+        WHERE 
+            ulp.is_completed IS NULL
+            OR ulp.is_completed = FALSE
+        ORDER BY RANDOM()
+        LIMIT 1
+    """, (user_id,))
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return None
+
+    return {
+        "id": row[0],
+        "context": row[1],
+        "partner_utterance": row[2],
+        "key_expression": row[3],
+        "pattern_display": row[4],
+        "insight": row[5],
+        "alternatives": row[6],
+        "keywords": row[7],
+        "function_type": row[8],
+        "tags": row[9],
+    }

@@ -22,6 +22,7 @@ from routers import (
     vocab,
     audio_vocab,
     summary_cost,
+    sentence_lesson,
 )
 
 
@@ -99,6 +100,7 @@ app.include_router(auth_routes.router)
 app.include_router(vocab.router)
 app.include_router(audio_vocab.router)
 app.include_router(summary_cost.router)
+app.include_router(sentence_lesson.router)
 
 
 

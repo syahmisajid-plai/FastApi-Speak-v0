@@ -41,6 +41,7 @@ import useStreak from "./hooks/useStreak";
 // import useGrammarCheck from "./hooks/useGrammarCheck";
 import useVocabEngine from "./hooks/useVocabEngine";
 import useTranslationHistory from "./hooks/useTranslationHistory";
+import useSentenceLesson from "./hooks/useSentenceLesson";
 
 // ================== AUDIO ==================
 import useTTS_Google from "./hooks/useTTS_Google";
@@ -195,6 +196,13 @@ Feature tambahan:
   useEffect(() => {
     document.body.style.overflow = showVocab ? "hidden" : "auto";
   }, [showVocab]);
+
+  // ================== Sentence Lesson ==================
+  const {
+    lesson,
+    loading: loadingSentence,
+    refetch,
+  } = useSentenceLesson(userId);
 
   // ================== Lock Daily ==================
   const [timeAllowed, setTimeAllowed] = useState(false);
@@ -1104,6 +1112,11 @@ Feature tambahan:
                 skipbutton: skipbutton,
               }}
               sentenceProps={{
+                lesson: lesson,
+                loading: loadingSentence,
+                refetch: refetch,
+
+                // 🔥 Recording
                 startRecording: startRecording,
                 stopRecording: stopRecording,
                 isRecording: isRecording,
