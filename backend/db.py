@@ -378,6 +378,24 @@ def init_db():
     );
     """)
 
+    # -----------------------------
+    # USER LESSON PROGRESS (Per Lesson Tracking)
+    # -----------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS user_lesson_progress (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        lesson_id UUID NOT NULL REFERENCES sentence_lessons(id) ON DELETE CASCADE,
+
+        is_completed BOOLEAN DEFAULT FALSE,
+
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        UNIQUE(user_id, lesson_id)
+    );
+    """)
+
     conn.commit()
     conn.close()
 
