@@ -716,31 +716,39 @@ Feature tambahan:
               userId={userIdRef.current}
             />
           )}
-          {/* <div className="text-white">
-            <p>Mic Volume: {volume}</p>
-            <p>
-              Is Speaking:{" "}
-              <span className={isSpeaking ? "text-green-400" : "text-red-400"}>
-                {isSpeaking ? "true" : "false"}
-              </span>
-            </p>
-            <p>
-              IsKataActive:{" "}
-              <span
-                className={
-                  lupaKata.isLupaKataActive ? "text-green-400" : "text-red-400"
-                }
-              >
-                {lupaKata.isLupaKataActive ? "true" : "false"}
-              </span>
-            </p>
+          {user?.id === "21121b45-6987-432c-a2cd-fda17eabbd2b" && (
+            <div className="text-white">
+              <p>Mic Volume: {volume}</p>
 
-            {showPopup && (
-              <div className="fixed top-5 right-5 bg-red-500 text-white px-4 py-3 rounded shadow-lg">
-                ⚠️ Mikrofon tidak terdeteksi suara!
-              </div>
-            )}
-          </div> */}
+              <p>
+                Is Speaking:{" "}
+                <span
+                  className={isSpeaking ? "text-green-400" : "text-red-400"}
+                >
+                  {isSpeaking ? "true" : "false"}
+                </span>
+              </p>
+
+              <p>
+                IsKataActive:{" "}
+                <span
+                  className={
+                    lupaKata.isLupaKataActive
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }
+                >
+                  {lupaKata.isLupaKataActive ? "true" : "false"}
+                </span>
+              </p>
+
+              {showPopup && (
+                <div className="fixed top-5 right-5 bg-red-500 text-white px-4 py-3 rounded shadow-lg">
+                  ⚠️ Mikrofon tidak terdeteksi suara!
+                </div>
+              )}
+            </div>
+          )}
           {/* Login Overlay */}
           {showLogin && (
             <LoginOverlay
@@ -1116,6 +1124,7 @@ Feature tambahan:
                 lesson: lesson,
                 loading: loadingSentence,
                 refetch: refetch,
+                completeLesson: completeLesson,
 
                 // 🔥 Recording
                 startRecording: startRecording,
