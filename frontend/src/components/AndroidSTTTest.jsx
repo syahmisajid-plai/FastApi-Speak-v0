@@ -1,16 +1,41 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 export default function AndroidSTTTest() {
   const recognitionRef = useRef(null);
+  const startTimeRef = useRef(null);
+
   const [isListening, setIsListening] = useState(false);
   const [text, setText] = useState("");
+  const [logs, setLogs] = useState([]);
+  const [error, setError] = useState("");
+  const [envInfo, setEnvInfo] = useState({});
 
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
+  const addLog = (msg) => {
+    console.log(msg);
+    setLogs((prev) => [msg, ...prev].slice(0, 20));
+  };
+
+  const detectEnv = () => {
+    const info = {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      isSecure: window.isSecureContext,
+      hasMediaDevices: !!navigator.mediaDevices,
+      hasGetUserMedia: !!navigator.mediaDevices?.getUserMedia,
+      speechRecognition: !!SpeechRecognition,
+    };
+    setEnvInfo(info);
+
+    addLog("📱 ENV DETECTED");
+    console.log(info);
+  };
+
   const createRecognition = () => {
     if (!SpeechRecognition) {
-      alert("SpeechRecognition not supported");
+      addLog("❌ SpeechRecognition NOT SUPPORTED");
       return null;
     }
 
@@ -20,8 +45,10 @@ export default function AndroidSTTTest() {
     recognition.interimResults = true;
 
     recognition.onstart = () => {
-      console.log("🎤 START");
+      addLog("🎤 START");
+      startTimeRef.current = Date.now();
       setIsListening(true);
+      setError("");
     };
 
     recognition.onresult = (event) => {
@@ -31,16 +58,31 @@ export default function AndroidSTTTest() {
         finalText += event.results[i][0].transcript;
       }
 
-      console.log("📝 RESULT:", finalText);
+      addLog("📝 RESULT RECEIVED");
       setText(finalText);
     };
 
     recognition.onerror = (e) => {
-      console.log("🔥 ERROR:", e.error);
+      addLog(`🔥 ERROR: ${e.error}`);
+      setError(e.error);
     };
 
     recognition.onend = () => {
-      console.log("🔚 END");
+      const duration = startTimeRef.current
+        ? Date.now() - startTimeRef.current
+        : 0;
+
+      addLog(`🔚 END (duration: ${duration}ms)`);
+
+      // 🔍 AUTO DIAGNOSIS
+      if (duration < 1000) {
+        addLog("⚠️ STOP TERLALU CEPAT → kemungkinan permission / engine issue");
+      }
+
+      if (!text) {
+        addLog("⚠️ TIDAK ADA RESULT → kemungkinan STT engine tidak jalan");
+      }
+
       setIsListening(false);
       recognitionRef.current = null;
     };
@@ -49,48 +91,121 @@ export default function AndroidSTTTest() {
     return recognition;
   };
 
-  const start = () => {
-    console.log("▶ START CLICKED");
+  const start = async () => {
+    addLog("▶ START CLICKED");
+
+    detectEnv();
+
+    const recognition = recognitionRef.current || createRecognition();
+    if (!recognition) return;
 
     try {
-      const recognition = recognitionRef.current || createRecognition();
-
-      setTimeout(() => {
-        try {
-          recognition.start();
-        } catch (e) {
-          console.log("❌ START FAILED:", e);
-        }
-      }, 400);
-    } catch (e) {
-      console.log("❌ CREATE FAILED:", e);
+      // 🔥 FORCE PERMISSION CHECK
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      addLog("🎤 MIC PERMISSION OK");
+    } catch (err) {
+      addLog("❌ MIC PERMISSION DENIED");
+      return;
     }
+
+    setTimeout(() => {
+      try {
+        recognition.start();
+        addLog("🚀 START CALLED");
+      } catch (e) {
+        addLog("❌ START FAILED (exception)");
+        console.error(e);
+      }
+    }, 400);
   };
 
   const stop = () => {
-    console.log("⛔ STOP CLICKED");
+    addLog("⛔ STOP CLICKED");
 
     try {
       recognitionRef.current?.stop();
     } catch (e) {
-      console.log("❌ STOP FAILED:", e);
+      addLog("❌ STOP FAILED");
     }
   };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Android STT Test</h2>
+    <div className="flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-5 space-y-4">
+        <h1 className="text-xl font-bold text-gray-800">
+          🎤 Android STT Advanced Debug
+        </h1>
 
-      <button onClick={start} style={{ marginRight: 10 }}>
-        Start
-      </button>
+        {/* STATUS */}
+        <div
+          className={`p-3 rounded-xl text-sm font-medium ${
+            isListening
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          }`}
+        >
+          Status: {isListening ? "Listening 🎤" : "Idle ⛔"}
+        </div>
 
-      <button onClick={stop}>Stop</button>
+        {/* SUPPORT */}
+        <div className="text-sm text-gray-600">
+          SpeechRecognition:{" "}
+          <span className="font-semibold">
+            {SpeechRecognition ? "✅ Available" : "❌ Not Supported"}
+          </span>
+        </div>
 
-      <p>Status: {isListening ? "Listening 🎤" : "Idle ⛔"}</p>
+        {/* ERROR */}
+        {error && (
+          <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
+            ⚠️ {error}
+          </div>
+        )}
 
-      <p>Result:</p>
-      <div style={{ fontSize: 18, marginTop: 10 }}>{text}</div>
+        {/* BUTTON */}
+        <div className="flex gap-2">
+          <button
+            onClick={start}
+            className="flex-1 bg-indigo-600! text-white py-2! rounded-xl shadow active:scale-95"
+          >
+            Start
+          </button>
+
+          <button
+            onClick={stop}
+            className="flex-1 bg-red-500! text-white py-2! rounded-xl shadow active:scale-95"
+          >
+            Stop
+          </button>
+        </div>
+
+        {/* RESULT */}
+        <div className="border rounded-xl p-3 bg-gray-50 min-h-[60px]">
+          <div className="text-xs text-gray-400 mb-1">Result</div>
+          <div className="text-gray-800 text-sm">
+            {text || "— belum ada hasil —"}
+          </div>
+        </div>
+
+        {/* ENV INFO */}
+        <div className="border rounded-xl p-3 bg-gray-50 text-xs">
+          <div className="text-gray-400 mb-1">Environment</div>
+          <pre className="text-gray-700 whitespace-pre-wrap">
+            {JSON.stringify(envInfo, null, 2)}
+          </pre>
+        </div>
+
+        {/* LOGS */}
+        <div className="border rounded-xl p-3 bg-gray-50 text-xs max-h-48 overflow-y-auto">
+          <div className="text-gray-400 mb-1">Logs</div>
+          {logs.length === 0 && <div className="text-gray-400">— kosong —</div>}
+          {logs.map((log, i) => (
+            <div className="text-gray-400" key={i}>
+              • {log}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

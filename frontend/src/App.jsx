@@ -718,10 +718,13 @@ Feature tambahan:
               userId={userIdRef.current}
             />
           )}
-          {user?.id === "21121b45-6987-432c-a2cd-fda17eabbd2b" && (
-            <div className="text-white">
-              <p>Mic Volume: {volume}</p>
-              {/* <p>
+
+          {mode === "testMicAndoid" &&
+            user?.id === "21121b45-6987-432c-a2cd-fda17eabbd2b" && (
+              <div className="text-white">
+                <p>Mic Volume: {volume}</p>
+                <AndroidSTTTest />
+                {/* <p>
                 Is Speaking:{" "}
                 <span
                   className={isSpeaking ? "text-green-400" : "text-red-400"}
@@ -746,9 +749,8 @@ Feature tambahan:
                   ⚠️ Mikrofon tidak terdeteksi suara!
                 </div>
               )} */}
-              <AndroidSTTTest />
-            </div>
-          )}
+              </div>
+            )}
           {/* Login Overlay */}
           {showLogin && (
             <LoginOverlay
@@ -1137,7 +1139,11 @@ Feature tambahan:
 
           {/* {mode === "vocab" && <LearnUI />} */}
 
-          <ModeSelector mode={mode} setMode={handleModeChange} />
+          <ModeSelector
+            user_id={userId}
+            mode={mode}
+            setMode={handleModeChange}
+          />
           {showModeConfirm && (
             <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
               <div
