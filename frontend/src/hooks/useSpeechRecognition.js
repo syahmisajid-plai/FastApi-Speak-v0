@@ -60,7 +60,7 @@ export default function useSpeechRecognition({
       } catch (err) {
         console.error("❌ Error starting STT:", err);
       }
-    }, 400);
+    }, 10);
   };
 
   useEffect(() => {
@@ -286,7 +286,6 @@ export default function useSpeechRecognition({
       }
 
       isListeningRef.current = false;
-      recognitionRef.current = null; // 🔥 WAJIB
       lastStopTimeRef.current = Date.now();
 
       if (isCanceled) return;

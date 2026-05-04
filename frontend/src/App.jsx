@@ -21,6 +21,8 @@ import ComingSoon from "./components/ComingSoon";
 import OverlayFeedback from "./components/OverlayFeedback";
 import LearnUI from "./components/LearnUI";
 
+import AndroidSTTTest from "./components/AndroidSTTTest";
+
 // ================== STYLES ==================
 import "./App.css";
 
@@ -719,8 +721,7 @@ Feature tambahan:
           {user?.id === "21121b45-6987-432c-a2cd-fda17eabbd2b" && (
             <div className="text-white">
               <p>Mic Volume: {volume}</p>
-
-              <p>
+              {/* <p>
                 Is Speaking:{" "}
                 <span
                   className={isSpeaking ? "text-green-400" : "text-red-400"}
@@ -728,7 +729,6 @@ Feature tambahan:
                   {isSpeaking ? "true" : "false"}
                 </span>
               </p>
-
               <p>
                 IsKataActive:{" "}
                 <span
@@ -741,12 +741,12 @@ Feature tambahan:
                   {lupaKata.isLupaKataActive ? "true" : "false"}
                 </span>
               </p>
-
               {showPopup && (
                 <div className="fixed top-5 right-5 bg-red-500 text-white px-4 py-3 rounded shadow-lg">
                   ⚠️ Mikrofon tidak terdeteksi suara!
                 </div>
-              )}
+              )} */}
+              <AndroidSTTTest />
             </div>
           )}
           {/* Login Overlay */}
