@@ -4,11 +4,18 @@ export default function AndroidSTTTest() {
   const recognitionRef = useRef(null);
   const startTimeRef = useRef(null);
 
+  // STT state
   const [isListening, setIsListening] = useState(false);
   const [text, setText] = useState("");
   const [logs, setLogs] = useState([]);
   const [error, setError] = useState("");
   const [envInfo, setEnvInfo] = useState({});
+
+  // Recording state
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const [audioURL, setAudioURL] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
 
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -30,9 +37,11 @@ export default function AndroidSTTTest() {
     setEnvInfo(info);
 
     addLog("📱 ENV DETECTED");
-    console.log(info);
   };
 
+  // =========================
+  // STT
+  // =========================
   const createRecognition = () => {
     if (!SpeechRecognition) {
       addLog("❌ SpeechRecognition NOT SUPPORTED");
@@ -45,7 +54,7 @@ export default function AndroidSTTTest() {
     recognition.interimResults = true;
 
     recognition.onstart = () => {
-      addLog("🎤 START");
+      addLog("🎤 STT START");
       startTimeRef.current = Date.now();
       setIsListening(true);
       setError("");
@@ -58,8 +67,8 @@ export default function AndroidSTTTest() {
         finalText += event.results[i][0].transcript;
       }
 
-      addLog("📝 RESULT RECEIVED");
       setText(finalText);
+      addLog("📝 STT RESULT");
     };
 
     recognition.onerror = (e) => {
@@ -72,16 +81,7 @@ export default function AndroidSTTTest() {
         ? Date.now() - startTimeRef.current
         : 0;
 
-      addLog(`🔚 END (duration: ${duration}ms)`);
-
-      // 🔍 AUTO DIAGNOSIS
-      if (duration < 1000) {
-        addLog("⚠️ STOP TERLALU CEPAT → kemungkinan permission / engine issue");
-      }
-
-      if (!text) {
-        addLog("⚠️ TIDAK ADA RESULT → kemungkinan STT engine tidak jalan");
-      }
+      addLog(`🔚 STT END (${duration}ms)`);
 
       setIsListening(false);
       recognitionRef.current = null;
@@ -91,8 +91,8 @@ export default function AndroidSTTTest() {
     return recognition;
   };
 
-  const start = async () => {
-    addLog("▶ START CLICKED");
+  const startSTT = async () => {
+    addLog("▶ STT START CLICKED");
 
     detectEnv();
 
@@ -100,41 +100,86 @@ export default function AndroidSTTTest() {
     if (!recognition) return;
 
     try {
-      // 🔥 FORCE PERMISSION CHECK
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      addLog("🎤 MIC PERMISSION OK");
+      addLog("🎤 MIC OK");
     } catch (err) {
-      addLog("❌ MIC PERMISSION DENIED");
+      addLog("❌ MIC DENIED");
       return;
     }
 
     setTimeout(() => {
       try {
         recognition.start();
-        addLog("🚀 START CALLED");
       } catch (e) {
-        addLog("❌ START FAILED (exception)");
-        console.error(e);
+        addLog("❌ STT START FAILED");
       }
-    }, 400);
+    }, 300);
   };
 
-  const stop = () => {
-    addLog("⛔ STOP CLICKED");
-
+  const stopSTT = () => {
+    addLog("⛔ STT STOP");
     try {
       recognitionRef.current?.stop();
     } catch (e) {
-      addLog("❌ STOP FAILED");
+      addLog("❌ STT STOP FAILED");
     }
   };
 
+  // =========================
+  // RECORDING
+  // =========================
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.onstart = () => {
+        addLog("🎙️ RECORDING START");
+        setIsRecording(true);
+      };
+
+      mediaRecorder.ondataavailable = (e) => {
+        audioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        addLog("🛑 RECORDING STOP");
+
+        const blob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
+
+        const url = URL.createObjectURL(blob);
+        setAudioURL(url);
+        setIsRecording(false);
+      };
+
+      mediaRecorder.start();
+    } catch (err) {
+      addLog("❌ RECORD ERROR: " + err.message);
+    }
+  };
+
+  const stopRecording = () => {
+    try {
+      mediaRecorderRef.current?.stop();
+    } catch (e) {
+      addLog("❌ STOP REC FAILED");
+    }
+  };
+
+  // =========================
+  // UI
+  // =========================
   return (
     <div className="flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-5 space-y-4">
-        <h1 className="text-xl font-bold text-gray-800">
-          🎤 Android STT Advanced Debug
-        </h1>
+        <h1 className="text-xl font-bold">🎤 STT + Voice Recorder</h1>
 
         {/* STATUS */}
         <div
@@ -144,15 +189,17 @@ export default function AndroidSTTTest() {
               : "bg-red-100 text-red-700"
           }`}
         >
-          Status: {isListening ? "Listening 🎤" : "Idle ⛔"}
+          STT: {isListening ? "Listening 🎤" : "Idle"}
         </div>
 
-        {/* SUPPORT */}
-        <div className="text-sm text-gray-600">
-          SpeechRecognition:{" "}
-          <span className="font-semibold">
-            {SpeechRecognition ? "✅ Available" : "❌ Not Supported"}
-          </span>
+        <div
+          className={`p-3 rounded-xl text-sm font-medium ${
+            isRecording
+              ? "bg-blue-100 text-blue-700"
+              : "bg-gray-100 text-gray-700"
+          }`}
+        >
+          Recorder: {isRecording ? "Recording 🎙️" : "Stopped"}
         </div>
 
         {/* ERROR */}
@@ -162,46 +209,65 @@ export default function AndroidSTTTest() {
           </div>
         )}
 
-        {/* BUTTON */}
+        {/* BUTTONS */}
         <div className="flex gap-2">
           <button
-            onClick={start}
-            className="flex-1 bg-indigo-600! text-white py-2! rounded-xl shadow active:scale-95"
+            onClick={startSTT}
+            className="flex-1 bg-indigo-600! text-white py-2! rounded-xl"
           >
-            Start
+            Start STT
           </button>
 
           <button
-            onClick={stop}
-            className="flex-1 bg-red-500! text-white py-2! rounded-xl shadow active:scale-95"
+            onClick={stopSTT}
+            className="flex-1 bg-red-500! text-white py-2! rounded-xl"
           >
-            Stop
+            Stop STT
+          </button>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={startRecording}
+            className="flex-1 bg-green-600! text-white py-2! rounded-xl"
+          >
+            Start Rec 🎙️
+          </button>
+
+          <button
+            onClick={stopRecording}
+            className="flex-1 bg-gray-700! text-white py-2! rounded-xl"
+          >
+            Stop Rec ⏹
           </button>
         </div>
 
         {/* RESULT */}
         <div className="border rounded-xl p-3 bg-gray-50 min-h-[60px]">
-          <div className="text-xs text-gray-400 mb-1">Result</div>
-          <div className="text-gray-800 text-sm">
-            {text || "— belum ada hasil —"}
-          </div>
+          <div className="text-xs text-gray-400">STT Result</div>
+          <div className="text-sm text-black">{text || "—"}</div>
         </div>
 
-        {/* ENV INFO */}
+        {/* AUDIO PLAYBACK */}
+        {audioURL && (
+          <div className="border rounded-xl p-3 bg-gray-50">
+            <div className="text-xs text-gray-400 mb-1">Voice Playback</div>
+            <audio controls src={audioURL} className="w-full" />
+          </div>
+        )}
+
+        {/* ENV */}
         <div className="border rounded-xl p-3 bg-gray-50 text-xs">
-          <div className="text-gray-400 mb-1">Environment</div>
-          <pre className="text-gray-700 whitespace-pre-wrap">
-            {JSON.stringify(envInfo, null, 2)}
-          </pre>
+          <div className="text-gray-400 mb-1">Env</div>
+          <pre className="text-black">{JSON.stringify(envInfo, null, 2)}</pre>
         </div>
 
         {/* LOGS */}
-        <div className="border rounded-xl p-3 bg-gray-50 text-xs max-h-48 overflow-y-auto">
-          <div className="text-gray-400 mb-1">Logs</div>
-          {logs.length === 0 && <div className="text-gray-400">— kosong —</div>}
-          {logs.map((log, i) => (
-            <div className="text-gray-400" key={i}>
-              • {log}
+        <div className="border rounded-xl p-3 bg-gray-50 text-xs max-h-40 overflow-y-auto">
+          <div className="text-black">Logs</div>
+          {logs.map((l, i) => (
+            <div className="text-black mb-1" key={i}>
+              • {l}
             </div>
           ))}
         </div>
