@@ -52,7 +52,7 @@ export default function AndroidSTTTest() {
 
     const recognition = new SpeechRecognition();
 
-    recognition.lang = "en-US"; // 👉 coba ganti ke id-ID kalau perlu
+    recognition.lang = "en-GB"; // 👉 coba ganti ke id-ID kalau perlu
     recognition.continuous = false;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
@@ -203,7 +203,7 @@ export default function AndroidSTTTest() {
   return (
     <div className="flex items-center justify-center p-4 text-black">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-5 space-y-4">
-        <h1 className="text-xl font-bold">🎤 STT FULL DEBUG MODE</h1>
+        <h2 className="text-xl font-bold">🎤 STT FULL DEBUG MODE</h2>
 
         {/* STATUS */}
         <div className="p-3 rounded-xl bg-gray-100 text-sm">
