@@ -4,14 +4,12 @@ export default function AndroidSTTTest() {
   const recognitionRef = useRef(null);
   const startTimeRef = useRef(null);
 
-  // STT state
   const [isListening, setIsListening] = useState(false);
   const [text, setText] = useState("");
   const [logs, setLogs] = useState([]);
   const [error, setError] = useState("");
   const [envInfo, setEnvInfo] = useState({});
 
-  // Recording state
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const [audioURL, setAudioURL] = useState("");
@@ -22,9 +20,12 @@ export default function AndroidSTTTest() {
 
   const addLog = (msg) => {
     console.log(msg);
-    setLogs((prev) => [msg, ...prev].slice(0, 20));
+    setLogs((prev) => [msg, ...prev].slice(0, 30));
   };
 
+  // =========================
+  // ENV CHECK
+  // =========================
   const detectEnv = () => {
     const info = {
       userAgent: navigator.userAgent,
@@ -34,13 +35,14 @@ export default function AndroidSTTTest() {
       hasGetUserMedia: !!navigator.mediaDevices?.getUserMedia,
       speechRecognition: !!SpeechRecognition,
     };
-    setEnvInfo(info);
 
-    addLog("📱 ENV DETECTED");
+    setEnvInfo(info);
+    addLog("📱 ENV CHECK DONE");
+    addLog(JSON.stringify(info));
   };
 
   // =========================
-  // STT
+  // CREATE STT
   // =========================
   const createRecognition = () => {
     if (!SpeechRecognition) {
@@ -49,16 +51,25 @@ export default function AndroidSTTTest() {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
+
+    recognition.lang = "en-US"; // 👉 coba ganti ke id-ID kalau perlu
     recognition.continuous = false;
     recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
-      addLog("🎤 STT START");
-      startTimeRef.current = Date.now();
+      addLog("🎤 ONSTART");
       setIsListening(true);
+      startTimeRef.current = Date.now();
       setError("");
     };
+
+    recognition.onaudiostart = () => addLog("🔊 AUDIO START");
+    recognition.onaudioend = () => addLog("🔇 AUDIO END");
+    recognition.onsoundstart = () => addLog("🎧 SOUND START");
+    recognition.onspeechstart = () => addLog("🗣️ SPEECH START");
+    recognition.onspeechend = () => addLog("🤐 SPEECH END");
+    recognition.onnomatch = () => addLog("❌ NO MATCH");
 
     recognition.onresult = (event) => {
       let finalText = "";
@@ -67,12 +78,12 @@ export default function AndroidSTTTest() {
         finalText += event.results[i][0].transcript;
       }
 
+      addLog("📝 RESULT RECEIVED");
       setText(finalText);
-      addLog("📝 STT RESULT");
     };
 
     recognition.onerror = (e) => {
-      addLog(`🔥 ERROR: ${e.error}`);
+      addLog("🔥 ERROR: " + JSON.stringify(e));
       setError(e.error);
     };
 
@@ -81,8 +92,7 @@ export default function AndroidSTTTest() {
         ? Date.now() - startTimeRef.current
         : 0;
 
-      addLog(`🔚 STT END (${duration}ms)`);
-
+      addLog(`🔚 ONEND (${duration}ms)`);
       setIsListening(false);
       recognitionRef.current = null;
     };
@@ -91,42 +101,56 @@ export default function AndroidSTTTest() {
     return recognition;
   };
 
+  // =========================
+  // START STT (FIXED)
+  // =========================
   const startSTT = async () => {
-    addLog("▶ STT START CLICKED");
+    addLog("▶ START CLICKED");
 
     detectEnv();
 
-    const recognition = recognitionRef.current || createRecognition();
-    if (!recognition) return;
-
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      addLog("🎤 MIC OK");
+      addLog("🎤 MIC GRANTED");
     } catch (err) {
       addLog("❌ MIC DENIED");
       return;
     }
 
-    setTimeout(() => {
+    // 🔥 IMPORTANT: reset instance (fix Android freeze bug)
+    if (recognitionRef.current) {
       try {
-        recognition.start();
-      } catch (e) {
-        addLog("❌ STT START FAILED");
-      }
-    }, 300);
-  };
+        recognitionRef.current.abort();
+      } catch {}
+      recognitionRef.current = null;
+    }
 
-  const stopSTT = () => {
-    addLog("⛔ STT STOP");
+    const recognition = createRecognition();
+    if (!recognition) return;
+
     try {
-      recognitionRef.current?.stop();
+      recognition.start();
+      addLog("🚀 STT START CALLED");
     } catch (e) {
-      addLog("❌ STT STOP FAILED");
+      addLog("❌ START FAILED: " + e.message);
     }
   };
 
   // =========================
-  // RECORDING
+  // STOP STT
+  // =========================
+  const stopSTT = () => {
+    addLog("⛔ STOP CLICKED");
+
+    try {
+      recognitionRef.current?.stop();
+    } catch (e) {
+      addLog("❌ STOP ERROR");
+    }
+  };
+
+  // =========================
+  // RECORDING (WORKING)
   // =========================
   const startRecording = async () => {
     try {
@@ -139,7 +163,7 @@ export default function AndroidSTTTest() {
       audioChunksRef.current = [];
 
       mediaRecorder.onstart = () => {
-        addLog("🎙️ RECORDING START");
+        addLog("🎙️ RECORD START");
         setIsRecording(true);
       };
 
@@ -148,7 +172,7 @@ export default function AndroidSTTTest() {
       };
 
       mediaRecorder.onstop = () => {
-        addLog("🛑 RECORDING STOP");
+        addLog("🛑 RECORD STOP");
 
         const blob = new Blob(audioChunksRef.current, {
           type: "audio/webm",
@@ -169,7 +193,7 @@ export default function AndroidSTTTest() {
     try {
       mediaRecorderRef.current?.stop();
     } catch (e) {
-      addLog("❌ STOP REC FAILED");
+      addLog("❌ STOP REC ERROR");
     }
   };
 
@@ -177,35 +201,23 @@ export default function AndroidSTTTest() {
   // UI
   // =========================
   return (
-    <div className="flex items-center justify-center p-4">
+    <div className="flex items-center justify-center p-4 text-black">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-5 space-y-4">
-        <h1 className="text-xl font-bold">🎤 STT + Voice Recorder</h1>
+        <h1 className="text-xl font-bold">🎤 STT FULL DEBUG MODE</h1>
 
         {/* STATUS */}
-        <div
-          className={`p-3 rounded-xl text-sm font-medium ${
-            isListening
-              ? "bg-green-100 text-green-700"
-              : "bg-red-100 text-red-700"
-          }`}
-        >
-          STT: {isListening ? "Listening 🎤" : "Idle"}
+        <div className="p-3 rounded-xl bg-gray-100 text-sm">
+          STT: {isListening ? "LISTENING 🎤" : "IDLE"}
         </div>
 
-        <div
-          className={`p-3 rounded-xl text-sm font-medium ${
-            isRecording
-              ? "bg-blue-100 text-blue-700"
-              : "bg-gray-100 text-gray-700"
-          }`}
-        >
-          Recorder: {isRecording ? "Recording 🎙️" : "Stopped"}
+        <div className="p-3 rounded-xl bg-gray-100 text-sm">
+          REC: {isRecording ? "RECORDING 🎙️" : "STOP"}
         </div>
 
         {/* ERROR */}
         {error && (
-          <div className="bg-red-100 text-red-700 text-sm p-2 rounded-lg">
-            ⚠️ {error}
+          <div className="bg-red-100 text-red-700 text-sm p-2 rounded">
+            {error}
           </div>
         )}
 
@@ -213,14 +225,13 @@ export default function AndroidSTTTest() {
         <div className="flex gap-2">
           <button
             onClick={startSTT}
-            className="flex-1 bg-indigo-600! text-white py-2! rounded-xl"
+            className="flex-1 bg-indigo-600! text-white p-2! rounded"
           >
             Start STT
           </button>
-
           <button
             onClick={stopSTT}
-            className="flex-1 bg-red-500! text-white py-2! rounded-xl"
+            className="flex-1 bg-red-500! text-white p-2! rounded"
           >
             Stop STT
           </button>
@@ -229,46 +240,36 @@ export default function AndroidSTTTest() {
         <div className="flex gap-2">
           <button
             onClick={startRecording}
-            className="flex-1 bg-green-600! text-white py-2! rounded-xl"
+            className="flex-1 bg-green-600! text-white p-2! rounded"
           >
-            Start Rec 🎙️
+            Start Rec
           </button>
-
           <button
             onClick={stopRecording}
-            className="flex-1 bg-gray-700! text-white py-2! rounded-xl"
+            className="flex-1 bg-gray-700! text-white p-2! rounded"
           >
-            Stop Rec ⏹
+            Stop Rec
           </button>
         </div>
 
         {/* RESULT */}
-        <div className="border rounded-xl p-3 bg-gray-50 min-h-[60px]">
-          <div className="text-xs text-gray-400">STT Result</div>
-          <div className="text-sm text-black">{text || "—"}</div>
+        <div className="p-3 bg-gray-50 rounded">
+          <div className="text-xs text-gray-500">STT RESULT</div>
+          <div>{text || "—"}</div>
         </div>
 
-        {/* AUDIO PLAYBACK */}
-        {audioURL && (
-          <div className="border rounded-xl p-3 bg-gray-50">
-            <div className="text-xs text-gray-400 mb-1">Voice Playback</div>
-            <audio controls src={audioURL} className="w-full" />
-          </div>
-        )}
+        {/* AUDIO */}
+        {audioURL && <audio controls src={audioURL} className="w-full mt-2" />}
 
         {/* ENV */}
-        <div className="border rounded-xl p-3 bg-gray-50 text-xs">
-          <div className="text-gray-400 mb-1">Env</div>
-          <pre className="text-black">{JSON.stringify(envInfo, null, 2)}</pre>
-        </div>
+        <pre className="text-xs bg-gray-50 p-2 rounded">
+          {JSON.stringify(envInfo, null, 2)}
+        </pre>
 
         {/* LOGS */}
-        <div className="border rounded-xl p-3 bg-gray-50 text-xs max-h-40 overflow-y-auto">
-          <div className="text-black">Logs</div>
+        <div className="h-48 overflow-y-auto bg-black text-green-400 text-xs p-2 rounded">
           {logs.map((l, i) => (
-            <div className="text-black mb-1" key={i}>
-              • {l}
-            </div>
+            <div key={i}>• {l}</div>
           ))}
         </div>
       </div>
