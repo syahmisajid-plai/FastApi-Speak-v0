@@ -17,7 +17,7 @@ export default function Header({
   activeChecklist,
   onOpenVocab,
   completedCountVocab,
-  completedIds,
+  completedLessons,
 }) {
   const [openMenu, setOpenMenu] = useState(false);
   const [showSummaryDaily, setShowSummaryDaily] = useState(false);
@@ -170,7 +170,7 @@ export default function Header({
                 </button>
 
                 {/* 🔥 COMPLETED OVERLAY MODAL */}
-                <CompletedLessonsModal completedIds={completedIds} />
+                <CompletedLessonsModal completedLessons={completedLessons} />
               </div>
             )}
 

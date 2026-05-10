@@ -2,106 +2,122 @@ import { useState } from "react";
 
 export default function CompletedLessonsModal({ completedLessons = [] }) {
   const [open, setOpen] = useState(false);
+  const [expandedId, setExpandedId] = useState(null);
+
+  const toggle = (id) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
 
   return (
     <>
-      {/* 🔘 Trigger Button */}
+      {/* TRIGGER */}
       <button
         onClick={() => setOpen(true)}
         className="
           px-4 py-2 rounded-full
-          bg-white/10 text-white
-          border border-white/20
-          hover:bg-white/20
-          transition
-          text-sm
-          flex items-center gap-2
+          bg-gradient-to-r from-indigo-500/30 to-purple-500/30
+          text-white border border-white/20
+          hover:from-indigo-500/50 hover:to-purple-500/50
+          transition text-sm shadow-md
         "
       >
-        📚 Completed
-        <span className="text-blue-300 font-medium">
-          ({completedLessons.length})
-        </span>
+        🧩 Patterns ({completedLessons.length})
       </button>
 
-      {/* 🌑 OVERLAY */}
       {open && (
-        <div className="fixed inset-0 z-50">
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-20"
+          aria-modal="true"
+          role="dialog"
+        >
           {/* BACKDROP */}
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fadeIn"
             onClick={() => setOpen(false)}
           />
 
-          {/* CENTER WRAPPER */}
-          <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-6">
-            {/* CARD */}
-            <div
-              className="
-                w-full max-w-md
-                bg-[#121212]
-                border border-white/10
-                rounded-2xl
-                shadow-2xl
-                p-5
-                relative
-
-                max-h-[85vh]
-                flex flex-col
+          {/* MODAL */}
+          <div
+            className="relative z-10 w-full max-w-md
+                bg-[#121212] border border-white/10 rounded-2xl p-6
+                max-h-[85vh] flex flex-col shadow-2xl animate-scaleIn
                 overflow-hidden
-              "
+            "
+          >
+            {/* CLOSE */}
+            <button
+              onClick={() => setOpen(false)}
+              className="absolute top-3 right-3 text-white/70 hover:text-white"
+              aria-label="Close modal"
             >
-              {/* ❌ CLOSE */}
-              <button
-                onClick={() => setOpen(false)}
-                className="absolute top-3 right-3 text-white/50 hover:text-white"
-              >
-                ✕
-              </button>
+              ✕
+            </button>
 
-              {/* TITLE */}
-              <h2 className="text-white text-lg font-semibold mb-4">
-                Completed Lessons
-              </h2>
+            {/* TITLE */}
+            <h2 className="text-white text-lg font-semibold mb-4">
+              Sentence Patterns
+            </h2>
 
-              {/* CONTENT */}
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-0">
-                {completedLessons.length === 0 ? (
-                  <div className="text-white/50 text-sm">
-                    Belum ada lesson yang selesai.
-                  </div>
-                ) : (
-                  completedLessons.map((item) => (
+            {/* LIST */}
+            <div className="flex-1 overflow-y-auto space-y-3">
+              {completedLessons.length === 0 ? (
+                <div className="text-white/50 text-sm">
+                  Belum ada pattern yang dipelajari.
+                </div>
+              ) : (
+                completedLessons.map((item) => {
+                  const isOpen = expandedId === item.id;
+
+                  return (
                     <div
                       key={item.id}
+                      onClick={() => toggle(item.id)}
                       className="
-                        p-3 rounded-lg
-                        bg-white/5
-                        border border-white/10
-                        space-y-2
+                        p-3 rounded-lg cursor-pointer
+                        bg-white/5 border border-white/10
+                        hover:bg-white/10 transition
+                        space-y-2 group
                       "
                     >
-                      {/* FUNCTION TYPE */}
-                      <div className="text-xs text-blue-400">
+                      {/* 🔥 MAIN FOCUS: PATTERN */}
+                      <div className="flex items-center justify-between">
+                        <div className="text-indigo-300 font-semibold text-sm">
+                          {item.pattern_display}
+                        </div>
+                        <span
+                          className={`text-xs transition ${
+                            isOpen ? "rotate-90" : ""
+                          }`}
+                        >
+                          ➤
+                        </span>
+                      </div>
+
+                      {/* secondary info */}
+                      <div className="text-xs text-zinc-400">
                         {item.function_type}
                       </div>
 
-                      {/* CONTEXT */}
-                      <div className="text-white text-sm">{item.context}</div>
-
-                      {/* KEY EXPRESSION (MEMORY CORE) */}
-                      <div className="text-green-300 text-sm font-medium">
-                        {item.key_expression}
-                      </div>
+                      {/* optional expand */}
+                      {isOpen && (
+                        <div className="pt-2 border-t border-white/10 space-y-2 animate-fadeIn">
+                          <div className="text-white text-sm">
+                            {item.key_expression}
+                          </div>
+                          <div className="text-white/60 text-sm">
+                            {item.context}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ))
-                )}
-              </div>
+                  );
+                })
+              )}
+            </div>
 
-              {/* FOOTER */}
-              <div className="mt-4 text-xs text-white/40 text-center">
-                Total: {completedLessons.length} lessons
-              </div>
+            {/* FOOTER */}
+            <div className="mt-3 text-center text-xs text-white/40">
+              Total patterns: {completedLessons.length}
             </div>
           </div>
         </div>
