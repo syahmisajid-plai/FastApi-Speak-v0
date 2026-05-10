@@ -1549,14 +1549,15 @@ def get_random_uncompleted_lesson(user_id):
     return {
         "id": row[0],
         "context": row[1],
-        "partner_utterance": row[2],
-        "key_expression": row[3],
-        "pattern_display": row[4],
-        "insight": row[5],
-        "alternatives": row[6],
-        "keywords": row[7],
-        "function_type": row[8],
-        "tags": row[9],
+        "context_id": row[2],
+        "partner_utterance": row[3],
+        "key_expression": row[4],
+        "pattern_display": row[5],
+        "insight": row[6],
+        "alternatives": row[7],
+        "keywords": row[8],
+        "function_type": row[9],
+        "tags": row[10],
     }
 
 def mark_lesson_completed(user_id, lesson_id):

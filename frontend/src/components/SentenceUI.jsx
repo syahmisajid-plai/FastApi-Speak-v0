@@ -29,6 +29,12 @@ export default function SentenceUI({
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (lesson) {
+      console.log("lesson:", lesson);
+    }
+  }, [lesson]);
+
   // const context =
   //   "Your friend invites you to a party, but you are not sure you want to go.";
 
@@ -92,6 +98,7 @@ export default function SentenceUI({
   }
 
   const context = lesson.context;
+  const context_id = lesson.context_id;
   const questionShadowing = lesson.partner_utterance;
   const idealAnswers = [lesson.key_expression]; // 🔥 utama
   const alternative = lesson.alternatives || [];
@@ -200,7 +207,16 @@ export default function SentenceUI({
           {/* CONTEXT */}
           <div>
             <h2 className="text-xl font-bold mb-2">🎬 Situation</h2>
-            <p className="bg-gray-100 p-4 rounded text-black">{context}</p>
+
+            <div className="bg-gray-100 p-4 rounded space-y-2">
+              <p className="text-black">{context}</p>
+
+              {context_id && (
+                <p className="text-sm text-gray-500 italic border-t pt-2">
+                  🇮🇩 {context_id}
+                </p>
+              )}
+            </div>
           </div>
 
           {step === 0 && (
