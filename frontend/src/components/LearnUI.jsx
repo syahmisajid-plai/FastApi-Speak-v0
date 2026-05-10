@@ -2,14 +2,24 @@ import { useState } from "react";
 import VocabUI from "./VocabUI";
 import SentenceUI from "./SentenceUI";
 
-export default function LearnUI({ vocabProps, sentenceProps }) {
+export default function LearnUI({
+  vocabProps,
+  sentenceProps,
+  modeLearn,
+  setModeLearn,
+}) {
   const [started, setStarted] = useState(false);
 
-  const [showVocab, setShowVocab] = useState(false);
-  const [showSentence, setShowSentence] = useState(false);
+  // const [showVocab, setShowVocab] = useState(false);
+  // const [showSentence, setShowSentence] = useState(false);
+  // idle | vocab | sentence
 
   return (
-    <section className="mx-4 mt-36 transition-all duration-500">
+    <section
+      className={`mx-4 mt-36 transition-all duration-500 ${
+        modeLearn === "sentence" ? "min-h-128" : ""
+      }`}
+    >
       <div className="relative">
         {/* ================= QUICK UI ================= */}
         <div
@@ -18,7 +28,7 @@ export default function LearnUI({ vocabProps, sentenceProps }) {
           shadow-lg shadow-black/30 flex flex-col justify-center
           transition-all duration-300 ease-out
           ${
-            showVocab || showSentence
+            modeLearn !== "idle"
               ? "opacity-0 scale-[0.98] translate-y-1"
               : "opacity-100 scale-100"
           }`}
@@ -36,7 +46,9 @@ export default function LearnUI({ vocabProps, sentenceProps }) {
                 🧠
               </div>
 
-              <p className="text-sm font-semibold tracking-wide">Learn Mode</p>
+              <p className="text-sm font-semibold tracking-wide">
+                Learn ModeLearn
+              </p>
 
               <p className="text-xs text-white/60 mt-1">
                 Let's learn new words & sentence
@@ -81,10 +93,7 @@ export default function LearnUI({ vocabProps, sentenceProps }) {
             <div className="grid grid-cols-2 gap-3">
               {/* WORDS */}
               <button
-                onClick={() => {
-                  setShowSentence(false);
-                  setShowVocab(true);
-                }}
+                onClick={() => setModeLearn("vocab")}
                 className="bg-white/5 rounded-xl p-4 text-center 
                 hover:bg-white/10 transition border border-white/10
                 active:scale-[0.98]"
@@ -96,10 +105,7 @@ export default function LearnUI({ vocabProps, sentenceProps }) {
 
               {/* SENTENCE */}
               <button
-                onClick={() => {
-                  setShowVocab(false);
-                  setShowSentence(true);
-                }}
+                onClick={() => setModeLearn("sentence")}
                 className="bg-gradient-to-br from-indigo-500/10 to-white/5 
                 rounded-xl p-4 text-center 
                 hover:scale-[1.02] transition border border-indigo-500/20
@@ -116,24 +122,24 @@ export default function LearnUI({ vocabProps, sentenceProps }) {
         {/* ================= VOCAB UI (OVERLAY) ================= */}
         <div
           className={`absolute inset-0 transition-all duration-300 ease-out ${
-            showVocab
+            modeLearn === "vocab"
               ? "opacity-100 translate-y-0"
               : "opacity-0 translate-y-2 pointer-events-none"
           }`}
         >
-          {showVocab && <VocabUI {...vocabProps} />}
+          {modeLearn === "vocab" && <VocabUI {...vocabProps} />}
         </div>
       </div>
 
       {/* ================= SENTENCE UI (OVERLAY) ================= */}
       <div
         className={`absolute inset-0 transition-all duration-300 ease-out ${
-          showSentence
+          modeLearn === "sentence"
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-2 pointer-events-none"
         }`}
       >
-        {showSentence && <SentenceUI {...sentenceProps} />}
+        {modeLearn === "sentence" && <SentenceUI {...sentenceProps} />}
       </div>
     </section>
   );

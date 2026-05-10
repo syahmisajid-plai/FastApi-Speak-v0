@@ -18,6 +18,8 @@ export default function Header({
   onOpenVocab,
   completedCountVocab,
   completedLessons,
+
+  modeLearn,
 }) {
   const [openMenu, setOpenMenu] = useState(false);
   const [showSummaryDaily, setShowSummaryDaily] = useState(false);
@@ -151,9 +153,10 @@ export default function Header({
             {mode === "vocab" && (
               <div className="flex items-center gap-2">
                 {/* MAIN VOCAB BUTTON */}
-                <button
-                  onClick={onOpenVocab}
-                  className="
+                {modeLearn === "vocab" && (
+                  <button
+                    onClick={onOpenVocab}
+                    className="
                   px-3! py-1.5!
                   rounded-full
                   bg-blue-500/10!
@@ -162,15 +165,18 @@ export default function Header({
                   transition
                   flex items-center gap-1
                 "
-                >
-                  📚 <span className="hidden sm:inline">Vocab</span>
-                  <span className="ml-1 text-blue-300 font-medium">
-                    {completedCountVocab ?? 0}
-                  </span>
-                </button>
+                  >
+                    📚 <span className="hidden sm:inline">Vocab</span>
+                    <span className="ml-1 text-blue-300 font-medium">
+                      {completedCountVocab ?? 0}
+                    </span>
+                  </button>
+                )}
 
-                {/* 🔥 COMPLETED OVERLAY MODAL */}
-                <CompletedLessonsModal completedLessons={completedLessons} />
+                {/* MAIN Sentece BUTTON */}
+                {modeLearn === "sentence" && (
+                  <CompletedLessonsModal completedLessons={completedLessons} />
+                )}
               </div>
             )}
 

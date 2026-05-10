@@ -14,14 +14,15 @@ export default function CompletedLessonsModal({ completedLessons = [] }) {
       <button
         onClick={() => setOpen(true)}
         className="
-          px-4 py-2 rounded-full
+          px-4! py-2! rounded-full
           bg-gradient-to-r from-indigo-500/30 to-purple-500/30
           text-white border border-white/20
           hover:from-indigo-500/50 hover:to-purple-500/50
           transition text-sm shadow-md
         "
       >
-        🧩 Patterns ({completedLessons.length})
+        🧩 <span className="hidden sm:inline">Patterns </span>
+        {completedLessons.length}
       </button>
 
       {open && (

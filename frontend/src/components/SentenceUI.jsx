@@ -200,7 +200,7 @@ export default function SentenceUI({
   return (
     <div
       className={`p-6 max-w-xl mx-auto space-y-10 ${
-        step === 3 ? "mt-20" : "mt-32"
+        step === 3 ? "mt-28" : "mt-32"
       } text-white`}
     >
       {/* ================= STEP 0: SPEAKING ================= */}

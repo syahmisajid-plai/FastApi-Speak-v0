@@ -122,6 +122,8 @@ Feature tambahan:
   const modeRef = useRef(mode);
   // freeTalk | dailyStory | roleplay | vocab
 
+  const [modeLearn, setModeLearn] = useState("idle");
+
   // ================== STATE Daily Greeting ==================
   const greetingSentRef = useRef(false);
 
@@ -709,6 +711,7 @@ Feature tambahan:
             onOpenVocab={() => setShowVocab(true)}
             completedCountVocab={completedCountVocab}
             completedLessons={completedLessons}
+            modeLearn={modeLearn}
           />
 
           <OverlayFeedback message={overlayFavoritTranslated} />
@@ -1136,6 +1139,8 @@ Feature tambahan:
                 isRecording: isRecording,
                 liveTranscript: liveTranscript,
               }}
+              modeLearn={modeLearn}
+              setModeLearn={setModeLearn}
             />
           )}
 
