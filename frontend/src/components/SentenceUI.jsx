@@ -1,5 +1,5 @@
 // import { div } from "framer-motion/m";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function SentenceUI({
   lesson,
@@ -18,15 +18,77 @@ export default function SentenceUI({
 
   const [finalTranscript, setFinalTranscript] = useState("");
 
+  // loading minimal 2 detik
+  const [showLoading, setShowLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLoading(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // const context =
   //   "Your friend invites you to a party, but you are not sure you want to go.";
 
-  if (loading) {
-    return <div className="text-white text-center mt-20">Loading...</div>;
+  if (loading || showLoading) {
+    return (
+      <div className="flex items-start justify-center pt-64">
+        <div
+          className={`text-white border border-white/10 backdrop-blur-xl rounded-3xl p-8
+        bg-linear-to-b from-slate-900/80 to-indigo-900/60
+        shadow-lg shadow-black/30 flex flex-col justify-center items-center
+        transition-all duration-300 ease-out
+        w-10/12 max-w-md`}
+        >
+          <div className="animate-bounce text-6xl mb-5">🎧</div>
+
+          <h2 className="text-2xl font-semibold animate-pulse text-center">
+            Preparing your speaking lesson...
+          </h2>
+
+          <p className="text-gray-300 mt-3 text-sm text-center">
+            Please wait a moment ✨
+          </p>
+
+          {/* loading dots */}
+          <div className="flex gap-2 mt-6">
+            <div className="w-2 h-2 rounded-full bg-white animate-bounce" />
+            <div
+              className="w-2 h-2 rounded-full bg-white animate-bounce"
+              style={{ animationDelay: "0.15s" }}
+            />
+            <div
+              className="w-2 h-2 rounded-full bg-white animate-bounce"
+              style={{ animationDelay: "0.3s" }}
+            />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!lesson) {
-    return <div className="text-white text-center mt-20">No lesson</div>;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-white text-center px-6">
+        <div className="text-6xl mb-4 animate-pulse">📚</div>
+
+        <h2 className="text-2xl font-semibold mb-2">Oops! No lesson found</h2>
+
+        <p className="text-gray-300 max-w-md">
+          We couldn't find any speaking lesson right now. Try refreshing or come
+          back later 🚀
+        </p>
+
+        <button
+          onClick={refetch}
+          className="mt-6 px-5! py-2! rounded-xl bg-white! text-black font-medium hover:scale-105 transition"
+        >
+          🔄 Refresh
+        </button>
+      </div>
+    );
   }
 
   const context = lesson.context;
@@ -127,7 +189,11 @@ export default function SentenceUI({
   };
 
   return (
-    <div className="p-6 max-w-xl mx-auto space-y-10 mt-32 text-white">
+    <div
+      className={`p-6 max-w-xl mx-auto space-y-10 ${
+        step === 3 ? "mt-20" : "mt-32"
+      } text-white`}
+    >
       {/* ================= STEP 0: SPEAKING ================= */}
       {(step === 0 || step === 1) && (
         <section className="space-y-6">

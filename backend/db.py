@@ -359,12 +359,15 @@ def init_db():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS sentence_lessons (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                   
         context TEXT NOT NULL,
+        context_id TEXT,
 
         partner_utterance TEXT NOT NULL,
 
         key_expression TEXT NOT NULL,
         pattern_display TEXT NOT NULL,
+                   
         insight TEXT,
 
         alternatives JSONB DEFAULT '[]'::jsonb,
@@ -1517,6 +1520,7 @@ def get_random_uncompleted_lesson(user_id):
         SELECT 
             sl.id,
             sl.context,
+            sl.context_id,
             sl.partner_utterance,
             sl.key_expression,
             sl.pattern_display,
