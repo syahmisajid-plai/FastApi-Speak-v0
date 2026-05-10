@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from db import (
     get_random_uncompleted_lesson,
     mark_lesson_completed,
-    get_completed_lesson_ids
+    get_completed_lessons
 )
 
 router = APIRouter(prefix="/sentence-lessons", tags=["Sentence Lessons"])
@@ -67,17 +67,17 @@ def complete_lesson(payload: LessonCompleteRequest):
 # =========================
 # GET COMPLETED LESSON IDS
 # =========================
-@router.get("/completed-ids/{user_id}")
-def get_completed_ids(user_id: str):
+@router.get("/completed-lessons/{user_id}")
+def get_completed_lessons_endpoint(user_id: str):
     try:
-        data = get_completed_lesson_ids(user_id)
+        data = get_completed_lessons(user_id)
 
         return {
             "success": True,
             "user_id": user_id,
-            "completed_lesson_ids": data
+            "completed_lessons": data
         }
 
     except Exception as e:
-        print("❌ GET COMPLETED LESSON IDS ERROR:", str(e))
+        print("❌ GET COMPLETED LESSONS ERROR:", str(e))
         raise HTTPException(status_code=500, detail=str(e))

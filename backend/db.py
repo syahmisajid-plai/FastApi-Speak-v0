@@ -1582,18 +1582,37 @@ def mark_lesson_completed(user_id, lesson_id):
         "status": "completed"
     }
 
-def get_completed_lesson_ids(user_id):
+def get_completed_lessons(user_id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT lesson_id
-        FROM user_lesson_progress
-        WHERE user_id = %s
-        AND is_completed = TRUE
+        SELECT 
+            sl.id,
+            sl.context,
+            sl.partner_utterance,
+            sl.key_expression,
+            sl.pattern_display,
+            sl.insight,
+            sl.function_type
+        FROM user_lesson_progress ulp
+        JOIN sentence_lessons sl ON sl.id = ulp.lesson_id
+        WHERE ulp.user_id = %s
+        AND ulp.is_completed = TRUE
     """, (user_id,))
 
     rows = cursor.fetchall()
     conn.close()
 
-    return [r[0] for r in rows]
+    return [
+        {
+            "id": r[0],
+            "context": r[1],
+            "partner_utterance": r[2],
+            "key_expression": r[3],
+            "pattern_display": r[4],
+            "insight": r[5],
+            "function_type": r[6],
+        }
+        for r in rows
+    ]

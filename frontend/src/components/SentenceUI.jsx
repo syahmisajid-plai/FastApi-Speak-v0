@@ -21,6 +21,8 @@ export default function SentenceUI({
   // loading minimal 2 detik
   const [showLoading, setShowLoading] = useState(true);
 
+  const [showID, setShowID] = useState(true);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowLoading(false);
@@ -208,13 +210,41 @@ export default function SentenceUI({
           <div>
             <h2 className="text-xl font-bold mb-2">🎬 Situation</h2>
 
-            <div className="bg-gray-100 p-4 rounded space-y-2">
-              <p className="text-black">{context}</p>
+            <div className="bg-gray-100 p-4 rounded space-y-3 text-black">
+              <p>{context}</p>
 
+              {/* toggle chip */}
               {context_id && (
-                <p className="text-sm text-gray-500 italic border-t pt-2">
-                  🇮🇩 {context_id}
-                </p>
+                <>
+                  <button
+                    onClick={() => setShowID((prev) => !prev)}
+                    className={`
+                      text-xs px-3! py-1! rounded-full border transition-all duration-200
+                      flex items-center gap-1 shadow-sm
+
+                      ${
+                        showID
+                          ? "bg-indigo-500! text-white border-indigo-400 shadow-indigo-200/50"
+                          : "bg-white/80! text-gray-700 border-gray-300 hover:bg-white!  shadow-sm"
+                      }
+                    `}
+                  >
+                    <span className="transition-transform duration-200">
+                      {showID ? "🙈" : "🇮🇩"}
+                    </span>
+
+                    {showID ? "Hide meaning" : "Show meaning"}
+                  </button>
+
+                  <div className="border-t m-0"></div>
+
+                  {/* INDONESIAN */}
+                  {showID && (
+                    <p className="text-sm text-gray-600 italic pt-2">
+                      {context_id}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           </div>

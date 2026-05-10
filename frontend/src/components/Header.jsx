@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import DailySummaryViewer from "./DailySummaryViewer";
 import TranslationHistoryModal from "./TranslationHistoryModal";
+import CompletedLessonsModal from "./CompletedLessonsModal";
 
 import UsageDashboard from "./UsageDashboard";
 
@@ -16,6 +17,7 @@ export default function Header({
   activeChecklist,
   onOpenVocab,
   completedCountVocab,
+  completedIds,
 }) {
   const [openMenu, setOpenMenu] = useState(false);
   const [showSummaryDaily, setShowSummaryDaily] = useState(false);
@@ -147,24 +149,29 @@ export default function Header({
             )}
 
             {mode === "vocab" && (
-              <button
-                onClick={onOpenVocab}
-                className="
-                px-3! py-1.5!
-                rounded-full
-                bg-blue-500/10!
-                text-xs text-blue-400
-                hover:bg-blue-500/20!
-                transition
-                flex items-center gap-1
-              "
-              >
-                📚 <span className="hidden sm:inline">Vocab</span>
-                {/* 🔥 COUNTER */}
-                <span className="ml-1 text-blue-300 font-medium">
-                  {completedCountVocab ?? 0}
-                </span>
-              </button>
+              <div className="flex items-center gap-2">
+                {/* MAIN VOCAB BUTTON */}
+                <button
+                  onClick={onOpenVocab}
+                  className="
+                  px-3! py-1.5!
+                  rounded-full
+                  bg-blue-500/10!
+                  text-xs text-blue-400
+                  hover:bg-blue-500/20!
+                  transition
+                  flex items-center gap-1
+                "
+                >
+                  📚 <span className="hidden sm:inline">Vocab</span>
+                  <span className="ml-1 text-blue-300 font-medium">
+                    {completedCountVocab ?? 0}
+                  </span>
+                </button>
+
+                {/* 🔥 COMPLETED OVERLAY MODAL */}
+                <CompletedLessonsModal completedIds={completedIds} />
+              </div>
             )}
 
             {/* 🕘 TRANSLATION HISTORY */}

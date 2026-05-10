@@ -203,6 +203,7 @@ Feature tambahan:
   const {
     lesson,
     loading: loadingSentence,
+    completedIds,
     refetch,
     completeLesson,
   } = useSentenceLesson(userId);
@@ -707,6 +708,7 @@ Feature tambahan:
             activeChecklist={activeChecklist}
             onOpenVocab={() => setShowVocab(true)}
             completedCountVocab={completedCountVocab}
+            completedIds={completedIds}
           />
 
           <OverlayFeedback message={overlayFavoritTranslated} />

@@ -5,6 +5,30 @@ export default function useSentenceLesson(userId) {
   const [lesson, setLesson] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 🔥 CHANGED: now full objects, not IDs
+  const [completedLessons, setCompletedLessons] = useState([]);
+
+  const fetchCompletedLessons = useCallback(async () => {
+    if (!userId) return;
+
+    try {
+      const res = await fetch(
+        `${linkBackend}/sentence-lessons/completed-lessons/${userId}`,
+      );
+
+      const json = await res.json();
+
+      if (json.success) {
+        setCompletedLessons(json.completed_lessons || []);
+      } else {
+        setCompletedLessons([]);
+      }
+    } catch (err) {
+      console.log("❌ Fetch completed lessons error:", err);
+      setCompletedLessons([]);
+    }
+  }, [userId]);
+
   const fetchLesson = useCallback(async () => {
     if (!userId) {
       setLoading(false);
@@ -15,9 +39,8 @@ export default function useSentenceLesson(userId) {
       setLoading(true);
 
       const res = await fetch(`${linkBackend}/sentence-lessons/next/${userId}`);
-      const json = await res.json();
 
-      console.log("📦 API Response:", json);
+      const json = await res.json();
 
       if (json.success) {
         setLesson(json.data);
@@ -32,7 +55,6 @@ export default function useSentenceLesson(userId) {
     }
   }, [userId]);
 
-  // 🔥 MARK COMPLETED + NEXT
   const completeLesson = useCallback(async () => {
     if (!userId || !lesson) return;
 
@@ -50,21 +72,27 @@ export default function useSentenceLesson(userId) {
 
       console.log("✅ Lesson completed:", lesson.id);
 
-      // 🔥 ambil lesson berikutnya
+      // 🔥 refresh both
+      await fetchCompletedLessons();
       await fetchLesson();
     } catch (err) {
       console.log("❌ Complete lesson error:", err);
     }
-  }, [userId, lesson, fetchLesson]);
+  }, [userId, lesson, fetchLesson, fetchCompletedLessons]);
 
   useEffect(() => {
+    fetchCompletedLessons();
     fetchLesson();
-  }, [fetchLesson]);
+  }, [fetchCompletedLessons, fetchLesson]);
 
   return {
     lesson,
     loading,
+
+    // 🔥 now FULL DATA, not IDs
+    completedLessons,
+
     refetch: fetchLesson,
-    completeLesson, // 🔥 NEW
+    completeLesson,
   };
 }
