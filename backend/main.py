@@ -2,6 +2,8 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+import traceback
+
 from db import init_db  # fungsi init_db dari db.py
 from config import DATABASE_URL
 
@@ -53,21 +55,38 @@ async def lifespan(app: FastAPI):
 # -----------------------------
 app = FastAPI(lifespan=lifespan)
 
+
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    print(
-        f"[HTTP] {request.method} {request.url.path} "
-        f"from {request.client.host}"
-    )
 
-    response = await call_next(request)
+    print("\n========== HTTP REQUEST ==========")
+    print("Method :", request.method)
+    print("Path   :", request.url.path)
+    print("URL    :", request.url)
+    print("Client :", request.client.host)
+    print("Origin :", request.headers.get("origin"))
+    print("==================================")
 
-    print(
-        f"[RESPONSE] {response.status_code} "
-        f"{request.method} {request.url.path}"
-    )
+    try:
+        response = await call_next(request)
 
-    return response
+        print("\n========== HTTP RESPONSE =========")
+        print("Status :", response.status_code)
+        print("Method :", request.method)
+        print("Path   :", request.url.path)
+        print("==================================\n")
+
+        return response
+
+    except Exception as e:
+        print("\n========== HTTP ERROR ============")
+        print("Method :", request.method)
+        print("Path   :", request.url.path)
+        print("Error  :", str(e))
+        traceback.print_exc()
+        print("==================================\n")
+
+        raise e
 
 
 # -----------------------------
@@ -80,7 +99,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:4173",
         "https://fast-api-speak-v0.vercel.app",  # frontend production
-        "http://0.0.0.0:8080", # testing local hp
+        # "http://0.0.0.0:8080", # testing local hp
     ],
     allow_credentials=True,
     allow_methods=["*"],
