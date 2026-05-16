@@ -56,37 +56,37 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
+# @app.middleware("http")
+# async def log_requests(request: Request, call_next):
 
-    print("\n========== HTTP REQUEST ==========")
-    print("Method :", request.method)
-    print("Path   :", request.url.path)
-    print("URL    :", request.url)
-    print("Client :", request.client.host)
-    print("Origin :", request.headers.get("origin"))
-    print("==================================")
+#     print("\n========== HTTP REQUEST ==========")
+#     print("Method :", request.method)
+#     print("Path   :", request.url.path)
+#     print("URL    :", request.url)
+#     print("Client :", request.client.host)
+#     print("Origin :", request.headers.get("origin"))
+#     print("==================================")
 
-    try:
-        response = await call_next(request)
+#     try:
+#         response = await call_next(request)
 
-        print("\n========== HTTP RESPONSE =========")
-        print("Status :", response.status_code)
-        print("Method :", request.method)
-        print("Path   :", request.url.path)
-        print("==================================\n")
+#         print("\n========== HTTP RESPONSE =========")
+#         print("Status :", response.status_code)
+#         print("Method :", request.method)
+#         print("Path   :", request.url.path)
+#         print("==================================\n")
 
-        return response
+#         return response
 
-    except Exception as e:
-        print("\n========== HTTP ERROR ============")
-        print("Method :", request.method)
-        print("Path   :", request.url.path)
-        print("Error  :", str(e))
-        traceback.print_exc()
-        print("==================================\n")
+#     except Exception as e:
+#         print("\n========== HTTP ERROR ============")
+#         print("Method :", request.method)
+#         print("Path   :", request.url.path)
+#         print("Error  :", str(e))
+#         traceback.print_exc()
+#         print("==================================\n")
 
-        raise e
+#         raise e
 
 
 # -----------------------------
@@ -99,7 +99,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:4173",
         "https://fast-api-speak-v0.vercel.app",  # frontend production
-        "http://192.168.101.13:5173", # testing local hp
+        "https://192.168.101.13:5173", # testing local hp
     ],
     allow_credentials=True,
     allow_methods=["*"],
