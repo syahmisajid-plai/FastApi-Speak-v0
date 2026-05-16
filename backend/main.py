@@ -53,21 +53,21 @@ async def lifespan(app: FastAPI):
 # -----------------------------
 app = FastAPI(lifespan=lifespan)
 
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    print(
-        f"[HTTP] {request.method} {request.url.path} "
-        f"from {request.client.host}"
-    )
+# @app.middleware("http")
+# async def log_requests(request: Request, call_next):
+#     print(
+#         f"[HTTP] {request.method} {request.url.path} "
+#         f"from {request.client.host}"
+#     )
 
-    response = await call_next(request)
+#     response = await call_next(request)
 
-    print(
-        f"[RESPONSE] {response.status_code} "
-        f"{request.method} {request.url.path}"
-    )
+#     print(
+#         f"[RESPONSE] {response.status_code} "
+#         f"{request.method} {request.url.path}"
+#     )
 
-    return response
+#     return response
 
 
 # -----------------------------
@@ -80,6 +80,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:4173",
         "https://fast-api-speak-v0.vercel.app",  # frontend production
+        "http://0.0.0.0:8080", # testing local hp
     ],
     allow_credentials=True,
     allow_methods=["*"],
