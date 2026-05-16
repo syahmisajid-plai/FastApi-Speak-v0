@@ -1,5 +1,5 @@
 # main.py
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from db import init_db  # fungsi init_db dari db.py
@@ -52,6 +52,22 @@ async def lifespan(app: FastAPI):
 # FASTAPI APP
 # -----------------------------
 app = FastAPI(lifespan=lifespan)
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    print(
+        f"[HTTP] {request.method} {request.url.path} "
+        f"from {request.client.host}"
+    )
+
+    response = await call_next(request)
+
+    print(
+        f"[RESPONSE] {response.status_code} "
+        f"{request.method} {request.url.path}"
+    )
+
+    return response
 
 
 # -----------------------------
