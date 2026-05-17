@@ -1,3 +1,4 @@
+// components/ChatBubble.jsx
 import { useState } from "react";
 import useTTS_Google from "../hooks/useTTS_Google";
 import useTranslate from "../hooks/useTranslate";
@@ -74,7 +75,7 @@ export default function ChatBubble({ chat, toggleFavorite }) {
       >
         <div className="whitespace-pre-line">{chat.message}</div>
 
-        {chat.sender === "You" && (
+        {chat.sender === "You" && chat.alternative && (
           <div className="mt-2 text-xs bg-white/20 rounded p-2 border border-white/30">
             <div className="text-green-200 font-medium">
               {chat.alternative ? (

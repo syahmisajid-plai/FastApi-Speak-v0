@@ -20,6 +20,10 @@ export default function Header({
   completedLessons,
 
   modeLearn,
+
+  autoCorrection,
+
+  setAutoCorrection,
 }) {
   const [openMenu, setOpenMenu] = useState(false);
   const [showSummaryDaily, setShowSummaryDaily] = useState(false);
@@ -179,6 +183,41 @@ export default function Header({
                 )}
               </div>
             )}
+
+            {/* AUTO CORRECTION TOGGLE */}
+            <button
+              onClick={() => setAutoCorrection((prev) => !prev)}
+              className={`
+                flex items-center gap-2
+                px-2.5! py-1.5!
+                rounded-full
+                transition
+                border
+                ${
+                  autoCorrection
+                    ? "bg-emerald-500/10! border-emerald-400/30 text-emerald-300"
+                    : "bg-white/5! border-white/10 text-gray-400"
+                }
+              `}
+            >
+              <span className="text-[11px] font-medium">✍️ Correction</span>
+
+              {/* SWITCH */}
+              <div
+                className={`
+                  w-9 h-5 rounded-full relative transition
+                  ${autoCorrection ? "bg-emerald-400" : "bg-white/20"}
+                `}
+              >
+                <div
+                  className={`
+                    absolute top-0.5
+                    w-4 h-4 rounded-full bg-white transition-all
+                    ${autoCorrection ? "left-4" : "left-0.5"}
+                  `}
+                />
+              </div>
+            </button>
 
             {/* 🕘 TRANSLATION HISTORY */}
             <button

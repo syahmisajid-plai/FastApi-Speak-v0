@@ -20,8 +20,15 @@ export default function useConversationEngine({
 
   onRoleplayCompleted,
   onPhaseCompleted, // ⭐ NEW
+
+  autoCorrectionRef,
 }) {
   const sendTextToBackend = async (text) => {
+    console.log(
+      "📤 sendTextToBackend autoCorrectionRef:",
+      autoCorrectionRef.current,
+    );
+
     console.log("📤 ====== useConversationEngine.js =======");
     console.log("📤 SEND TEXT TRIGGERED");
     console.log("👤 userIdRef:", userIdRef);
@@ -120,7 +127,12 @@ export default function useConversationEngine({
               };
             }
 
-            if (!alternativeAttached && c.sender === "You" && !c.alternative) {
+            if (
+              autoCorrectionRef.current &&
+              !alternativeAttached &&
+              c.sender === "You" &&
+              !c.alternative
+            ) {
               alternativeAttached = true;
 
               return {

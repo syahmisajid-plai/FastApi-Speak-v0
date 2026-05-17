@@ -109,6 +109,8 @@ Feature tambahan:
 
   const [showVocab, setShowVocab] = useState(false);
 
+  const [autoCorrection, setAutoCorrection] = useState(true);
+
   // ================== Tambahkan state ==================
   const [pendingMode, setPendingMode] = useState(null);
   const [showModeConfirm, setShowModeConfirm] = useState(false);
@@ -167,6 +169,13 @@ Feature tambahan:
     setSessionId(null);
     setShowLogin(true);
   };
+
+  // ================== autoCorrectionRef ==================
+  const autoCorrectionRef = useRef(autoCorrection);
+
+  useEffect(() => {
+    autoCorrectionRef.current = autoCorrection;
+  }, [autoCorrection]);
 
   // ================== SESSION MANAGEMENT ==================
   const [sessionId, setSessionId] = useState("sam");
@@ -429,6 +438,10 @@ Feature tambahan:
   //   console.log(result);
   // }, [result]);
 
+  useEffect(() => {
+    console.log("🛠️ autoCorrectionRef changed:", autoCorrectionRef);
+  }, [autoCorrectionRef]);
+
   // ================== SEND TEXT TO BACKEND ==================
   const { sendTextToBackend } = useConversationEngine({
     sessionIdRef,
@@ -449,6 +462,8 @@ Feature tambahan:
       setCurrentStoryPhase(phase);
       setReadyToContinue(true);
     },
+
+    autoCorrectionRef,
   });
 
   // ================== Chat User Terakhir kali (untuk checklist roleplay) ==================
@@ -717,6 +732,8 @@ Feature tambahan:
             completedCountVocab={completedCountVocab}
             completedLessons={completedLessons}
             modeLearn={modeLearn}
+            autoCorrection={autoCorrection}
+            setAutoCorrection={setAutoCorrection}
           />
 
           <OverlayFeedback message={overlayFavoritTranslated} />
