@@ -39,13 +39,13 @@ export default function VocabUI({
   // AUDIO
   const { playAudio, loading } = useAudioVocab(user_id);
 
-  useEffect(() => {
-    if (!started || !vocab) return;
+  // useEffect(() => {
+  //   if (!started || !vocab) return;
 
-    if (phase === "wordIntro") {
-      playAudio(vocab.word);
-    }
-  }, [phase, vocab, started]);
+  //   if (phase === "wordIntro") {
+  //     playAudio(vocab.word);
+  //   }
+  // }, [phase, vocab, started]);
 
   useEffect(() => {
     console.log("🔥 PHASE UPDATED:", phase);

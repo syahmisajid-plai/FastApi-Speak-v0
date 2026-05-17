@@ -210,7 +210,20 @@ export default function SentenceUI({
           <div>
             <h2 className="text-xl font-bold mb-2">🎬 Situation</h2>
 
-            <div className="bg-gray-100 p-4 rounded space-y-3 text-black">
+            <div
+              className="
+                bg-gradient-to-br
+                from-white/10
+                to-indigo-500/10
+                border border-white/10
+                backdrop-blur-xl
+                rounded-2xl
+                space-y-3
+                p-4
+                text-white
+                shadow-[0_0_30px_rgba(99,102,241,0.15)]
+              "
+            >
               <p>{context}</p>
 
               {/* toggle chip */}
@@ -236,14 +249,30 @@ export default function SentenceUI({
                     {showID ? "Hide meaning" : "Show meaning"}
                   </button>
 
-                  <div className="border-t m-0"></div>
-
-                  {/* INDONESIAN */}
-                  {showID && (
-                    <p className="text-sm text-gray-600 italic pt-2">
-                      {context_id}
-                    </p>
-                  )}
+                  {/* TRANSLATION */}
+                  <div
+                    className={`
+                      transition-all duration-300 overflow-hidden
+                      ${
+                        showID
+                          ? "max-h-40 opacity-100 translate-y-0"
+                          : "max-h-0 opacity-0 -translate-y-1"
+                      }
+                    `}
+                  >
+                    <div
+                      className="
+                        rounded-2xl
+                        bg-black/20
+                        border border-white/[0.05]
+                        px-4 py-3
+                      "
+                    >
+                      <p className="text-sm italic leading-6 text-white/55">
+                        {context_id}
+                      </p>
+                    </div>
+                  </div>
                 </>
               )}
             </div>
@@ -533,8 +562,19 @@ export default function SentenceUI({
 
           {/* NEXT BUTTON */}
           {step === 2 && mode === "review" && (
-            <div className="flex justify-center mt-4 text-md">
-              <button onClick={nextStep} className="btn-small">
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={nextStep}
+                className="
+                  px-5! py-2.5! rounded-xl
+                  bg-gradient-to-r from-green-500 to-emerald-600
+                  text-white font-medium text-sm
+                  shadow-lg shadow-green-900/20
+                  hover:scale-105 hover:shadow-green-900/40
+                  active:scale-95
+                  transition-all duration-200
+                "
+              >
                 See The Summary →
               </button>
             </div>
@@ -596,6 +636,7 @@ export default function SentenceUI({
           <button
             onClick={async () => {
               await completeLesson();
+              setMode("idle");
               setStep(0);
             }}
           >

@@ -4,9 +4,26 @@ export default function CompletedLessonsModal({ completedLessons = [] }) {
   const [open, setOpen] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
 
+  // 🔥 category dropdown state
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
   const toggle = (id) => {
     setExpandedId((prev) => (prev === id ? null : id));
   };
+
+  // ambil semua kategori unik
+  const categories = [
+    "All",
+    ...new Set(completedLessons.map((item) => item.function_type)),
+  ];
+
+  // filter berdasarkan kategori
+  const filteredLessons =
+    selectedCategory === "All"
+      ? completedLessons
+      : completedLessons.filter(
+          (item) => item.function_type === selectedCategory,
+        );
 
   return (
     <>
@@ -39,10 +56,11 @@ export default function CompletedLessonsModal({ completedLessons = [] }) {
 
           {/* MODAL */}
           <div
-            className="relative z-10 w-full max-w-md
-                bg-[#121212] border border-white/10 rounded-2xl p-6
-                max-h-[85vh] flex flex-col shadow-2xl animate-scaleIn
-                overflow-hidden
+            className="
+              relative z-10 w-full max-w-md
+              bg-[#121212] border border-white/10 rounded-2xl p-6
+              max-h-[85vh] flex flex-col shadow-2xl animate-scaleIn
+              overflow-hidden
             "
           >
             {/* CLOSE */}
@@ -55,18 +73,38 @@ export default function CompletedLessonsModal({ completedLessons = [] }) {
             </button>
 
             {/* TITLE */}
-            <h2 className="text-white text-lg font-semibold mb-4">
-              Sentence Patterns
-            </h2>
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <h2 className="text-white text-lg font-semibold">
+                Sentence Patterns
+              </h2>
+
+              {/* 🔥 CATEGORY DROPDOWN */}
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="
+                  bg-white/5 border border-white/10
+                  text-white text-xs rounded-lg
+                  px-3 py-2 outline-none
+                  hover:bg-white/10 transition
+                "
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat} className="bg-[#121212]">
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {/* LIST */}
             <div className="flex-1 overflow-y-auto space-y-3">
-              {completedLessons.length === 0 ? (
+              {filteredLessons.length === 0 ? (
                 <div className="text-white/50 text-sm">
-                  Belum ada pattern yang dipelajari.
+                  Tidak ada pattern di kategori ini.
                 </div>
               ) : (
-                completedLessons.map((item) => {
+                filteredLessons.map((item) => {
                   const isOpen = expandedId === item.id;
 
                   return (
@@ -80,11 +118,12 @@ export default function CompletedLessonsModal({ completedLessons = [] }) {
                         space-y-2 group
                       "
                     >
-                      {/* 🔥 MAIN FOCUS: PATTERN */}
+                      {/* PATTERN */}
                       <div className="flex items-center justify-between">
                         <div className="text-indigo-300 font-semibold text-sm">
                           {item.pattern_display}
                         </div>
+
                         <span
                           className={`text-xs transition ${
                             isOpen ? "rotate-90" : ""
@@ -94,17 +133,18 @@ export default function CompletedLessonsModal({ completedLessons = [] }) {
                         </span>
                       </div>
 
-                      {/* secondary info */}
+                      {/* CATEGORY */}
                       <div className="text-xs text-zinc-400">
                         {item.function_type}
                       </div>
 
-                      {/* optional expand */}
+                      {/* EXPAND */}
                       {isOpen && (
                         <div className="pt-2 border-t border-white/10 space-y-2 animate-fadeIn">
                           <div className="text-white text-sm">
                             {item.key_expression}
                           </div>
+
                           <div className="text-white/60 text-sm">
                             {item.context}
                           </div>
@@ -118,7 +158,7 @@ export default function CompletedLessonsModal({ completedLessons = [] }) {
 
             {/* FOOTER */}
             <div className="mt-3 text-center text-xs text-white/40">
-              Total patterns: {completedLessons.length}
+              Total patterns: {filteredLessons.length}
             </div>
           </div>
         </div>

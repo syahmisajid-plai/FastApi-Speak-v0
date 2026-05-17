@@ -140,7 +140,12 @@ Feature tambahan:
     setShowContext(false);
     setShowModeConfirm(false);
     setPendingMode(null);
+    setModeLearn("idle");
   };
+
+  useEffect(() => {
+    setModeLearn("idle");
+  }, [mode]);
 
   // ================== Login & Logout ==================
   useEffect(() => {
