@@ -339,15 +339,18 @@ Feature tambahan:
     setReadyToContinue(false);
   };
 
+  // ================== Handle Mode Change ==================
   const handleModeChange = (newMode) => {
-    if (chatHistory.length > 0) {
+    if (chatHistory.length > 0 || modeLearn !== "idle") {
       setPendingMode(newMode);
       setShowModeConfirm(true);
+      setModeLearn("idle");
       return;
     }
 
     resetModeState();
     setMode(newMode);
+    
 
     if (newMode === "roleplay") {
       setRoleplayModalOpen(true);
