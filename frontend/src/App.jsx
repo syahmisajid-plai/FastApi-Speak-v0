@@ -370,7 +370,7 @@ Feature tambahan:
   const { volume, showPopup } = useMicMonitor();
 
   // ================== HOOKS ==================
-  const { speakText, isSpeaking, forceStop } = useTTS_Google(userIdRef, mode); // 🗣️ Text-to-Speech
+  const { speakText, isSpeaking, forceStop , unlockAudio} = useTTS_Google(userIdRef, mode); // 🗣️ Text-to-Speech
 
   // ================== RolePlay ==================
   // const [checklistProgress, setChecklistProgress] = useState({
@@ -453,6 +453,7 @@ Feature tambahan:
     modeRef,
     setChatHistory,
     speakText,
+    unlockAudio,
 
     // grammarResult: result, // 🔥 TAMBAHKAN INI
 

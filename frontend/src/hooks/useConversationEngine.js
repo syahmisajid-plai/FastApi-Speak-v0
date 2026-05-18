@@ -15,6 +15,7 @@ export default function useConversationEngine({
   modeRef,
   setChatHistory,
   speakText,
+  unlockAudio,
 
   // grammarResult,
 
@@ -38,6 +39,7 @@ export default function useConversationEngine({
 
     const currentUserId = userIdRef.current;
 
+    await unlockAudio();
     await streamChat({
       text,
       sessionId: sessionIdRef.current,
@@ -148,7 +150,7 @@ export default function useConversationEngine({
           ? finalText
           : cleanAIText(finalText);
   
-        speakText(ttsMessage);
+        await speakText(ttsMessage);
 
         // ⭐ hanya roleplay yang punya completion
         if (meta?.completed && scenarioRef.current?.id > 0) {

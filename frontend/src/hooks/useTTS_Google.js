@@ -8,6 +8,40 @@ export default function useTTS_Google(userIdRef, mode) {
 
   const MUTE_TTS = false; // 👈 ganti false kalau mau hidupkan lagi
 
+  const audioUnlockedRef = useRef(false);
+
+    // 🔓 Unlock audio for iOS / mobile browsers
+  const unlockAudio = async () => {
+    if (audioUnlockedRef.current) {
+      console.log("🔓 Audio already unlocked");
+      return;
+    }
+
+    try {
+      console.log("🔓 Unlocking audio...");
+
+      const silentAudio = new Audio();
+
+      // tiny silent wav
+      silentAudio.src =
+        "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEA";
+
+      silentAudio.playsInline = true;
+      silentAudio.muted = true;
+
+      await silentAudio.play();
+
+      silentAudio.pause();
+      silentAudio.currentTime = 0;
+
+      audioUnlockedRef.current = true;
+
+      console.log("✅ Audio unlocked");
+    } catch (err) {
+      console.error("❌ unlockAudio failed:", err);
+    }
+  };
+
   const cleanupAudio = (audio) => {
     if (!audio) {
       console.log("🧹 cleanupAudio called but no audio");
@@ -26,8 +60,8 @@ export default function useTTS_Google(userIdRef, mode) {
       audio.currentTime = 0;
 
       // 🔥 Important for iOS release
-      audio.src = "";
-      audio.load();
+      // audio.src = "";
+      // audio.load();
 
       console.log("🧹 cleanupAudio DONE");
     } catch (err) {
@@ -47,7 +81,9 @@ export default function useTTS_Google(userIdRef, mode) {
 
       if (audioCache.current.has(text)) {
         console.log("♻️ Using cached audio");
-        audio = audioCache.current.get(text);
+        const cachedUrl = audioCache.current.get(text);
+
+audio = new Audio(cachedUrl);
       } else {
         console.log("🌐 Fetching new TTS audio");
 
@@ -72,9 +108,16 @@ export default function useTTS_Google(userIdRef, mode) {
 
         console.log("🎵 Created blob URL:", url);
 
+        audioCache.current.set(text, url);
         audio = new Audio(url);
-        audioCache.current.set(text, audio);
       }
+
+      if (currentAudioRef.current) {
+        cleanupAudio(currentAudioRef.current);
+      }
+
+      audio.preload = "auto";
+      audio.playsInline = true;
 
       currentAudioRef.current = audio;
       setIsSpeaking(true);
@@ -132,5 +175,5 @@ export default function useTTS_Google(userIdRef, mode) {
     console.log("🛑 forceStop finished");
   };
 
-  return { speakText, isSpeaking, forceStop };
+  return { speakText, isSpeaking, forceStop, unlockAudio };
 }
