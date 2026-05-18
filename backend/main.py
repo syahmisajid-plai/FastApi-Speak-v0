@@ -100,7 +100,8 @@ app.add_middleware(
         "https://localhost:5173",
         "http://localhost:4173",
         "https://fast-api-speak-v0.vercel.app",  # frontend production
-        "https://192.168.101.13:5173", # testing local hp
+        "https://192.168.101.13:5173", # testing local hp Kos Eka Lia
+        "https://172.16.10.178:5173/", # testing local hp PLAI
     ],
     allow_credentials=True,
     allow_methods=["*"],

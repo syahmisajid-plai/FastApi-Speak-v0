@@ -184,6 +184,15 @@ export default function Header({
               </div>
             )}
 
+            {/* 🕘 TRANSLATION HISTORY */}
+            <button
+              onClick={() => setShowHistory(true)}
+              title="Translation History"
+              className="w-8 h-8 rounded-full bg-white/10 text-white hover:bg-white/20 transition flex items-center justify-center"
+            >
+              🕘
+            </button>
+
             {/* AUTO CORRECTION TOGGLE */}
             <button
               onClick={() => setAutoCorrection((prev) => !prev)}
@@ -219,14 +228,7 @@ export default function Header({
               </div>
             </button>
 
-            {/* 🕘 TRANSLATION HISTORY */}
-            <button
-              onClick={() => setShowHistory(true)}
-              title="Translation History"
-              className="w-8 h-8 rounded-full bg-white/10 text-white hover:bg-white/20 transition flex items-center justify-center"
-            >
-              🕘
-            </button>
+
 
             {/* COST MONITORING DASHBOARD */}
             {user?.id === "21121b45-6987-432c-a2cd-fda17eabbd2b" &&

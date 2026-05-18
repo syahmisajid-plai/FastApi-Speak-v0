@@ -1268,6 +1268,7 @@ Feature tambahan:
               mode={mode}
               data={data}
               toggleFavorite={handleToggleFavorite}
+              autoCorrectionRef={autoCorrectionRef}
             />
           )}
           {((mode === "freeTalk" && freeTalkStarted) ||

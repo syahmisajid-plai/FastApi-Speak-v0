@@ -9,6 +9,7 @@ export default function ChatSection({
   mode,
   data,
   toggleFavorite,
+  autoCorrectionRef,
 }) {
   return (
     <section className="relative rounded-xl p-4 shadow flex flex-col space-y-2 max-h-max overflow-y-auto">
@@ -48,6 +49,7 @@ export default function ChatSection({
             chat={chat}
             data={data}
             toggleFavorite={toggleFavorite}
+            autoCorrectionRef={autoCorrectionRef}
           />
         );
       })}

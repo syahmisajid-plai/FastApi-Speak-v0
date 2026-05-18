@@ -3,7 +3,7 @@ import { streamChat } from "../services/chatService";
 
 function cleanAIText(text) {
   return text
-    .replace(/You could say:\s*"?[^"\n]+"?/i, "")
+    .replace(/You could say\s*:?\s*"[^"]*"\s*/i, "")
     .replace(/\n{2,}/g, "\n")
     .trim();
 }
@@ -107,8 +107,6 @@ export default function useConversationEngine({
           );
         }
 
-        const cleanText = cleanAIText(finalText);
-
         const safeAlternative = isFreetalk
           ? alternative || "Nice 👍"
           : alternative;
@@ -123,12 +121,13 @@ export default function useConversationEngine({
             if (c.sender === "AI-temp") {
               return {
                 sender: "AI",
-                message: cleanText,
+                message: autoCorrectionRef.current
+                  ? finalText
+                  : cleanAIText(finalText),
               };
             }
 
             if (
-              autoCorrectionRef.current &&
               !alternativeAttached &&
               c.sender === "You" &&
               !c.alternative
@@ -145,7 +144,11 @@ export default function useConversationEngine({
           });
         });
 
-        speakText(finalText);
+        const ttsMessage = autoCorrectionRef.current
+          ? finalText
+          : cleanAIText(finalText);
+  
+        speakText(ttsMessage);
 
         // ⭐ hanya roleplay yang punya completion
         if (meta?.completed && scenarioRef.current?.id > 0) {

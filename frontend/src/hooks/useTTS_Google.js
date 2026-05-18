@@ -107,7 +107,10 @@ export default function useTTS_Google(userIdRef, mode) {
       await audio.play();
       console.log("✅ audio.play resolved");
     } catch (err) {
-      console.error("❌ speakText error:", err);
+      console.error("❌ PLAY ERROR");
+      console.error("name:", err.name);
+      console.error("message:", err.message);
+      console.error(err);
       setIsSpeaking(false);
     }
   };
