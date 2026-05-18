@@ -115,6 +115,27 @@ button {
   animation: slow-pulse 4s ease-in-out infinite;
 }
 
+@keyframes rewardFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+
+  20% {
+    opacity: 1;
+    transform: translateY(0px) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-20px) scale(1.05);
+  }
+}
+
+.animate-reward {
+  animation: rewardFloat 1.8s ease forwards;
+}
+
 /* 
 #root {
   max-width: 1280px;
