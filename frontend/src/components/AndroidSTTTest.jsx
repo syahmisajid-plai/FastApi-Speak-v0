@@ -5,48 +5,112 @@ export default function SimpleSTT() {
 
   const [text, setText] = useState("");
   const [listening, setListening] = useState(false);
-  const [lang, setLang] = useState("en-GB");
+  const [lang, setLang] = useState("id-ID");
 
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
   const start = () => {
+    console.log("========== STARTT BUTTON CLICK ==========");
+    console.log("User Agent:", navigator.userAgent);
+    console.log("Protocol:", window.location.protocol);
+    console.log("Host:", window.location.host);
+
     if (!SpeechRecognition) {
+      console.log("❌ SpeechRecognition NOT SUPPORTED");
       alert("Browser tidak support SpeechRecognition");
       return;
     }
 
-    const recognition = new SpeechRecognition();
+    console.log("✅ SpeechRecognition Supported");
 
-    // 🔥 pakai bahasa dari state
-    recognition.lang = lang;
-    recognition.interimResults = true;
+    try {
+      const recognition = new SpeechRecognition();
 
-    recognition.onstart = () => setListening(true);
+      recognition.lang = lang;
+      recognition.interimResults = false;
+      recognition.continuous = false;
 
-    recognition.onresult = (e) => {
-      let result = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        result += e.results[i][0].transcript;
-      }
-      setText(result);
-    };
+      console.log("Language:", recognition.lang);
+      console.log("interimResults:", recognition.interimResults);
+      console.log("continuous:", recognition.continuous);
 
-    recognition.onend = () => setListening(false);
+      const logTime = (label) => {
+        console.log(`[${new Date().toLocaleTimeString()}] ${label}`);
+      };
 
-    recognitionRef.current = recognition;
-    recognition.start();
+      recognition.onstart = () => {
+        logTime("🎤 onstart triggered");
+        setListening(true);
+      };
+
+      recognition.onaudiostart = () => {
+        logTime("🔊 Audio capturing started");
+      };
+
+      recognition.onsoundstart = () => {
+        logTime("📢 Sound detected");
+      };
+
+      recognition.onspeechstart = () => {
+        logTime("🗣️ Speech detected");
+      };
+
+      recognition.onresult = (e) => {
+        logTime("✅ onresult triggered");
+
+        let result = "";
+
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          result += e.results[i][0].transcript;
+        }
+
+        console.log("📝 RESULT:", result);
+
+        setText(result);
+      };
+
+      recognition.onerror = (e) => {
+        logTime(`❌ ERROR: ${e.error}`);
+      };
+
+      recognition.onspeechend = () => {
+        logTime("🛑 Speech ended");
+      };
+
+      recognition.onsoundend = () => {
+        logTime("🔇 Sound ended");
+      };
+
+      recognition.onaudioend = () => {
+        logTime("🎧 Audio capture ended");
+      };
+
+      recognition.onend = () => {
+        logTime("⛔ Recognition ended");
+        setListening(false);
+      };
+
+      recognitionRef.current = recognition;
+
+      console.log("🚀 Calling recognition.start()");
+
+      recognition.start();
+    } catch (err) {
+      console.log("🔥 FAILED TO START STT");
+      console.log(err);
+    }
   };
 
   const stop = () => {
+    console.log("========== STOP BUTTON CLICK ==========");
     recognitionRef.current?.stop();
   };
 
   return (
     <div style={{ padding: 20 }}>
-      <h3>Simple STT</h3>
+      <h3>Simple 6 STT Debug</h3>
 
-      {/* LANGUAGE BUTTONS */}
       <div style={{ marginBottom: 10 }}>
         <button onClick={() => setLang("en-GB")}>🇬🇧 EN-GB</button>
 
@@ -63,7 +127,6 @@ export default function SimpleSTT() {
         Language: <b>{lang}</b>
       </p>
 
-      {/* CONTROL */}
       <button onClick={start} disabled={listening}>
         Start
       </button>
@@ -74,7 +137,6 @@ export default function SimpleSTT() {
 
       <p>Status: {listening ? "Listening..." : "Idle"}</p>
 
-      {/* RESULT */}
       <h4>Result:</h4>
       <p>{text}</p>
     </div>
