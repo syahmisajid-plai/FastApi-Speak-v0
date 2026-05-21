@@ -12,6 +12,7 @@ export default function ChatSection({
   data,
   toggleFavorite,
   autoCorrectionRef,
+  speakText,
 }) {
   const [floatingRewards, setFloatingRewards] = useState([]);
 
@@ -119,6 +120,8 @@ export default function ChatSection({
             data={data}
             toggleFavorite={toggleFavorite}
             autoCorrectionRef={autoCorrectionRef}
+            speakText={speakText}
+            mode={mode}
           />
         );
       })}

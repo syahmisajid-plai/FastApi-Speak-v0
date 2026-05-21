@@ -1,12 +1,6 @@
 // hooks/useConversationEngine.js
 import { streamChat } from "../services/chatService";
-
-function cleanAIText(text) {
-  return text
-    .replace(/You could say\s*:?\s*"[^"]*"\s*/i, "")
-    .replace(/\n{2,}/g, "\n")
-    .trim();
-}
+import { cleanAIText } from "../utils/textUtils";
 
 export default function useConversationEngine({
   sessionIdRef,

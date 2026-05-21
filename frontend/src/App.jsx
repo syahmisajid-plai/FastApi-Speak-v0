@@ -1270,6 +1270,7 @@ Feature tambahan:
               data={data}
               toggleFavorite={handleToggleFavorite}
               autoCorrectionRef={autoCorrectionRef}
+              speakText={speakText}
             />
           )}
           {((mode === "freeTalk" && freeTalkStarted) ||

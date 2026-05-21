@@ -1,144 +1,209 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
-export default function SimpleSTT() {
-  const recognitionRef = useRef(null);
-
-  const [text, setText] = useState("");
+export default function AndroidSTTTest() {
   const [listening, setListening] = useState(false);
-  const [lang, setLang] = useState("id-ID");
+  const [transcript, setTranscript] = useState("");
+  const [error, setError] = useState("");
 
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognitionRef = useRef(null);
+  const lastResultRef = useRef(Date.now());
+  const intervalRef = useRef(null);
 
-  const start = () => {
-    console.log("========== STARTT BUTTON CLICK ==========");
-    console.log("User Agent:", navigator.userAgent);
-    console.log("Protocol:", window.location.protocol);
-    console.log("Host:", window.location.host);
+  const startListening = async () => {
+    setError("");
+
+    console.log("🟡 [STT] startListening triggered");
+
+    // 🌐 ENVIRONMENT DEBUG (IMPORTANT FOR ANDROID BUGS)
+    console.log("🌐 isSecureContext:", window.isSecureContext);
+    console.log("🌐 protocol:", window.location.protocol);
+    console.log("🌐 userAgent:", navigator.userAgent);
+    console.log("🌐 mediaDevices:", !!navigator.mediaDevices);
+
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    console.log("🟡 [STT] SpeechRecognition support:", !!SpeechRecognition);
 
     if (!SpeechRecognition) {
-      console.log("❌ SpeechRecognition NOT SUPPORTED");
-      alert("Browser tidak support SpeechRecognition");
+      const msg = "SpeechRecognition not supported";
+      console.error("🔴 [STT]", msg);
+      setError(msg);
       return;
     }
 
-    console.log("✅ SpeechRecognition Supported");
-
     try {
+      console.log("🟡 [STT] Requesting microphone permission...");
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      console.log("🟢 [STT] Microphone permission GRANTED");
+      console.log("🎤 audio tracks:", stream.getAudioTracks());
+
       const recognition = new SpeechRecognition();
 
-      recognition.lang = lang;
-      recognition.interimResults = false;
       recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = "id-ID";
 
-      console.log("Language:", recognition.lang);
-      console.log("interimResults:", recognition.interimResults);
-      console.log("continuous:", recognition.continuous);
-
-      const logTime = (label) => {
-        console.log(`[${new Date().toLocaleTimeString()}] ${label}`);
-      };
+      console.log("🟡 [STT] Recognition instance created", recognition);
 
       recognition.onstart = () => {
-        logTime("🎤 onstart triggered");
+        console.log("🟢 [STT] recognition.onstart");
         setListening(true);
       };
 
-      recognition.onaudiostart = () => {
-        logTime("🔊 Audio capturing started");
-      };
-
-      recognition.onsoundstart = () => {
-        logTime("📢 Sound detected");
-      };
-
       recognition.onspeechstart = () => {
-        logTime("🗣️ Speech detected");
-      };
-
-      recognition.onresult = (e) => {
-        logTime("✅ onresult triggered");
-
-        let result = "";
-
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          result += e.results[i][0].transcript;
-        }
-
-        console.log("📝 RESULT:", result);
-
-        setText(result);
-      };
-
-      recognition.onerror = (e) => {
-        logTime(`❌ ERROR: ${e.error}`);
+        console.log("🟢 [STT] speech detected (onspeechstart)");
       };
 
       recognition.onspeechend = () => {
-        logTime("🛑 Speech ended");
+        console.log("🟠 [STT] speech ended (onspeechend)");
+      };
+
+      recognition.onsoundstart = () => {
+        console.log("🟢 [STT] sound detected (onsoundstart)");
       };
 
       recognition.onsoundend = () => {
-        logTime("🔇 Sound ended");
+        console.log("🟠 [STT] sound ended (onsoundend)");
       };
 
-      recognition.onaudioend = () => {
-        logTime("🎧 Audio capture ended");
+      recognition.onresult = (event) => {
+        console.log("🟡 [STT] onresult RAW EVENT:", event);
+
+        lastResultRef.current = Date.now();
+
+        const text = Array.from(event.results)
+          .map((r) => r[0].transcript)
+          .join("");
+
+        console.log("🟢 [STT] transcript:", text);
+
+        setTranscript(text);
       };
 
-      recognition.onend = () => {
-        logTime("⛔ Recognition ended");
+      recognition.onerror = (event) => {
+        console.error("🔴 [STT ERROR RAW EVENT]:", event);
+
+        console.error("🔴 error type:", event?.error);
+        console.error("🔴 error message:", event?.message);
+        console.error("🔴 event type:", event?.type);
+
+        // 🔎 GOOGLE-READY LOG
+        console.error(
+          "🔎 GOOGLE SEARCH:",
+          `speechrecognition android chrome ${event?.error}`
+        );
+
+        setError(event?.error || "Speech recognition error");
         setListening(false);
       };
 
-      recognitionRef.current = recognition;
+      recognition.onend = () => {
+        console.log("🟠 [STT] recognition ended (onend)");
+        setListening(false);
+      };
 
-      console.log("🚀 Calling recognition.start()");
+      recognition.onaudiostart = () => {
+        console.log("🟢 [STT] audio capture started");
+      };
+
+      recognition.onaudioend = () => {
+        console.log("🟠 [STT] audio capture ended");
+      };
 
       recognition.start();
+
+      console.log("🟢 [STT] recognition.start() called");
+
+      recognitionRef.current = recognition;
+
+      // 🧠 SILENT FAILURE WATCHDOG (ANDROID IMPORTANT)
+      intervalRef.current = setInterval(() => {
+        const diff = Date.now() - lastResultRef.current;
+
+        if (listening && diff > 5000) {
+          console.warn(
+            "🟠 [STT] SILENT FAILURE: no speech detected for 5s"
+          );
+
+          console.warn(
+            "🔎 GOOGLE SEARCH:",
+            "speechrecognition android chrome silent no result onend"
+          );
+        }
+      }, 2000);
     } catch (err) {
-      console.log("🔥 FAILED TO START STT");
-      console.log(err);
+      console.error("🔴 [STT] getUserMedia FAILED:", err);
+
+      console.error("🔴 name:", err?.name);
+      console.error("🔴 message:", err?.message);
+      console.error("🔴 constraint:", err?.constraint);
+
+      console.error(
+        "🔎 GOOGLE SEARCH:",
+        `getUserMedia ${err?.name} chrome android microphone`
+      );
+
+      setError("Mic permission ditolak / blocked / insecure context");
     }
   };
 
-  const stop = () => {
-    console.log("========== STOP BUTTON CLICK ==========");
-    recognitionRef.current?.stop();
+  const stopListening = () => {
+    console.log("🟠 [STT] stopListening triggered");
+
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      console.log("🟠 [STT] recognition.stop() called");
+      recognitionRef.current = null;
+    }
+
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    setListening(false);
   };
 
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
+
   return (
-    <div style={{ padding: 20 }}>
-      <h3>Simple 6 STT Debug</h3>
+    <div style={{ padding: 16, fontFamily: "sans-serif" }}>
+      <h3>Android STT Testf (FULL DEBUG MODE)</h3>
 
-      <div style={{ marginBottom: 10 }}>
-        <button onClick={() => setLang("en-GB")}>🇬🇧 EN-GB</button>
+      <button onClick={listening ? stopListening : startListening}>
+        {listening ? "Stop" : "Start"}
+      </button>
 
-        <button onClick={() => setLang("en-US")} style={{ marginLeft: 8 }}>
-          🇺🇸 EN-US
-        </button>
-
-        <button onClick={() => setLang("id-ID")} style={{ marginLeft: 8 }}>
-          🇮🇩 ID
-        </button>
+      <div style={{ marginTop: 12 }}>
+        <p>
+          Status:{" "}
+          <b style={{ color: listening ? "green" : "gray" }}>
+            {listening ? "Listening..." : "Idle"}
+          </b>
+        </p>
       </div>
 
-      <p>
-        Language: <b>{lang}</b>
-      </p>
+      <div>
+        <strong>Transcript:</strong>
+        <p>{transcript || "-"}</p>
+      </div>
 
-      <button onClick={start} disabled={listening}>
-        Start
-      </button>
+      {error && (
+        <div style={{ marginTop: 10, color: "red" }}>
+          ⚠️ {error}
+        </div>
+      )}
 
-      <button onClick={stop} style={{ marginLeft: 10 }}>
-        Stop
-      </button>
-
-      <p>Status: {listening ? "Listening..." : "Idle"}</p>
-
-      <h4>Result:</h4>
-      <p>{text}</p>
+      <div style={{ marginTop: 20, fontSize: 12, color: "#666" }}>
+        Open DevTools → Console untuk debug penuh STT Android Chrome
+      </div>
     </div>
   );
 }

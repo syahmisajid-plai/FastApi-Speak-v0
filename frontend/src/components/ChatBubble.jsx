@@ -1,12 +1,17 @@
 // components/ChatBubble.jsx
 import { useState } from "react";
-import useTTS_Google from "../hooks/useTTS_Google";
+// import useTTS_Google from "../hooks/useTTS_Google";
 import useTranslate from "../hooks/useTranslate";
 
-export default function ChatBubble({ chat, toggleFavorite, autoCorrectionRef }) {
+import { cleanAIText,normalizeTTS } from "../utils/textUtils";
+
+export default function ChatBubble({ chat, toggleFavorite, autoCorrectionRef, speakText, mode }) {
   const [translated, setTranslated] = useState(null);
-  const { speakText } = useTTS_Google();
+  // const { speakText } = useTTS_Google(userIdRef, mode );
   const { translate } = useTranslate();
+
+  const speak = (text) =>
+  speakText(autoCorrectionRef.current ? text : cleanAIText(text));
 
   /* =====================
   HELPER / LUPA KATA
@@ -91,7 +96,7 @@ export default function ChatBubble({ chat, toggleFavorite, autoCorrectionRef }) 
         {chat.sender === "AI" && (
           <>
             <button
-              onClick={() => speakText(chat.message)}
+              onClick={() => speak(chat.message)}
               className="absolute bottom-1 right-1 text-xs bg-gray-300 px-2 py-0.5 rounded hover:bg-gray-400"
             >
               🔊
