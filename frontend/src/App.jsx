@@ -6,9 +6,9 @@ import Header from "./components/Header";
 import ChatSection from "./components/ChatSection";
 import BottomActions from "./components/BottomActions";
 import AudioUnlockOverlay from "./components/AudioUnlockOverlay";
-import RoleplayToggle from "./components/RoleplayToggleSwipe";
+// import RoleplayToggle from "./components/RoleplayToggleSwipe";
 import RoleplaySummaryCard from "./components/RoleplaySummaryCard";
-import DailyStoryIndicator from "./components/DailyStoryIndicator";
+// import DailyStoryIndicator from "./components/DailyStoryIndicator";
 import Testcard_swipe from "./components/testcard_swipe";
 import ModeSelector from "./components/ModeSelector";
 import ContextRenderer from "./components/ContextRenderer";
@@ -21,6 +21,9 @@ import ComingSoon from "./components/ComingSoon";
 import OverlayFeedback from "./components/OverlayFeedback";
 import LearnUI from "./components/LearnUI";
 import DailyStoryContinue from "./components/DailyStoryContinue";
+
+import ScenariosUI from "./components/ScenariosUI";
+import SmartCallUI from "./components/SmartCallUI";
 
 import AndroidSTTTest from "./components/AndroidSTTTest";
 
@@ -127,6 +130,9 @@ Feature tambahan:
 
   const [modeLearn, setModeLearn] = useState("idle");
 
+  const [modeScenario, setModeScenario] = useState("idle");
+  
+
   // ================== STATE Daily Greeting ==================
   const greetingSentRef = useRef(false);
 
@@ -144,10 +150,12 @@ Feature tambahan:
     setShowModeConfirm(false);
     setPendingMode(null);
     setModeLearn("idle");
+    setModeScenario("idle");
   };
 
   useEffect(() => {
     setModeLearn("idle");
+    setModeScenario("idle");
   }, [mode]);
 
   // ================== Login & Logout ==================
@@ -622,7 +630,7 @@ Feature tambahan:
     onFinalResult: async (text) => {
       if (!text) return;
 
-      if (modeRef.current === "vocab") {
+      if (modeRef.current === "learn") {
         console.log("🧠 Vocab mode → handle locally");
         handleSpeech(text); // 🔥 kirim ke vocab engine
         return;
@@ -707,11 +715,11 @@ Feature tambahan:
       <div
         className={`min-h-screen lg:w-full flex justify-center p-4
         ${
-          mode === "dailyStory"
-            ? "bg-linear-to-b from-gray-800 to-gray-900"
-            : mode === "roleplay"
-              ? "bg-linear-to-b from-purple-400 to-indigo-600"
-              : mode === "vocab"
+          mode === "smartcall"
+            ? "bg-linear-to-b from-slate-900 to-cyan-950"
+            : mode === "scenarios"
+              ? "bg-linear-to-b from-purple-700 to-indigo-900"
+              : mode === "learn"
                 ? "bg-linear-to-b from-slate-900 to-indigo-950"
                 : mode === "ielts"
                   ? "bg-linear-to-b from-rose-300 to-rose-500"
@@ -867,131 +875,72 @@ Feature tambahan:
               </div>
             </div>
           )}
-          {/* 🔥 TAMBAHKAN DI SINI */}
-          {mode === "roleplay" &&
-            selectedScenario &&
-            activeContext &&
-            !showContext && (
-              <button
-                onClick={() => setShowContext(true)}
-                className="
-              text-sm
-              fixed 
-              bottom-65 
-              right-4 
-              z-40
-              bg-blue-600! 
-              text-white 
-              px-4! py-3! 
-              rounded-full 
-              shadow-lg
-              hover:scale-105
-              active:scale-95
-              transition
-            "
-              >
-                📌
-              </button>
-            )}
-          {/* <div className="relative">
-            konten lain
-
-            🧹 CLEAR BUTTON
-            <button
-              onClick={clearAllHistory}
-              title="Clear all history"
-              className="
-                absolute 
-                bottom-2 right-2 
-                text-[10px]
-                bg-red-500/80 hover:bg-red-600
-                px-2 py-1
-                rounded-md
-                shadow-md
-            "
-            >
-              🧹
-            </button>
-          </div> */}
-          {mode === "dailyStory" && (
-            <DailyStoryIndicator
-              progressData={progressData}
-              isDailyLocked={isDailyLocked}
-              started={dailyStarted}
-              setStarted={setDailyStarted}
-              isDailyEmpty={isDailyEmpty}
-            />
-          )}
-
-          {mode === "dailyStory" && (
-            <DailyStoryContinue
-              readyToContinue={readyToContinue}
-              currentStoryPhase={currentStoryPhase}
-              activePhase={activePhase}
-
-              expanded={expanded}
-              setExpanded={setExpanded}
-
-              sessionId={sessionId}
-              userId={userId}
-
-              setActivePhase={setActivePhase}
-              setReadyToContinue={setReadyToContinue}
-              setChatHistory={setChatHistory}
-              setProgressData={setProgressData}
-
-              nextPhaseRequest={nextPhaseRequest}
-              markPhaseComplete={markPhaseComplete}
-              generateSummary={generateSummary}
-            />
-          )}
-          {/* SESSION ID INPUT */}
-          {/* <div className="flex items-center space-x-2 text-white">
-            <label htmlFor="sessionId">Session ID:</label>
-            <select
-              id="sessionId"
-              className="p-1 rounded text-white bg-gray-700"
-              value={sessionId}
-              onChange={(e) => setSessionId(e.target.value)}
-            >
-              <option value="sam">sam</option>
-              <option value="syifa">syifa</option>
-              <option value="test">test</option>
-              <option value="test2">test2</option>
-              <option value="test3">test3</option>
-              <option value="test4">test4</option>
-              <option value="test5">test5</option>
-              <option value="test6">test6</option>
-              <option value="test7">test7</option>
-            </select>
-          </div> */}
+          {/* 🔥 MODE */}
           {mode === "freeTalk" && (
             <FreeTalkUI
               started={freeTalkStarted}
               setStarted={setFreeTalkStarted}
             />
           )}
-          {mode === "roleplay" && (
-            <RoleplayToggle
-              started={rolePlayStarted}
-              setStarted={setRolePlayStarted}
-              selectedScenario={selectedScenario}
-              onScenarioSelect={selectScenario}
-              isOpen={roleplayModalOpen} // controlled
-              setIsOpen={setRoleplayModalOpen} // controlled
-              setMode={setMode} // <-- tambahkan ini
-              lastUserMessage={lastUserMessage}
-              onFinish={handleChecklistFinished}
-              onChecklistUpdate={handleChecklistUpdate}
-              currentTurn={currentTurn}
-              maxTurn={maxTurn}
-              sendInitialMessage={sendInitialMessage}
-              activeChecklist={activeChecklist}
-              setActiveChecklist={setActiveChecklist}
+
+
+          {mode === "scenarios" && (
+            <ScenariosUI
+              modeScenario={modeScenario}
+              setModeScenario={setModeScenario}
+
+              roleplayProps={{
+                started: rolePlayStarted,
+                setStarted: setRolePlayStarted,
+                selectedScenario: selectedScenario,
+                onScenarioSelect: selectScenario,
+                isOpen: roleplayModalOpen,
+                setIsOpen: setRoleplayModalOpen,
+                setMode: setMode,
+                lastUserMessage: lastUserMessage,
+                onFinish: handleChecklistFinished,
+                onChecklistUpdate: handleChecklistUpdate,
+                currentTurn: currentTurn,
+                maxTurn: maxTurn,
+                sendInitialMessage: sendInitialMessage,
+                activeChecklist: activeChecklist,
+                setActiveChecklist: setActiveChecklist,
+
+                activeContext,
+                showContext,
+                setShowContext,
+              }}
+
+              dailyStoryProps={{
+                progressData,
+                isDailyLocked,
+                started: dailyStarted,
+                setStarted: setDailyStarted,
+                isDailyEmpty,
+
+                readyToContinue,
+                currentStoryPhase,
+                activePhase,
+
+                expanded,
+                setExpanded,
+
+                sessionId,
+                userId,
+
+                setActivePhase,
+                setReadyToContinue,
+                setChatHistory,
+                setProgressData,
+
+                nextPhaseRequest,
+                markPhaseComplete,
+                generateSummary,
+              }}
             />
           )}
 
-          {mode === "vocab" && (
+          {mode === "learn" && (
             <LearnUI
               vocabProps={{
                 vocab: vocab,
@@ -1028,6 +977,26 @@ Feature tambahan:
               }}
               modeLearn={modeLearn}
               setModeLearn={setModeLearn}
+            />
+          )}
+
+          {mode === "smartcall" && (
+            <SmartCallUI
+              isRecording={isRecording}
+              liveTranscript={liveTranscript}
+              startRecording={startRecording}
+              stopRecording={stopRecording}
+
+              openLupaKata={() =>
+                lupaKata.toggleLupaKata(
+                  isRecording,
+                  speech.pauseRecording,
+                  speech.resumeRecording
+                )
+              }
+
+              isLupaKataActive={lupaKata.isLupaKataActive}
+              lupaKata={lupaKata}
             />
           )}
 
@@ -1120,7 +1089,7 @@ Feature tambahan:
               </div>
             </div>
           )}
-          {mode !== "vocab" && (
+          {(mode === "freeTalk" || mode === "scenarios") && (
             <ChatSection
               lupaKata={lupaKata}
               chatHistory={chatHistory}
@@ -1134,9 +1103,10 @@ Feature tambahan:
               speakText={speakText}
             />
           )}
+
           {((mode === "freeTalk" && freeTalkStarted) ||
-            (mode === "dailyStory" && dailyStarted) ||
-            (mode === "roleplay" && rolePlayStarted)) && (
+            (modeScenario === "dailyStory" && dailyStarted) ||
+            (modeScenario === "roleplay" && rolePlayStarted)) && (
             <BottomActions
               isRecording={isRecording}
               showSuggestions={showSuggestions}

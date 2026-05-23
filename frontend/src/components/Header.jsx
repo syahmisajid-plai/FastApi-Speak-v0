@@ -93,7 +93,7 @@ export default function Header({
           {/* RIGHT */}
           <div className="flex items-center gap-3">
             {/* SUMMARY ONLY DAILY */}
-            {mode === "dailyStory" && (
+            {/* {mode === "dailyStory" && (
               <button
                 onClick={() => setShowSummaryDaily(true)}
                 className="
@@ -108,7 +108,7 @@ export default function Header({
               >
                 📖 Open<span className="hidden sm:inline">Diary</span>
               </button>
-            )}
+            )} */}
 
             {/* 🔥 STREAK ONLY DAILY STORY */}
             {mode === "dailyStory" && (

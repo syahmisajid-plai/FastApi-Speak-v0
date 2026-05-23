@@ -402,17 +402,18 @@ export default function RoleplayToggleSwipe({
           )}
         </div>
       </section>
+      
       {/* MODAL */}
       {isOpen && started && (
-        <div className="fixed inset-0 z-52 flex items-center justify-center bg-black/80">
-          <div className="w-[280px] h-[380px]  rounded-xl p-3">
+        <div className="fixed inset-0 z-52 h-full place-items-center p-4">
+          <div className="w-[280px] h-[380px] rounded-xl p-3">
             {/* STEP 1 — category SELECTION */}
             {step === "category" && (
               <Swiper
                 effect="cards"
                 grabCursor={true}
                 modules={[EffectCards]}
-                className="h-full"
+                className="h-11/12 w-10/12"
               >
                 {category.map((t) => (
                   <SwiperSlide key={t.id}>

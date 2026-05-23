@@ -10,10 +10,10 @@ export default function ModeSelector({
   const isTestUser = user_id === "21121b45-6987-432c-a2cd-fda17eabbd2b";
 
   const baseModes = [
-    { key: "vocab", icon: "🧠", label: "Learn", color: "indigo" },
-    { key: "roleplay", icon: "🎭", label: "Roleplay", color: "purple" },
+    { key: "learn", icon: "🧠", label: "Learn", color: "indigo" },
+    { key: "scenarios", icon: "🎭", label: "Scenarios", color: "purple" },
     { key: "freeTalk", icon: "💬", label: "Talk", color: "blue" },
-    { key: "dailyStory", icon: "📖", label: "Story", color: "emerald" },
+    { key: "smartcall", icon: "📞", label: "SmartCall", color: "cyan" },
     { key: "ielts", icon: "📝", label: "IELTS", color: "rose" },
   ];
 
@@ -33,6 +33,7 @@ export default function ModeSelector({
     indigo: "bg-gradient-to-r from-indigo-500 to-indigo-300 ring-indigo-300",
     purple: "bg-gradient-to-r from-purple-500 to-purple-300 ring-purple-300",
     blue: "bg-gradient-to-r from-blue-500 to-blue-300 ring-blue-300",
+    cyan: "bg-gradient-to-r from-cyan-500 to-cyan-300 ring-cyan-300",
     emerald:
       "bg-gradient-to-r from-emerald-500 to-emerald-300 ring-emerald-300",
     rose: "bg-gradient-to-r from-rose-500 to-rose-300 ring-rose-300",
