@@ -13,6 +13,8 @@ export default function useSmartCall({
   user,
 }) {
 
+  const [isPeerConnected, setIsPeerConnected] = useState(false);
+
   // ================= STATES =================
   const [started, setStarted] =
     useState(false);
@@ -180,10 +182,11 @@ export default function useSmartCall({
       channel;
 
     channel.onopen = () => {
+    console.log("DATA CHANNEL OPEN (CALLER)");
 
-      console.log(
-        "DATA CHANNEL OPEN"
-      );
+    setIsPeerConnected(true);
+
+    console.log("✅ BOTH USERS CONNECTED (CALLER READY)");
     };
 
     channel.onmessage = (event) => {
@@ -282,12 +285,13 @@ export default function useSmartCall({
       dataChannelRef.current =
         channel;
 
-      channel.onopen = () => {
+        channel.onopen = () => {
+        console.log("DATA CHANNEL OPEN (CALLEE)");
 
-        console.log(
-          "DATA CHANNEL OPEN"
-        );
-      };
+        setIsPeerConnected(true);
+
+        console.log("✅ BOTH USERS CONNECTED (CALLEE READY)");
+        };
 
         channel.onmessage = (event) => {
             try {
@@ -377,6 +381,12 @@ export default function useSmartCall({
     localStreamRef.current =
       null;
   };
+
+    useEffect(() => {
+    if (isPeerConnected) {
+        console.log("🚀 WEBRTC FULL CONNECTION ESTABLISHED");
+    }
+    }, [isPeerConnected]);
 
   // ================= WS CONNECT =================
   const username = user?.username ?? "Guest";

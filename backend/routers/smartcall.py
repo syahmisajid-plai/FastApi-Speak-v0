@@ -1,10 +1,6 @@
-from fastapi import APIRouter
-from fastapi import WebSocket
-from fastapi import WebSocketDisconnect
-
-from fastapi import Query
-
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from collections import defaultdict
+import json
 
 router = APIRouter()
 
@@ -29,13 +25,25 @@ async def websocket_endpoint(
 
     try:
         while True:
-            data = await websocket.receive_text()
+            # ================= RECEIVE MESSAGE =================
+            raw_data = await websocket.receive_text()
 
+            # parse JSON (IMPORTANT FOR WEBRTC)
+            try:
+                data = json.loads(raw_data)
+            except Exception:
+                print("INVALID JSON:", raw_data)
+                continue
+
+            print(f"RECEIVED FROM {username}: {data}")
+
+            # ================= BUILD PAYLOAD =================
             payload = {
                 "from": username,
-                "message": data
+                **data   # preserve type, offer, answer, ice
             }
 
+            # ================= BROADCAST TO ROOM =================
             for client in rooms[room_id]:
                 if client["ws"] != websocket:
                     await client["ws"].send_json(payload)
