@@ -10,6 +10,7 @@ export default function useSmartCall({
   startRecording,
   stopRecording,
   liveTranscript,
+  user,
 }) {
 
   // ================= STATES =================
@@ -185,18 +186,13 @@ export default function useSmartCall({
       );
     };
 
-    channel.onmessage = (
-      event
-    ) => {
-
-      console.log(
-        "REMOTE TRANSCRIPT:",
-        event.data
-      );
-
-      setRemoteTranscript(
-        event.data
-      );
+    channel.onmessage = (event) => {
+    try {
+        const data = JSON.parse(event.data);
+        setRemoteTranscript(`${data.from}: ${data.text}`);
+    } catch {
+        setRemoteTranscript(event.data);
+    }
     };
 
     // ================= LOCAL AUDIO =================
@@ -293,19 +289,14 @@ export default function useSmartCall({
         );
       };
 
-      channel.onmessage = (
-        event
-      ) => {
-
-        console.log(
-          "REMOTE TRANSCRIPT:",
-          event.data
-        );
-
-        setRemoteTranscript(
-          event.data
-        );
-      };
+        channel.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                setRemoteTranscript(`${data.from}: ${data.text}`);
+            } catch {
+                setRemoteTranscript(event.data);
+            }
+        };
     };
 
     // ================= LOCAL AUDIO =================
@@ -388,13 +379,14 @@ export default function useSmartCall({
   };
 
   // ================= WS CONNECT =================
+  const username = user?.username ?? "Guest";
   useEffect(() => {
 
     if (!joinedRoom || !roomId)
       return;
 
     const ws = new WebSocket(
-      `${wsBackend}/ws/${roomId}`
+    `${wsBackend}/ws/${roomId}?username=${username}`
     );
 
     wsRef.current = ws;
@@ -484,7 +476,7 @@ export default function useSmartCall({
 
     };
 
-  }, [joinedRoom, roomId]);
+  }, [joinedRoom, roomId, username]);
 
   // ================= AUTOPLAY =================
   useEffect(() => {
@@ -531,9 +523,12 @@ export default function useSmartCall({
         .readyState === "open"
     ) {
 
-      dataChannelRef.current.send(
-        liveTranscript
-      );
+    dataChannelRef.current.send(
+    JSON.stringify({
+        from: username,
+        text: liveTranscript,
+    })
+    );
     }
 
     // AI REPLY PLACEHOLDER

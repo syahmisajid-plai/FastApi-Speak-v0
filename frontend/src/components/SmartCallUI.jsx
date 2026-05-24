@@ -34,6 +34,7 @@ export default function SmartCallUI({
     startRecording,
     stopRecording,
     liveTranscript,
+    user,
   });
 
   const [stage, setStage] = useState("A"); // A | B | C
@@ -42,10 +43,8 @@ export default function SmartCallUI({
   const [roomMode, setRoomMode] = useState(null);
   const [readyToCall, setReadyToCall] = useState(false);
 
-  const username = user.username;
-
   return (
-    <section className="mt-36 text-white flex items-center justify-center bg-linear-to-b from-slate-900 to-cyan-950">
+    <section className="mt-24 text-white flex items-center justify-center bg-linear-to-b from-slate-900 to-cyan-950">
       <div className="w-full max-w-md relative">
 
         {/* AUDIO */}
@@ -53,7 +52,7 @@ export default function SmartCallUI({
 
         {/* ================= A: START SMARTCALL ================= */}
         <section
-          className={`transition-all duration-500 ease-out absolute w-full
+          className={`transition-all duration-500 ease-out absolute w-full mt-12
           ${
             stage === "A"
               ? "opacity-100 scale-100 translate-y-0"
@@ -105,7 +104,9 @@ export default function SmartCallUI({
             className={`absolute w-full transition-all duration-500 ease-out ${
               started
                 ? "opacity-0 scale-95 pointer-events-none"
-                : "opacity-100 scale-100"
+                : `opacity-100 scale-100 ${
+                    roomMode === "join" || roomMode === "create" ? "" : "mt-12"
+                  }`
             }`}
           >
             <div
@@ -216,11 +217,24 @@ export default function SmartCallUI({
                 {/* ROOM INFO */}
                 {roomMode === "create" && joinedRoom && (
                   <div
-                    className="mt-3 text-center p-3 rounded-xl
+                    className="mt-3 text-center p-3 rounded-xl relative
                     bg-cyan-500/5 border border-cyan-400/10"
                   >
                     <p className="text-[10px] text-white/40">Room ID</p>
-                    <p className="text-base font-semibold text-cyan-300 tracking-widest">
+
+                    {/* COPY BUTTON */}
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(roomId);
+                      }}
+                      className="absolute top-2 right-2 text-sm
+                      text-white/60 hover:text-white transition"
+                    >
+                      📑
+                    </button>
+
+                    {/* ROOM ID CENTER */}
+                    <p className="text-base font-semibold text-cyan-300 tracking-widest mt-1">
                       {roomId}
                     </p>
                   </div>
@@ -250,7 +264,7 @@ export default function SmartCallUI({
 
         {/* ================= C: ACTIVE CALL ================= */}
         {stage === "C" && (
-          <div className="absolute mt-36 inset-0 flex items-center justify-center px-4">
+          <div className="absolute mt-48 inset-0 flex items-center justify-center px-4">
             <div
               className="w-full max-w-md flex flex-col
               text-white backdrop-blur-2xl rounded-3xl p-5
