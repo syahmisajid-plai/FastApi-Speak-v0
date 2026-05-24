@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { linkBackend } from "../config";
 
 export default function SmartCallUI({
   startRecording,
@@ -10,25 +11,112 @@ export default function SmartCallUI({
   isLupaKataActive,
   lupaKata,
 }) {
+
   const [started, setStarted] = useState(false);
 
   // ================= AI STATES =================
-  const [remoteTranscript, setRemoteTranscript] = useState("");
-  const [aiReply, setAiReply] = useState("");
+  const [remoteTranscript, setRemoteTranscript] =
+    useState("");
+
+  const [aiReply, setAiReply] =
+    useState("");
+
+  // ================= ROOM =================
+  const roomId = "abc123";
+
+  // ================= WEBSOCKET =================
+  const wsRef = useRef(null);
 
   // ================= WEBRTC =================
   const pcRef = useRef(null);
+
   const dataChannelRef = useRef(null);
 
   const localStreamRef = useRef(null);
+
   const remoteAudioRef = useRef(null);
+
+  // ================= WS URL =================
+  const wsBackend = linkBackend
+    .replace("https://", "wss://")
+    .replace("http://", "ws://");
+
+  // ================= WEBSOCKET CONNECT =================
+  useEffect(() => {
+
+    const ws = new WebSocket(
+      `${wsBackend}/ws/${roomId}`
+    );
+
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log("WS CONNECTED");
+    };
+
+    ws.onmessage = async (event) => {
+
+      const data = JSON.parse(event.data);
+
+      console.log("WS MESSAGE:", data);
+
+      // ================= OFFER =================
+      if (data.type === "offer") {
+
+        console.log("RECEIVED OFFER");
+
+        await answerCall(data.offer);
+
+        setStarted(true);
+      }
+
+      // ================= ANSWER =================
+      else if (data.type === "answer") {
+
+        console.log("RECEIVED ANSWER");
+
+        await pcRef.current.setRemoteDescription(
+          data.answer
+        );
+      }
+
+      // ================= ICE =================
+      else if (data.type === "ice") {
+
+        console.log("RECEIVED ICE");
+
+        try {
+
+          await pcRef.current.addIceCandidate(
+            data.candidate
+          );
+
+        } catch (err) {
+
+          console.log(err);
+
+        }
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("WS CLOSED");
+    };
+
+    return () => {
+      ws.close();
+    };
+
+  }, []);
 
   // ================= GET MIC =================
   const getAudioStream = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: false,
-    });
+
+    const stream =
+      await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
 
     localStreamRef.current = stream;
 
@@ -37,17 +125,24 @@ export default function SmartCallUI({
 
   // ================= ICE =================
   const setupICE = (pc) => {
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        console.log("ICE CANDIDATE:");
-        console.log(JSON.stringify(event.candidate));
 
-        window._ice = window._ice || [];
-        window._ice.push(event.candidate);
+    pc.onicecandidate = (event) => {
+
+      if (event.candidate) {
+
+        console.log("SEND ICE");
+
+        wsRef.current.send(
+          JSON.stringify({
+            type: "ice",
+            candidate: event.candidate,
+          })
+        );
       }
     };
 
     pc.onconnectionstatechange = () => {
+
       console.log(
         "CONNECTION STATE:",
         pc.connectionState
@@ -55,6 +150,7 @@ export default function SmartCallUI({
     };
 
     pc.oniceconnectionstatechange = () => {
+
       console.log(
         "ICE STATE:",
         pc.iceConnectionState
@@ -64,25 +160,29 @@ export default function SmartCallUI({
 
   // ================= START CALL =================
   const startCall = async () => {
-    const stream = await getAudioStream();
 
-    const pc = new RTCPeerConnection({
-      iceServers: [
-        {
-          urls: "stun:stun.l.google.com:19302",
-        },
-      ],
-    });
+    console.log("START CALL");
+
+    const stream =
+      await getAudioStream();
+
+    const pc =
+      new RTCPeerConnection({
+        iceServers: [
+          {
+            urls:
+              "stun:stun.l.google.com:19302",
+          },
+        ],
+      });
 
     pcRef.current = pc;
-
-    // debug
-    window.pc = pc;
 
     setupICE(pc);
 
     // ================= DATA CHANNEL =================
-    const channel = pc.createDataChannel("chat");
+    const channel =
+      pc.createDataChannel("chat");
 
     dataChannelRef.current = channel;
 
@@ -91,6 +191,7 @@ export default function SmartCallUI({
     };
 
     channel.onmessage = (event) => {
+
       console.log(
         "REMOTE TRANSCRIPT:",
         event.data
@@ -106,61 +207,79 @@ export default function SmartCallUI({
 
     // ================= REMOTE AUDIO =================
     pc.ontrack = (event) => {
+
       console.log("REMOTE AUDIO RECEIVED");
 
       if (remoteAudioRef.current) {
+
         remoteAudioRef.current.srcObject =
           event.streams[0];
       }
     };
 
     // ================= CREATE OFFER =================
-    const offer = await pc.createOffer();
+    const offer =
+      await pc.createOffer();
 
-    await pc.setLocalDescription(offer);
+    await pc.setLocalDescription(
+      offer
+    );
 
-    window._offer = offer;
+    console.log("SEND OFFER");
 
-    console.log("===== COPY OFFER =====");
-    console.log(JSON.stringify(offer));
+    wsRef.current.send(
+      JSON.stringify({
+        type: "offer",
+        offer,
+      })
+    );
   };
 
   // ================= ANSWER CALL =================
   const answerCall = async (offer) => {
-    const stream = await getAudioStream();
 
-    const pc = new RTCPeerConnection({
-      iceServers: [
-        {
-          urls: "stun:stun.l.google.com:19302",
-        },
-      ],
-    });
+    console.log("ANSWER CALL");
+
+    const stream =
+      await getAudioStream();
+
+    const pc =
+      new RTCPeerConnection({
+        iceServers: [
+          {
+            urls:
+              "stun:stun.l.google.com:19302",
+          },
+        ],
+      });
 
     pcRef.current = pc;
-
-    // debug
-    window.pc = pc;
 
     setupICE(pc);
 
     // ================= RECEIVE DATA CHANNEL =================
     pc.ondatachannel = (event) => {
-      const channel = event.channel;
 
-      dataChannelRef.current = channel;
+      const channel =
+        event.channel;
+
+      dataChannelRef.current =
+        channel;
 
       channel.onopen = () => {
         console.log("DATA CHANNEL OPEN");
       };
 
       channel.onmessage = (event) => {
+
         console.log(
           "REMOTE TRANSCRIPT:",
           event.data
         );
 
-        setRemoteTranscript(event.data);
+        setRemoteTranscript(
+          event.data
+        );
       };
     };
 
@@ -171,48 +290,66 @@ export default function SmartCallUI({
 
     // ================= REMOTE AUDIO =================
     pc.ontrack = (event) => {
+
       console.log("REMOTE AUDIO RECEIVED");
 
       if (remoteAudioRef.current) {
+
         remoteAudioRef.current.srcObject =
           event.streams[0];
       }
     };
 
     // ================= SET OFFER =================
-    await pc.setRemoteDescription(offer);
+    await pc.setRemoteDescription(
+      offer
+    );
 
     // ================= CREATE ANSWER =================
-    const answer = await pc.createAnswer();
+    const answer =
+      await pc.createAnswer();
 
-    await pc.setLocalDescription(answer);
+    await pc.setLocalDescription(
+      answer
+    );
 
-    window._answer = answer;
+    console.log("SEND ANSWER");
 
-    console.log("===== COPY ANSWER =====");
-    console.log(JSON.stringify(answer));
+    wsRef.current.send(
+      JSON.stringify({
+        type: "answer",
+        answer,
+      })
+    );
   };
 
   // ================= AUTOPLAY =================
   useEffect(() => {
+
     if (remoteAudioRef.current) {
-      remoteAudioRef.current.autoplay = true;
+      remoteAudioRef.current.autoplay =
+        true;
     }
+
   }, []);
 
   // ================= AUTO RECORDING =================
   useEffect(() => {
+
     if (started) {
       startRecording?.();
-    } else {
+    }
+    else {
       stopRecording?.();
     }
 
     return () => stopRecording?.();
+
   }, [started]);
 
   // ================= SEND TRANSCRIPT =================
   useEffect(() => {
+
     if (!liveTranscript) return;
 
     // SEND TO REMOTE
@@ -221,6 +358,7 @@ export default function SmartCallUI({
       dataChannelRef.current.readyState ===
         "open"
     ) {
+
       dataChannelRef.current.send(
         liveTranscript
       );
@@ -231,32 +369,47 @@ export default function SmartCallUI({
 
     // ================= AI REPLY =================
     if (
-      text.includes("where are you from")
+      text.includes(
+        "where are you from"
+      )
     ) {
-      setAiReply("I'm from Indonesia");
+
+      setAiReply(
+        "I'm from Indonesia"
+      );
     }
+
     else if (
       text.includes("how are you")
     ) {
+
       setAiReply(
         "I'm doing great today!"
       );
     }
+
     else if (
       text.includes("your name")
     ) {
+
       setAiReply(
         "My name is Syahmi"
       );
     }
+
     else if (
-      text.includes("what do you do")
+      text.includes(
+        "what do you do"
+      )
     ) {
+
       setAiReply(
         "I'm an AI Engineer"
       );
     }
+
     else {
+
       setAiReply("...");
     }
 
@@ -264,7 +417,9 @@ export default function SmartCallUI({
 
   // ================= UI =================
   return (
+
     <section className="mx-4 mt-12">
+
       <div className="relative">
 
         {/* REMOTE AUDIO */}
@@ -296,42 +451,28 @@ export default function SmartCallUI({
               Talk with real people with AI
               assistance
             </p>
+
           </div>
 
           {/* BUTTONS */}
-          <div className="mt-6 space-y-2">
+          <div className="mt-6">
 
             {/* START */}
             <button
               onClick={() => {
+
                 startCall();
-                setStarted(true);
-              }}
-              className="w-full py-2! rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 text-white"
-            >
-              Start Call (Caller)
-            </button>
-
-            {/* JOIN */}
-            <button
-              onClick={() => {
-                const offer =
-                  JSON.parse(
-                    prompt(
-                      "Paste OFFER JSON"
-                    )
-                  );
-
-                answerCall(offer);
 
                 setStarted(true);
+
               }}
-              className="w-full py-2 rounded-xl bg-green-500/20 text-green-300"
+              className="w-full py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 text-white"
             >
-              Join Call (Receiver)
+              Start Call
             </button>
 
           </div>
+
         </div>
 
         {/* ================= IN CALL ================= */}
@@ -347,25 +488,30 @@ export default function SmartCallUI({
           <div className="flex justify-between mb-5">
 
             <div>
+
               <p className="text-sm font-semibold">
                 In Call...
               </p>
 
               <p className="text-xs text-white/50">
+
                 {isRecording
                   ? "Listening..."
                   : "Idle"}
+
               </p>
+
             </div>
 
             <button
               onClick={() =>
                 setStarted(false)
               }
-              className="text-xs px-3! py-1! rounded-lg bg-red-500/20! text-red-300"
+              className="text-xs px-3 py-1 rounded-lg bg-red-500/20 text-red-300"
             >
               End
             </button>
+
           </div>
 
           {/* ICON */}
@@ -391,8 +537,10 @@ export default function SmartCallUI({
             </p>
 
             <p className="text-sm text-white">
+
               {remoteTranscript ||
                 "Waiting for speech..."}
+
             </p>
 
           </div>
@@ -405,8 +553,10 @@ export default function SmartCallUI({
             </p>
 
             <p className="text-sm text-white">
+
               {lupaKata?.lupaKataHeardText ||
                 "..."}
+
             </p>
 
           </div>
@@ -429,39 +579,47 @@ export default function SmartCallUI({
 
             {/* MIC */}
             {!isRecording ? (
+
               <button
                 onClick={startRecording}
-                className="flex-1 py-2! rounded-xl bg-green-500/20! text-green-300"
+                className="flex-1 py-2 rounded-xl bg-green-500/20 text-green-300"
               >
                 Start Mic
               </button>
+
             ) : (
+
               <button
                 onClick={stopRecording}
-                className="flex-1 py-2! rounded-xl bg-red-500/20! text-red-300"
+                className="flex-1 py-2 rounded-xl bg-red-500/20 text-red-300"
               >
                 Stop Mic
               </button>
+
             )}
 
             {/* TRANSLATE */}
             <button
               onClick={openLupaKata}
-              className={`flex-1 py-2! rounded-xl border transition ${
+              className={`flex-1 py-2 rounded-xl border transition ${
                 isLupaKataActive
-                  ? "bg-emerald-500/30! text-emerald-300 border-emerald-400"
-                  : "bg-white/5! text-white/60 border-white/10"
+                  ? "bg-emerald-500/30 text-emerald-300 border-emerald-400"
+                  : "bg-white/5 text-white/60 border-white/10"
               }`}
             >
+
               {isLupaKataActive
                 ? "Translate ON"
                 : "Translate"}
+
             </button>
 
           </div>
 
         </div>
+
       </div>
+
     </section>
   );
 }
