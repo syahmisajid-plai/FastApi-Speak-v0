@@ -307,7 +307,7 @@ export default function SmartCallUI({
                 startCall();
                 setStarted(true);
               }}
-              className="w-full py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 text-white"
+              className="w-full py-2! rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 text-white"
             >
               Start Call (Caller)
             </button>
@@ -362,7 +362,7 @@ export default function SmartCallUI({
               onClick={() =>
                 setStarted(false)
               }
-              className="text-xs px-3 py-1 rounded-lg bg-red-500/20 text-red-300"
+              className="text-xs px-3! py-1! rounded-lg bg-red-500/20! text-red-300"
             >
               End
             </button>
@@ -431,14 +431,14 @@ export default function SmartCallUI({
             {!isRecording ? (
               <button
                 onClick={startRecording}
-                className="flex-1 py-2 rounded-xl bg-green-500/20 text-green-300"
+                className="flex-1 py-2! rounded-xl bg-green-500/20! text-green-300"
               >
                 Start Mic
               </button>
             ) : (
               <button
                 onClick={stopRecording}
-                className="flex-1 py-2 rounded-xl bg-red-500/20 text-red-300"
+                className="flex-1 py-2! rounded-xl bg-red-500/20! text-red-300"
               >
                 Stop Mic
               </button>
@@ -447,10 +447,10 @@ export default function SmartCallUI({
             {/* TRANSLATE */}
             <button
               onClick={openLupaKata}
-              className={`flex-1 py-2 rounded-xl border transition ${
+              className={`flex-1 py-2! rounded-xl border transition ${
                 isLupaKataActive
-                  ? "bg-emerald-500/30 text-emerald-300 border-emerald-400"
-                  : "bg-white/5 text-white/60 border-white/10"
+                  ? "bg-emerald-500/30! text-emerald-300 border-emerald-400"
+                  : "bg-white/5! text-white/60 border-white/10"
               }`}
             >
               {isLupaKataActive

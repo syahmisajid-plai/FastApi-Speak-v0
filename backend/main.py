@@ -25,6 +25,7 @@ from routers import (
     audio_vocab,
     summary_cost,
     sentence_lesson,
+    smartcall,
 )
 
 
@@ -140,7 +141,7 @@ app.include_router(vocab.router)
 app.include_router(audio_vocab.router)
 app.include_router(summary_cost.router)
 app.include_router(sentence_lesson.router)
-
+app.include_router(smartcall.router)
 
 
 # Set path ke service account GCP
