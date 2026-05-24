@@ -2,6 +2,8 @@ from fastapi import APIRouter
 from fastapi import WebSocket
 from fastapi import WebSocketDisconnect
 
+from fastapi import Query
+
 from collections import defaultdict
 
 router = APIRouter()
@@ -10,47 +12,43 @@ router = APIRouter()
 rooms = defaultdict(list)
 
 
-# ================= WEBSOCKET =================
 @router.websocket("/ws/{room_id}")
 async def websocket_endpoint(
     websocket: WebSocket,
     room_id: str,
+    username: str = "Guest"
 ):
-
     await websocket.accept()
 
-    print(f"USER JOIN ROOM: {room_id}")
+    print(f"{username} JOIN ROOM: {room_id}")
 
-    rooms[room_id].append(websocket)
-
-    print(
-        f"TOTAL USERS IN ROOM {room_id}:",
-        len(rooms[room_id])
-    )
+    rooms[room_id].append({
+        "ws": websocket,
+        "username": username
+    })
 
     try:
-
         while True:
-
             data = await websocket.receive_text()
 
-            print("SIGNAL:", data)
+            payload = {
+                "from": username,
+                "message": data
+            }
 
-            # SEND TO OTHER USERS
             for client in rooms[room_id]:
-
-                if client != websocket:
-
-                    await client.send_text(data)
+                if client["ws"] != websocket:
+                    await client["ws"].send_json(payload)
 
     except WebSocketDisconnect:
 
-        print(f"USER LEFT ROOM: {room_id}")
+        print(f"{username} LEFT ROOM: {room_id}")
 
-        rooms[room_id].remove(websocket)
+        rooms[room_id] = [
+            c for c in rooms[room_id]
+            if c["ws"] != websocket
+        ]
 
         if len(rooms[room_id]) == 0:
-
             del rooms[room_id]
-
             print(f"ROOM DELETED: {room_id}")

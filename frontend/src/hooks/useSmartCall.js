@@ -1,0 +1,566 @@
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import { linkBackend } from "../config";
+
+export default function useSmartCall({
+  startRecording,
+  stopRecording,
+  liveTranscript,
+}) {
+
+  // ================= STATES =================
+  const [started, setStarted] =
+    useState(false);
+
+  const [
+    remoteTranscript,
+    setRemoteTranscript,
+  ] = useState("");
+
+  const [aiReply, setAiReply] =
+    useState("");
+
+  // ================= ROOM =================
+  const [roomId, setRoomId] =
+    useState("");
+
+  const [joinedRoom, setJoinedRoom] =
+    useState(false);
+
+  const [roomInput, setRoomInput] =
+    useState("");
+
+  // ================= REFS =================
+  const wsRef = useRef(null);
+
+  const pcRef = useRef(null);
+
+  const dataChannelRef =
+    useRef(null);
+
+  const localStreamRef =
+    useRef(null);
+
+  const remoteAudioRef =
+    useRef(null);
+
+  // ================= WS URL =================
+  const wsBackend = linkBackend
+    .replace("https://", "wss://")
+    .replace("http://", "ws://");
+
+  // ================= CREATE ROOM =================
+  const createRoom = () => {
+
+    const id = Math.random()
+      .toString(36)
+      .substring(2, 8);
+
+    setRoomId(id);
+
+    setJoinedRoom(true);
+
+    console.log(
+      "ROOM CREATED:",
+      id
+    );
+  };
+
+  // ================= JOIN ROOM =================
+  const joinRoom = () => {
+
+    if (!roomInput) return;
+
+    setRoomId(roomInput);
+
+    setJoinedRoom(true);
+
+    console.log(
+      "JOIN ROOM:",
+      roomInput
+    );
+  };
+
+  // ================= GET AUDIO =================
+  const getAudioStream =
+    async () => {
+
+      const stream =
+        await navigator.mediaDevices.getUserMedia(
+          {
+            audio: true,
+            video: false,
+          }
+        );
+
+      localStreamRef.current =
+        stream;
+
+      return stream;
+    };
+
+  // ================= ICE =================
+  const setupICE = (pc) => {
+
+    pc.onicecandidate = (
+      event
+    ) => {
+
+      if (event.candidate) {
+
+        console.log(
+          "SEND ICE"
+        );
+
+        wsRef.current?.send(
+          JSON.stringify({
+            type: "ice",
+            candidate:
+              event.candidate,
+          })
+        );
+      }
+    };
+
+    pc.onconnectionstatechange =
+      () => {
+
+        console.log(
+          "CONNECTION STATE:",
+          pc.connectionState
+        );
+      };
+
+    pc.oniceconnectionstatechange =
+      () => {
+
+        console.log(
+          "ICE STATE:",
+          pc.iceConnectionState
+        );
+      };
+  };
+
+  // ================= START CALL =================
+  const startCall = async () => {
+
+    console.log(
+      "START CALL"
+    );
+
+    const stream =
+      await getAudioStream();
+
+    const pc =
+      new RTCPeerConnection({
+        iceServers: [
+          {
+            urls:
+              "stun:stun.l.google.com:19302",
+          },
+        ],
+      });
+
+    pcRef.current = pc;
+
+    setupICE(pc);
+
+    // ================= DATA CHANNEL =================
+    const channel =
+      pc.createDataChannel(
+        "chat"
+      );
+
+    dataChannelRef.current =
+      channel;
+
+    channel.onopen = () => {
+
+      console.log(
+        "DATA CHANNEL OPEN"
+      );
+    };
+
+    channel.onmessage = (
+      event
+    ) => {
+
+      console.log(
+        "REMOTE TRANSCRIPT:",
+        event.data
+      );
+
+      setRemoteTranscript(
+        event.data
+      );
+    };
+
+    // ================= LOCAL AUDIO =================
+    stream
+      .getTracks()
+      .forEach((track) => {
+
+        pc.addTrack(
+          track,
+          stream
+        );
+
+      });
+
+    // ================= REMOTE AUDIO =================
+    pc.ontrack = (event) => {
+
+      console.log(
+        "REMOTE AUDIO RECEIVED"
+      );
+
+      if (
+        remoteAudioRef.current
+      ) {
+
+        remoteAudioRef.current.srcObject =
+          event.streams[0];
+      }
+    };
+
+    // ================= OFFER =================
+    const offer =
+      await pc.createOffer();
+
+    await pc.setLocalDescription(
+      offer
+    );
+
+    console.log(
+      "SEND OFFER"
+    );
+
+    wsRef.current?.send(
+      JSON.stringify({
+        type: "offer",
+        offer,
+      })
+    );
+
+    setStarted(true);
+  };
+
+  // ================= ANSWER CALL =================
+  const answerCall = async (
+    offer
+  ) => {
+
+    console.log(
+      "ANSWER CALL"
+    );
+
+    const stream =
+      await getAudioStream();
+
+    const pc =
+      new RTCPeerConnection({
+        iceServers: [
+          {
+            urls:
+              "stun:stun.l.google.com:19302",
+          },
+        ],
+      });
+
+    pcRef.current = pc;
+
+    setupICE(pc);
+
+    // ================= RECEIVE DATA CHANNEL =================
+    pc.ondatachannel = (
+      event
+    ) => {
+
+      const channel =
+        event.channel;
+
+      dataChannelRef.current =
+        channel;
+
+      channel.onopen = () => {
+
+        console.log(
+          "DATA CHANNEL OPEN"
+        );
+      };
+
+      channel.onmessage = (
+        event
+      ) => {
+
+        console.log(
+          "REMOTE TRANSCRIPT:",
+          event.data
+        );
+
+        setRemoteTranscript(
+          event.data
+        );
+      };
+    };
+
+    // ================= LOCAL AUDIO =================
+    stream
+      .getTracks()
+      .forEach((track) => {
+
+        pc.addTrack(
+          track,
+          stream
+        );
+
+      });
+
+    // ================= REMOTE AUDIO =================
+    pc.ontrack = (event) => {
+
+      console.log(
+        "REMOTE AUDIO RECEIVED"
+      );
+
+      if (
+        remoteAudioRef.current
+      ) {
+
+        remoteAudioRef.current.srcObject =
+          event.streams[0];
+      }
+    };
+
+    // ================= SET OFFER =================
+    await pc.setRemoteDescription(
+      offer
+    );
+
+    // ================= CREATE ANSWER =================
+    const answer =
+      await pc.createAnswer();
+
+    await pc.setLocalDescription(
+      answer
+    );
+
+    console.log(
+      "SEND ANSWER"
+    );
+
+    wsRef.current?.send(
+      JSON.stringify({
+        type: "answer",
+        answer,
+      })
+    );
+  };
+
+  // ================= END CALL =================
+  const endCall = () => {
+
+    setStarted(false);
+
+    pcRef.current?.close();
+
+    wsRef.current?.close();
+
+    localStreamRef.current
+      ?.getTracks()
+      ?.forEach((track) =>
+        track.stop()
+      );
+
+    pcRef.current = null;
+
+    wsRef.current = null;
+
+    dataChannelRef.current =
+      null;
+
+    localStreamRef.current =
+      null;
+  };
+
+  // ================= WS CONNECT =================
+  useEffect(() => {
+
+    if (!joinedRoom || !roomId)
+      return;
+
+    const ws = new WebSocket(
+      `${wsBackend}/ws/${roomId}`
+    );
+
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+
+      console.log(
+        "WS CONNECTED"
+      );
+    };
+
+    ws.onmessage = async (
+      event
+    ) => {
+
+      const data = JSON.parse(
+        event.data
+      );
+
+      console.log(
+        "WS MESSAGE:",
+        data
+      );
+
+      // ================= OFFER =================
+      if (data.type === "offer") {
+
+        console.log(
+          "RECEIVED OFFER"
+        );
+
+        await answerCall(
+          data.offer
+        );
+
+        setStarted(true);
+      }
+
+      // ================= ANSWER =================
+      else if (
+        data.type === "answer"
+      ) {
+
+        console.log(
+          "RECEIVED ANSWER"
+        );
+
+        await pcRef.current?.setRemoteDescription(
+          data.answer
+        );
+      }
+
+      // ================= ICE =================
+      else if (
+        data.type === "ice"
+      ) {
+
+        console.log(
+          "RECEIVED ICE"
+        );
+
+        try {
+
+          await pcRef.current?.addIceCandidate(
+            data.candidate
+          );
+
+        }
+        catch (err) {
+
+          console.log(err);
+
+        }
+      }
+    };
+
+    ws.onclose = () => {
+
+      console.log(
+        "WS CLOSED"
+      );
+    };
+
+    return () => {
+
+      ws.close();
+
+    };
+
+  }, [joinedRoom, roomId]);
+
+  // ================= AUTOPLAY =================
+  useEffect(() => {
+
+    if (
+      remoteAudioRef.current
+    ) {
+
+      remoteAudioRef.current.autoplay =
+        true;
+    }
+
+  }, []);
+
+  // ================= AUTO RECORD =================
+  useEffect(() => {
+
+    if (started) {
+
+      startRecording?.();
+
+    }
+    else {
+
+      stopRecording?.();
+
+    }
+
+    return () =>
+      stopRecording?.();
+
+  }, [started]);
+
+  // ================= SEND TRANSCRIPT =================
+  useEffect(() => {
+
+    if (!liveTranscript)
+      return;
+
+    // SEND TO REMOTE
+    if (
+      dataChannelRef.current &&
+      dataChannelRef.current
+        .readyState === "open"
+    ) {
+
+      dataChannelRef.current.send(
+        liveTranscript
+      );
+    }
+
+    // AI REPLY PLACEHOLDER
+    setAiReply("...");
+
+  }, [liveTranscript]);
+
+  return {
+    // STATES
+    started,
+    remoteTranscript,
+    aiReply,
+
+    roomId,
+    joinedRoom,
+    roomInput,
+
+    // SETTERS
+    setRoomInput,
+
+    // ACTIONS
+    createRoom,
+    joinRoom,
+    startCall,
+    endCall,
+
+    // REFS
+    remoteAudioRef,
+  };
+}

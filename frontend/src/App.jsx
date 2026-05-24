@@ -997,6 +997,8 @@ Feature tambahan:
 
               isLupaKataActive={lupaKata.isLupaKataActive}
               lupaKata={lupaKata}
+
+              user={user}
             />
           )}
 

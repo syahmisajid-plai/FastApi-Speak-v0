@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { linkBackend } from "../config";
+import { useState } from "react";
+import useSmartCall from "../hooks/useSmartCall";
 
 export default function SmartCallUI({
   startRecording,
@@ -10,821 +10,373 @@ export default function SmartCallUI({
   openLupaKata,
   isLupaKataActive,
   lupaKata,
+
+  user,
 }) {
-
-  const [started, setStarted] =
-    useState(false);
-
-  // ================= AI STATES =================
-  const [
+  const {
+    started,
     remoteTranscript,
-    setRemoteTranscript,
-  ] = useState("");
+    aiReply,
 
-  const [aiReply, setAiReply] =
-    useState("");
+    roomId,
+    joinedRoom,
+    roomInput,
 
-  // ================= ROOM =================
-  const [roomId, setRoomId] =
-    useState("");
+    setRoomInput,
 
-  const [joinedRoom, setJoinedRoom] =
-    useState(false);
+    createRoom,
+    joinRoom,
+    startCall,
+    endCall,
 
-  const [roomInput, setRoomInput] =
-    useState("");
+    remoteAudioRef,
+  } = useSmartCall({
+    startRecording,
+    stopRecording,
+    liveTranscript,
+  });
 
-  // ================= WEBSOCKET =================
-  const wsRef = useRef(null);
+  const [stage, setStage] = useState("A"); // A | B | C
 
-  // ================= WEBRTC =================
-  const pcRef = useRef(null);
+  const [showJoinInput, setShowJoinInput] = useState(false);
+  const [roomMode, setRoomMode] = useState(null);
+  const [readyToCall, setReadyToCall] = useState(false);
 
-  const dataChannelRef =
-    useRef(null);
+  const username = user.username;
 
-  const localStreamRef =
-    useRef(null);
-
-  const remoteAudioRef =
-    useRef(null);
-
-  // ================= WS URL =================
-  const wsBackend = linkBackend
-    .replace("https://", "wss://")
-    .replace("http://", "ws://");
-
-  // ================= CREATE ROOM =================
-  const createRoom = () => {
-
-    const id = Math.random()
-      .toString(36)
-      .substring(2, 8);
-
-    setRoomId(id);
-
-    setJoinedRoom(true);
-
-    console.log(
-      "ROOM CREATED:",
-      id
-    );
-  };
-
-  // ================= JOIN ROOM =================
-  const joinRoom = () => {
-
-    if (!roomInput) return;
-
-    setRoomId(roomInput);
-
-    setJoinedRoom(true);
-
-    console.log(
-      "JOIN ROOM:",
-      roomInput
-    );
-  };
-
-  // ================= WEBSOCKET CONNECT =================
-  useEffect(() => {
-
-    if (!joinedRoom || !roomId)
-      return;
-
-    const ws = new WebSocket(
-      `${wsBackend}/ws/${roomId}`
-    );
-
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-
-      console.log(
-        "WS CONNECTED"
-      );
-    };
-
-    ws.onmessage = async (
-      event
-    ) => {
-
-      const data = JSON.parse(
-        event.data
-      );
-
-      console.log(
-        "WS MESSAGE:",
-        data
-      );
-
-      // ================= OFFER =================
-      if (data.type === "offer") {
-
-        console.log(
-          "RECEIVED OFFER"
-        );
-
-        await answerCall(
-          data.offer
-        );
-
-        setStarted(true);
-      }
-
-      // ================= ANSWER =================
-      else if (
-        data.type === "answer"
-      ) {
-
-        console.log(
-          "RECEIVED ANSWER"
-        );
-
-        await pcRef.current.setRemoteDescription(
-          data.answer
-        );
-      }
-
-      // ================= ICE =================
-      else if (
-        data.type === "ice"
-      ) {
-
-        console.log(
-          "RECEIVED ICE"
-        );
-
-        try {
-
-          await pcRef.current.addIceCandidate(
-            data.candidate
-          );
-
-        }
-        catch (err) {
-
-          console.log(err);
-
-        }
-      }
-    };
-
-    ws.onclose = () => {
-
-      console.log(
-        "WS CLOSED"
-      );
-    };
-
-    return () => {
-
-      ws.close();
-
-    };
-
-  }, [joinedRoom, roomId]);
-
-  // ================= GET MIC =================
-  const getAudioStream =
-    async () => {
-
-      const stream =
-        await navigator.mediaDevices.getUserMedia(
-          {
-            audio: true,
-            video: false,
-          }
-        );
-
-      localStreamRef.current =
-        stream;
-
-      return stream;
-    };
-
-  // ================= ICE =================
-  const setupICE = (pc) => {
-
-    pc.onicecandidate = (
-      event
-    ) => {
-
-      if (event.candidate) {
-
-        console.log(
-          "SEND ICE"
-        );
-
-        wsRef.current.send(
-          JSON.stringify({
-            type: "ice",
-            candidate:
-              event.candidate,
-          })
-        );
-      }
-    };
-
-    pc.onconnectionstatechange =
-      () => {
-
-        console.log(
-          "CONNECTION STATE:",
-          pc.connectionState
-        );
-      };
-
-    pc.oniceconnectionstatechange =
-      () => {
-
-        console.log(
-          "ICE STATE:",
-          pc.iceConnectionState
-        );
-      };
-  };
-
-  // ================= START CALL =================
-  const startCall = async () => {
-
-    console.log(
-      "START CALL"
-    );
-
-    const stream =
-      await getAudioStream();
-
-    const pc =
-      new RTCPeerConnection({
-        iceServers: [
-          {
-            urls:
-              "stun:stun.l.google.com:19302",
-          },
-        ],
-      });
-
-    pcRef.current = pc;
-
-    setupICE(pc);
-
-    // ================= DATA CHANNEL =================
-    const channel =
-      pc.createDataChannel(
-        "chat"
-      );
-
-    dataChannelRef.current =
-      channel;
-
-    channel.onopen = () => {
-
-      console.log(
-        "DATA CHANNEL OPEN"
-      );
-    };
-
-    channel.onmessage = (
-      event
-    ) => {
-
-      console.log(
-        "REMOTE TRANSCRIPT:",
-        event.data
-      );
-
-      setRemoteTranscript(
-        event.data
-      );
-    };
-
-    // ================= LOCAL AUDIO =================
-    stream
-      .getTracks()
-      .forEach((track) => {
-
-        pc.addTrack(
-          track,
-          stream
-        );
-
-      });
-
-    // ================= REMOTE AUDIO =================
-    pc.ontrack = (event) => {
-
-      console.log(
-        "REMOTE AUDIO RECEIVED"
-      );
-
-      if (
-        remoteAudioRef.current
-      ) {
-
-        remoteAudioRef.current.srcObject =
-          event.streams[0];
-      }
-    };
-
-    // ================= CREATE OFFER =================
-    const offer =
-      await pc.createOffer();
-
-    await pc.setLocalDescription(
-      offer
-    );
-
-    console.log(
-      "SEND OFFER"
-    );
-
-    wsRef.current.send(
-      JSON.stringify({
-        type: "offer",
-        offer,
-      })
-    );
-
-    setStarted(true);
-  };
-
-  // ================= ANSWER CALL =================
-  const answerCall = async (
-    offer
-  ) => {
-
-    console.log(
-      "ANSWER CALL"
-    );
-
-    const stream =
-      await getAudioStream();
-
-    const pc =
-      new RTCPeerConnection({
-        iceServers: [
-          {
-            urls:
-              "stun:stun.l.google.com:19302",
-          },
-        ],
-      });
-
-    pcRef.current = pc;
-
-    setupICE(pc);
-
-    // ================= RECEIVE DATA CHANNEL =================
-    pc.ondatachannel = (
-      event
-    ) => {
-
-      const channel =
-        event.channel;
-
-      dataChannelRef.current =
-        channel;
-
-      channel.onopen = () => {
-
-        console.log(
-          "DATA CHANNEL OPEN"
-        );
-      };
-
-      channel.onmessage = (
-        event
-      ) => {
-
-        console.log(
-          "REMOTE TRANSCRIPT:",
-          event.data
-        );
-
-        setRemoteTranscript(
-          event.data
-        );
-      };
-    };
-
-    // ================= LOCAL AUDIO =================
-    stream
-      .getTracks()
-      .forEach((track) => {
-
-        pc.addTrack(
-          track,
-          stream
-        );
-
-      });
-
-    // ================= REMOTE AUDIO =================
-    pc.ontrack = (event) => {
-
-      console.log(
-        "REMOTE AUDIO RECEIVED"
-      );
-
-      if (
-        remoteAudioRef.current
-      ) {
-
-        remoteAudioRef.current.srcObject =
-          event.streams[0];
-      }
-    };
-
-    // ================= SET OFFER =================
-    await pc.setRemoteDescription(
-      offer
-    );
-
-    // ================= CREATE ANSWER =================
-    const answer =
-      await pc.createAnswer();
-
-    await pc.setLocalDescription(
-      answer
-    );
-
-    console.log(
-      "SEND ANSWER"
-    );
-
-    wsRef.current.send(
-      JSON.stringify({
-        type: "answer",
-        answer,
-      })
-    );
-  };
-
-  // ================= AUTOPLAY =================
-  useEffect(() => {
-
-    if (
-      remoteAudioRef.current
-    ) {
-
-      remoteAudioRef.current.autoplay =
-        true;
-    }
-
-  }, []);
-
-  // ================= AUTO RECORDING =================
-  useEffect(() => {
-
-    if (started) {
-
-      startRecording?.();
-
-    }
-    else {
-
-      stopRecording?.();
-
-    }
-
-    return () =>
-      stopRecording?.();
-
-  }, [started]);
-
-  // ================= SEND TRANSCRIPT =================
-  useEffect(() => {
-
-    if (!liveTranscript)
-      return;
-
-    // SEND TO REMOTE
-    if (
-      dataChannelRef.current &&
-      dataChannelRef.current
-        .readyState === "open"
-    ) {
-
-      dataChannelRef.current.send(
-        liveTranscript
-      );
-    }
-
-    const text =
-      liveTranscript.toLowerCase();
-
-    // ================= AI REPLY =================
-    if (
-      text.includes(
-        "where are you from"
-      )
-    ) {
-
-      setAiReply(
-        "I'm from Indonesia"
-      );
-    }
-
-    else if (
-      text.includes(
-        "how are you"
-      )
-    ) {
-
-      setAiReply(
-        "I'm doing great today!"
-      );
-    }
-
-    else if (
-      text.includes(
-        "your name"
-      )
-    ) {
-
-      setAiReply(
-        "My name is Syahmi"
-      );
-    }
-
-    else if (
-      text.includes(
-        "what do you do"
-      )
-    ) {
-
-      setAiReply(
-        "I'm an AI Engineer"
-      );
-    }
-
-    else {
-
-      setAiReply("...");
-    }
-
-  }, [liveTranscript]);
-
-  // ================= UI =================
   return (
+    <section className="mt-36 text-white flex items-center justify-center bg-linear-to-b from-slate-900 to-cyan-950">
+      <div className="w-full max-w-md relative">
 
-    <section className="mx-4 mt-12">
+        {/* AUDIO */}
+        <audio ref={remoteAudioRef} autoPlay />
 
-      <div className="relative">
-
-        {/* REMOTE AUDIO */}
-        <audio
-          ref={remoteAudioRef}
-          autoPlay
-        />
-
-        {/* ================= BEFORE CALL ================= */}
-        <div
-          className={`transition-all duration-500 ${
-            started
-              ? "opacity-0 scale-95 pointer-events-none"
-              : "opacity-100 scale-100"
+        {/* ================= A: START SMARTCALL ================= */}
+        <section
+          className={`transition-all duration-500 ease-out absolute w-full
+          ${
+            stage === "A"
+              ? "opacity-100 scale-100 translate-y-0"
+              : "opacity-0 scale-95 translate-y-3 pointer-events-none"
           }`}
         >
+          <div
+            className="text-white border border-cyan-400/10 backdrop-blur-xl rounded-3xl p-6
+            bg-linear-to-b from-slate-900/80 to-cyan-950/70
+            shadow-lg shadow-cyan-500/10 flex flex-col justify-center
+            transition-all duration-300 ease-out"
+          >
+            {/* ICON */}
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl bg-white/10 text-2xl mb-4 flex items-center justify-center">
+                📞
+              </div>
 
-          <div className="flex flex-col items-center">
+              <div>
+                <p className="text-base font-semibold tracking-wide">
+                  SmartCall
+                </p>
 
-            <div className="w-14 h-14 rounded-2xl bg-cyan-500/20 flex items-center justify-center text-2xl mb-4 border border-white/10">
-              📞
+                <p className="text-xs text-white/60 mt-1">
+                  Talk with AI-assisted voice calls
+                </p>
+              </div>
             </div>
 
-            <p className="text-sm font-semibold">
-              SmartCall
-            </p>
-
-            <p className="text-xs text-white/60 mt-1 text-center">
-              Talk with real people with AI assistance
-            </p>
-
-          </div>
-
-          {/* ROOM */}
-          <div className="mt-6 space-y-3">
-
-            {/* CREATE ROOM */}
+            {/* BUTTON */}
             <button
-              onClick={createRoom}
-              className="w-full py-2 rounded-xl bg-cyan-500 text-white"
+              onClick={() => {
+                // tunggu fade out dulu
+                setStage("B");
+              }}
+              className="mt-6 w-full py-2! rounded-xl
+              bg-cyan-400! text-black text-sm font-medium
+              hover:bg-white transition
+              active:scale-[0.98]"
             >
-              Create Room
+              Start SmartCall
             </button>
-
-            {/* INPUT ROOM */}
-            <input
-              value={roomInput}
-              onChange={(e) =>
-                setRoomInput(
-                  e.target.value
-                )
-              }
-              placeholder="Enter Room ID"
-              className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white outline-none"
-            />
-
-            {/* JOIN ROOM */}
-            <button
-              onClick={joinRoom}
-              className="w-full py-2 rounded-xl bg-green-500/20 text-green-300"
-            >
-              Join Room
-            </button>
-
           </div>
+        </section>
 
-          {/* ROOM INFO */}
-          {joinedRoom && (
-
-            <div className="mt-4 text-center">
-
-              <p className="text-xs text-white/50">
-                Room ID
-              </p>
-
-              <p className="text-lg font-bold text-cyan-300">
-                {roomId}
-              </p>
-
-            </div>
-
-          )}
-
-          {/* START CALL */}
-          {joinedRoom && (
-
-            <div className="mt-6">
-
-              <button
-                onClick={
-                  startCall
-                }
-                className="w-full py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 text-white"
-              >
-                Start Call
-              </button>
-
-            </div>
-
-          )}
-
-        </div>
-
-        {/* ================= IN CALL ================= */}
-        <div
-          className={`absolute inset-0 p-6 flex flex-col transition-all duration-500 ${
-            started
-              ? "opacity-100 scale-100"
-              : "opacity-0 scale-95 pointer-events-none"
-          }`}
-        >
-
-          {/* TOP */}
-          <div className="flex justify-between mb-5">
-
-            <div>
-
-              <p className="text-sm font-semibold">
-                In Call...
-              </p>
-
-              <p className="text-xs text-white/50">
-
-                {isRecording
-                  ? "Listening..."
-                  : "Idle"}
-
-              </p>
-
-            </div>
-
-            <button
-              onClick={() =>
-                setStarted(false)
-              }
-              className="text-xs px-3 py-1 rounded-lg bg-red-500/20 text-red-300"
-            >
-              End
-            </button>
-
-          </div>
-
-          {/* ICON */}
-          <div className="flex justify-center mb-5">
-
+        {/* ================= B: BEFORE CALL ================= */}
+        {stage === "B" && (
+          <div
+            className={`absolute w-full transition-all duration-500 ease-out ${
+              started
+                ? "opacity-0 scale-95 pointer-events-none"
+                : "opacity-100 scale-100"
+            }`}
+          >
             <div
-              className={`w-20 h-20 rounded-full flex items-center justify-center text-3xl border transition-all ${
-                isRecording
-                  ? "bg-cyan-500/30 border-cyan-400 animate-pulse"
-                  : "bg-white/10 border-white/10"
-              }`}
+              className="rounded-2xl backdrop-blur-2xl
+              bg-linear-to-b from-slate-900/70 to-cyan-950/60
+              border border-cyan-400/10
+              shadow-xl shadow-cyan-500/10
+              p-6"
             >
-              📞
+
+              {/* HEADER */}
+              <div className="text-center">
+                <div
+                  className="mx-auto w-14 h-14 rounded-2xl
+                  bg-cyan-400/10 text-cyan-300
+                  border border-cyan-400/20
+                  flex items-center justify-center text-xl"
+                >
+                  📞
+                </div>
+
+                <h2 className="mt-4 text-lg font-semibold text-white tracking-wide">
+                  SmartCall
+                </h2>
+
+                <p className="text-xs text-white/50 mt-1">
+                  Create or join a real-time AI voice call
+                </p>
+              </div>
+
+              {/* ACTIONS */}
+              <div className="mt-6 space-y-3">
+
+                <div className="grid grid-cols-2 gap-3">
+
+                  {/* CREATE */}
+                  <button
+                    onClick={() => {
+                      setRoomMode("create");
+                      setShowJoinInput(false);
+                      setRoomInput("");
+                      setReadyToCall(true);
+                      createRoom();
+                    }}
+                    className="py-2.5! rounded-xl
+                    bg-cyan-500! text-black font-medium text-sm
+                    hover:bg-cyan-400
+                    active:scale-[0.98]
+                    shadow-md shadow-cyan-500/20 transition"
+                  >
+                    Create
+                  </button>
+
+                  {/* JOIN */}
+                  <button
+                    onClick={() => {
+                      setRoomMode("join");
+                      setShowJoinInput(true);
+                      setRoomInput("");
+                      setReadyToCall(false);
+                    }}
+                    className="py-2.5! rounded-xl
+                    bg-white/5! text-white/80 text-sm
+                    border border-white/10
+                    hover:bg-white/10 hover:border-cyan-400/20
+                    active:scale-[0.98]
+                    transition"
+                  >
+                    Join
+                  </button>
+
+                </div>
+
+                {/* JOIN INPUT */}
+                {showJoinInput && (
+                  <div className="space-y-2 animate-in fade-in duration-300">
+
+                    <input
+                      value={roomInput}
+                      onChange={(e) => setRoomInput(e.target.value)}
+                      placeholder="Enter Room ID"
+                      className="w-full px-3 py-2.5 rounded-xl
+                      bg-white/5 text-white text-sm
+                      border border-white/10
+                      placeholder:text-white/30
+                      outline-none
+                      focus:border-cyan-400/40 focus:bg-white/10
+                      transition"
+                    />
+
+                    <button
+                      onClick={async () => {
+                        await joinRoom(roomInput);
+                        setReadyToCall(true);
+                      }}
+                      className="w-full py-2.5! rounded-xl
+                      bg-emerald-500/20! text-emerald-300 text-sm
+                      border border-emerald-400/20
+                      hover:bg-emerald-500/30
+                      transition active:scale-[0.98]"
+                    >
+                      Join Room
+                    </button>
+
+                  </div>
+                )}
+
+                {/* ROOM INFO */}
+                {roomMode === "create" && joinedRoom && (
+                  <div
+                    className="mt-3 text-center p-3 rounded-xl
+                    bg-cyan-500/5 border border-cyan-400/10"
+                  >
+                    <p className="text-[10px] text-white/40">Room ID</p>
+                    <p className="text-base font-semibold text-cyan-300 tracking-widest">
+                      {roomId}
+                    </p>
+                  </div>
+                )}
+
+                {/* START CALL */}
+                {readyToCall && (
+                  <button
+                    onClick={() => {
+                      startCall();
+                      setStage("C");
+                    }}
+                    className="w-full mt-2 py-3! rounded-xl font-medium text-sm
+                    bg-gradient-to-r from-cyan-500 to-sky-500
+                    text-white
+                    hover:opacity-90 active:scale-[0.98]
+                    shadow-lg shadow-cyan-500/20 transition"
+                  >
+                    Start Call
+                  </button>
+                )}
+
+              </div>
             </div>
-
           </div>
+        )}
 
-          {/* REMOTE SPEECH */}
-          <div className="bg-white/5 p-3 rounded-xl mb-3">
-
-            <p className="text-xs text-white/50 mb-1">
-              Remote Speech
-            </p>
-
-            <p className="text-sm text-white">
-
-              {remoteTranscript ||
-                "Waiting for speech..."}
-
-            </p>
-
-          </div>
-
-          {/* TRANSLATION */}
-          <div className="bg-white/5 p-3 rounded-xl mb-3">
-
-            <p className="text-xs text-white/50 mb-1">
-              Translation
-            </p>
-
-            <p className="text-sm text-white">
-
-              {lupaKata?.lupaKataHeardText ||
-                "..."}
-
-            </p>
-
-          </div>
-
-          {/* AI REPLY */}
-          <div className="bg-cyan-500/10 border border-cyan-500/20 p-3 rounded-xl mb-3">
-
-            <p className="text-xs text-cyan-300 mb-1">
-              AI Suggested Reply
-            </p>
-
-            <p className="text-sm text-white">
-              {aiReply || "..."}
-            </p>
-
-          </div>
-
-          {/* CONTROLS */}
-          <div className="flex gap-2 mt-auto">
-
-            {/* MIC */}
-            {!isRecording ? (
-
-              <button
-                onClick={
-                  startRecording
-                }
-                className="flex-1 py-2 rounded-xl bg-green-500/20 text-green-300"
-              >
-                Start Mic
-              </button>
-
-            ) : (
-
-              <button
-                onClick={
-                  stopRecording
-                }
-                className="flex-1 py-2 rounded-xl bg-red-500/20 text-red-300"
-              >
-                Stop Mic
-              </button>
-
-            )}
-
-            {/* TRANSLATE */}
-            <button
-              onClick={
-                openLupaKata
-              }
-              className={`flex-1 py-2 rounded-xl border transition ${
-                isLupaKataActive
-                  ? "bg-emerald-500/30 text-emerald-300 border-emerald-400"
-                  : "bg-white/5 text-white/60 border-white/10"
-              }`}
+        {/* ================= C: ACTIVE CALL ================= */}
+        {stage === "C" && (
+          <div className="absolute mt-36 inset-0 flex items-center justify-center px-4">
+            <div
+              className="w-full max-w-md flex flex-col
+              text-white backdrop-blur-2xl rounded-3xl p-5
+              bg-linear-to-b from-slate-900/70 to-cyan-950/60
+              border border-cyan-400/10
+              shadow-xl shadow-cyan-500/10
+              transition-all duration-500"
             >
 
-              {isLupaKataActive
-                ? "Translate ON"
-                : "Translate"}
+              {/* TOP BAR */}
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <p className="text-sm font-semibold tracking-wide">
+                    In Call
+                  </p>
+                  <p className="text-xs text-white/50 mt-1">
+                    {isRecording ? "Listening..." : "Idle"}
+                  </p>
+                </div>
 
-            </button>
+                <button
+                  onClick={() => {
+                    endCall();
+                    setStage("B");
+                  }}
+                  className="text-xs px-3! py-1! rounded-lg
+                  bg-red-500/10! text-red-300
+                  border border-red-500/20
+                  hover:bg-red-500/20 transition"
+                >
+                  End
+                </button>
+              </div>
 
+              {/* AVATAR / STATUS */}
+              <div className="flex justify-center mb-6">
+                <div
+                  className={`w-24 h-24 rounded-full flex items-center justify-center text-3xl border transition-all duration-300
+                  ${
+                    isRecording
+                      ? "bg-cyan-500/20 border-cyan-400 animate-pulse shadow-lg shadow-cyan-500/20"
+                      : "bg-white/5 border-white/10"
+                  }`}
+                >
+                  📞
+                </div>
+              </div>
+
+              {/* CARDS */}
+              <div className="space-y-3">
+
+                {/* Remote Speech */}
+                <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                  <p className="text-xs text-white/40 mb-1">Remote Speech</p>
+                  <p className="text-sm text-white">
+                    {remoteTranscript || "Waiting for speech..."}
+                  </p>
+                </div>
+
+                {/* Translation */}
+                <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                  <p className="text-xs text-white/40 mb-1">Translation</p>
+                  <p className="text-sm text-white">
+                    {lupaKata?.lupaKataHeardText || "..."}
+                  </p>
+                </div>
+
+                {/* AI Reply */}
+                <div
+                  className="bg-cyan-500/10 border border-cyan-400/20
+                  p-3 rounded-xl shadow-sm shadow-cyan-500/10"
+                >
+                  <p className="text-xs text-cyan-300 mb-1">
+                    AI Suggested Reply
+                  </p>
+                  <p className="text-sm text-white">
+                    {aiReply || "..."}
+                  </p>
+                </div>
+              </div>
+
+              {/* CONTROLS */}
+              <div className="flex gap-2 mt-5">
+
+                {!isRecording ? (
+                  <button
+                    onClick={startRecording}
+                    className="flex-1 py-2! rounded-xl
+                    bg-green-500/10! text-green-300
+                    border border-green-500/20
+                    hover:bg-green-500/20 transition
+                    active:scale-[0.98]"
+                  >
+                    Start Mic
+                  </button>
+                ) : (
+                  <button
+                    onClick={stopRecording}
+                    className="flex-1 py-2! rounded-xl
+                    bg-red-500/10! text-red-300
+                    border border-red-500/20
+                    hover:bg-red-500/20 transition
+                    active:scale-[0.98]"
+                  >
+                    Stop Mic
+                  </button>
+                )}
+
+                <button
+                  onClick={openLupaKata}
+                  className={`flex-1 py-2! rounded-xl border transition ${
+                    isLupaKataActive
+                      ? "bg-emerald-500/20! text-emerald-300 border-emerald-400/30"
+                      : "bg-white/5! text-white/60 border-white/10 hover:bg-white/10"
+                  }`}
+                >
+                  {isLupaKataActive ? "Translate ON" : "Translate"}
+                </button>
+
+              </div>
+
+            </div>
           </div>
-
-        </div>
+        )}
 
       </div>
-
     </section>
   );
 }
