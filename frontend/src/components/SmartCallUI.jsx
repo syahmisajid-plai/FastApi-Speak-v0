@@ -12,17 +12,27 @@ export default function SmartCallUI({
   lupaKata,
 }) {
 
-  const [started, setStarted] = useState(false);
+  const [started, setStarted] =
+    useState(false);
 
   // ================= AI STATES =================
-  const [remoteTranscript, setRemoteTranscript] =
-    useState("");
+  const [
+    remoteTranscript,
+    setRemoteTranscript,
+  ] = useState("");
 
   const [aiReply, setAiReply] =
     useState("");
 
   // ================= ROOM =================
-  const roomId = "abc123";
+  const [roomId, setRoomId] =
+    useState("");
+
+  const [joinedRoom, setJoinedRoom] =
+    useState(false);
+
+  const [roomInput, setRoomInput] =
+    useState("");
 
   // ================= WEBSOCKET =================
   const wsRef = useRef(null);
@@ -30,19 +40,57 @@ export default function SmartCallUI({
   // ================= WEBRTC =================
   const pcRef = useRef(null);
 
-  const dataChannelRef = useRef(null);
+  const dataChannelRef =
+    useRef(null);
 
-  const localStreamRef = useRef(null);
+  const localStreamRef =
+    useRef(null);
 
-  const remoteAudioRef = useRef(null);
+  const remoteAudioRef =
+    useRef(null);
 
   // ================= WS URL =================
   const wsBackend = linkBackend
     .replace("https://", "wss://")
     .replace("http://", "ws://");
 
+  // ================= CREATE ROOM =================
+  const createRoom = () => {
+
+    const id = Math.random()
+      .toString(36)
+      .substring(2, 8);
+
+    setRoomId(id);
+
+    setJoinedRoom(true);
+
+    console.log(
+      "ROOM CREATED:",
+      id
+    );
+  };
+
+  // ================= JOIN ROOM =================
+  const joinRoom = () => {
+
+    if (!roomInput) return;
+
+    setRoomId(roomInput);
+
+    setJoinedRoom(true);
+
+    console.log(
+      "JOIN ROOM:",
+      roomInput
+    );
+  };
+
   // ================= WEBSOCKET CONNECT =================
   useEffect(() => {
+
+    if (!joinedRoom || !roomId)
+      return;
 
     const ws = new WebSocket(
       `${wsBackend}/ws/${roomId}`
@@ -51,29 +99,47 @@ export default function SmartCallUI({
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log("WS CONNECTED");
+
+      console.log(
+        "WS CONNECTED"
+      );
     };
 
-    ws.onmessage = async (event) => {
+    ws.onmessage = async (
+      event
+    ) => {
 
-      const data = JSON.parse(event.data);
+      const data = JSON.parse(
+        event.data
+      );
 
-      console.log("WS MESSAGE:", data);
+      console.log(
+        "WS MESSAGE:",
+        data
+      );
 
       // ================= OFFER =================
       if (data.type === "offer") {
 
-        console.log("RECEIVED OFFER");
+        console.log(
+          "RECEIVED OFFER"
+        );
 
-        await answerCall(data.offer);
+        await answerCall(
+          data.offer
+        );
 
         setStarted(true);
       }
 
       // ================= ANSWER =================
-      else if (data.type === "answer") {
+      else if (
+        data.type === "answer"
+      ) {
 
-        console.log("RECEIVED ANSWER");
+        console.log(
+          "RECEIVED ANSWER"
+        );
 
         await pcRef.current.setRemoteDescription(
           data.answer
@@ -81,9 +147,13 @@ export default function SmartCallUI({
       }
 
       // ================= ICE =================
-      else if (data.type === "ice") {
+      else if (
+        data.type === "ice"
+      ) {
 
-        console.log("RECEIVED ICE");
+        console.log(
+          "RECEIVED ICE"
+        );
 
         try {
 
@@ -91,7 +161,8 @@ export default function SmartCallUI({
             data.candidate
           );
 
-        } catch (err) {
+        }
+        catch (err) {
 
           console.log(err);
 
@@ -100,68 +171,86 @@ export default function SmartCallUI({
     };
 
     ws.onclose = () => {
-      console.log("WS CLOSED");
+
+      console.log(
+        "WS CLOSED"
+      );
     };
 
     return () => {
+
       ws.close();
+
     };
 
-  }, []);
+  }, [joinedRoom, roomId]);
 
   // ================= GET MIC =================
-  const getAudioStream = async () => {
+  const getAudioStream =
+    async () => {
 
-    const stream =
-      await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: false,
-      });
+      const stream =
+        await navigator.mediaDevices.getUserMedia(
+          {
+            audio: true,
+            video: false,
+          }
+        );
 
-    localStreamRef.current = stream;
+      localStreamRef.current =
+        stream;
 
-    return stream;
-  };
+      return stream;
+    };
 
   // ================= ICE =================
   const setupICE = (pc) => {
 
-    pc.onicecandidate = (event) => {
+    pc.onicecandidate = (
+      event
+    ) => {
 
       if (event.candidate) {
 
-        console.log("SEND ICE");
+        console.log(
+          "SEND ICE"
+        );
 
         wsRef.current.send(
           JSON.stringify({
             type: "ice",
-            candidate: event.candidate,
+            candidate:
+              event.candidate,
           })
         );
       }
     };
 
-    pc.onconnectionstatechange = () => {
+    pc.onconnectionstatechange =
+      () => {
 
-      console.log(
-        "CONNECTION STATE:",
-        pc.connectionState
-      );
-    };
+        console.log(
+          "CONNECTION STATE:",
+          pc.connectionState
+        );
+      };
 
-    pc.oniceconnectionstatechange = () => {
+    pc.oniceconnectionstatechange =
+      () => {
 
-      console.log(
-        "ICE STATE:",
-        pc.iceConnectionState
-      );
-    };
+        console.log(
+          "ICE STATE:",
+          pc.iceConnectionState
+        );
+      };
   };
 
   // ================= START CALL =================
   const startCall = async () => {
 
-    console.log("START CALL");
+    console.log(
+      "START CALL"
+    );
 
     const stream =
       await getAudioStream();
@@ -182,35 +271,56 @@ export default function SmartCallUI({
 
     // ================= DATA CHANNEL =================
     const channel =
-      pc.createDataChannel("chat");
+      pc.createDataChannel(
+        "chat"
+      );
 
-    dataChannelRef.current = channel;
+    dataChannelRef.current =
+      channel;
 
     channel.onopen = () => {
-      console.log("DATA CHANNEL OPEN");
+
+      console.log(
+        "DATA CHANNEL OPEN"
+      );
     };
 
-    channel.onmessage = (event) => {
+    channel.onmessage = (
+      event
+    ) => {
 
       console.log(
         "REMOTE TRANSCRIPT:",
         event.data
       );
 
-      setRemoteTranscript(event.data);
+      setRemoteTranscript(
+        event.data
+      );
     };
 
     // ================= LOCAL AUDIO =================
-    stream.getTracks().forEach((track) => {
-      pc.addTrack(track, stream);
-    });
+    stream
+      .getTracks()
+      .forEach((track) => {
+
+        pc.addTrack(
+          track,
+          stream
+        );
+
+      });
 
     // ================= REMOTE AUDIO =================
     pc.ontrack = (event) => {
 
-      console.log("REMOTE AUDIO RECEIVED");
+      console.log(
+        "REMOTE AUDIO RECEIVED"
+      );
 
-      if (remoteAudioRef.current) {
+      if (
+        remoteAudioRef.current
+      ) {
 
         remoteAudioRef.current.srcObject =
           event.streams[0];
@@ -225,7 +335,9 @@ export default function SmartCallUI({
       offer
     );
 
-    console.log("SEND OFFER");
+    console.log(
+      "SEND OFFER"
+    );
 
     wsRef.current.send(
       JSON.stringify({
@@ -233,12 +345,18 @@ export default function SmartCallUI({
         offer,
       })
     );
+
+    setStarted(true);
   };
 
   // ================= ANSWER CALL =================
-  const answerCall = async (offer) => {
+  const answerCall = async (
+    offer
+  ) => {
 
-    console.log("ANSWER CALL");
+    console.log(
+      "ANSWER CALL"
+    );
 
     const stream =
       await getAudioStream();
@@ -258,7 +376,9 @@ export default function SmartCallUI({
     setupICE(pc);
 
     // ================= RECEIVE DATA CHANNEL =================
-    pc.ondatachannel = (event) => {
+    pc.ondatachannel = (
+      event
+    ) => {
 
       const channel =
         event.channel;
@@ -267,10 +387,15 @@ export default function SmartCallUI({
         channel;
 
       channel.onopen = () => {
-        console.log("DATA CHANNEL OPEN");
+
+        console.log(
+          "DATA CHANNEL OPEN"
+        );
       };
 
-      channel.onmessage = (event) => {
+      channel.onmessage = (
+        event
+      ) => {
 
         console.log(
           "REMOTE TRANSCRIPT:",
@@ -284,16 +409,27 @@ export default function SmartCallUI({
     };
 
     // ================= LOCAL AUDIO =================
-    stream.getTracks().forEach((track) => {
-      pc.addTrack(track, stream);
-    });
+    stream
+      .getTracks()
+      .forEach((track) => {
+
+        pc.addTrack(
+          track,
+          stream
+        );
+
+      });
 
     // ================= REMOTE AUDIO =================
     pc.ontrack = (event) => {
 
-      console.log("REMOTE AUDIO RECEIVED");
+      console.log(
+        "REMOTE AUDIO RECEIVED"
+      );
 
-      if (remoteAudioRef.current) {
+      if (
+        remoteAudioRef.current
+      ) {
 
         remoteAudioRef.current.srcObject =
           event.streams[0];
@@ -313,7 +449,9 @@ export default function SmartCallUI({
       answer
     );
 
-    console.log("SEND ANSWER");
+    console.log(
+      "SEND ANSWER"
+    );
 
     wsRef.current.send(
       JSON.stringify({
@@ -326,7 +464,10 @@ export default function SmartCallUI({
   // ================= AUTOPLAY =================
   useEffect(() => {
 
-    if (remoteAudioRef.current) {
+    if (
+      remoteAudioRef.current
+    ) {
+
       remoteAudioRef.current.autoplay =
         true;
     }
@@ -337,26 +478,32 @@ export default function SmartCallUI({
   useEffect(() => {
 
     if (started) {
+
       startRecording?.();
+
     }
     else {
+
       stopRecording?.();
+
     }
 
-    return () => stopRecording?.();
+    return () =>
+      stopRecording?.();
 
   }, [started]);
 
   // ================= SEND TRANSCRIPT =================
   useEffect(() => {
 
-    if (!liveTranscript) return;
+    if (!liveTranscript)
+      return;
 
     // SEND TO REMOTE
     if (
       dataChannelRef.current &&
-      dataChannelRef.current.readyState ===
-        "open"
+      dataChannelRef.current
+        .readyState === "open"
     ) {
 
       dataChannelRef.current.send(
@@ -380,7 +527,9 @@ export default function SmartCallUI({
     }
 
     else if (
-      text.includes("how are you")
+      text.includes(
+        "how are you"
+      )
     ) {
 
       setAiReply(
@@ -389,7 +538,9 @@ export default function SmartCallUI({
     }
 
     else if (
-      text.includes("your name")
+      text.includes(
+        "your name"
+      )
     ) {
 
       setAiReply(
@@ -448,30 +599,78 @@ export default function SmartCallUI({
             </p>
 
             <p className="text-xs text-white/60 mt-1 text-center">
-              Talk with real people with AI
-              assistance
+              Talk with real people with AI assistance
             </p>
 
           </div>
 
-          {/* BUTTONS */}
-          <div className="mt-6">
+          {/* ROOM */}
+          <div className="mt-6 space-y-3">
 
-            {/* START */}
+            {/* CREATE ROOM */}
             <button
-              onClick={() => {
-
-                startCall();
-
-                setStarted(true);
-
-              }}
-              className="w-full py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 text-white"
+              onClick={createRoom}
+              className="w-full py-2 rounded-xl bg-cyan-500 text-white"
             >
-              Start Call
+              Create Room
+            </button>
+
+            {/* INPUT ROOM */}
+            <input
+              value={roomInput}
+              onChange={(e) =>
+                setRoomInput(
+                  e.target.value
+                )
+              }
+              placeholder="Enter Room ID"
+              className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white outline-none"
+            />
+
+            {/* JOIN ROOM */}
+            <button
+              onClick={joinRoom}
+              className="w-full py-2 rounded-xl bg-green-500/20 text-green-300"
+            >
+              Join Room
             </button>
 
           </div>
+
+          {/* ROOM INFO */}
+          {joinedRoom && (
+
+            <div className="mt-4 text-center">
+
+              <p className="text-xs text-white/50">
+                Room ID
+              </p>
+
+              <p className="text-lg font-bold text-cyan-300">
+                {roomId}
+              </p>
+
+            </div>
+
+          )}
+
+          {/* START CALL */}
+          {joinedRoom && (
+
+            <div className="mt-6">
+
+              <button
+                onClick={
+                  startCall
+                }
+                className="w-full py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 text-white"
+              >
+                Start Call
+              </button>
+
+            </div>
+
+          )}
 
         </div>
 
@@ -581,7 +780,9 @@ export default function SmartCallUI({
             {!isRecording ? (
 
               <button
-                onClick={startRecording}
+                onClick={
+                  startRecording
+                }
                 className="flex-1 py-2 rounded-xl bg-green-500/20 text-green-300"
               >
                 Start Mic
@@ -590,7 +791,9 @@ export default function SmartCallUI({
             ) : (
 
               <button
-                onClick={stopRecording}
+                onClick={
+                  stopRecording
+                }
                 className="flex-1 py-2 rounded-xl bg-red-500/20 text-red-300"
               >
                 Stop Mic
@@ -600,7 +803,9 @@ export default function SmartCallUI({
 
             {/* TRANSLATE */}
             <button
-              onClick={openLupaKata}
+              onClick={
+                openLupaKata
+              }
               className={`flex-1 py-2 rounded-xl border transition ${
                 isLupaKataActive
                   ? "bg-emerald-500/30 text-emerald-300 border-emerald-400"
