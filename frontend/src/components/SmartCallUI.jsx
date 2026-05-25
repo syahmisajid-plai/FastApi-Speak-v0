@@ -382,9 +382,9 @@ export default function SmartCallUI({
               {/* CARDS */}
               <div className="space-y-3">
 
-                {/* Remote Speech */}
+                {/* Live Caption (Partner) */}
                 <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
-                  <p className="text-xs text-white/40 mb-1">Remote Speech</p>
+                  <p className="text-xs text-white/40 mb-1">Live Caption (Partner)</p>
                   <p className="text-sm text-white">
                     {remoteTranscript || "Waiting for speech..."}
                   </p>
