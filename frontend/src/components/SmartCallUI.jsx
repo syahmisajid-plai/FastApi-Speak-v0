@@ -50,20 +50,20 @@ export default function SmartCallUI({
 
   useEffect(() => {
 
-  if (isLupaKataActive) {
+    if (isLupaKataActive) {
 
-    // mute mic ke peer
-    setMicEnabled(false);
+      // mute mic ke peer
+      setMicEnabled(false);
 
-  }
-  else {
+    }
+    else {
 
-    // nyalakan lagi
-    setMicEnabled(true);
+      // nyalakan lagi
+      setMicEnabled(true);
 
-  }
+    }
 
-}, [isLupaKataActive]);
+  }, [isLupaKataActive]);
 
   return (
     <section className="mt-24 md:mb-90 text-white flex items-center justify-center bg-linear-to-b from-slate-900 to-cyan-950">
