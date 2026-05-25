@@ -27,6 +27,9 @@ export default function useSmartCall({
   const [aiReply, setAiReply] =
     useState("");
 
+  const [isMuted, setIsMuted] =
+    useState(false);
+
   // ================= ROOM =================
   const [roomId, setRoomId] =
     useState("");
@@ -356,10 +359,46 @@ export default function useSmartCall({
     );
   };
 
+  // ================= TOGGLE MUTE =================
+  const toggleMute = () => {
+
+    const stream =
+      localStreamRef.current;
+
+    if (!stream) return;
+
+    const nextMuted =
+      !isMuted;
+
+    stream
+      .getAudioTracks()
+      .forEach((track) => {
+
+        track.enabled =
+          !nextMuted;
+
+      });
+
+    setIsMuted(nextMuted);
+
+    // transcript juga stop
+    if (nextMuted) {
+
+      stopRecording?.();
+
+    }
+    else {
+
+      startRecording?.();
+
+    }
+  };
+
   // ================= END CALL =================
   const endCall = () => {
 
     setStarted(false);
+    setIsMuted(false);
 
     pcRef.current?.close();
 
@@ -546,11 +585,34 @@ export default function useSmartCall({
 
   }, [liveTranscript]);
 
+  // ================= SET MIC ENABLED =================
+  const setMicEnabled = (
+    enabled
+  ) => {
+
+    const stream =
+      localStreamRef.current;
+
+    if (!stream) return;
+
+    stream
+      .getAudioTracks()
+      .forEach((track) => {
+
+        track.enabled =
+          enabled;
+
+      });
+
+    setIsMuted(!enabled);
+  };
+
   return {
     // STATES
     started,
     remoteTranscript,
     aiReply,
+    isMuted,
 
     roomId,
     joinedRoom,
@@ -564,6 +626,9 @@ export default function useSmartCall({
     joinRoom,
     startCall,
     endCall,
+    toggleMute,
+
+    setMicEnabled,
 
     // REFS
     remoteAudioRef,

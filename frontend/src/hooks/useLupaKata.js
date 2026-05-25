@@ -9,6 +9,7 @@ export default function useLupaKata({
 }) {
   const [isLupaKataActive, setIsLupaKataActive] = useState(false);
   const [lupaKataHeardText, setLupaKataHeardText] = useState("");
+  const [translatedText, setTranslatedText] = useState("");
 
   const finalTextRef = useRef("");
 
@@ -51,6 +52,7 @@ export default function useLupaKata({
       ]);
 
       if (data.translated) {
+        setTranslatedText(data.translated);
         onLupaKataResult?.(data.translated);
       }
     } catch (err) {
@@ -200,5 +202,7 @@ export default function useLupaKata({
     isLupaKataActive,
     lupaKataHeardText,
     toggleLupaKata, // ⬅️ INI dipakai tombol
+
+    translatedText
   };
 }

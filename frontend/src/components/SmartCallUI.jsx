@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSmartCall from "../hooks/useSmartCall";
 
 export default function SmartCallUI({
@@ -17,6 +17,11 @@ export default function SmartCallUI({
     started,
     remoteTranscript,
     aiReply,
+
+    isMuted,
+    toggleMute,
+
+    setMicEnabled,
 
     roomId,
     joinedRoom,
@@ -43,8 +48,25 @@ export default function SmartCallUI({
   const [roomMode, setRoomMode] = useState(null);
   const [readyToCall, setReadyToCall] = useState(false);
 
+  useEffect(() => {
+
+  if (isLupaKataActive) {
+
+    // mute mic ke peer
+    setMicEnabled(false);
+
+  }
+  else {
+
+    // nyalakan lagi
+    setMicEnabled(true);
+
+  }
+
+}, [isLupaKataActive]);
+
   return (
-    <section className="mt-24 text-white flex items-center justify-center bg-linear-to-b from-slate-900 to-cyan-950">
+    <section className="mt-24 md:mb-90 text-white flex items-center justify-center bg-linear-to-b from-slate-900 to-cyan-950">
       <div className="w-full max-w-md relative">
 
         {/* AUDIO */}
@@ -280,9 +302,53 @@ export default function SmartCallUI({
                   <p className="text-sm font-semibold tracking-wide">
                     In Call
                   </p>
-                  <p className="text-xs text-white/50 mt-1">
-                    {isRecording ? "Listening..." : "Idle"}
-                  </p>
+                  <div className="flex gap-2 mt-2 flex-wrap">
+
+                    {isMuted && (
+                      <span
+                        className="px-2 py-1 rounded-lg
+                        bg-red-500/20 text-red-300
+                        border border-red-400/20
+                        text-[10px] tracking-wide"
+                      >
+                        MUTED
+                      </span>
+                    )}
+
+                    {isLupaKataActive && (
+                      <span
+                        className="px-2 py-1 rounded-lg
+                        bg-emerald-500/20 text-emerald-300
+                        border border-emerald-400/20
+                        text-[10px] tracking-wide"
+                      >
+                        TRANSLATE MODE
+                      </span>
+                    )}
+
+                    {!isMuted && !isLupaKataActive && (
+                      <span
+                        className="px-2 py-1 rounded-lg
+                        bg-cyan-500/20 text-cyan-300
+                        border border-cyan-400/20
+                        text-[10px] tracking-wide"
+                      >
+                        LIVE CALL
+                      </span>
+                    )}
+
+                    {isRecording && !isMuted && (
+                      <span
+                        className="px-2 py-1 rounded-lg
+                        bg-white/10 text-white/80
+                        border border-white/10
+                        text-[10px] tracking-wide animate-pulse"
+                      >
+                        LISTENING
+                      </span>
+                    )}
+
+                  </div>
                 </div>
 
                 <button
@@ -304,7 +370,7 @@ export default function SmartCallUI({
                 <div
                   className={`w-24 h-24 rounded-full flex items-center justify-center text-3xl border transition-all duration-300
                   ${
-                    isRecording
+                    !isMuted
                       ? "bg-cyan-500/20 border-cyan-400 animate-pulse shadow-lg shadow-cyan-500/20"
                       : "bg-white/5 border-white/10"
                   }`}
@@ -326,10 +392,31 @@ export default function SmartCallUI({
 
                 {/* Translation */}
                 <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
-                  <p className="text-xs text-white/40 mb-1">Translation</p>
-                  <p className="text-sm text-white">
-                    {lupaKata?.lupaKataHeardText || "..."}
-                  </p>
+                  <p className="text-xs text-white/40 mb-2">Translation</p>
+
+                  {/* LIVE TRANSCRIPT */}
+                  <div className="mb-2">
+                    <p className="text-[10px] text-white/30 mb-1">
+                      {isLupaKataActive ? "Listening..." : "Transcript"}
+                    </p>
+
+                    <p className="text-sm text-white">
+                      {lupaKata?.lupaKataHeardText || "..."}
+                    </p>
+                  </div>
+
+                  {/* TRANSLATED RESULT */}
+                  {lupaKata?.translatedText && !isLupaKataActive && (
+                    <div className="pt-2 border-t border-white/10">
+                      <p className="text-[10px] text-cyan-300/70 mb-1">
+                        English Translation
+                      </p>
+
+                      <p className="text-sm text-cyan-100">
+                        {lupaKata.translatedText}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* AI Reply */}
@@ -349,29 +436,17 @@ export default function SmartCallUI({
               {/* CONTROLS */}
               <div className="flex gap-2 mt-5">
 
-                {!isRecording ? (
-                  <button
-                    onClick={startRecording}
-                    className="flex-1 py-2! rounded-xl
-                    bg-green-500/10! text-green-300
-                    border border-green-500/20
-                    hover:bg-green-500/20 transition
-                    active:scale-[0.98]"
-                  >
-                    Start Mic
-                  </button>
-                ) : (
-                  <button
-                    onClick={stopRecording}
-                    className="flex-1 py-2! rounded-xl
-                    bg-red-500/10! text-red-300
-                    border border-red-500/20
-                    hover:bg-red-500/20 transition
-                    active:scale-[0.98]"
-                  >
-                    Stop Mic
-                  </button>
-                )}
+                <button
+                  onClick={toggleMute}
+                  className={`flex-1 py-2! rounded-xl border transition
+                  ${
+                    isMuted
+                      ? "bg-yellow-500/20! text-yellow-300 border-yellow-400/30"
+                      : "bg-red-500/10! text-red-300 border-red-500/20 hover:bg-red-500/20"
+                  }`}
+                >
+                  {isMuted ? "Unmute" : "Mute"}
+                </button>
 
                 <button
                   onClick={openLupaKata}
@@ -391,6 +466,7 @@ export default function SmartCallUI({
         )}
 
       </div>
+      
     </section>
   );
 }
