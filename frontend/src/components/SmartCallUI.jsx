@@ -92,6 +92,14 @@ export default function SmartCallUI({
 
 }, [started, joinedRoom]);
 
+  useEffect(() => {
+
+    if (started) {
+      setStage("C");
+    }
+
+  }, [started]);
+
   return (
     <section className="mt-24 md:mb-90 text-white flex items-center justify-center bg-linear-to-b from-slate-900 to-cyan-950">
       <div className="w-full max-w-md relative">
@@ -150,13 +158,12 @@ export default function SmartCallUI({
         {/* ================= B: BEFORE CALL ================= */}
         {stage === "B" && (
           <div
-            className={`absolute w-full transition-all duration-500 ease-out ${
-              started
-                ? "opacity-0 scale-95 pointer-events-none"
-                : `opacity-100 scale-100 ${
-                    roomMode === "join" || roomMode === "create" ? "" : "mt-12"
-                  }`
-            }`}
+            className={`absolute w-full transition-all duration-500 ease-out
+              opacity-100 scale-100 ${
+                roomMode === "join" || roomMode === "create"
+                  ? ""
+                  : "mt-12"
+              }`}
           >
             <div
               className="rounded-2xl backdrop-blur-2xl
