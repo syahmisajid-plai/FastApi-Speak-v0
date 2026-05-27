@@ -379,36 +379,31 @@ export default function useSmartCall({
 
   // ================= TOGGLE MUTE =================
   const toggleMute = () => {
-
-    const stream =
-      localStreamRef.current;
-
+    const stream = localStreamRef.current;
     if (!stream) return;
 
-    const nextMuted =
-      !isMuted;
+    const nextMuted = !isMuted;
 
-    stream
-      .getAudioTracks()
-      .forEach((track) => {
-
-        track.enabled =
-          !nextMuted;
-
-      });
+    stream.getAudioTracks().forEach(track => {
+      track.enabled = !nextMuted;
+    });
 
     setIsMuted(nextMuted);
 
-    // transcript juga stop
-    if (nextMuted) {
-
-      stopRecording?.();
-
+    // 🔥 SEND STATE KE PEER
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: "peer-state",
+          mute: nextMuted,
+        })
+      );
     }
-    else {
 
+    if (nextMuted) {
+      stopRecording?.();
+    } else {
       startRecording?.();
-
     }
   };
 
