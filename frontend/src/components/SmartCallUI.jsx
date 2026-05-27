@@ -76,6 +76,10 @@ export default function SmartCallUI({
   };
 
   useEffect(() => {
+    console.log("📡 peerState UPDATED:", peerState);
+  }, [peerState]);
+
+  useEffect(() => {
 
     if (isLupaKataActive) {
 

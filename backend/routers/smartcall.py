@@ -88,6 +88,10 @@ async def websocket_endpoint(
             # ================= PEER STATE (MUTE / TRANSLATE / ETC) =================
             if event_type == "peer-state":
 
+                # 🔥 DEBUG INI TARUH DI SINI
+                print("🔥 RAW DATA:", data)
+                print("🔥 STATE RECEIVED:", data.get("state"))
+
                 state = data.get("state", {})
 
                 # simpan state user
@@ -98,6 +102,8 @@ async def websocket_endpoint(
                     "from": username,
                     "state": state
                 }
+
+                print("📡 BROADCAST PEER STATE:", payload)
 
                 # broadcast ke peer lain
                 for client in rooms[room_id]:

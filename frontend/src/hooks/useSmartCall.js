@@ -394,6 +394,11 @@ export default function useSmartCall({
 
     setIsMuted(nextMuted);
 
+    // 🔥 DEBUG LOG (INI YANG KAMU TANYA)
+    console.log("📤 SEND PEER STATE:", {
+      muted: nextMuted,
+    });
+
     // 🔥 SEND STATE KE PEER (MATCH BACKEND)
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(
@@ -531,14 +536,15 @@ export default function useSmartCall({
       event
     ) => {
 
+      const data = JSON.parse(event.data);
+
       if (data.type === "peer-state") {
         if (data.from !== username) {
+          console.log("📡 RAW PEER STATE RECEIVED:", data.state);
           setPeerState?.(data.state); // atau setRemotePeerState
         }
         return;
       }
-
-      const data = JSON.parse(event.data);
 
       console.log("WS MESSAGE:", data);
 
