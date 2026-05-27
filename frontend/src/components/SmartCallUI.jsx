@@ -76,6 +76,22 @@ export default function SmartCallUI({
 
   }, [isLupaKataActive]);
 
+  useEffect(() => {
+
+  // call selesai -> balik idle UI
+  if (!started && !joinedRoom) {
+
+    setStage("B");
+
+    setShowJoinInput(false);
+
+    setRoomMode(null);
+
+    setReadyToCall(false);
+  }
+
+}, [started, joinedRoom]);
+
   return (
     <section className="mt-24 md:mb-90 text-white flex items-center justify-center bg-linear-to-b from-slate-900 to-cyan-950">
       <div className="w-full max-w-md relative">
@@ -219,7 +235,12 @@ export default function SmartCallUI({
 
                     <input
                       value={roomInput}
-                      onChange={(e) => setRoomInput(e.target.value)}
+                      onChange={(e) => {
+                        setRoomInput(e.target.value);
+
+                        // user mengubah ID -> harus join ulang
+                        setReadyToCall(false);
+                      }}
                       placeholder="Enter Room ID"
                       className="w-full px-3 py-2.5 rounded-xl
                       bg-white/5 text-white text-sm
@@ -401,7 +422,6 @@ export default function SmartCallUI({
                 <button
                   onClick={() => {
                     endCall();
-                    setStage("B");
                   }}
                   className="text-xs px-3! py-1! rounded-lg
                   bg-red-500/10! text-red-300

@@ -46,6 +46,8 @@ export default function useSmartCall({
 
   const pcRef = useRef(null);
 
+  const isCleaningRef = useRef(false);
+
   const dataChannelRef =
     useRef(null);
 
@@ -123,13 +125,15 @@ export default function useSmartCall({
           "SEND ICE"
         );
 
-        wsRef.current?.send(
-          JSON.stringify({
-            type: "ice",
-            candidate:
-              event.candidate,
-          })
-        );
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current?.send(
+            JSON.stringify({
+              type: "ice",
+              candidate:
+                event.candidate,
+            })
+          );
+        }
       }
     };
 
@@ -240,12 +244,14 @@ export default function useSmartCall({
       "SEND OFFER"
     );
 
-    wsRef.current?.send(
-      JSON.stringify({
-        type: "offer",
-        offer,
-      })
-    );
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current?.send(
+        JSON.stringify({
+          type: "offer",
+          offer,
+        })
+      );
+    }
 
     setStarted(true);
   };
@@ -350,12 +356,14 @@ export default function useSmartCall({
       "SEND ANSWER"
     );
 
-    wsRef.current?.send(
-      JSON.stringify({
-        type: "answer",
-        answer,
-      })
-    );
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current?.send(
+        JSON.stringify({
+          type: "answer",
+          answer,
+        })
+      );
+    }
   };
 
   // ================= TOGGLE MUTE =================
@@ -393,31 +401,86 @@ export default function useSmartCall({
     }
   };
 
-  // ================= END CALL =================
-  const endCall = () => {
+  // ================= Reset CALL State =================
+  const resetCallState = () => {
+
+    if (isCleaningRef.current) return;
+
+    isCleaningRef.current = true;
+
+    console.log("RESET CALL STATE");
 
     setStarted(false);
+
     setIsMuted(false);
 
+    setIsPeerConnected(false);
+
+    setConnectionState("new");
+
+    setRemoteTranscript("");
+
+    setAiReply("");
+
+    setJoinedRoom(false);
+
+    setRoomId("");
+
+    setRoomInput("");
+
+    // close pc
     pcRef.current?.close();
 
-    wsRef.current?.close();
+    // close ws
+    if (
+      wsRef.current &&
+      wsRef.current.readyState === WebSocket.OPEN
+    ) {
+      wsRef.current.close();
+    }
 
+    // stop mic
     localStreamRef.current
       ?.getTracks()
       ?.forEach((track) =>
         track.stop()
       );
 
+    // clear refs
     pcRef.current = null;
 
     wsRef.current = null;
 
-    dataChannelRef.current =
-      null;
+    dataChannelRef.current = null;
 
-    localStreamRef.current =
-      null;
+    localStreamRef.current = null;
+
+    // clear remote audio
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = null;
+    }
+
+    setTimeout(() => {
+      isCleaningRef.current = false;
+    }, 500);
+  };
+
+  // ================= END CALL =================
+  const endCall = () => {
+
+    console.log("END CALL");
+
+    // kasih tahu backend
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current?.send(
+        JSON.stringify({
+          type: "end-call",
+        })
+      );
+    }
+
+    // local cleanup
+    resetCallState();
   };
 
     useEffect(() => {
@@ -458,6 +521,16 @@ export default function useSmartCall({
         "WS MESSAGE:",
         data
       );
+
+      // ================= CALL ENDED =================
+      if (data.type === "call-ended") {
+
+        console.log("CALL ENDED FROM SERVER");
+
+        resetCallState();
+
+        return;
+      }
 
       // ================= OFFER =================
       if (data.type === "offer") {

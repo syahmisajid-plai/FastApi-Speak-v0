@@ -8,12 +8,34 @@ router = APIRouter()
 rooms = defaultdict(list)
 
 
+async def cleanup_room(room_id: str):
+
+    if room_id in rooms:
+
+        # kasih tahu semua peer call selesai
+        for client in rooms[room_id]:
+
+            try:
+                await client["ws"].send_json({
+                    "type": "call-ended"
+                })
+
+            except:
+                pass
+
+        # hapus room
+        del rooms[room_id]
+
+        print(f"ROOM DELETED: {room_id}")
+
+
 @router.websocket("/ws/{room_id}")
 async def websocket_endpoint(
     websocket: WebSocket,
     room_id: str,
     username: str = "Guest"
 ):
+
     await websocket.accept()
 
     print(f"{username} JOIN ROOM: {room_id}")
@@ -24,39 +46,46 @@ async def websocket_endpoint(
     })
 
     try:
+
         while True:
-            # ================= RECEIVE MESSAGE =================
+
+            # ================= RECEIVE =================
             raw_data = await websocket.receive_text()
 
-            # parse JSON (IMPORTANT FOR WEBRTC)
             try:
                 data = json.loads(raw_data)
+
             except Exception:
                 print("INVALID JSON:", raw_data)
                 continue
 
             print(f"RECEIVED FROM {username}: {data}")
 
-            # ================= BUILD PAYLOAD =================
+            # ================= END CALL =================
+            if data.get("type") == "end-call":
+
+                print(f"{username} ENDED CALL")
+
+                await cleanup_room(room_id)
+
+                break
+
+            # ================= PAYLOAD =================
             payload = {
                 "from": username,
-                **data   # preserve type, offer, answer, ice
+                **data
             }
 
-            # ================= BROADCAST TO ROOM =================
+            # ================= BROADCAST =================
             for client in rooms[room_id]:
+
                 if client["ws"] != websocket:
+
                     await client["ws"].send_json(payload)
 
     except WebSocketDisconnect:
 
-        print(f"{username} LEFT ROOM: {room_id}")
+        print(f"{username} DISCONNECTED")
 
-        rooms[room_id] = [
-            c for c in rooms[room_id]
-            if c["ws"] != websocket
-        ]
-
-        if len(rooms[room_id]) == 0:
-            del rooms[room_id]
-            print(f"ROOM DELETED: {room_id}")
+        # kalau ada user keluar -> akhiri seluruh call
+        await cleanup_room(room_id)
