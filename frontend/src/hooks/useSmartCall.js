@@ -33,6 +33,10 @@ export default function useSmartCall({
   const [isMuted, setIsMuted] =
     useState(false);
 
+  const [peerState, setPeerState] = useState({
+    muted: false,
+  });
+
   // ================= ROOM =================
   const [roomId, setRoomId] =
     useState("");
@@ -390,12 +394,14 @@ export default function useSmartCall({
 
     setIsMuted(nextMuted);
 
-    // 🔥 SEND STATE KE PEER
+    // 🔥 SEND STATE KE PEER (MATCH BACKEND)
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(
         JSON.stringify({
           type: "peer-state",
-          mute: nextMuted,
+          state: {
+            muted: nextMuted,
+          },
         })
       );
     }
@@ -524,6 +530,13 @@ export default function useSmartCall({
     ws.onmessage = async (
       event
     ) => {
+
+      if (data.type === "peer-state") {
+        if (data.from !== username) {
+          setPeerState?.(data.state); // atau setRemotePeerState
+        }
+        return;
+      }
 
       const data = JSON.parse(event.data);
 
@@ -737,5 +750,7 @@ export default function useSmartCall({
 
     connectionState,
     callEndedBy,
+
+    peerState,
   };
 }

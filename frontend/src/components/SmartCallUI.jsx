@@ -40,6 +40,8 @@ export default function SmartCallUI({
 
     connectionState,
     callEndedBy,
+
+    peerState,
   } = useSmartCall({
     startRecording,
     stopRecording,
@@ -55,6 +57,7 @@ export default function SmartCallUI({
   const [roomMode, setRoomMode] = useState(null);
   const [readyToCall, setReadyToCall] = useState(false);
   const [endMessage, setEndMessage] = useState("");
+
 
   const connectionLabel = {
     new: "Idle",
@@ -528,14 +531,20 @@ export default function SmartCallUI({
               {/* AVATAR / STATUS */}
               <div className="flex justify-center mb-6">
                 <div
-                  className={`w-24 h-24 rounded-full flex items-center justify-center text-3xl border transition-all duration-300
+                  className={`w-24 h-24 rounded-full flex items-center justify-center text-3xl border transition-all duration-300 relative
                   ${
-                    !isMuted
-                      ? "bg-cyan-500/20 border-cyan-400 animate-pulse shadow-lg shadow-cyan-500/20"
-                      : "bg-white/5 border-white/10"
+                    peerState?.muted
+                      ? "bg-red-500/10 border-red-400/30"
+                      : "bg-cyan-500/20 border-cyan-400 animate-pulse"
                   }`}
                 >
-                  📞
+                  {peerState?.muted ? "🔇" : "📞"}
+
+                  {/* small dot indicator */}
+                  <span
+                    className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-900
+                    ${peerState?.muted ? "bg-red-400" : "bg-emerald-400"}`}
+                  />
                 </div>
               </div>
 
