@@ -14,6 +14,7 @@ export default function useSmartCall({
 }) {
 
   const [isPeerConnected, setIsPeerConnected] = useState(false);
+  const [connectionState, setConnectionState] = useState("new");
 
   // ================= STATES =================
   const [started, setStarted] =
@@ -132,14 +133,12 @@ export default function useSmartCall({
       }
     };
 
-    pc.onconnectionstatechange =
-      () => {
+    pc.onconnectionstatechange = () => {
+      const state = pc.connectionState;
 
-        console.log(
-          "CONNECTION STATE:",
-          pc.connectionState
-        );
-      };
+      console.log("CONNECTION STATE:", state);
+      setConnectionState(state);
+    };
 
     pc.oniceconnectionstatechange =
       () => {
@@ -632,5 +631,8 @@ export default function useSmartCall({
 
     // REFS
     remoteAudioRef,
+
+
+    connectionState,
   };
 }

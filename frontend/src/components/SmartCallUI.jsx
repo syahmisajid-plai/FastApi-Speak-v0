@@ -35,6 +35,8 @@ export default function SmartCallUI({
     endCall,
 
     remoteAudioRef,
+
+    connectionState,
   } = useSmartCall({
     startRecording,
     stopRecording,
@@ -47,6 +49,15 @@ export default function SmartCallUI({
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [roomMode, setRoomMode] = useState(null);
   const [readyToCall, setReadyToCall] = useState(false);
+
+  const connectionLabel = {
+    new: "Idle",
+    connecting: "Connecting...",
+    connected: "Live",
+    disconnected: "Reconnecting...",
+    failed: "Connection Lost",
+    closed: "Call Ended",
+  };
 
   useEffect(() => {
 
@@ -299,9 +310,45 @@ export default function SmartCallUI({
               {/* TOP BAR */}
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <p className="text-sm font-semibold tracking-wide">
-                    In Call
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold tracking-wide">
+                      In Call
+                    </p>
+
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] border
+                      ${
+                        connectionState === "connected"
+                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/20"
+                          : connectionState === "connecting"
+                          ? "bg-yellow-500/20 text-yellow-300 border-yellow-400/20"
+                          : connectionState === "disconnected"
+                          ? "bg-orange-500/20 text-orange-300 border-orange-400/20"
+                          : connectionState === "failed"
+                          ? "bg-red-500/20 text-red-300 border-red-400/20"
+                          : "bg-white/5 text-white/50 border-white/10"
+                      }`}
+                    >
+                      <span
+                        className={`w-2 h-2 rounded-full
+                        ${
+                          connectionState === "connected"
+                            ? "bg-emerald-400"
+                            : connectionState === "connecting"
+                            ? "bg-yellow-400 animate-pulse"
+                            : connectionState === "disconnected"
+                            ? "bg-orange-400"
+                            : connectionState === "failed"
+                            ? "bg-red-400"
+                            : "bg-white/40"
+                        }`}
+                      />
+
+                      {connectionLabel[connectionState] || "Unknown"}
+                    </span>
+                  </div>
+
+
                   <div className="flex gap-2 mt-2 flex-wrap">
 
                     {isMuted && (
