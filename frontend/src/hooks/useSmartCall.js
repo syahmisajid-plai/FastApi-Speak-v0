@@ -15,6 +15,7 @@ export default function useSmartCall({
 
   const [isPeerConnected, setIsPeerConnected] = useState(false);
   const [connectionState, setConnectionState] = useState("new");
+  const [peerName, setPeerName] = useState(null);
   const [callEndedBy, setCallEndedBy] = useState(null);
 
   // ================= STATES =================
@@ -434,11 +435,13 @@ export default function useSmartCall({
 
     setJoinedRoom(false);
 
+    setPeerName(null);
+
     setRoomId("");
 
     setRoomInput("");
 
-    setCallEndedBy(null);
+    // setCallEndedBy(null);
 
     // close pc
     pcRef.current?.close();
@@ -492,7 +495,9 @@ export default function useSmartCall({
     }
 
     // local cleanup
-    resetCallState();
+    setTimeout(() => {
+      resetCallState();
+    }, 100);
   };
 
     useEffect(() => {
@@ -525,14 +530,13 @@ export default function useSmartCall({
       event
     ) => {
 
-      const data = JSON.parse(
-        event.data
-      );
+      const data = JSON.parse(event.data);
 
-      console.log(
-        "WS MESSAGE:",
-        data
-      );
+      console.log("WS MESSAGE:", data);
+
+      if (data.from && data.from !== username) {
+        setPeerName(data.from);
+      }
 
       // ================= CALL ENDED =================
       if (data.type === "call-ended") {
@@ -548,7 +552,9 @@ export default function useSmartCall({
 
         }
 
-        resetCallState();
+        setTimeout(() => {
+          resetCallState();
+        }, 100);
 
         return;
       }
@@ -712,6 +718,8 @@ export default function useSmartCall({
     aiReply,
     isMuted,
 
+    peerName,
+    
     roomId,
     joinedRoom,
     roomInput,

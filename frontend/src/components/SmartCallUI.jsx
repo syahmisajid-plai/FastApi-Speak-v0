@@ -21,6 +21,8 @@ export default function SmartCallUI({
     isMuted,
     toggleMute,
 
+    peerName,
+
     setMicEnabled,
 
     roomId,
@@ -381,12 +383,44 @@ export default function SmartCallUI({
               {/* TOP BAR */}
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold tracking-wide">
-                      In Call
-                    </p>
+                  <div className="flex items-center gap-3">
+                    {/* Avatar */}
+                    <div
+                      className="w-11 h-11 rounded-2xl
+                      bg-cyan-500/20 border border-cyan-400/20
+                      flex items-center justify-center
+                      text-cyan-200 font-semibold text-sm"
+                    >
+                      {peerName?.charAt(0)?.toUpperCase() || "?"}
+                    </div>
 
-                    <span
+                    {/* User Info */}
+                    <div className="flex flex-col">
+                      
+                      <p className="text-sm font-semibold text-white tracking-wide">
+                        {peerName || "Connecting..."}
+                      </p>
+
+                      <div className="flex items-center gap-2 mt-0.5">
+
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            connectionState === "connected"
+                              ? "bg-emerald-400"
+                              : connectionState === "connecting"
+                              ? "bg-yellow-400 animate-pulse"
+                              : "bg-white/30"
+                          }`}
+                        />
+
+                        <p className="text-[11px] text-white/45">
+                          {connectionLabel[connectionState] || "Waiting"}
+                        </p>
+
+                      </div>
+                    </div>
+
+                    {/* <span
                       className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] border
                       ${
                         connectionState === "connected"
@@ -416,7 +450,7 @@ export default function SmartCallUI({
                       />
 
                       {connectionLabel[connectionState] || "Unknown"}
-                    </span>
+                    </span> */}
                   </div>
 
 
