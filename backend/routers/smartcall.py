@@ -8,7 +8,10 @@ router = APIRouter()
 rooms = defaultdict(list)
 
 
-async def cleanup_room(room_id: str):
+async def cleanup_room(
+    room_id: str,
+    ended_by: str = "Unknown"
+):
 
     if room_id in rooms:
 
@@ -17,7 +20,8 @@ async def cleanup_room(room_id: str):
 
             try:
                 await client["ws"].send_json({
-                    "type": "call-ended"
+                    "type": "call-ended",
+                    "by": ended_by
                 })
 
             except:
@@ -66,7 +70,10 @@ async def websocket_endpoint(
 
                 print(f"{username} ENDED CALL")
 
-                await cleanup_room(room_id)
+                await cleanup_room(
+                    room_id,
+                    ended_by=username
+                )
 
                 break
 
@@ -88,4 +95,7 @@ async def websocket_endpoint(
         print(f"{username} DISCONNECTED")
 
         # kalau ada user keluar -> akhiri seluruh call
-        await cleanup_room(room_id)
+        await cleanup_room(
+            room_id,
+            ended_by=username
+        )

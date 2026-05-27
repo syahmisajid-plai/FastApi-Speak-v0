@@ -15,6 +15,7 @@ export default function useSmartCall({
 
   const [isPeerConnected, setIsPeerConnected] = useState(false);
   const [connectionState, setConnectionState] = useState("new");
+  const [callEndedBy, setCallEndedBy] = useState(null);
 
   // ================= STATES =================
   const [started, setStarted] =
@@ -80,7 +81,7 @@ export default function useSmartCall({
   };
 
   // ================= JOIN ROOM =================
-  const joinRoom = () => {
+  const joinRoom = (roomInput) => {
 
     if (!roomInput) return;
 
@@ -156,6 +157,10 @@ export default function useSmartCall({
 
   // ================= START CALL =================
   const startCall = async () => {
+    if (pcRef.current) {
+      console.log("CALL ALREADY EXISTS");
+      return;
+    }
 
     console.log(
       "START CALL"
@@ -260,6 +265,11 @@ export default function useSmartCall({
   const answerCall = async (
     offer
   ) => {
+
+    if (pcRef.current) {
+      console.log("PEER CONNECTION ALREADY EXISTS");
+      return;
+    }
 
     console.log(
       "ANSWER CALL"
@@ -428,6 +438,8 @@ export default function useSmartCall({
 
     setRoomInput("");
 
+    setCallEndedBy(null);
+
     // close pc
     pcRef.current?.close();
 
@@ -527,6 +539,15 @@ export default function useSmartCall({
 
         console.log("CALL ENDED FROM SERVER");
 
+        setCallEndedBy(data.by);
+
+        // apakah peer yang mengakhiri?
+        if (data.by !== username) {
+
+          console.log(`${data.by} ended the call`);
+
+        }
+
         resetCallState();
 
         return;
@@ -593,7 +614,12 @@ export default function useSmartCall({
 
     return () => {
 
-      ws.close();
+      if (
+        ws.readyState === WebSocket.OPEN ||
+        ws.readyState === WebSocket.CONNECTING
+      ) {
+        ws.close();
+      }
 
     };
 
@@ -707,5 +733,6 @@ export default function useSmartCall({
 
 
     connectionState,
+    callEndedBy,
   };
 }

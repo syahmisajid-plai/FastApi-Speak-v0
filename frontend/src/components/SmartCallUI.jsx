@@ -37,6 +37,7 @@ export default function SmartCallUI({
     remoteAudioRef,
 
     connectionState,
+    callEndedBy,
   } = useSmartCall({
     startRecording,
     stopRecording,
@@ -49,6 +50,7 @@ export default function SmartCallUI({
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [roomMode, setRoomMode] = useState(null);
   const [readyToCall, setReadyToCall] = useState(false);
+  const [endMessage, setEndMessage] = useState("");
 
   const connectionLabel = {
     new: "Idle",
@@ -100,10 +102,51 @@ export default function SmartCallUI({
 
   }, [started]);
 
+  useEffect(() => {
+
+    if (!callEndedBy) return;
+
+    // kalau peer yang end
+    if (callEndedBy !== user?.username) {
+
+      setEndMessage(
+        `${callEndedBy} ended the call`
+      );
+
+    }
+    else {
+
+      setEndMessage(
+        "Call ended"
+      );
+
+    }
+
+    // hilang otomatis
+    setTimeout(() => {
+      setEndMessage("");
+    }, 3000);
+
+  }, [callEndedBy, user]);
+
   return (
     <section className="mt-24 md:mb-90 text-white flex items-center justify-center bg-linear-to-b from-slate-900 to-cyan-950">
       <div className="w-full max-w-md relative">
 
+        {/* End Call Message */}
+        {endMessage && (
+          <div
+            className="absolute -top-14 left-1/2 -translate-x-1/2
+            px-4 py-2 rounded-xl
+            bg-red-500/20 border border-red-400/20
+            text-red-200 text-sm backdrop-blur-xl
+            animate-in fade-in duration-300
+            z-50"
+          >
+            {endMessage}
+          </div>
+        )}
+        
         {/* AUDIO */}
         <audio ref={remoteAudioRef} autoPlay />
 
