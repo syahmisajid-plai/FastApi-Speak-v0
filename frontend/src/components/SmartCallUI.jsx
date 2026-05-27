@@ -45,6 +45,8 @@ export default function SmartCallUI({
     stopRecording,
     liveTranscript,
     user,
+
+    isLupaKataActive,
   });
 
   const [stage, setStage] = useState("A"); // A | B | C
@@ -61,6 +63,13 @@ export default function SmartCallUI({
     disconnected: "Reconnecting...",
     failed: "Connection Lost",
     closed: "Call Ended",
+  };
+
+  // ================= Control Mute When Translate ON =================
+  const handleToggleMute = () => {
+    if (isLupaKataActive) return; // ❌ benar-benar dikunci
+
+    toggleMute();
   };
 
   useEffect(() => {
@@ -588,15 +597,33 @@ export default function SmartCallUI({
               <div className="flex gap-2 mt-5">
 
                 <button
-                  onClick={toggleMute}
-                  className={`flex-1 py-2! rounded-xl border transition
-                  ${
-                    isMuted
-                      ? "bg-yellow-500/20! text-yellow-300 border-yellow-400/30"
-                      : "bg-red-500/10! text-red-300 border-red-500/20 hover:bg-red-500/20"
-                  }`}
+                  onClick={handleToggleMute}
+                  disabled={isLupaKataActive}
+                  className={`flex-1 py-2! rounded-xl border transition relative
+                    ${
+                      isLupaKataActive
+                        ? "bg-white/5 text-white/40 border-white/10 cursor-not-allowed"
+                        : isMuted
+                        ? "bg-yellow-500/20 text-yellow-300 border-yellow-400/30"
+                        : "bg-red-500/10 text-red-300 border-red-500/20 hover:bg-red-500/20"
+                    }`}
                 >
-                  {isMuted ? "Unmute" : "Mute"}
+                  <div className="flex items-center justify-center gap-2">
+                    
+                    {/* ICON */}
+                    {isLupaKataActive ? (
+                      <span className="text-sm">🔒</span>
+                    ) : (
+                      <span className="text-sm">🎤</span>
+                    )}
+
+                    {/* TEXT */}
+                    {isLupaKataActive
+                      ? "Muted (Locked)"
+                      : isMuted
+                      ? "Unmute"
+                      : "Mute"}
+                  </div>
                 </button>
 
                 <button
@@ -607,7 +634,7 @@ export default function SmartCallUI({
                       : "bg-white/5! text-white/60 border-white/10 hover:bg-white/10"
                   }`}
                 >
-                  {isLupaKataActive ? "Translate ON" : "Translate"}
+                  {isLupaKataActive ? "🔒 Translate ON" : "🌐 Translate"}
                 </button>
 
               </div>
