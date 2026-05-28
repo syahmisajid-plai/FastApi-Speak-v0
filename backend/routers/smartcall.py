@@ -7,21 +7,18 @@ router = APIRouter()
 # ================= ROOMS =================
 rooms = defaultdict(list)
 
-# ================= ROOM STATE =================
+# ================= ROOM STATE (IMPORTANT) =================
+# menyimpan status tiap user: mute / translate / dll
 room_states = defaultdict(dict)
 
-# ================= ROOM META =================
-room_meta = defaultdict(lambda: {
-    "status": "waiting",   # waiting | ready | starting | in-call
-})
 
-
-# ================= CLEANUP =================
+# ================= CLEANUP ROOM =================
 async def cleanup_room(room_id: str, ended_by: str = "Unknown"):
 
     if room_id not in rooms:
         return
 
+    # notify semua peer
     for client in rooms[room_id]:
         try:
             await client["ws"].send_json({
@@ -31,9 +28,10 @@ async def cleanup_room(room_id: str, ended_by: str = "Unknown"):
         except:
             pass
 
+    # clear state + room
     rooms[room_id].clear()
+    del rooms[room_id]
     room_states.pop(room_id, None)
-    room_meta.pop(room_id, None)
 
     print(f"ROOM DELETED: {room_id}")
 
@@ -50,34 +48,15 @@ async def websocket_endpoint(
 
     print(f"{username} JOIN ROOM: {room_id}")
 
-    # ================= ASSIGN ROLE =================
-    role = "creator" if len(rooms[room_id]) == 0 else "guest"
-
+    # add client
     rooms[room_id].append({
         "ws": websocket,
-        "username": username,
-        "role": role
+        "username": username
     })
-
-    print(f"ROLE: {username} = {role}")
-    print(f"TOTAL USERS: {len(rooms[room_id])}")
-
-    # ================= ROOM READY CHECK =================
-    if len(rooms[room_id]) == 2:
-        room_meta[room_id]["status"] = "ready"
-
-        for client in rooms[room_id]:
-            try:
-                await client["ws"].send_json({
-                    "type": "room-ready",
-                    "status": "ready"
-                })
-            except:
-                pass
 
     try:
 
-        # ================= SYNC STATE =================
+        # ================= SYNC STATE WHEN JOIN =================
         if room_states.get(room_id):
             await websocket.send_json({
                 "type": "sync-state",
@@ -90,43 +69,13 @@ async def websocket_endpoint(
 
             try:
                 data = json.loads(raw_data)
-            except:
+            except Exception:
                 print("INVALID JSON:", raw_data)
                 continue
 
+            print(f"RECEIVED FROM {username}: {data}")
+
             event_type = data.get("type")
-
-            print("📩 EVENT:", event_type)
-            print("👥 USERS:", [c["username"] for c in rooms[room_id]])
-            print("📦 META:", room_meta[room_id])
-
-            # ================= START CALL (ONLY CREATOR) =================
-            if event_type == "start-call":
-
-                caller = next(
-                    (c for c in rooms[room_id] if c["ws"] == websocket),
-                    None
-                )
-
-                if not caller or caller["role"] != "creator":
-                    print("❌ NOT ALLOWED TO START CALL")
-                    continue
-
-                room_meta[room_id]["status"] = "starting"
-
-                print(f"🚀 START CALL BY {username}")
-
-                for client in rooms[room_id]:
-                    try:
-                        await client["ws"].send_json({
-                            "type": "start-call",
-                            "by": username
-                        })
-                    except:
-                        pass
-
-                room_meta[room_id]["status"] = "in-call"
-                continue
 
             # ================= END CALL =================
             if event_type == "end-call":
@@ -136,13 +85,16 @@ async def websocket_endpoint(
                 await cleanup_room(room_id, ended_by=username)
                 break
 
-            # ================= PEER STATE =================
+            # ================= PEER STATE (MUTE / TRANSLATE / ETC) =================
             if event_type == "peer-state":
+
+                # 🔥 DEBUG INI TARUH DI SINI
+                print("🔥 RAW DATA:", data)
+                print("🔥 STATE RECEIVED:", data.get("state"))
 
                 state = data.get("state", {})
 
-                print("🔥 RAW PEER STATE:", state)
-
+                # simpan state user
                 room_states[room_id][username] = state
 
                 payload = {
@@ -151,6 +103,9 @@ async def websocket_endpoint(
                     "state": state
                 }
 
+                print("📡 BROADCAST PEER STATE:", payload)
+
+                # broadcast ke peer lain
                 for client in rooms[room_id]:
                     if client["ws"] == websocket:
                         continue
@@ -162,7 +117,7 @@ async def websocket_endpoint(
 
                 continue
 
-            # ================= WEBRTC SIGNALING =================
+            # ================= NORMAL BROADCAST (OFFER / ANSWER / ICE / CHAT) =================
             payload = {
                 "from": username,
                 **data
@@ -180,4 +135,5 @@ async def websocket_endpoint(
     except WebSocketDisconnect:
 
         print(f"{username} DISCONNECTED")
+
         await cleanup_room(room_id, ended_by=username)
