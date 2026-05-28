@@ -13,6 +13,12 @@ export default function useSmartCall({
   user,
 }) {
 
+  // ================= WAITING ROOM =================
+  const [roomStatus, setRoomStatus] = useState("waiting");
+  const [usersInRoom, setUsersInRoom] = useState(1);
+  const [users, setUsers] = useState([]);
+  const [canStartCall, setCanStartCall] = useState(false);
+
   const [isPeerConnected, setIsPeerConnected] = useState(false);
   const [connectionState, setConnectionState] = useState("new");
   const [peerName, setPeerName] = useState(null);
@@ -567,6 +573,42 @@ export default function useSmartCall({
         return;
       }
 
+      // ================= ROOM STATE =================
+      if (data.type === "room-state") {
+
+        setRoomStatus(data.status);
+
+        setUsersInRoom(data.users);
+
+        return;
+      }
+
+      // ================= USER LIST =================
+      if (data.type === "user-list") {
+
+        setUsers(data.users || []);
+
+        return;
+      }
+
+      // ================= ROOM READY =================
+      if (data.type === "room-ready") {
+
+        setRoomStatus("ready");
+
+        setCanStartCall(true);
+
+        return;
+      }
+
+      // ================= SYNC STATE =================
+      if (data.type === "sync-state") {
+
+        console.log("SYNC STATE:", data.states);
+
+        return;
+      }
+
       // ================= OFFER =================
       if (data.type === "offer") {
 
@@ -732,6 +774,11 @@ export default function useSmartCall({
     joinedRoom,
     roomInput,
 
+    roomStatus,
+    usersInRoom,
+    users,
+    canStartCall,
+
     // SETTERS
     setRoomInput,
 
@@ -746,7 +793,6 @@ export default function useSmartCall({
 
     // REFS
     remoteAudioRef,
-
 
     connectionState,
     callEndedBy,

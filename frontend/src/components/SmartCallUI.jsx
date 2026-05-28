@@ -29,6 +29,11 @@ export default function SmartCallUI({
     joinedRoom,
     roomInput,
 
+    roomStatus,
+    usersInRoom,
+    users,
+    canStartCall,
+
     setRoomInput,
 
     createRoom,
@@ -55,8 +60,10 @@ export default function SmartCallUI({
 
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [roomMode, setRoomMode] = useState(null);
-  const [readyToCall, setReadyToCall] = useState(false);
+  // const [readyToCall, setReadyToCall] = useState(false);
   const [endMessage, setEndMessage] = useState("");
+
+  const [isHost, setIsHost] = useState(false);
 
 
   const connectionLabel = {
@@ -107,7 +114,7 @@ export default function SmartCallUI({
 
     setRoomMode(null);
 
-    setReadyToCall(false);
+    // setReadyToCall(false);
   }
 
 }, [started, joinedRoom]);
@@ -115,7 +122,7 @@ export default function SmartCallUI({
   useEffect(() => {
 
     if (started) {
-      setStage("C");
+      setStage("D");
     }
 
   }, [started]);
@@ -265,8 +272,10 @@ export default function SmartCallUI({
                       setRoomMode("create");
                       setShowJoinInput(false);
                       setRoomInput("");
-                      setReadyToCall(true);
+                      // setReadyToCall(true);
                       createRoom();
+                      setIsHost(true);
+                      setStage("C");  
                     }}
                     className="py-2.5! rounded-xl
                     bg-cyan-500! text-black font-medium text-sm
@@ -283,7 +292,6 @@ export default function SmartCallUI({
                       setRoomMode("join");
                       setShowJoinInput(true);
                       setRoomInput("");
-                      setReadyToCall(false);
                     }}
                     className="py-2.5! rounded-xl
                     bg-white/5! text-white/80 text-sm
@@ -307,7 +315,7 @@ export default function SmartCallUI({
                         setRoomInput(e.target.value);
 
                         // user mengubah ID -> harus join ulang
-                        setReadyToCall(false);
+                        // setReadyToCall(false);
                       }}
                       placeholder="Enter Room ID"
                       className="w-full px-3 py-2.5 rounded-xl
@@ -321,8 +329,13 @@ export default function SmartCallUI({
 
                     <button
                       onClick={async () => {
+
+                        if (!roomInput) return;
+
                         await joinRoom(roomInput);
-                        setReadyToCall(true);
+                        setIsHost(false);
+                        setStage("C");
+
                       }}
                       className="w-full py-2.5! rounded-xl
                       bg-emerald-500/20! text-emerald-300 text-sm
@@ -360,23 +373,6 @@ export default function SmartCallUI({
                       {roomId}
                     </p>
                   </div>
-                )}
-
-                {/* START CALL */}
-                {readyToCall && (
-                  <button
-                    onClick={() => {
-                      startCall();
-                      setStage("C");
-                    }}
-                    className="w-full mt-2 py-3! rounded-xl font-medium text-sm
-                    bg-gradient-to-r from-cyan-500 to-sky-500
-                    text-white
-                    hover:opacity-90 active:scale-[0.98]
-                    shadow-lg shadow-cyan-500/20 transition"
-                  >
-                    Start Call
-                  </button>
                 )}
 
               </div>
@@ -592,24 +588,33 @@ export default function SmartCallUI({
                 </div>
 
                 {/* ================= START BUTTON ================= */}
-                <button
-                  onClick={() => {
-                    startCall();
-                    setStage("D");
-                  }}
-                  disabled={!peerName}
-                  className={`w-full py-3 rounded-2xl
-                  font-medium transition-all duration-300
-                  ${
-                    peerName
-                      ? "bg-gradient-to-r from-cyan-500 to-sky-500 text-white hover:opacity-90 active:scale-[0.98]"
-                      : "bg-white/5 text-white/30 border border-white/10 cursor-not-allowed"
-                  }`}
-                >
-                  {peerName
-                    ? "Start Call"
-                    : "Waiting for peer..."}
-                </button>
+                {isHost ? (
+                  <button
+                    onClick={() => {
+                      startCall();
+                    }}
+                    disabled={!peerName}
+                    className={`w-full py-3 rounded-2xl
+                    font-medium transition-all duration-300
+                    ${
+                      peerName
+                        ? "bg-gradient-to-r from-cyan-500 to-sky-500 text-white hover:opacity-90 active:scale-[0.98]"
+                        : "bg-white/5 text-white/30 border border-white/10 cursor-not-allowed"
+                    }`}
+                  >
+                    {peerName
+                      ? "Start Call"
+                      : "Waiting for peer..."}
+                  </button>
+                ) : (
+                  <div
+                    className="w-full py-3 rounded-2xl
+                    bg-white/5 border border-white/10
+                    text-center text-sm text-white/50"
+                  >
+                    Waiting for host to start...
+                  </div>
+                )}
 
                 {/* ================= WAITING DOTS ================= */}
                 {!peerName && (
