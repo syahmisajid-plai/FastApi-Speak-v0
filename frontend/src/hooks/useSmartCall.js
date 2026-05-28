@@ -133,6 +133,11 @@ export default function useSmartCall({
       event
     ) => {
 
+      console.log(
+        "LOCAL ICE TYPE:",
+        event.candidate?.candidate
+      );
+
       if (event.candidate) {
 
         console.log(
@@ -706,6 +711,11 @@ export default function useSmartCall({
       else if (data.type === "ice") {
 
         console.log("RECEIVED ICE");
+        
+        console.log(
+          "REMOTE ICE TYPE:",
+          data.candidate?.candidate
+        );
 
         try {
 
