@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useMemo, useState } from "react";
 import useSmartCall from "../hooks/useSmartCall";
 
 import useTranslate from "../hooks/useTranslate";
@@ -108,6 +108,37 @@ export default function SmartCallUI({
       console.log("❌ No translatedText in response");
     }
   };
+
+  function normalizeSTT(text) {
+    if (!text) return "";
+
+    const words = text.split(" ");
+
+    const cleaned = [];
+    for (let i = 0; i < words.length; i++) {
+      if (words[i] !== words[i - 1]) {
+        cleaned.push(words[i]);
+      }
+    }
+
+    return cleaned.join(" ").replace(/\s+/g, " ").trim();
+  }
+
+  const lastStableRef = useRef("");
+
+  const cleanLupaKataText = useMemo(() => {
+    const raw = lupaKata?.lupaKataHeardText || "";
+
+    const cleaned = normalizeSTT(raw);
+
+    // prevent unnecessary UI re-render noise
+    if (cleaned === lastStableRef.current) {
+      return lastStableRef.current;
+    }
+
+    lastStableRef.current = cleaned;
+    return cleaned;
+  }, [lupaKata?.lupaKataHeardText]);
 
   // ================= Control Mute When Translate ON =================
   const handleToggleMute = () => {
@@ -747,7 +778,7 @@ export default function SmartCallUI({
                     </p>
 
                     <p className="text-sm text-white">
-                      {lupaKata?.lupaKataHeardText || "..."}
+                      {cleanLupaKataText || "..."}
                     </p>
                   </div>
 
