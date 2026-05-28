@@ -41,6 +41,8 @@ export default function SmartCallUI({
     startCall,
     endCall,
 
+    requestStartCall,
+
     remoteAudioRef,
 
     connectionState,
@@ -582,7 +584,7 @@ export default function SmartCallUI({
                           : "text-yellow-300"
                       }`}
                     >
-                      {roomStatus
+                      {canStartCall
                         ? "Ready to start call"
                         : "Waiting for participant"}
                     </p>
@@ -594,15 +596,22 @@ export default function SmartCallUI({
                 {isHost ? (
                   <button
                     onClick={() => {
+
+                      wsRef.current?.send(
+                        JSON.stringify({
+                          type: "start-call",
+                        })
+                      );
+
                       startCall();
                     }}
                     disabled={!canStartCall}
-                    className={`w-full py-3 rounded-2xl
+                    className={`w-full py-3! rounded-2xl
                     font-medium transition-all duration-300
                     ${
                       canStartCall  
                         ? "bg-gradient-to-r from-cyan-500 to-sky-500 text-white hover:opacity-90 active:scale-[0.98]"
-                        : "bg-white/5 text-white/30 border border-white/10 cursor-not-allowed"
+                        : "bg-white/5! text-white/30 border border-white/10 cursor-not-allowed"
                     }`}
                   >
                     {canStartCall
@@ -647,7 +656,13 @@ export default function SmartCallUI({
         })()}
 
         {/* ================= D: ACTIVE CALL ================= */}
-        {stage === "D" && (
+        {stage === "D" && (() => {
+
+          const peerUser = users?.find(
+            (u) => u.username !== user?.username
+          );
+          
+          return (
           <div className="absolute mt-48 inset-0 flex items-center justify-center px-4">
             <div
               className="w-full max-w-md flex flex-col
@@ -669,14 +684,14 @@ export default function SmartCallUI({
                       flex items-center justify-center
                       text-cyan-200 font-semibold text-sm"
                     >
-                      {peerName?.charAt(0)?.toUpperCase() || "?"}
+                      {peerUser?.username?.charAt(0)?.toUpperCase() || "?"}
                     </div>
 
                     {/* User Info */}
                     <div className="flex flex-col">
                       
                       <p className="text-sm font-semibold text-white tracking-wide">
-                        {peerName || "Connecting..."}
+                        {peerUser?.username || "Connecting..."}
                       </p>
 
                       <div className="flex items-center gap-2 mt-0.5">
@@ -916,7 +931,8 @@ export default function SmartCallUI({
 
             </div>
           </div>
-        )}
+          )
+        })()}
 
       </div>
       

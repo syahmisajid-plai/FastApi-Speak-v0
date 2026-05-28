@@ -272,6 +272,22 @@ export default function useSmartCall({
     setStarted(true);
   };
 
+  // ================= RequestSTART CALL =================
+  const requestStartCall = () => {
+
+    if (wsRef.current?.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
+    console.log("REQUEST START CALL");
+
+    wsRef.current.send(
+      JSON.stringify({
+        type: "start-call",
+      })
+    );
+  };
+
   // ================= ANSWER CALL =================
   const answerCall = async (
     offer
@@ -607,6 +623,23 @@ export default function useSmartCall({
         return;
       }
 
+      // ================= START CALL =================
+      if (data.type === "start-call") {
+
+        console.log("START CALL SIGNAL RECEIVED");
+
+        // participant pindah ke active call
+        if (data.from !== username) {
+
+          console.log("HOST STARTED THE CALL");
+
+          setStarted(true);
+
+        }
+
+        return;
+      }
+
       // ================= SYNC STATE =================
       if (data.type === "sync-state") {
 
@@ -794,6 +827,8 @@ export default function useSmartCall({
     startCall,
     endCall,
     toggleMute,
+
+    requestStartCall,
 
     setMicEnabled,
 
