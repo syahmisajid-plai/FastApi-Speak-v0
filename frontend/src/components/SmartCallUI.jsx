@@ -383,8 +383,11 @@ export default function SmartCallUI({
         {/* ================= C: WAITING ROOM ================= */}
         {stage === "C" && (() => {
 
-          // ================= DUMMY SAFE =================
-          const dummyRoomId = roomId || "ROOM-4821";
+          const peerUser = users?.find(
+            (u) => u.username !== user?.username
+          );
+
+          const displayRoomId = roomId || "ROOM-4821";
 
           return (
             <div className="absolute inset-0 flex items-center justify-center px-4 mt-48">
@@ -423,7 +426,7 @@ export default function SmartCallUI({
                   {/* COPY */}
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(dummyRoomId);
+                      navigator.clipboard.writeText(displayRoomId);
                     }}
                     className="absolute top-3 right-3 text-white/50 hover:text-white transition"
                   >
@@ -435,7 +438,7 @@ export default function SmartCallUI({
                   </p>
 
                   <p className="mt-1 text-cyan-300 font-mono tracking-widest text-sm">
-                    {dummyRoomId}
+                    {displayRoomId}
                   </p>
                 </div>
 
@@ -508,13 +511,13 @@ export default function SmartCallUI({
                         flex items-center justify-center
                         font-semibold border
                         ${
-                          peerName
+                          peerUser
                             ? "bg-emerald-500/10 border-emerald-400/20 text-emerald-200"
                             : "bg-white/5 border-white/10 text-white/40"
                         }`}
                       >
-                        {peerName
-                          ? peerName.charAt(0).toUpperCase()
+                        {peerUser
+                          ? peerUser.charAt(0).toUpperCase()
                           : "?"}
                       </div>
 
@@ -522,7 +525,7 @@ export default function SmartCallUI({
                       <div>
 
                         <p className="text-sm font-medium">
-                          {peerName || "Waiting for peer..."}
+                          {peerUser?.username || "Waiting for peer..."}
                         </p>
 
                         <p className="text-[11px] text-white/40">
@@ -537,14 +540,14 @@ export default function SmartCallUI({
 
                       <span
                         className={`w-2 h-2 rounded-full ${
-                          peerName
+                          canStartCall
                             ? "bg-emerald-400"
                             : "bg-yellow-400 animate-pulse"
                         }`}
                       />
 
                       <p className="text-[11px] text-white/50">
-                        {peerName ? "Joined" : "Waiting"}
+                        {peerUser ? "Joined" : "Waiting"}
                       </p>
 
                     </div>
@@ -566,7 +569,7 @@ export default function SmartCallUI({
 
                     <span
                       className={`w-2 h-2 rounded-full ${
-                        peerName
+                        canStartCall
                           ? "bg-emerald-400"
                           : "bg-yellow-400 animate-pulse"
                       }`}
@@ -574,12 +577,12 @@ export default function SmartCallUI({
 
                     <p
                       className={`text-sm ${
-                        peerName
+                        canStartCall
                           ? "text-emerald-300"
                           : "text-yellow-300"
                       }`}
                     >
-                      {peerName
+                      {roomStatus
                         ? "Ready to start call"
                         : "Waiting for participant"}
                     </p>
@@ -593,16 +596,16 @@ export default function SmartCallUI({
                     onClick={() => {
                       startCall();
                     }}
-                    disabled={!peerName}
+                    disabled={!canStartCall}
                     className={`w-full py-3 rounded-2xl
                     font-medium transition-all duration-300
                     ${
-                      peerName
+                      canStartCall  
                         ? "bg-gradient-to-r from-cyan-500 to-sky-500 text-white hover:opacity-90 active:scale-[0.98]"
                         : "bg-white/5 text-white/30 border border-white/10 cursor-not-allowed"
                     }`}
                   >
-                    {peerName
+                    {canStartCall
                       ? "Start Call"
                       : "Waiting for peer..."}
                   </button>
@@ -617,7 +620,7 @@ export default function SmartCallUI({
                 )}
 
                 {/* ================= WAITING DOTS ================= */}
-                {!peerName && (
+                {!canStartCall && (
                   <div className="mt-5 flex justify-center">
 
                     <div className="flex gap-2">
