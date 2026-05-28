@@ -627,15 +627,6 @@ export default function useSmartCall({
 
         console.log("START CALL SIGNAL RECEIVED");
 
-        // participant pindah ke active call
-        if (data.from !== username) {
-
-          console.log("HOST STARTED THE CALL");
-
-          setStarted(true);
-
-        }
-
         return;
       }
 

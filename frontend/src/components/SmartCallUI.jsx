@@ -68,6 +68,8 @@ export default function SmartCallUI({
 
   const [isHost, setIsHost] = useState(false);
 
+  const [callUIStarted, setCallUIStarted] = useState(false);
+
 
   const connectionLabel = {
     new: "Idle",
@@ -599,7 +601,7 @@ export default function SmartCallUI({
                     onClick={() => {
 
                       requestStartCall(); // request ke peer untuk start
-
+                      setCallUIStarted(true);
                       startCall();
                     }}
                     disabled={!canStartCall}
