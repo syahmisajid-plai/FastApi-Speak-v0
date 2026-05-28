@@ -51,7 +51,7 @@ export default function SmartCallUI({
     isLupaKataActive,
   });
 
-  const [stage, setStage] = useState("A"); // A | B | C
+  const [stage, setStage] = useState("A"); // A | B | C | D
 
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [roomMode, setRoomMode] = useState(null);
@@ -384,8 +384,262 @@ export default function SmartCallUI({
           </div>
         )}
 
-        {/* ================= C: ACTIVE CALL ================= */}
-        {stage === "C" && (
+        {/* ================= C: WAITING ROOM ================= */}
+        {stage === "C" && (() => {
+
+          // ================= DUMMY SAFE =================
+          const dummyRoomId = roomId || "ROOM-4821";
+
+          return (
+            <div className="absolute inset-0 flex items-center justify-center px-4 mt-48">
+
+              <div className="w-full max-w-md text-white">
+
+                {/* ================= HEADER ================= */}
+                <div className="text-center mb-6">
+
+                  {/* ICON */}
+                  <div
+                    className="w-16 h-16 mx-auto rounded-3xl
+                    bg-cyan-500/20 border border-cyan-400/20
+                    flex items-center justify-center
+                    text-2xl animate-pulse"
+                  >
+                    ⏳
+                  </div>
+
+                  {/* TITLE */}
+                  <h2 className="mt-4 text-xl font-semibold tracking-wide">
+                    Waiting Room
+                  </h2>
+
+                  <p className="text-xs text-white/50 mt-1">
+                    Waiting for participants to connect
+                  </p>
+                </div>
+
+                {/* ================= ROOM INFO ================= */}
+                <div
+                  className="bg-white/5 border border-white/10
+                  rounded-2xl p-4 mb-4 relative overflow-hidden"
+                >
+
+                  {/* COPY */}
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(dummyRoomId);
+                    }}
+                    className="absolute top-3 right-3 text-white/50 hover:text-white transition"
+                  >
+                    📑
+                  </button>
+
+                  <p className="text-[11px] text-white/40">
+                    Room ID
+                  </p>
+
+                  <p className="mt-1 text-cyan-300 font-mono tracking-widest text-sm">
+                    {dummyRoomId}
+                  </p>
+                </div>
+
+                {/* ================= PARTICIPANTS ================= */}
+                <div className="space-y-3 mb-4">
+
+                  <p className="text-xs text-white/40 px-1">
+                    Participants
+                  </p>
+
+                  {/* ================= SELF ================= */}
+                  <div
+                    className="flex items-center justify-between
+                    bg-white/5 border border-white/10
+                    rounded-2xl p-3"
+                  >
+
+                    <div className="flex items-center gap-3">
+
+                      {/* AVATAR */}
+                      <div
+                        className="w-12 h-12 rounded-2xl
+                        bg-cyan-500/20 border border-cyan-400/20
+                        flex items-center justify-center
+                        text-cyan-200 font-semibold"
+                      >
+                        {(user?.username || "Y")
+                          .charAt(0)
+                          .toUpperCase()}
+                      </div>
+
+                      {/* INFO */}
+                      <div>
+
+                        <p className="text-sm font-medium">
+                          {user?.username || "You"}
+                        </p>
+
+                        <p className="text-[11px] text-cyan-300">
+                          Host
+                        </p>
+
+                      </div>
+                    </div>
+
+                    {/* STATUS */}
+                    <div className="flex items-center gap-2">
+
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+
+                      <p className="text-[11px] text-white/50">
+                        Joined
+                      </p>
+
+                    </div>
+                  </div>
+
+                  {/* ================= PEER ================= */}
+                  <div
+                    className="flex items-center justify-between
+                    bg-white/5 border border-white/10
+                    rounded-2xl p-3"
+                  >
+
+                    <div className="flex items-center gap-3">
+
+                      {/* AVATAR */}
+                      <div
+                        className={`w-12 h-12 rounded-2xl
+                        flex items-center justify-center
+                        font-semibold border
+                        ${
+                          peerName
+                            ? "bg-emerald-500/10 border-emerald-400/20 text-emerald-200"
+                            : "bg-white/5 border-white/10 text-white/40"
+                        }`}
+                      >
+                        {peerName
+                          ? peerName.charAt(0).toUpperCase()
+                          : "?"}
+                      </div>
+
+                      {/* INFO */}
+                      <div>
+
+                        <p className="text-sm font-medium">
+                          {peerName || "Waiting for peer..."}
+                        </p>
+
+                        <p className="text-[11px] text-white/40">
+                          Participant
+                        </p>
+
+                      </div>
+                    </div>
+
+                    {/* STATUS */}
+                    <div className="flex items-center gap-2">
+
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          peerName
+                            ? "bg-emerald-400"
+                            : "bg-yellow-400 animate-pulse"
+                        }`}
+                      />
+
+                      <p className="text-[11px] text-white/50">
+                        {peerName ? "Joined" : "Waiting"}
+                      </p>
+
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* ================= STATUS CARD ================= */}
+                <div
+                  className="bg-white/5 border border-white/10
+                  rounded-2xl p-4 mb-5"
+                >
+
+                  <p className="text-xs text-white/40 mb-2">
+                    Room Status
+                  </p>
+
+                  <div className="flex items-center gap-2">
+
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        peerName
+                          ? "bg-emerald-400"
+                          : "bg-yellow-400 animate-pulse"
+                      }`}
+                    />
+
+                    <p
+                      className={`text-sm ${
+                        peerName
+                          ? "text-emerald-300"
+                          : "text-yellow-300"
+                      }`}
+                    >
+                      {peerName
+                        ? "Ready to start call"
+                        : "Waiting for participant"}
+                    </p>
+
+                  </div>
+                </div>
+
+                {/* ================= START BUTTON ================= */}
+                <button
+                  onClick={() => {
+                    startCall();
+                    setStage("D");
+                  }}
+                  disabled={!peerName}
+                  className={`w-full py-3 rounded-2xl
+                  font-medium transition-all duration-300
+                  ${
+                    peerName
+                      ? "bg-gradient-to-r from-cyan-500 to-sky-500 text-white hover:opacity-90 active:scale-[0.98]"
+                      : "bg-white/5 text-white/30 border border-white/10 cursor-not-allowed"
+                  }`}
+                >
+                  {peerName
+                    ? "Start Call"
+                    : "Waiting for peer..."}
+                </button>
+
+                {/* ================= WAITING DOTS ================= */}
+                {!peerName && (
+                  <div className="mt-5 flex justify-center">
+
+                    <div className="flex gap-2">
+
+                      <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+
+                      <div
+                        className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"
+                        style={{ animationDelay: "0.2s" }}
+                      />
+
+                      <div
+                        className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"
+                        style={{ animationDelay: "0.4s" }}
+                      />
+
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ================= D: ACTIVE CALL ================= */}
+        {stage === "D" && (
           <div className="absolute mt-48 inset-0 flex items-center justify-center px-4">
             <div
               className="w-full max-w-md flex flex-col
