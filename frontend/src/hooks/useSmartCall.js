@@ -60,6 +60,8 @@ export default function useSmartCall({
 
   const isCleaningRef = useRef(false);
 
+  const pendingIceCandidatesRef = useRef([]);
+
   const dataChannelRef =
     useRef(null);
 
@@ -380,6 +382,19 @@ export default function useSmartCall({
       offer
     );
 
+    // flush queued ICE
+    for (const candidate of pendingIceCandidatesRef.current) {
+
+      await pc.addIceCandidate(
+        new RTCIceCandidate(candidate)
+      );
+
+    }
+
+    pendingIceCandidatesRef.current = [];
+
+    console.log("QUEUED ICE FLUSHED");
+
     // ================= CREATE ANSWER =================
     const answer =
       await pc.createAnswer();
@@ -672,27 +687,53 @@ export default function useSmartCall({
         await pcRef.current?.setRemoteDescription(
           data.answer
         );
+
+        // flush queued ICE
+        for (const candidate of pendingIceCandidatesRef.current) {
+
+          await pcRef.current?.addIceCandidate(
+            new RTCIceCandidate(candidate)
+          );
+
+        }
+
+        pendingIceCandidatesRef.current = [];
+
+        console.log("QUEUED ICE FLUSHED AFTER ANSWER");
       }
 
       // ================= ICE =================
-      else if (
-        data.type === "ice"
-      ) {
+      else if (data.type === "ice") {
 
-        console.log(
-          "RECEIVED ICE"
-        );
+        console.log("RECEIVED ICE");
 
         try {
 
-          await pcRef.current?.addIceCandidate(
-            data.candidate
+          // peer belum siap
+          if (
+            !pcRef.current ||
+            !pcRef.current.remoteDescription
+          ) {
+
+            console.log("QUEUE ICE");
+
+            pendingIceCandidatesRef.current.push(
+              data.candidate
+            );
+
+            return;
+          }
+
+          await pcRef.current.addIceCandidate(
+            new RTCIceCandidate(data.candidate)
           );
+
+          console.log("ICE ADDED");
 
         }
         catch (err) {
 
-          console.log(err);
+          console.log("ICE ERROR:", err);
 
         }
       }
