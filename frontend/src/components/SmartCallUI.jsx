@@ -185,7 +185,7 @@ export default function SmartCallUI({
   // call selesai -> balik idle UI
   if (!started && !joinedRoom) {
 
-    setStage("B");
+    setStage("A");
 
     setShowJoinInput(false);
 
@@ -469,7 +469,9 @@ export default function SmartCallUI({
           return (
 
             <div className="absolute inset-0 flex items-center justify-center px-4 mt-42">
-              <div className="w-full max-w-md text-white">
+              <div className="w-full max-w-md text-white bg-white/5 border border-cyan-400/20 
+                  rounded-2xl p-4 space-y-3
+                  shadow-[0_0_20px_rgba(34,211,238,0.3)]">
 
                 {/* HEADER */}
                 <div className="text-center mb-4 relative">
