@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import useSmartCall from "../hooks/useSmartCall";
 
+import useTranslate from "../hooks/useTranslate";
+
 export default function SmartCallUI({
   startRecording,
   stopRecording,
@@ -61,6 +63,9 @@ export default function SmartCallUI({
 
   const [stage, setStage] = useState("A"); // A | B | C | D
 
+  const [partnerTranslatedText, setPartnerTranslatedText] = useState(null);
+  const [isPartnerTranslating, setIsPartnerTranslating] = useState(false);
+
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [roomMode, setRoomMode] = useState(null);
   // const [readyToCall, setReadyToCall] = useState(false);
@@ -70,6 +75,7 @@ export default function SmartCallUI({
 
   const [callUIStarted, setCallUIStarted] = useState(false);
 
+  const { translate } = useTranslate();
 
   const connectionLabel = {
     new: "Idle",
@@ -78,6 +84,29 @@ export default function SmartCallUI({
     disconnected: "Reconnecting...",
     failed: "Connection Lost",
     closed: "Call Ended",
+  };
+
+  const handlePartnerTranslate = async (text) => {
+    console.log("🟡 RAW TEXT CLICKED:", text);
+
+    if (!text || text === "Waiting for speech...") {
+      console.log("❌ Invalid text, skip translate");
+      return;
+    }
+
+    setIsPartnerTranslating(true);
+
+    const res = await translate(text);
+
+    console.log("🟢 TRANSLATE RESPONSE:", res);
+
+    setIsPartnerTranslating(false);
+
+    if (res?.translated) {
+      setPartnerTranslatedText(res.translated);
+    } else {
+      console.log("❌ No translatedText in response");
+    }
   };
 
   // ================= Control Mute When Translate ON =================
@@ -90,6 +119,18 @@ export default function SmartCallUI({
   useEffect(() => {
     console.log("📡 peerState UPDATED:", peerState);
   }, [peerState]);
+
+  useEffect(() => {
+    if (stage !== "D") return;
+    if (connectionState !== "connected") return;
+
+    // delay kecil biar audio stream ready
+    const t = setTimeout(() => {
+      startRecording();
+    }, 600);
+
+    return () => clearTimeout(t);
+  }, [stage, connectionState]);
 
   useEffect(() => {
 
@@ -395,259 +436,129 @@ export default function SmartCallUI({
           const displayRoomId = roomId || "ROOM-4821";
 
           return (
-            <div className="absolute inset-0 flex items-center justify-center px-4 mt-48">
 
+            <div className="absolute inset-0 flex items-center justify-center px-4 mt-42">
               <div className="w-full max-w-md text-white">
 
-                {/* ================= HEADER ================= */}
-                <div className="text-center mb-6">
+                {/* HEADER */}
+                <div className="text-center mb-4 relative">
 
-                  {/* ICON */}
-                  <div
-                    className="w-16 h-16 mx-auto rounded-3xl
-                    bg-cyan-500/20 border border-cyan-400/20
-                    flex items-center justify-center
-                    text-2xl animate-pulse"
+                  {/* BACK BUTTON */}
+                  <button
+                    onClick={() => {
+                      setRoomMode(null);
+                      setStage("B");
+                    }}
+                    className="absolute left-0 top-0 text-white/60 hover:text-white text-lg"
                   >
+                    ← Back
+                  </button>
+
+                  <div className="w-12 h-12 mx-auto rounded-2xl bg-cyan-500/20 border border-cyan-400/20 flex items-center justify-center animate-pulse">
                     ⏳
                   </div>
 
-                  {/* TITLE */}
-                  <h2 className="mt-4 text-xl font-semibold tracking-wide">
-                    Waiting Room
-                  </h2>
-
-                  <p className="text-xs text-white/50 mt-1">
-                    Waiting for participants to connect
+                  <h2 className="mt-2 text-lg font-semibold">Waiting Room</h2>
+                  <p className="text-xs text-white/50">
+                    Waiting for participants...
                   </p>
                 </div>
 
-                {/* ================= ROOM INFO ================= */}
-                <div
-                  className="bg-white/5 border border-white/10
-                  rounded-2xl p-4 mb-4 relative overflow-hidden"
-                >
+                {/* MAIN CARD (gabungan semua info) */}
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
 
-                  {/* COPY */}
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(displayRoomId);
-                    }}
-                    className="absolute top-3 right-3 text-white/50 hover:text-white transition"
-                  >
-                    📑
-                  </button>
-
-                  <p className="text-[11px] text-white/40">
-                    Room ID
-                  </p>
-
-                  <p className="mt-1 text-cyan-300 font-mono tracking-widest text-sm">
-                    {displayRoomId}
-                  </p>
-                </div>
-
-                {/* ================= PARTICIPANTS ================= */}
-                <div className="space-y-3 mb-4">
-
-                  <p className="text-xs text-white/40 px-1">
-                    Participants
-                  </p>
-
-                  {/* ================= SELF ================= */}
-                  <div
-                    className="flex items-center justify-between
-                    bg-white/5 border border-white/10
-                    rounded-2xl p-3"
-                  >
-
-                    <div className="flex items-center gap-3">
-
-                      {/* AVATAR */}
-                      <div
-                        className="w-12 h-12 rounded-2xl
-                        bg-cyan-500/20 border border-cyan-400/20
-                        flex items-center justify-center
-                        text-cyan-200 font-semibold"
-                      >
-                        {(user?.username || "Y")
-                          .charAt(0)
-                          .toUpperCase()}
-                      </div>
-
-                      {/* INFO */}
-                      <div>
-
-                        <p className="text-sm font-medium">
-                          {user?.username || "You"}
-                        </p>
-
-                        <p className="text-[11px] text-cyan-300">
-                          Host
-                        </p>
-
-                      </div>
-                    </div>
-
-                    {/* STATUS */}
-                    <div className="flex items-center gap-2">
-
-                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
-
-                      <p className="text-[11px] text-white/50">
-                        Joined
+                  {/* ROOM ID */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] text-white/40">Room ID</p>
+                      <p className="text-cyan-300 font-mono text-sm tracking-widest">
+                        {displayRoomId}
                       </p>
-
                     </div>
+
+                    <button
+                      onClick={() => navigator.clipboard.writeText(displayRoomId)}
+                      className="text-white/50 hover:text-white"
+                    >
+                      📑
+                    </button>
                   </div>
 
-                  {/* ================= PEER ================= */}
-                  <div
-                    className="flex items-center justify-between
-                    bg-white/5 border border-white/10
-                    rounded-2xl p-3"
-                  >
+                  {/* STATUS BAR */}
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className={`w-2 h-2 rounded-full ${
+                      canStartCall ? "bg-emerald-400" : "bg-yellow-400 animate-pulse"
+                    }`} />
+                    <p className={canStartCall ? "text-emerald-300" : "text-yellow-300"}>
+                      {canStartCall ? "Ready" : "Waiting for participant"}
+                    </p>
+                  </div>
 
-                    <div className="flex items-center gap-3">
+                  {/* PARTICIPANTS (lebih compact) */}
+                  <div className="space-y-2">
 
-                      {/* AVATAR */}
-                      <div
-                        className={`w-12 h-12 rounded-2xl
-                        flex items-center justify-center
-                        font-semibold border
-                        ${
+                    {/* HOST */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-9 h-9 rounded-xl bg-cyan-500/20 border border-cyan-400/20 flex items-center justify-center text-xs font-semibold">
+                          {(user?.username || "Y")[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm">{user?.username || "You"}</p>
+                          <p className="text-[10px] text-cyan-300">Host</p>
+                        </div>
+                      </div>
+
+                      <span className="text-[10px] text-white/50">Joined</span>
+                    </div>
+
+                    {/* PEER */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-semibold border ${
                           peerUser
                             ? "bg-emerald-500/10 border-emerald-400/20 text-emerald-200"
                             : "bg-white/5 border-white/10 text-white/40"
-                        }`}
-                      >
-                      {peerUser?.username
-                        ? peerUser.username.charAt(0).toUpperCase()
-                        : "?"}
+                        }`}>
+                          {peerUser?.username ? peerUser.username[0].toUpperCase() : "?"}
+                        </div>
+
+                        <div>
+                          <p className="text-sm">
+                            {peerUser?.username || "Waiting..."}
+                          </p>
+                          <p className="text-[10px] text-white/40">Participant</p>
+                        </div>
                       </div>
 
-                      {/* INFO */}
-                      <div>
-
-                        <p className="text-sm font-medium">
-                          {peerUser?.username || "Waiting for peer..."}
-                        </p>
-
-                        <p className="text-[11px] text-white/40">
-                          Participant
-                        </p>
-
-                      </div>
-                    </div>
-
-                    {/* STATUS */}
-                    <div className="flex items-center gap-2">
-
-                      <span
-                        className={`w-2 h-2 rounded-full ${
-                          canStartCall
-                            ? "bg-emerald-400"
-                            : "bg-yellow-400 animate-pulse"
-                        }`}
-                      />
-
-                      <p className="text-[11px] text-white/50">
+                      <span className="text-[10px] text-white/50">
                         {canStartCall ? "Joined" : "Waiting"}
-                      </p>
-
+                      </span>
                     </div>
-                  </div>
 
+                  </div>
                 </div>
 
-                {/* ================= STATUS CARD ================= */}
-                <div
-                  className="bg-white/5 border border-white/10
-                  rounded-2xl p-4 mb-5"
-                >
-
-                  <p className="text-xs text-white/40 mb-2">
-                    Room Status
-                  </p>
-
-                  <div className="flex items-center gap-2">
-
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        canStartCall
-                          ? "bg-emerald-400"
-                          : "bg-yellow-400 animate-pulse"
-                      }`}
-                    />
-
-                    <p
-                      className={`text-sm ${
-                        canStartCall
-                          ? "text-emerald-300"
-                          : "text-yellow-300"
+                {/* BUTTON (lebih dekat ke card) */}
+                <div className="mt-3">
+                  {isHost ? (
+                    <button
+                      onClick={requestStartCall}
+                      disabled={!canStartCall}
+                      className={`w-full py-3! rounded-2xl text-sm font-medium transition
+                      ${canStartCall
+                        ? "bg-gradient-to-r from-cyan-500 to-sky-500 text-white"
+                        : "bg-white/5! text-white/30 border border-white/10"
                       }`}
                     >
-                      {canStartCall
-                        ? "Ready to start call"
-                        : "Waiting for participant"}
-                    </p>
-
-                  </div>
-                </div>
-
-                {/* ================= START BUTTON ================= */}
-                {isHost ? (
-                  <button
-                    onClick={() => {
-
-                      requestStartCall(); // request ke peer untuk start
-                      setCallUIStarted(true);
-                      // startCall();
-                    }}
-                    disabled={!canStartCall}
-                    className={`w-full py-3! rounded-2xl
-                    font-medium transition-all duration-300
-                    ${
-                      canStartCall  
-                        ? "bg-gradient-to-r from-cyan-500 to-sky-500 text-white hover:opacity-90 active:scale-[0.98]"
-                        : "bg-white/5! text-white/30 border border-white/10 cursor-not-allowed"
-                    }`}
-                  >
-                    {canStartCall
-                      ? "Start Call"
-                      : "Waiting for peer..."}
-                  </button>
-                ) : (
-                  <div
-                    className="w-full py-3 rounded-2xl
-                    bg-white/5 border border-white/10
-                    text-center text-sm text-white/50"
-                  >
-                    Waiting for host to start...
-                  </div>
-                )}
-
-                {/* ================= WAITING DOTS ================= */}
-                {!canStartCall && (
-                  <div className="mt-5 flex justify-center">
-
-                    <div className="flex gap-2">
-
-                      <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-
-                      <div
-                        className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"
-                        style={{ animationDelay: "0.2s" }}
-                      />
-
-                      <div
-                        className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"
-                        style={{ animationDelay: "0.4s" }}
-                      />
-
+                      {canStartCall ? "Start Call" : "Waiting..."}
+                    </button>
+                  ) : (
+                    <div className="w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-center text-sm text-white/50">
+                      Waiting for host...
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
               </div>
             </div>
@@ -712,37 +623,6 @@ export default function SmartCallUI({
                       </div>
                     </div>
 
-                    {/* <span
-                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] border
-                      ${
-                        connectionState === "connected"
-                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/20"
-                          : connectionState === "connecting"
-                          ? "bg-yellow-500/20 text-yellow-300 border-yellow-400/20"
-                          : connectionState === "disconnected"
-                          ? "bg-orange-500/20 text-orange-300 border-orange-400/20"
-                          : connectionState === "failed"
-                          ? "bg-red-500/20 text-red-300 border-red-400/20"
-                          : "bg-white/5 text-white/50 border-white/10"
-                      }`}
-                    >
-                      <span
-                        className={`w-2 h-2 rounded-full
-                        ${
-                          connectionState === "connected"
-                            ? "bg-emerald-400"
-                            : connectionState === "connecting"
-                            ? "bg-yellow-400 animate-pulse"
-                            : connectionState === "disconnected"
-                            ? "bg-orange-400"
-                            : connectionState === "failed"
-                            ? "bg-red-400"
-                            : "bg-white/40"
-                        }`}
-                      />
-
-                      {connectionLabel[connectionState] || "Unknown"}
-                    </span> */}
                   </div>
 
 
@@ -834,9 +714,26 @@ export default function SmartCallUI({
                 {/* Live Caption (Partner) */}
                 <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
                   <p className="text-xs text-white/40 mb-1">Live Caption (Partner)</p>
-                  <p className="text-sm text-white">
-                    {remoteTranscript || "Waiting for speech..."}
-                  </p>
+                  <div>
+                    <p
+                      className="text-sm text-white cursor-pointer hover:bg-white/5 p-1 rounded"
+                      onClick={() => handlePartnerTranslate(remoteTranscript)}
+                    >
+                      {remoteTranscript || "Waiting for speech..."}
+                    </p>
+
+                    {isPartnerTranslating && (
+                      <p className="text-xs text-white/40 mt-1 animate-pulse">
+                        Translating...
+                      </p>
+                    )}
+
+                    {partnerTranslatedText && !isPartnerTranslating && (
+                      <p className="text-sm text-cyan-200 mt-2 border-t border-white/10 pt-2">
+                        {partnerTranslatedText}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Translation */}
