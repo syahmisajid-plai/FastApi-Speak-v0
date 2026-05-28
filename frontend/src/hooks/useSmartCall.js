@@ -627,6 +627,14 @@ export default function useSmartCall({
 
         console.log("START CALL SIGNAL RECEIVED");
 
+        if (data.from === username) {
+
+          setTimeout(() => {
+            startCall();
+          }, 300);
+
+        }
+
         return;
       }
 

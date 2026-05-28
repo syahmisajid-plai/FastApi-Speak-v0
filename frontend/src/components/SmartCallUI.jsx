@@ -602,7 +602,7 @@ export default function SmartCallUI({
 
                       requestStartCall(); // request ke peer untuk start
                       setCallUIStarted(true);
-                      startCall();
+                      // startCall();
                     }}
                     disabled={!canStartCall}
                     className={`w-full py-3! rounded-2xl
