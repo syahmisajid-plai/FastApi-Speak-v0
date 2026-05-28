@@ -272,20 +272,19 @@ export default function useSmartCall({
     setStarted(true);
   };
 
-  // ================= RequestSTART CALL =================
+  // ================= REQUEST START CALL =================
   const requestStartCall = () => {
 
-    if (wsRef.current?.readyState !== WebSocket.OPEN) {
-      return;
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+
+      wsRef.current.send(
+        JSON.stringify({
+          type: "start-call",
+        })
+      );
+
     }
 
-    console.log("REQUEST START CALL");
-
-    wsRef.current.send(
-      JSON.stringify({
-        type: "start-call",
-      })
-    );
   };
 
   // ================= ANSWER CALL =================

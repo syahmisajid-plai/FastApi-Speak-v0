@@ -49,6 +49,7 @@ export default function SmartCallUI({
     callEndedBy,
 
     peerState,
+    
   } = useSmartCall({
     startRecording,
     stopRecording,
@@ -597,11 +598,7 @@ export default function SmartCallUI({
                   <button
                     onClick={() => {
 
-                      wsRef.current?.send(
-                        JSON.stringify({
-                          type: "start-call",
-                        })
-                      );
+                      requestStartCall(); // request ke peer untuk start
 
                       startCall();
                     }}
