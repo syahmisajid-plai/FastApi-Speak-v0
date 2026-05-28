@@ -576,9 +576,15 @@ export default function useSmartCall({
       // ================= ROOM STATE =================
       if (data.type === "room-state") {
 
+        console.log("ROOM STATE RECEIVED:", data);
+
         setRoomStatus(data.status);
 
-        setUsersInRoom(data.users);
+        setUsersInRoom(data.usersCount || 0);
+
+        setUsers(data.users || []);
+
+        setCanStartCall(data.canStartCall || false);
 
         return;
       }

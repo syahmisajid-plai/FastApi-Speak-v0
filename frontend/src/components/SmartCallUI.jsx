@@ -516,9 +516,9 @@ export default function SmartCallUI({
                             : "bg-white/5 border-white/10 text-white/40"
                         }`}
                       >
-                        {peerUser
-                          ? peerUser.charAt(0).toUpperCase()
-                          : "?"}
+                      {peerUser?.username
+                        ? peerUser.username.charAt(0).toUpperCase()
+                        : "?"}
                       </div>
 
                       {/* INFO */}
@@ -547,7 +547,7 @@ export default function SmartCallUI({
                       />
 
                       <p className="text-[11px] text-white/50">
-                        {peerUser ? "Joined" : "Waiting"}
+                        {canStartCall ? "Joined" : "Waiting"}
                       </p>
 
                     </div>
