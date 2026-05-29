@@ -1002,8 +1002,11 @@ Feature tambahan:
             />
           )}
 
-          {/* {mode === "vocab" && <LearnUI />} */}
-          {/* {mode === "vocab" && <LearnUI />} */}
+          <div className="mb-96" />
+          <div className="mb-96" />
+          <div className="mb-96" />
+          <div className="mb-96" />
+
           {/* {mode === "vocab" && <LearnUI />} */}
 
           <ModeSelector
