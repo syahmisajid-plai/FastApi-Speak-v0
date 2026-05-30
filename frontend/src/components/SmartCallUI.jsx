@@ -22,6 +22,7 @@ export default function SmartCallUI({
 
     isMuted,
     toggleMute,
+    toggleTranslated,
 
     peerName,
 
@@ -146,6 +147,10 @@ export default function SmartCallUI({
 
     toggleMute();
   };
+
+  useEffect(() => {
+    toggleTranslated(isLupaKataActive);
+  }, [isLupaKataActive]);
 
   useEffect(() => {
     console.log("📡 peerState UPDATED:", peerState);
@@ -731,7 +736,11 @@ export default function SmartCallUI({
                       : "bg-cyan-500/20 border-cyan-400 animate-pulse"
                   }`}
                 >
-                  {peerState?.muted ? "🔇" : "📞"}
+                    {peerState?.muted
+                    ? "🔇"
+                    : peerState?.translated
+                    ? "🌐"
+                    : "📞"}
 
                   {/* small dot indicator */}
                   <span

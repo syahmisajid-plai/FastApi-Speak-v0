@@ -41,6 +41,7 @@ export default function useSmartCall({
 
   const [peerState, setPeerState] = useState({
     muted: false,
+    translated: false,
   });
 
   // ================= ROOM =================
@@ -454,6 +455,20 @@ export default function useSmartCall({
     }
   };
 
+  // ================= TOGGLE Translate =================
+  const toggleTranslated = (translated) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: "peer-state",
+          state: {
+            translated,
+          },
+        })
+      );
+    }
+  };
+
   // ================= Reset CALL State =================
   const resetCallState = () => {
 
@@ -576,7 +591,10 @@ export default function useSmartCall({
 
       if (data.type === "peer-state") {
         if (data.from !== username) {
-          setPeerState?.(data.state); // atau setRemotePeerState
+          setPeerState(prev => ({
+            ...prev,
+            ...data.state,
+          }));
         }
         return;
       }
@@ -876,6 +894,7 @@ export default function useSmartCall({
     startCall,
     endCall,
     toggleMute,
+    toggleTranslated,
 
     requestStartCall,
 
