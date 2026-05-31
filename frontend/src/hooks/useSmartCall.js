@@ -457,16 +457,16 @@ export default function useSmartCall({
 
   // ================= TOGGLE Translate =================
   const toggleTranslated = (translated) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(
-        JSON.stringify({
-          type: "peer-state",
-          state: {
-            translated,
-          },
-        })
-      );
-    }
+
+    wsRef.current?.send(
+      JSON.stringify({
+        type: "peer-state",
+        state: {
+          translated,
+          muted: translated,
+        },
+      })
+    );
   };
 
   // ================= Reset CALL State =================

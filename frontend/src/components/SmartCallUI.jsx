@@ -731,16 +731,18 @@ export default function SmartCallUI({
                 <div
                   className={`w-24 h-24 rounded-full flex items-center justify-center text-3xl border transition-all duration-300 relative
                   ${
-                    peerState?.muted
+                    peerState?.translated
+                      ? "bg-emerald-500/15 border-emerald-400"
+                      : peerState?.muted
                       ? "bg-red-500/10 border-red-400/30"
                       : "bg-cyan-500/20 border-cyan-400 animate-pulse"
                   }`}
                 >
-                    {peerState?.muted
-                    ? "🔇"
-                    : peerState?.translated
-                    ? "🌐"
-                    : "📞"}
+                    {peerState?.translated
+                      ? "🌐"
+                      : peerState?.muted
+                      ? "🔇"
+                      : "📞"}
 
                   {/* small dot indicator */}
                   <span
