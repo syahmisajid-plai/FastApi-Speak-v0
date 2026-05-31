@@ -47,11 +47,15 @@ export default function LearnUI({
               </div>
 
               <p className="text-sm font-semibold tracking-wide">
-                Learn ModeLearn
+                Learn Mode
               </p>
 
               <p className="text-xs text-white/60 mt-1">
-                Let's learn new words & sentence
+                Build vocabulary and speaking skills
+              </p>
+
+              <p className="text-[10px] text-white/35 uppercase tracking-[0.2em] mt-3">
+                Vocabulary • Sentences • Practice
               </p>
             </div>
 

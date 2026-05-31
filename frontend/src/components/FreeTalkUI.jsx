@@ -8,16 +8,30 @@ export default function FreeTalkUI({ started, setStarted }) {
       }`}
     >
       <div
-        className={`text-white border border-white/10 backdrop-blur-md transition-all duration-500
+        className={`text-white backdrop-blur-xl transition-all duration-500
         ${
           started
-            ? "rounded-2xl px-4 py-3 bg-slate-900/70"
-            : "rounded-3xl p-6 bg-slate-900/70 text-center"
+            ? `
+              border border-white/10
+              rounded-2xl
+              px-4 py-3
+              bg-slate-900/70
+            `
+            : `
+              border border-white/10
+              rounded-3xl
+              p-6
+              bg-slate-900/70
+              text-center
+              shadow-lg shadow-black/20
+            `
         }`}
       >
         <div
           className={`transition-all duration-500 ${
-            started ? "flex items-center gap-3" : "flex flex-col items-center"
+            started
+              ? "flex items-center gap-3"
+              : "flex flex-col items-center"
           }`}
         >
           {/* ICON */}
@@ -25,24 +39,38 @@ export default function FreeTalkUI({ started, setStarted }) {
             className={`flex items-center justify-center shrink-0 transition-all duration-500
             ${
               started
-                ? "w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 text-base"
+                ? "w-10 h-10 rounded-xl bg-white/10 text-base"
                 : "w-14 h-14 rounded-2xl bg-white/10 text-2xl mb-4"
             }`}
           >
-            {started ? "💬" : "🎙️"}
+            🎙️
           </div>
 
           {/* TEXT */}
           <div className={`${started ? "leading-tight" : ""}`}>
-            <p className="text-sm font-semibold">
+            <p
+              className={`font-semibold tracking-wide transition-all duration-500 ${
+                started ? "text-sm mt-1" : "text-base"
+              }`}
+            >
               {started ? "Free Talk" : "Free Talk Mode"}
             </p>
 
-            <p className="text-xs text-white/60">
+            <p
+              className={`text-white/60 transition-all duration-500 ${
+                started ? "text-xs" : "text-xs mt-1"
+              }`}
+            >
               {started
                 ? "Talk freely 🎙️ AI will respond"
-                : "Speak anything, AI will respond naturally"}
+                : "Speak naturally with AI"}
             </p>
+
+            {!started && (
+              <p className="text-[10px] text-white/35 uppercase tracking-[0.2em] mt-3">
+                Natural • Instant • Voice
+              </p>
+            )}
           </div>
         </div>
 
@@ -50,7 +78,19 @@ export default function FreeTalkUI({ started, setStarted }) {
         {!started && (
           <button
             onClick={() => setStarted(true)}
-            className="mt-4 w-full py-2.5! rounded-xl bg-white! text-black text-sm font-medium active:scale-[0.98] transition"
+            className="
+              mt-5
+              w-full
+              py-2.5!
+              rounded-xl
+              bg-white!
+              text-black
+              text-sm
+              font-medium
+              transition
+              hover:bg-white/90
+              active:scale-[0.98]
+            "
           >
             Start Talking
           </button>

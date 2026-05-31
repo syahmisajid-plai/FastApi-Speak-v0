@@ -249,8 +249,14 @@ export default function SmartCallUI({
   }, [callEndedBy, user]);
 
   return (
-    <section className="mt-24 md:mb-90 text-white flex items-center justify-center bg-linear-to-b from-slate-900 to-cyan-950">
-      <div className="w-full max-w-md relative">
+    <section
+      className={`
+        mt-24 md:mb-90 text-white flex items-center justify-center
+        bg-linear-to-b from-slate-900 to-cyan-950
+        ${(stage === "A" || stage === "B") ? "mx-4" : ""}
+      `}
+    >
+        <div className="w-full max-w-md relative">
 
         {/* End Call Message */}
         {endMessage && (
@@ -286,7 +292,7 @@ export default function SmartCallUI({
           >
             {/* ICON */}
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-2xl bg-white/10 text-2xl mb-4 flex items-center justify-center">
+              <div className="w-14 h-14 rounded-2xl bg-white/10 text-2xl mb-4 flex items-center justify-center">
                 📞
               </div>
 
@@ -296,7 +302,7 @@ export default function SmartCallUI({
                 </p>
 
                 <p className="text-xs text-white/60 mt-1">
-                  Talk with AI-assisted voice calls
+                  Talk with friends in real-time, with AI support when needed
                 </p>
               </div>
             </div>
@@ -307,12 +313,12 @@ export default function SmartCallUI({
                 // tunggu fade out dulu
                 setStage("B");
               }}
-              className="mt-6 w-full py-2! rounded-xl
+              className="mt-4 w-full py-2.5! rounded-xl
               bg-cyan-400! text-black text-sm font-medium
               hover:bg-white transition
               active:scale-[0.98]"
             >
-              Start SmartCall
+              Start Voice Room
             </button>
           </div>
         </section>
@@ -474,6 +480,141 @@ export default function SmartCallUI({
           </div>
         )}
 
+        {/* OPSI B */}
+        {stage === "B" && (
+          <div
+            className={`absolute w-full transition-all duration-500 ease-out
+            opacity-100 scale-100`}
+          >
+            <div
+              className="rounded-3xl backdrop-blur-2xl
+              bg-gradient-to-b from-slate-950/80 to-cyan-950/40
+              border border-cyan-400/10
+              shadow-2xl shadow-cyan-500/10
+              p-5"
+            >
+
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-xl
+                  bg-cyan-400/10 text-cyan-300
+                  flex items-center justify-center text-lg"
+                >
+                  ⚡
+                </div>
+
+                <div>
+                  <h2 className="text-sm font-semibold text-white">
+                    Voice Lobby
+                  </h2>
+                  <p className="text-[11px] text-white/40">
+                    Create or join a room
+                  </p>
+                </div>
+              </div>
+
+              {/* MODE SELECTOR */}
+              <div className="mt-5 grid grid-cols-2 gap-2">
+
+                {/* CREATE */}
+                <button
+                  onClick={() => {
+                    setRoomMode("create");
+                    setShowJoinInput(false);
+                    setRoomInput("");
+                    createRoom();
+                    setIsHost(true);
+                    setStage("C");
+                  }}
+                  className="py-3! rounded-2xl
+                  bg-gradient-to-r from-cyan-500 to-cyan-400
+                  text-black font-medium text-sm!
+                  hover:opacity-90 active:scale-[0.98]
+                  transition"
+                >
+                  Create Room
+                </button>
+
+                {/* JOIN */}
+                <button
+                  onClick={() => {
+                    setRoomMode("join");
+                    setShowJoinInput(true);
+                    setRoomInput("");
+                  }}
+                  className="py-3! rounded-2xl
+                  bg-white/5 text-white/80 text-sm!
+                  border border-white/10
+                  hover:bg-white/10 hover:border-cyan-400/20
+                  transition active:scale-[0.98]"
+                >
+                  Join Room
+                </button>
+
+              </div>
+
+              {/* JOIN INPUT (lebih "floating panel", bukan inline form) */}
+              {showJoinInput && (
+                <div className="mt-4 p-3 rounded-2xl
+                bg-white/5 border border-white/10
+                animate-in fade-in duration-300">
+
+                  <input
+                    value={roomInput}
+                    onChange={(e) => setRoomInput(e.target.value)}
+                    placeholder="Room ID"
+                    className="w-full px-3 py-2.5 rounded-xl
+                    bg-transparent text-white text-sm
+                    border border-white/10
+                    placeholder:text-white/30
+                    outline-none focus:border-cyan-400/40"
+                  />
+
+                  <button
+                    onClick={async () => {
+                      if (!roomInput) return;
+                      await joinRoom(roomInput);
+                      setIsHost(false);
+                      setStage("C");
+                    }}
+                    className="mt-3 w-full py-2.5 rounded-xl
+                    bg-emerald-500/20 text-emerald-300 text-sm
+                    border border-emerald-400/20
+                    hover:bg-emerald-500/30
+                    transition active:scale-[0.98]"
+                  >
+                    Join
+                  </button>
+                </div>
+              )}
+
+              {/* ROOM INFO */}
+              {roomMode === "create" && joinedRoom && (
+                <div className="mt-4 p-3 rounded-2xl
+                bg-cyan-500/5 border border-cyan-400/10 text-center">
+
+                  <p className="text-[10px] text-white/40">Room ID</p>
+
+                  <div className="flex items-center justify-center gap-2 mt-1">
+                    <p className="text-sm font-semibold text-cyan-300 tracking-widest">
+                      {roomId}
+                    </p>
+
+                    <button
+                      onClick={() => navigator.clipboard.writeText(roomId)}
+                      className="text-white/60 hover:text-white transition"
+                    >
+                      📑
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        )}
+        
+
         {/* ================= C: WAITING ROOM ================= */}
         {stage === "C" && (() => {
 
@@ -623,284 +764,288 @@ export default function SmartCallUI({
           );
           
           return (
-          <div className="absolute mt-48 inset-0 flex items-center justify-center px-4">
-            <div
-              className="w-full max-w-md flex flex-col
-              text-white backdrop-blur-2xl rounded-3xl p-5
-              bg-linear-to-b from-slate-900/70 to-cyan-950/60
-              border border-cyan-400/10
-              shadow-xl shadow-cyan-500/10
-              transition-all duration-500"
-            >
+          <div>
+            <div className="absolute mt-48 inset-0 flex items-center justify-center px-4">
+              <div
+                className="w-full max-w-md flex flex-col
+                text-white backdrop-blur-2xl rounded-3xl p-5
+                bg-linear-to-b from-slate-900/70 to-cyan-950/60
+                border border-cyan-400/10
+                shadow-xl shadow-cyan-500/10
+                transition-all duration-500"
+              >
 
-              {/* TOP BAR */}
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <div className="flex items-center gap-3">
-                    {/* Avatar */}
-                    <div
-                      className="w-11 h-11 rounded-2xl
-                      bg-cyan-500/20 border border-cyan-400/20
-                      flex items-center justify-center
-                      text-cyan-200 font-semibold text-sm"
-                    >
-                      {peerUser?.username?.charAt(0)?.toUpperCase() || "?"}
-                    </div>
+                {/* TOP BAR */}
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      {/* Avatar */}
+                      <div
+                        className="w-11 h-11 rounded-2xl
+                        bg-cyan-500/20 border border-cyan-400/20
+                        flex items-center justify-center
+                        text-cyan-200 font-semibold text-sm"
+                      >
+                        {peerUser?.username?.charAt(0)?.toUpperCase() || "?"}
+                      </div>
 
-                    {/* User Info */}
-                    <div className="flex flex-col">
-                      
-                      <p className="text-sm font-semibold text-white tracking-wide">
-                        {peerUser?.username || "Connecting..."}
-                      </p>
-
-                      <div className="flex items-center gap-2 mt-0.5">
-
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            connectionState === "connected"
-                              ? "bg-emerald-400"
-                              : connectionState === "connecting"
-                              ? "bg-yellow-400 animate-pulse"
-                              : "bg-white/30"
-                          }`}
-                        />
-
-                        <p className="text-[11px] text-white/45">
-                          {connectionLabel[connectionState] || "Waiting"}
+                      {/* User Info */}
+                      <div className="flex flex-col">
+                        
+                        <p className="text-sm font-semibold text-white tracking-wide">
+                          {peerUser?.username || "Connecting..."}
                         </p>
 
+                        <div className="flex items-center gap-2 mt-0.5">
+
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              connectionState === "connected"
+                                ? "bg-emerald-400"
+                                : connectionState === "connecting"
+                                ? "bg-yellow-400 animate-pulse"
+                                : "bg-white/30"
+                            }`}
+                          />
+
+                          <p className="text-[11px] text-white/45">
+                            {connectionLabel[connectionState] || "Waiting"}
+                          </p>
+
+                        </div>
                       </div>
+
                     </div>
 
-                  </div>
 
+                    <div className="flex gap-2 mt-2 flex-wrap">
 
-                  <div className="flex gap-2 mt-2 flex-wrap">
+                      {isMuted && (
+                        <span
+                          className="px-2 py-1 rounded-lg
+                          bg-red-500/20 text-red-300
+                          border border-red-400/20
+                          text-[10px] tracking-wide"
+                        >
+                          MUTED
+                        </span>
+                      )}
 
-                    {isMuted && (
-                      <span
-                        className="px-2 py-1 rounded-lg
-                        bg-red-500/20 text-red-300
-                        border border-red-400/20
-                        text-[10px] tracking-wide"
-                      >
-                        MUTED
-                      </span>
-                    )}
+                      {isLupaKataActive && (
+                        <span
+                          className="px-2 py-1 rounded-lg
+                          bg-emerald-500/20 text-emerald-300
+                          border border-emerald-400/20
+                          text-[10px] tracking-wide"
+                        >
+                          TRANSLATE MODE
+                        </span>
+                      )}
 
-                    {isLupaKataActive && (
-                      <span
-                        className="px-2 py-1 rounded-lg
-                        bg-emerald-500/20 text-emerald-300
-                        border border-emerald-400/20
-                        text-[10px] tracking-wide"
-                      >
-                        TRANSLATE MODE
-                      </span>
-                    )}
+                      {!isMuted && !isLupaKataActive && (
+                        <span
+                          className="px-2 py-1 rounded-lg
+                          bg-cyan-500/20 text-cyan-300
+                          border border-cyan-400/20
+                          text-[10px] tracking-wide"
+                        >
+                          LIVE CALL
+                        </span>
+                      )}
 
-                    {!isMuted && !isLupaKataActive && (
-                      <span
-                        className="px-2 py-1 rounded-lg
-                        bg-cyan-500/20 text-cyan-300
-                        border border-cyan-400/20
-                        text-[10px] tracking-wide"
-                      >
-                        LIVE CALL
-                      </span>
-                    )}
+                      {isRecording && !isMuted && (
+                        <span
+                          className="px-2 py-1 rounded-lg
+                          bg-white/10 text-white/80
+                          border border-white/10
+                          text-[10px] tracking-wide animate-pulse"
+                        >
+                          LISTENING
+                        </span>
+                      )}
 
-                    {isRecording && !isMuted && (
-                      <span
-                        className="px-2 py-1 rounded-lg
-                        bg-white/10 text-white/80
-                        border border-white/10
-                        text-[10px] tracking-wide animate-pulse"
-                      >
-                        LISTENING
-                      </span>
-                    )}
-
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setShowSummary(true);
-                    endCall();
-                  }}
-                  className="text-xs px-3! py-1! rounded-lg
-                  bg-red-500/10! text-red-300
-                  border border-red-500/20
-                  hover:bg-red-500/20 transition"
-                >
-                  End
-                </button>
-              </div>
-
-              {/* AVATAR / STATUS */}
-              <div className="flex justify-center mb-6">
-                <div
-                  className={`w-24 h-24 rounded-full flex items-center justify-center text-3xl border transition-all duration-300 relative
-                  ${
-                    peerState?.translated
-                      ? "bg-emerald-500/15 border-emerald-400"
-                      : peerState?.muted
-                      ? "bg-red-500/10 border-red-400/30"
-                      : "bg-cyan-500/20 border-cyan-400 animate-pulse"
-                  }`}
-                >
-                    {peerState?.translated
-                      ? "🌐"
-                      : peerState?.muted
-                      ? "🔇"
-                      : "📞"}
-
-                  {/* small dot indicator */}
-                  <span
-                    className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-900
-                    ${peerState?.muted ? "bg-red-400" : "bg-emerald-400"}`}
-                  />
-                </div>
-              </div>
-
-              {/* CARDS */}
-              <div className="space-y-3">
-
-                {/* Live Caption (Partner) */}
-                <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
-                  <p className="text-xs text-white/40 mb-1">Live Caption (Partner)</p>
-                  <div>
-                    <p
-                      className="text-sm text-white cursor-pointer hover:bg-white/5 p-1 rounded"
-                      onClick={() => handlePartnerTranslate(remoteTranscript)}
-                    >
-                      {remoteTranscript || "Waiting for speech..."}
-                    </p>
-
-                    {isPartnerTranslating && (
-                      <p className="text-xs text-white/40 mt-1 animate-pulse">
-                        Translating...
-                      </p>
-                    )}
-
-                    {partnerTranslatedText && !isPartnerTranslating && (
-                      <p className="text-sm text-cyan-200 mt-2 border-t border-white/10 pt-2">
-                        {partnerTranslatedText}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Translation */}
-                <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
-                  <p className="text-xs text-white/40 mb-2">Translation</p>
-
-                  {/* LIVE TRANSCRIPT */}
-                  <div className="mb-2">
-                    <p className="text-[10px] text-white/30 mb-1">
-                      {isLupaKataActive ? "Listening..." : "Transcript"}
-                    </p>
-
-                    <p className="text-sm text-white">
-                      {cleanLupaKataText || "..."}
-                    </p>
-                  </div>
-
-                  {/* TRANSLATED RESULT */}
-                  {lupaKata?.translatedText && !isLupaKataActive && (
-                    <div className="pt-2 border-t border-white/10">
-                      <p className="text-[10px] text-cyan-300/70 mb-1">
-                        English Translation
-                      </p>
-
-                      <p className="text-sm text-cyan-100">
-                        {lupaKata.translatedText}
-                      </p>
                     </div>
-                  )}
-                </div>
-
-                {/* AI Speaking Coach */}
-                <div
-                  className="bg-cyan-500/10 border border-cyan-400/20
-                  p-3 rounded-xl shadow-sm shadow-cyan-500/10"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-cyan-300">
-                      AI Speaking Coach
-                    </p>
-
-                    <button
-                      onClick={() => setShowCoach((v) => !v)}
-                      className="text-[11px]! px-2! py-1! rounded-md
-                      bg-white/5! hover:bg-white/10
-                      text-white/60 transition"
-                    >
-                      {showCoach ? "Hide" : "💡 Need Help"}
-                    </button>
                   </div>
 
-                  {showCoach ? (
-                    <p className="text-sm text-white">
-                      {aiReply || "..."}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-white/40 italic">
-                      Try responding on your own first.
-                    </p>
-                  )}
+                  <button
+                    onClick={() => {
+                      setShowSummary(true);
+                      endCall();
+                    }}
+                    className="text-xs px-3! py-1! rounded-lg
+                    bg-red-500/10! text-red-300
+                    border border-red-500/20
+                    hover:bg-red-500/20 transition"
+                  >
+                    End
+                  </button>
                 </div>
-              </div>
 
-              {/* CONTROLS */}
-              <div className="flex gap-2 mt-5">
-
-                <button
-                  onClick={handleToggleMute}
-                  disabled={isLupaKataActive}
-                  className={`flex-1 py-2! rounded-xl border transition relative
+                {/* AVATAR / STATUS */}
+                <div className="flex justify-center mb-6">
+                  <div
+                    className={`w-24 h-24 rounded-full flex items-center justify-center text-3xl border transition-all duration-300 relative
                     ${
-                      isLupaKataActive
-                        ? "bg-white/5 text-white/40 border-white/10 cursor-not-allowed"
-                        : isMuted
-                        ? "bg-yellow-500/20 text-yellow-300 border-yellow-400/30"
-                        : "bg-red-500/10 text-red-300 border-red-500/20 hover:bg-red-500/20"
+                      peerState?.translated
+                        ? "bg-emerald-500/15 border-emerald-400"
+                        : peerState?.muted
+                        ? "bg-red-500/10 border-red-400/30"
+                        : "bg-cyan-500/20 border-cyan-400 animate-pulse"
                     }`}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    
-                    {/* ICON */}
-                    {isLupaKataActive ? (
-                      <span className="text-sm">🔒</span>
-                    ) : (
-                      <span className="text-sm">🎤</span>
-                    )}
+                  >
+                      {peerState?.translated
+                        ? "🌐"
+                        : peerState?.muted
+                        ? "🔇"
+                        : "📞"}
 
-                    {/* TEXT */}
-                    {isLupaKataActive
-                      ? "Muted (Locked)"
-                      : isMuted
-                      ? "Unmute"
-                      : "Mute"}
+                    {/* small dot indicator */}
+                    <span
+                      className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-900
+                      ${peerState?.muted ? "bg-red-400" : "bg-emerald-400"}`}
+                    />
                   </div>
-                </button>
+                </div>
 
-                <button
-                  onClick={openLupaKata}
-                  className={`flex-1 py-2! rounded-xl border transition ${
-                    isLupaKataActive
-                      ? "bg-emerald-500/20! text-emerald-300 border-emerald-400/30"
-                      : "bg-white/5! text-white/60 border-white/10 hover:bg-white/10"
-                  }`}
-                >
-                  {isLupaKataActive ? "🔒 Translate ON" : "🌐 Translate"}
-                </button>
+                {/* CARDS */}
+                <div className="space-y-3">
+
+                  {/* Live Caption (Partner) */}
+                  <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                    <p className="text-xs text-white/40 mb-1">Live Caption (Partner)</p>
+                    <div>
+                      <p
+                        className="text-sm text-white cursor-pointer hover:bg-white/5 p-1 rounded"
+                        onClick={() => handlePartnerTranslate(remoteTranscript)}
+                      >
+                        {remoteTranscript || "Waiting for speech..."}
+                      </p>
+
+                      {isPartnerTranslating && (
+                        <p className="text-xs text-white/40 mt-1 animate-pulse">
+                          Translating...
+                        </p>
+                      )}
+
+                      {partnerTranslatedText && !isPartnerTranslating && (
+                        <p className="text-sm text-cyan-200 mt-2 border-t border-white/10 pt-2">
+                          {partnerTranslatedText}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Translation */}
+                  <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                    <p className="text-xs text-white/40 mb-2">Translation</p>
+
+                    {/* LIVE TRANSCRIPT */}
+                    <div className="mb-2">
+                      <p className="text-[10px] text-white/30 mb-1">
+                        {isLupaKataActive ? "Listening..." : "Transcript"}
+                      </p>
+
+                      <p className="text-sm text-white">
+                        {cleanLupaKataText || "..."}
+                      </p>
+                    </div>
+
+                    {/* TRANSLATED RESULT */}
+                    {lupaKata?.translatedText && !isLupaKataActive && (
+                      <div className="pt-2 border-t border-white/10">
+                        <p className="text-[10px] text-cyan-300/70 mb-1">
+                          English Translation
+                        </p>
+
+                        <p className="text-sm text-cyan-100">
+                          {lupaKata.translatedText}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* AI Speaking Coach */}
+                  <div
+                    className="bg-cyan-500/10 border border-cyan-400/20
+                    p-3 rounded-xl shadow-sm shadow-cyan-500/10"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs text-cyan-300">
+                        AI Speaking Coach
+                      </p>
+
+                      <button
+                        onClick={() => setShowCoach((v) => !v)}
+                        className="text-[11px]! px-2! py-1! rounded-md
+                        bg-white/5! hover:bg-white/10
+                        text-white/60 transition"
+                      >
+                        {showCoach ? "Hide" : "💡 Need Help"}
+                      </button>
+                    </div>
+
+                    {showCoach ? (
+                      <p className="text-sm text-white">
+                        {aiReply || "..."}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-white/40 italic">
+                        Try responding on your own first.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* CONTROLS */}
+                <div className="flex gap-2 mt-5">
+
+                  <button
+                    onClick={handleToggleMute}
+                    disabled={isLupaKataActive}
+                    className={`flex-1 py-2! rounded-xl border transition relative
+                      ${
+                        isLupaKataActive
+                          ? "bg-white/5 text-white/40 border-white/10 cursor-not-allowed"
+                          : isMuted
+                          ? "bg-yellow-500/20 text-yellow-300 border-yellow-400/30"
+                          : "bg-red-500/10 text-red-300 border-red-500/20 hover:bg-red-500/20"
+                      }`}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      
+                      {/* ICON */}
+                      {isLupaKataActive ? (
+                        <span className="text-sm">🔒</span>
+                      ) : (
+                        <span className="text-sm">🎤</span>
+                      )}
+
+                      {/* TEXT */}
+                      {isLupaKataActive
+                        ? "Muted (Locked)"
+                        : isMuted
+                        ? "Unmute"
+                        : "Mute"}
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={openLupaKata}
+                    className={`flex-1 py-2! rounded-xl border transition ${
+                      isLupaKataActive
+                        ? "bg-emerald-500/20! text-emerald-300 border-emerald-400/30"
+                        : "bg-white/5! text-white/60 border-white/10 hover:bg-white/10"
+                    }`}
+                  >
+                    {isLupaKataActive ? "🔒 Translate ON" : "🌐 Translate"}
+                  </button>
+
+                </div>
 
               </div>
-
             </div>
+
+            <div clas></div>
           </div>
           )
         })()}

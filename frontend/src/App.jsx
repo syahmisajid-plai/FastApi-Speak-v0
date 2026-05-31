@@ -17,7 +17,8 @@ import FreeTalkUI from "./components/FreeTalkUI";
 import VocabUI from "./components/VocabUI";
 import LoginOverlay from "./components/LoginOverlay";
 import VocabList from "./components/VocabList";
-import ComingSoon from "./components/ComingSoon";
+import ComingSoonIELTS from "./components/ComingSoonIELTS";
+import ComingSoonScenarios from "./components/ComingSoonScenarios";
 import OverlayFeedback from "./components/OverlayFeedback";
 import LearnUI from "./components/LearnUI";
 import DailyStoryContinue from "./components/DailyStoryContinue";
@@ -876,8 +877,8 @@ Feature tambahan:
             />
           )}
 
-
-          {mode === "scenarios" && (
+          {mode === "scenarios" && <ComingSoonScenarios />}
+          {/* {mode === "scenarios" && (
             <ScenariosUI
               modeScenario={modeScenario}
               setModeScenario={setModeScenario}
@@ -931,7 +932,7 @@ Feature tambahan:
                 generateSummary,
               }}
             />
-          )}
+          )} */}
 
           {mode === "learn" && (
             <LearnUI
@@ -1137,7 +1138,7 @@ Feature tambahan:
         </div>
       </div>
 
-      {mode === "ielts" && <ComingSoon />}
+      {mode === "ielts" && <ComingSoonIELTS />}
 
       {/* Overlay untuk daily complete */}
       {mode === "dailyStory" && allDailyComplete && (
