@@ -1,13 +1,14 @@
 import { useEffect, useRef, useMemo, useState } from "react";
 import useSmartCall from "../hooks/useSmartCall";
-
 import useTranslate from "../hooks/useTranslate";
+
+import SmartCallSummaryModal from "./SmartCallSummaryModal";
 
 export default function SmartCallUI({
   startRecording,
   stopRecording,
   isRecording,
-  liveTranscript,
+  currentTranscript,
 
   openLupaKata,
   isLupaKataActive,
@@ -56,7 +57,7 @@ export default function SmartCallUI({
   } = useSmartCall({
     startRecording,
     stopRecording,
-    liveTranscript,
+    currentTranscript,
     user,
 
     isLupaKataActive,
@@ -75,6 +76,9 @@ export default function SmartCallUI({
   const [isHost, setIsHost] = useState(false);
 
   const [callUIStarted, setCallUIStarted] = useState(false);
+
+  const [showSummary, setShowSummary] = useState(false);
+  const [showCoach, setShowCoach] = useState(false);
 
   const { translate } = useTranslate();
 
@@ -211,17 +215,24 @@ export default function SmartCallUI({
 
   useEffect(() => {
 
-    if (!callEndedBy) return;
+    console.log("📞 callEndedBy changed:", callEndedBy);
 
-    // kalau peer yang end
+    if (!callEndedBy) {
+      // console.log("❌ callEndedBy kosong");
+      return;
+    }
+
+    // console.log("✅ SHOW SUMMARY");
+
+    setShowSummary(true);
+
     if (callEndedBy !== user?.username) {
 
       setEndMessage(
         `${callEndedBy} ended the call`
       );
 
-    }
-    else {
+    } else {
 
       setEndMessage(
         "Call ended"
@@ -229,10 +240,11 @@ export default function SmartCallUI({
 
     }
 
-    // hilang otomatis
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       setEndMessage("");
     }, 3000);
+
+    return () => clearTimeout(timeout);
 
   }, [callEndedBy, user]);
 
@@ -715,6 +727,7 @@ export default function SmartCallUI({
 
                 <button
                   onClick={() => {
+                    setShowSummary(true);
                     endCall();
                   }}
                   className="text-xs px-3! py-1! rounded-lg
@@ -809,17 +822,35 @@ export default function SmartCallUI({
                   )}
                 </div>
 
-                {/* AI Reply */}
+                {/* AI Speaking Coach */}
                 <div
                   className="bg-cyan-500/10 border border-cyan-400/20
                   p-3 rounded-xl shadow-sm shadow-cyan-500/10"
                 >
-                  <p className="text-xs text-cyan-300 mb-1">
-                    AI Suggested Reply
-                  </p>
-                  <p className="text-sm text-white">
-                    {aiReply || "..."}
-                  </p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs text-cyan-300">
+                      AI Speaking Coach
+                    </p>
+
+                    <button
+                      onClick={() => setShowCoach((v) => !v)}
+                      className="text-[11px]! px-2! py-1! rounded-md
+                      bg-white/5! hover:bg-white/10
+                      text-white/60 transition"
+                    >
+                      {showCoach ? "Hide" : "💡 Need Help"}
+                    </button>
+                  </div>
+
+                  {showCoach ? (
+                    <p className="text-sm text-white">
+                      {aiReply || "..."}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-white/40 italic">
+                      Try responding on your own first.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -876,6 +907,13 @@ export default function SmartCallUI({
 
       </div>
       
+      {/* Summary Modal */}
+      <SmartCallSummaryModal
+        open={showSummary}
+        onClose={() => {
+          setShowSummary(false);
+        }}
+      />
     </section>
   );
 }

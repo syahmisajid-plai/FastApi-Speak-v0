@@ -9,7 +9,7 @@ import { linkBackend } from "../config";
 export default function useSmartCall({
   startRecording,
   stopRecording,
-  liveTranscript,
+  currentTranscript,
   user,
 }) {
 
@@ -822,7 +822,7 @@ export default function useSmartCall({
   // ================= SEND TRANSCRIPT =================
   useEffect(() => {
 
-    if (!liveTranscript)
+    if (!currentTranscript)
       return;
 
     // SEND TO REMOTE
@@ -835,7 +835,7 @@ export default function useSmartCall({
     dataChannelRef.current.send(
     JSON.stringify({
         from: username,
-        text: liveTranscript,
+        text: currentTranscript,
     })
     );
     }
@@ -843,7 +843,7 @@ export default function useSmartCall({
     // AI REPLY PLACEHOLDER
     setAiReply("...");
 
-  }, [liveTranscript]);
+  }, [currentTranscript]);
 
   // ================= SET MIC ENABLED =================
   const setMicEnabled = (

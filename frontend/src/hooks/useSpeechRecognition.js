@@ -11,6 +11,7 @@ export default function useSpeechRecognition({
 }) {
   const transcriptRef = useRef("");
   const [liveTranscript, setLiveTranscript] = useState("");
+  const [currentTranscript, setCurrentTranscript] = useState("");
   const [isCanceled, setIsCanceled] = useState(false);
 
   const lastInterimRef = useRef("");
@@ -128,6 +129,7 @@ export default function useSpeechRecognition({
       transcriptRef.current = "";
       lastInterimRef.current = "";
       setLiveTranscript("");
+      setCurrentTranscript("");
       setIsCanceled(false);
       shouldSendOnEndRef.current = true;
 
@@ -200,6 +202,7 @@ export default function useSpeechRecognition({
     setIsCanceled(true);
     transcriptRef.current = "";
     setLiveTranscript("");
+    setCurrentTranscript("");
 
     try {
       recognitionRef.current?.stop();
@@ -259,21 +262,29 @@ export default function useSpeechRecognition({
     };
 
     recognition.onresult = (event) => {
-      console.log("📝 STT onresult fired");
       if (isCanceled || isLupaKataActive) return;
 
       let interim = "";
+      let latestText = "";
+
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const t = event.results[i][0].transcript;
+
         if (event.results[i].isFinal) {
-          transcriptRef.current += t + " ";
+          transcriptRef.current += t + " "; // mode utama tetap akumulasi
+          latestText = t;                   // hanya simpan ucapan terakhir
         } else {
           interim += t;
         }
       }
 
       lastInterimRef.current = interim;
+
+      // MODE UTAMA
       setLiveTranscript(transcriptRef.current + interim);
+
+      // MODE KEDUA (tidak menumpuk)
+      setCurrentTranscript(interim || latestText);
     };
 
     recognition.onend = () => {
@@ -305,6 +316,7 @@ export default function useSpeechRecognition({
         transcriptRef.current = "";
         lastInterimRef.current = "";
         setLiveTranscript("");
+        setCurrentTranscript("");
         setIsRecording(false);
         onResetIdle?.();
       } else {
@@ -325,6 +337,7 @@ export default function useSpeechRecognition({
 
   return {
     liveTranscript,
+    currentTranscript,
     startRecording,
     stopRecording,
     cancelRecording,

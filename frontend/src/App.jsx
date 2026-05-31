@@ -636,14 +636,6 @@ Feature tambahan:
         return;
       }
 
-      // let grammarData = null;
-
-      // if (modeRef.current === "dailyStory") {
-      //   grammarData = await checkGrammar(text);
-      // }
-
-      // sendTextToBackend(text, grammarData); // ✅ kirim ke engine
-
       sendTextToBackend(text);
     },
     onResetIdle: resetIdle, // Reset idle jika user bicara
@@ -654,6 +646,7 @@ Feature tambahan:
   // ================== DESTRUCTURING SPEECH ==================
   const {
     liveTranscript,
+    currentTranscript,
     startRecording: rawStartRecording,
     stopRecording,
     cancelRecording,
@@ -983,7 +976,7 @@ Feature tambahan:
           {mode === "smartcall" && (
             <SmartCallUI
               isRecording={isRecording}
-              liveTranscript={liveTranscript}
+              currentTranscript={currentTranscript}
               startRecording={startRecording}
               stopRecording={stopRecording}
 
@@ -1001,11 +994,6 @@ Feature tambahan:
               user={user}
             />
           )}
-
-          <div className="mb-96" />
-          <div className="mb-96" />
-          <div className="mb-96" />
-          <div className="mb-96" />
 
           {/* {mode === "vocab" && <LearnUI />} */}
 
