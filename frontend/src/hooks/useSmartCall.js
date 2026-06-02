@@ -552,6 +552,17 @@ export default function useSmartCall({
     }, 500);
   };
 
+  // ================= LEAVE ROOM =================
+  const leaveRoom = () => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: "leave-room",
+        })
+      );
+    }
+  };
+
   // ================= END CALL =================
   const endCall = () => {
 
@@ -931,6 +942,7 @@ export default function useSmartCall({
     joinRoom,
     startCall,
     endCall,
+    leaveRoom,
     toggleMute,
     toggleTranslated,
 

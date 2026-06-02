@@ -164,6 +164,26 @@ async def websocket_endpoint(
 
                 continue
 
+            # ================= LEAVE ROOM =================
+            if event_type == "leave-room":
+
+                print(f"{username} LEFT ROOM INTENTIONALLY")
+
+                rooms[room_id] = [
+                    client
+                    for client in rooms[room_id]
+                    if client["ws"] != websocket
+                ]
+
+                if username in room_states.get(room_id, {}):
+                    del room_states[room_id][username]
+
+                await broadcast_room_state(room_id)
+                await cleanup_room(room_id)
+
+                await websocket.close()
+                break
+
             # ================= PEER STATE =================
             if event_type == "peer-state":
 

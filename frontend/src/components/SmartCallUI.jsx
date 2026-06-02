@@ -44,6 +44,7 @@ export default function SmartCallUI({
     joinRoom,
     startCall,
     endCall,
+    leaveRoom,
 
     requestStartCall,
 
@@ -527,6 +528,7 @@ export default function SmartCallUI({
                   {/* BACK BUTTON */}
                   <button
                     onClick={() => {
+                      leaveRoom(); 
                       setRoomMode(null);
                       setShowJoinInput(false);
                       setStage("B");
