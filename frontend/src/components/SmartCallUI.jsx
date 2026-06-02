@@ -531,6 +531,7 @@ export default function SmartCallUI({
                       leaveRoom(); 
                       setRoomMode(null);
                       setShowJoinInput(false);
+                      setRoomInput("");
                       setStage("B");
                     }}
                     className="absolute left-0 top-0 text-white/60 hover:text-white text-lg"

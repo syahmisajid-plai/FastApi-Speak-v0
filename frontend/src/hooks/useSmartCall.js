@@ -561,6 +561,8 @@ export default function useSmartCall({
         })
       );
     }
+
+    resetCallState();
   };
 
   // ================= END CALL =================
