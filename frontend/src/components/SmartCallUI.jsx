@@ -275,115 +275,115 @@ export default function SmartCallUI({
         {/* AUDIO */}
         <audio ref={remoteAudioRef} autoPlay />
 
-        {/* ================= A: START SMARTCALL ================= */}
-        <section
-          className={`transition-all duration-500 ease-out absolute w-full mt-12
-          ${
-            stage === "A"
-              ? "opacity-100 scale-100 translate-y-0"
-              : "opacity-0 scale-95 translate-y-3 pointer-events-none"
-          }`}
-        >
-          <div
-            className="text-white border border-cyan-400/10 backdrop-blur-xl rounded-3xl p-6
-            bg-linear-to-b from-slate-900/80 to-cyan-950/70
-            shadow-lg shadow-cyan-500/10 flex flex-col justify-center
-            transition-all duration-300 ease-out"
-          >
-            {/* ICON */}
-            <div className="flex flex-col items-center text-center">
-              <div className="w-14 h-14 rounded-2xl bg-white/10 text-2xl mb-4 flex items-center justify-center">
-                📞
-              </div>
-
-              <div>
-                <p className="text-base font-semibold tracking-wide">
-                  SmartCall
-                </p>
-
-                <p className="text-xs text-white/60 mt-1">
-                  Talk with friends in real-time, with AI support when needed
-                </p>
-              </div>
-            </div>
-
-            {/* BUTTON */}
-            <button
-              onClick={() => {
-                // tunggu fade out dulu
-                setStage("B");
-              }}
-              className="mt-4 w-full py-2.5! rounded-xl
-              bg-cyan-400! text-black text-sm font-medium
-              hover:bg-white transition
-              active:scale-[0.98]"
-            >
-              Start Voice Room
-            </button>
-          </div>
-        </section>
-
-        {/* ================= B: BEFORE CALL ================= */}
-        {stage === "B" && (
-          <div
-            className={`absolute w-full transition-all duration-500 ease-out
-              opacity-100 scale-100 ${
-                roomMode === "join" || roomMode === "create"
-                  ? ""
-                  : "mt-12"
-              }`}
+        {/* ================= SHARED CONTAINER A & B================= */}
+        {(stage === "A" || stage === "B") && (
+          <section
+            className={`absolute w-full transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]
+            ${
+              roomMode === "join"
+                ? "mt-12"
+                : stage === "A"
+                ? "mt-12"
+                : "mt-14"
+            }`}
           >
             <div
-              className="rounded-2xl backdrop-blur-2xl
-              bg-linear-to-b from-slate-900/70 to-cyan-950/60
-              border border-cyan-400/10
-              shadow-xl shadow-cyan-500/10
-              p-6"
+              className="text-white border border-cyan-400/10 backdrop-blur-xl rounded-3xl p-6
+              bg-linear-to-b from-slate-900/80 to-cyan-950/70
+              shadow-lg shadow-cyan-500/10 flex flex-col justify-center
+              transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
             >
 
-              {/* HEADER */}
-              <div className="text-center">
+              {/* ================= CONTENT WRAPPER ================= */}
+              <div
+                className={`relative transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]
+                ${
+                  roomMode === "join"
+                    ? "min-h-[280px]"
+                    : stage === "A"
+                    ? "min-h-[200px]"
+                    : "min-h-[120px]"
+                }`}
+              >
+
+                {/* ================= A ================= */}
                 <div
-                  className="mx-auto w-14 h-14 rounded-2xl
-                  bg-cyan-400/10 text-cyan-300
-                  border border-cyan-400/20
-                  flex items-center justify-center text-xl"
+                  className={`absolute inset-0 flex flex-col items-center text-center
+                  transition-all duration-400 ease-out
+                  ${
+                    stage === "A"
+                      ? "opacity-100 translate-y-0 scale-100"
+                      : "opacity-0 -translate-y-2 scale-95 pointer-events-none"
+                  }`}
                 >
-                  📞
+                  <div className="w-14 h-14 rounded-2xl bg-white/10 text-2xl mb-4 flex items-center justify-center">
+                    📞
+                  </div>
+
+                  <p className="text-base font-semibold tracking-wide">
+                    SmartCall
+                  </p>
+
+                  <p className="text-xs text-white/60 mt-1">
+                    Talk with friends in real-time, with AI support when needed
+                  </p>
+
+                  <button
+                    onClick={() => setStage("B")}
+                    className="mt-4 w-full py-2.5! rounded-xl
+                    bg-cyan-400! text-black text-sm font-medium
+                    hover:bg-white transition active:scale-[0.98]"
+                  >
+                    Start Voice Room
+                  </button>
                 </div>
 
-                <h2 className="mt-4 text-lg font-semibold text-white tracking-wide">
-                  SmartCall
-                </h2>
+              {/* ================= B ================= */}
+              <div
+                className={`absolute inset-0 transition-all duration-500 ease-out
+                ${
+                  stage === "B"
+                    ? "opacity-100 translate-y-0 scale-100"
+                    : "opacity-0 translate-y-2 scale-95 pointer-events-none"
+                }`}
+              >
+                {/* HEADER */}
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-400/10 text-cyan-300 flex items-center justify-center text-lg">
+                    📞
+                  </div>
 
-                <p className="text-xs text-white/50 mt-1">
-                  Create or join a real-time AI voice call
-                </p>
-              </div>
+                  <div>
+                    <h2 className="text-sm font-semibold text-white">
+                      Voice Lobby
+                    </h2>
+                    <p className="text-[11px] text-white/40">
+                      Create or join a room
+                    </p>
+                  </div>
+                </div>
 
-              {/* ACTIONS */}
-              <div className="mt-6 space-y-3">
-
-                <div className="grid grid-cols-2 gap-3">
-
+                {/* ACTION BUTTONS */}
+                <div className="grid grid-cols-2 gap-2">
+                  
                   {/* CREATE */}
                   <button
                     onClick={() => {
                       setRoomMode("create");
                       setShowJoinInput(false);
                       setRoomInput("");
-                      // setReadyToCall(true);
+
                       createRoom();
                       setIsHost(true);
-                      setStage("C");  
+                      setStage("C");
                     }}
-                    className="py-2.5! rounded-xl
-                    bg-cyan-500! text-black font-medium text-sm
-                    hover:bg-cyan-400
-                    active:scale-[0.98]
-                    shadow-md shadow-cyan-500/20 transition"
+                    className="py-3! rounded-2xl
+                    bg-gradient-to-r from-cyan-500 to-cyan-400
+                    text-black font-medium text-sm
+                    hover:opacity-90 active:scale-[0.98]
+                    transition"
                   >
-                    Create
+                    Create Room
                   </button>
 
                   {/* JOIN */}
@@ -391,227 +391,78 @@ export default function SmartCallUI({
                     onClick={() => {
                       setRoomMode("join");
                       setShowJoinInput(true);
-                      setRoomInput("");
                     }}
-                    className="py-2.5! rounded-xl
-                    bg-white/5! text-white/80 text-sm
+                    className="py-3! rounded-2xl
+                    bg-gradient-to-r from-white/5 to-white/10
+                    text-white/80 text-sm font-medium
                     border border-white/10
+                    backdrop-blur-md
                     hover:bg-white/10 hover:border-cyan-400/20
-                    active:scale-[0.98]
-                    transition"
+                    transition active:scale-[0.98]"
                   >
-                    Join
+                    🔑 Join Room
                   </button>
 
                 </div>
 
-                {/* JOIN INPUT */}
-                {showJoinInput && (
-                  <div className="space-y-2 animate-in fade-in duration-300">
+                {/* DIVIDER */}
+                <div className="my-5 h-px bg-white/5" />
 
-                    <input
-                      value={roomInput}
-                      onChange={(e) => {
-                        setRoomInput(e.target.value);
-
-                        // user mengubah ID -> harus join ulang
-                        // setReadyToCall(false);
-                      }}
-                      placeholder="Enter Room ID"
-                      className="w-full px-3 py-2.5 rounded-xl
-                      bg-white/5 text-white text-sm
-                      border border-white/10
-                      placeholder:text-white/30
-                      outline-none
-                      focus:border-cyan-400/40 focus:bg-white/10
-                      transition"
-                    />
-
-                    <button
-                      onClick={async () => {
-
-                        if (!roomInput) return;
-
-                        await joinRoom(roomInput);
-                        setIsHost(false);
-                        setStage("C");
-
-                      }}
-                      className="w-full py-2.5! rounded-xl
-                      bg-emerald-500/20! text-emerald-300 text-sm
-                      border border-emerald-400/20
-                      hover:bg-emerald-500/30
-                      transition active:scale-[0.98]"
-                    >
-                      Join Room
-                    </button>
-
-                  </div>
-                )}
-
-                {/* ROOM INFO */}
-                {roomMode === "create" && joinedRoom && (
-                  <div
-                    className="mt-3 text-center p-3 rounded-xl relative
-                    bg-cyan-500/5 border border-cyan-400/10"
-                  >
-                    <p className="text-[10px] text-white/40">Room ID</p>
-
-                    {/* COPY BUTTON */}
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(roomId);
-                      }}
-                      className="absolute top-2 right-2 text-sm
-                      text-white/60 hover:text-white transition"
-                    >
-                      📑
-                    </button>
-
-                    {/* ROOM ID CENTER */}
-                    <p className="text-base font-semibold text-cyan-300 tracking-widest mt-1">
-                      {roomId}
-                    </p>
-                  </div>
-                )}
-
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* OPSI B */}
-        {stage === "B" && (
-          <div
-            className={`absolute w-full transition-all duration-500 ease-out
-            opacity-100 scale-100`}
-          >
-            <div
-              className="rounded-3xl backdrop-blur-2xl
-              bg-gradient-to-b from-slate-950/80 to-cyan-950/40
-              border border-cyan-400/10
-              shadow-2xl shadow-cyan-500/10
-              p-5"
-            >
-
-              <div className="flex items-center gap-3">
+                {/* JOIN INPUT (SMOOTH EXPAND) */}
                 <div
-                  className="w-10 h-10 rounded-xl
-                  bg-cyan-400/10 text-cyan-300
-                  flex items-center justify-center text-lg"
+                  className={`
+                    overflow-hidden transition-all duration-300 ease-out
+                    ${showJoinInput
+                      ? "max-h-48 opacity-100 translate-y-0"
+                      : "max-h-0 opacity-0 -translate-y-2 pointer-events-none"
+                    }
+                  `}
                 >
-                  ⚡
-                </div>
-
-                <div>
-                  <h2 className="text-sm font-semibold text-white">
-                    Voice Lobby
-                  </h2>
-                  <p className="text-[11px] text-white/40">
-                    Create or join a room
+                  {/* LABEL */}
+                  <p className="text-[10px] text-white/40 mb-1 ml-1">
+                    Room ID
                   </p>
-                </div>
-              </div>
 
-              {/* MODE SELECTOR */}
-              <div className="mt-5 grid grid-cols-2 gap-2">
-
-                {/* CREATE */}
-                <button
-                  onClick={() => {
-                    setRoomMode("create");
-                    setShowJoinInput(false);
-                    setRoomInput("");
-                    createRoom();
-                    setIsHost(true);
-                    setStage("C");
-                  }}
-                  className="py-3! rounded-2xl
-                  bg-gradient-to-r from-cyan-500 to-cyan-400
-                  text-black font-medium text-sm!
-                  hover:opacity-90 active:scale-[0.98]
-                  transition"
-                >
-                  Create Room
-                </button>
-
-                {/* JOIN */}
-                <button
-                  onClick={() => {
-                    setRoomMode("join");
-                    setShowJoinInput(true);
-                    setRoomInput("");
-                  }}
-                  className="py-3! rounded-2xl
-                  bg-white/5 text-white/80 text-sm!
-                  border border-white/10
-                  hover:bg-white/10 hover:border-cyan-400/20
-                  transition active:scale-[0.98]"
-                >
-                  Join Room
-                </button>
-
-              </div>
-
-              {/* JOIN INPUT (lebih "floating panel", bukan inline form) */}
-              {showJoinInput && (
-                <div className="mt-4 p-3 rounded-2xl
-                bg-white/5 border border-white/10
-                animate-in fade-in duration-300">
-
+                  {/* INPUT */}
                   <input
                     value={roomInput}
                     onChange={(e) => setRoomInput(e.target.value)}
-                    placeholder="Room ID"
+                    placeholder="e.g. abc123 or paste invite code"
                     className="w-full px-3 py-2.5 rounded-xl
-                    bg-transparent text-white text-sm
+                    bg-black/20 text-white text-sm
                     border border-white/10
-                    placeholder:text-white/30
-                    outline-none focus:border-cyan-400/40"
+                    placeholder:text-white/25
+                    outline-none
+                    transition
+                    focus:border-cyan-300/40 focus:ring-2 focus:ring-cyan-400/10"
                   />
 
+                  {/* JOIN BUTTON */}
                   <button
+                    disabled={!roomInput.trim()}
                     onClick={async () => {
-                      if (!roomInput) return;
-                      await joinRoom(roomInput);
+                      if (!roomInput.trim()) return;
+
+                      await joinRoom(roomInput.trim());
                       setIsHost(false);
                       setStage("C");
                     }}
-                    className="mt-3 w-full py-2.5 rounded-xl
-                    bg-emerald-500/20 text-emerald-300 text-sm
-                    border border-emerald-400/20
-                    hover:bg-emerald-500/30
-                    transition active:scale-[0.98]"
+                    className={`mt-3 w-full py-2.5! rounded-xl text-md! font-medium
+                    transition active:scale-[0.98] 
+                    ${
+                      roomInput.trim()
+                        ? "bg-cyan-500/10! text-cyan-200 border border-cyan-400/20 hover:bg-cyan-500/20"
+                        : "bg-white/5! text-white/40 border border-white/10 cursor-not-allowed"
+                    }`}
                   >
-                    Join
+                    Join Room
                   </button>
                 </div>
-              )}
+              </div>
 
-              {/* ROOM INFO */}
-              {roomMode === "create" && joinedRoom && (
-                <div className="mt-4 p-3 rounded-2xl
-                bg-cyan-500/5 border border-cyan-400/10 text-center">
-
-                  <p className="text-[10px] text-white/40">Room ID</p>
-
-                  <div className="flex items-center justify-center gap-2 mt-1">
-                    <p className="text-sm font-semibold text-cyan-300 tracking-widest">
-                      {roomId}
-                    </p>
-
-                    <button
-                      onClick={() => navigator.clipboard.writeText(roomId)}
-                      className="text-white/60 hover:text-white transition"
-                    >
-                      📑
-                    </button>
-                  </div>
-                </div>
-              )}
-
+              </div>
             </div>
-          </div>
+          </section>
         )}
         
 
