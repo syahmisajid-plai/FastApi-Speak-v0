@@ -78,20 +78,31 @@ export default function useSmartCall({
     .replace("http://", "ws://");
 
   // ================= CREATE ROOM =================
-  const createRoom = () => {
+  // const createRoom = () => {
 
-    const id = Math.random()
-      .toString(36)
-      .substring(2, 8);
+  //   const id = Math.random()
+  //     .toString(36)
+  //     .substring(2, 8);
 
-    setRoomId(id);
+  //   setRoomId(id);
 
+  //   setJoinedRoom(true);
+
+  //   console.log(
+  //     "ROOM CREATED:",
+  //     id
+  //   );
+  // };
+
+  const createRoom = async () => {
+    const res = await fetch(`${linkBackend}/room/create`, {
+      method: "POST",
+    });
+
+    const data = await res.json();
+
+    setRoomId(data.roomId);
     setJoinedRoom(true);
-
-    console.log(
-      "ROOM CREATED:",
-      id
-    );
   };
 
   // ================= JOIN ROOM =================
@@ -99,8 +110,8 @@ export default function useSmartCall({
 
     if (!roomInput) return;
 
+    setRoomInput(roomInput);
     setRoomId(roomInput);
-
     setJoinedRoom(true);
 
     console.log(
@@ -657,6 +668,22 @@ export default function useSmartCall({
 
         setCanStartCall(true);
 
+        return;
+      }
+
+      // ================= ROOM ERROR =================
+      if (data.type === "room-error") {
+        console.log("ROOM INVALID");
+
+        resetCallState();
+        return;
+      }
+
+      // ================= ROOM FULL =================
+      if (data.type === "room-full") {
+        console.log("ROOM FULL");
+
+        resetCallState();
         return;
       }
 

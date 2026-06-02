@@ -1,14 +1,25 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from collections import defaultdict
 import json
+import asyncio
+
 
 router = APIRouter()
 
 # ================= ROOMS =================
-rooms = defaultdict(list)
+# rooms = defaultdict(list)
+rooms = {}
+
+# ================= ROOMS LOCK=================
+room_lock = asyncio.Lock()
 
 # ================= ROOM STATES =================
-room_states = defaultdict(dict)
+# room_states = defaultdict(dict)
+room_states = {}
+
+# ================= ROOM Exists =================
+def room_exists(room_id: str):
+    return room_id in rooms
 
 
 # ================= BROADCAST ROOM INFO =================
@@ -65,10 +76,28 @@ async def websocket_endpoint(
     room_id: str,
     username: str = "Guest"
 ):
+    # ❌ ROOM HARUS VALID DULU
+    if room_id not in rooms:
+        await websocket.accept()
+        await websocket.send_json({
+            "type": "room-error",
+            "message": "Room tidak ditemukan"
+        })
+        await websocket.close()
+        return
 
     await websocket.accept()
 
     print(f"{username} JOIN ROOM: {room_id}")
+
+    # 🔥 FIX 5 — LIMIT ROOM CAPACITY (DITARUH DI SINI)
+    async with room_lock:
+        if len(rooms[room_id]) >= 2:
+            await websocket.send_json({
+                "type": "room-full"
+            })
+            await websocket.close()
+            return
 
     # ================= ADD CLIENT =================
     rooms[room_id].append({
@@ -196,3 +225,16 @@ async def websocket_endpoint(
 
         # cleanup kalau kosong
         await cleanup_room(room_id)
+
+@router.post("/room/create")
+async def create_room():
+    import random, string
+
+    room_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+
+    rooms[room_id] = []
+    room_states[room_id] = {}
+
+    return {
+        "roomId": room_id
+    }

@@ -91,6 +91,18 @@ export default function SmartCallUI({
     closed: "Call Ended",
   };
 
+  const handleCreateRoom = async () => {
+    try {
+      await createRoom(); // pastikan backend sukses
+
+      setIsHost(true);
+      setStage("C");
+
+    } catch (err) {
+      console.log("CREATE ROOM FAILED", err);
+    }
+  };
+
   const handlePartnerTranslate = async (text) => {
     console.log("🟡 RAW TEXT CLICKED:", text);
 
@@ -376,9 +388,7 @@ export default function SmartCallUI({
                       setShowJoinInput(false);
                       setRoomInput("");
 
-                      createRoom();
-                      setIsHost(true);
-                      setStage("C");
+                      handleCreateRoom();
                     }}
                     className="py-3! rounded-2xl
                     bg-gradient-to-r from-cyan-500 to-cyan-400
@@ -447,7 +457,13 @@ export default function SmartCallUI({
                     onClick={async () => {
                       if (!roomInput.trim()) return;
 
-                      await joinRoom(roomInput.trim());
+                      const res = await joinRoom(roomInput.trim());
+
+                      if (!res?.success) {
+                        alert(res?.message || "Failed to join room");
+                        return;
+                      }
+
                       setIsHost(false);
                       setStage("C");
                     }}
