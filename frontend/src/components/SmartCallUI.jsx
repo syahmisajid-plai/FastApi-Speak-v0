@@ -218,15 +218,12 @@ export default function SmartCallUI({
     console.log("📞 callEndedBy changed:", callEndedBy);
 
     if (!callEndedBy) {
-      // console.log("❌ callEndedBy kosong");
+      console.log("❌ callEndedBy kosong");
       return;
     }
 
-    // console.log("✅ SHOW SUMMARY");
-
-    setShowSummary(true);
-
     if (callEndedBy !== user?.username) {
+
 
       setEndMessage(
         `${callEndedBy} ended the call`
@@ -237,6 +234,12 @@ export default function SmartCallUI({
       setEndMessage(
         "Call ended"
       );
+
+      console.log("❌ Pesan CALL ENDED:", endMessage);
+
+      console.log("✅ SHOW SUMMARY");
+
+      setShowSummary(true);
 
     }
 
@@ -391,6 +394,7 @@ export default function SmartCallUI({
                     onClick={() => {
                       setRoomMode("join");
                       setShowJoinInput(true);
+                      setRoomInput("");
                     }}
                     className="py-3! rounded-2xl
                     bg-gradient-to-r from-white/5 to-white/10

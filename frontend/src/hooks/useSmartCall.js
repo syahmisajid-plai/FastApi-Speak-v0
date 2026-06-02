@@ -621,7 +621,8 @@ export default function useSmartCall({
 
         setTimeout(() => {
           resetCallState();
-        }, 100);
+          setCallEndedBy(null);
+        }, 1500);
 
         return;
       }
