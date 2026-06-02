@@ -222,6 +222,7 @@ export default function SmartCallUI({
       return;
     }
 
+
     if (callEndedBy !== user?.username) {
 
 
@@ -237,11 +238,10 @@ export default function SmartCallUI({
 
       console.log("❌ Pesan CALL ENDED:", endMessage);
 
-      console.log("✅ SHOW SUMMARY");
-
-      setShowSummary(true);
-
     }
+
+    console.log("✅ SHOW SUMMARY");
+    setShowSummary(true);
 
     const timeout = setTimeout(() => {
       setEndMessage("");
@@ -269,7 +269,7 @@ export default function SmartCallUI({
             bg-red-500/20 border border-red-400/20
             text-red-200 text-sm backdrop-blur-xl
             animate-in fade-in duration-300
-            z-50"
+            z-55"
           >
             {endMessage}
           </div>
