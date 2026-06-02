@@ -54,6 +54,10 @@ export default function useSmartCall({
   const [roomInput, setRoomInput] =
     useState("");
 
+  const [roomError, setRoomError] = useState("");
+
+  const [roomFailed, setRoomFailed] = useState(false);
+
   // ================= REFS =================
   const wsRef = useRef(null);
 
@@ -641,6 +645,7 @@ export default function useSmartCall({
       if (data.type === "room-state") {
 
         console.log("ROOM STATE RECEIVED:", data);
+        setRoomError("");
 
         setRoomStatus(data.status);
 
@@ -674,6 +679,9 @@ export default function useSmartCall({
       // ================= ROOM ERROR =================
       if (data.type === "room-error") {
         console.log("ROOM INVALID");
+        setRoomError("Room not found");
+
+        setRoomFailed(true);
 
         resetCallState();
         return;
@@ -682,6 +690,9 @@ export default function useSmartCall({
       // ================= ROOM FULL =================
       if (data.type === "room-full") {
         console.log("ROOM FULL");
+        setRoomError("Room is full");
+
+        setRoomFailed(true);
 
         resetCallState();
         return;
@@ -934,5 +945,11 @@ export default function useSmartCall({
     callEndedBy,
 
     peerState,
+
+    roomError,
+    setRoomError,
+
+    roomFailed,
+    setRoomFailed,
   };
 }

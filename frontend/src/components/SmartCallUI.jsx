@@ -53,6 +53,12 @@ export default function SmartCallUI({
     callEndedBy,
 
     peerState,
+
+    roomError,
+    setRoomError,
+
+    roomFailed,
+    setRoomFailed,
     
   } = useSmartCall({
     startRecording,
@@ -79,6 +85,8 @@ export default function SmartCallUI({
 
   const [showSummary, setShowSummary] = useState(false);
   const [showCoach, setShowCoach] = useState(false);
+
+
 
   const { translate } = useTranslate();
 
@@ -202,9 +210,15 @@ export default function SmartCallUI({
   }, [isLupaKataActive]);
 
   useEffect(() => {
+    if (roomStatus === "ready" && joinedRoom) {
+      setStage("C");
+    }
+  }, [roomStatus, joinedRoom]);
+
+  useEffect(() => {
 
   // call selesai -> balik idle UI
-  if (!started && !joinedRoom) {
+  if (!started && !joinedRoom && !roomFailed) {
 
     setStage("A");
 
@@ -313,7 +327,9 @@ export default function SmartCallUI({
               <div
                 className={`relative transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]
                 ${
-                  roomMode === "join"
+                  roomFailed
+                    ? "min-h-[320px]"
+                    : roomMode === "join"
                     ? "min-h-[280px]"
                     : stage === "A"
                     ? "min-h-[200px]"
@@ -451,21 +467,24 @@ export default function SmartCallUI({
                     focus:border-cyan-300/40 focus:ring-2 focus:ring-cyan-400/10"
                   />
 
+                  {roomError && (
+                    <div className="mt-3 text-red-300 text-xs bg-red-500/10 border border-red-400/20 p-2 rounded-lg">
+                      {roomError}
+                    </div>
+                  )}
+
                   {/* JOIN BUTTON */}
                   <button
                     disabled={!roomInput.trim()}
                     onClick={async () => {
                       if (!roomInput.trim()) return;
+                        setRoomError("");
+                        setRoomFailed(false);
 
-                      const res = await joinRoom(roomInput.trim());
-
-                      if (!res?.success) {
-                        alert(res?.message || "Failed to join room");
-                        return;
-                      }
+                      await joinRoom(roomInput.trim());
 
                       setIsHost(false);
-                      setStage("C");
+                      // setStage("C");
                     }}
                     className={`mt-3 w-full py-2.5! rounded-xl text-md! font-medium
                     transition active:scale-[0.98] 
@@ -509,6 +528,7 @@ export default function SmartCallUI({
                   <button
                     onClick={() => {
                       setRoomMode(null);
+                      setShowJoinInput(false);
                       setStage("B");
                     }}
                     className="absolute left-0 top-0 text-white/60 hover:text-white text-lg"
