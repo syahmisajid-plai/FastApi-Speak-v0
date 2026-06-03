@@ -1121,6 +1121,7 @@ Feature tambahan:
                 stopRecording,
                 cancelRecording,
                 toggleSuggestion,
+                unlockAudio,
                 isIdle,
                 openLupaKata: () =>
                   lupaKata.toggleLupaKata(

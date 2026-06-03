@@ -17,6 +17,7 @@ export default function ControlSection({
   speakerReady,
   forceStop, // ✅ TAMBAHKAN
   isDailyLocked,
+  unlockAudio,
 }) {
   const [showHint, setShowHint] = useState(true);
 
@@ -101,7 +102,9 @@ export default function ControlSection({
                     className="w-full h-full flex items-center justify-center"
                     onClick={
                       !isLupaKataActive && !isDailyLocked
-                        ? () => {
+                        ? async () => {
+                            await unlockAudio(); // 🔥 WAJIB di user gesture pertama
+
                             if (isSpeaking) {
                               console.log("🛑 Interrupting TTS first");
                               forceStop();
@@ -109,6 +112,14 @@ export default function ControlSection({
                             }
 
                             startRecording();
+                          }
+                        : undefined
+                    }
+
+                    onTouchStart={
+                      !isLupaKataActive && !isDailyLocked
+                        ? async () => {
+                            await unlockAudio(); // 🔥 penting untuk iPhone
                           }
                         : undefined
                     }
