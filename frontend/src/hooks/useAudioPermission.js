@@ -1,8 +1,10 @@
 import { useState, useCallback } from "react";
 
 // import speakerSound from "../assets/speaker_enable.mp3";
-import speakerSound from "../assets/intro_welcome.mp3";
+// import speakerSound from "../assets/intro_welcome.mp3";
 // import speakerSound from "../assets/light_intro_welcome.mp3";
+import speakerSound from "../assets/mixkit-intro-transition-1146.wav";
+
 
 export default function useAudioPermission() {
   const [micReady, setMicReady] = useState(false);
