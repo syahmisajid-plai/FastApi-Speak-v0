@@ -27,6 +27,7 @@ from routers import (
     sentence_lesson,
     smartcall,
     version,
+    whisper,
 )
 
 
@@ -151,7 +152,7 @@ app.include_router(summary_cost.router)
 app.include_router(sentence_lesson.router)
 app.include_router(smartcall.router)
 app.include_router(version.router)
-
+app.include_router(whisper.router)
 
 # Set path ke service account GCP
 # Ambil JSON dari env
