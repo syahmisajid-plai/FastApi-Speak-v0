@@ -733,13 +733,6 @@ Feature tambahan:
           onWheel={resetIdle}
         >
 
-          {hasUpdate && (
-            <UpdateBanner
-              onUpdate={() => window.location.reload()}
-            />
-          )}
-
-
           <Header
             streak={streak}
             mode={mode}
@@ -1155,6 +1148,12 @@ Feature tambahan:
       </div>
 
       {mode === "ielts" && <ComingSoonIELTS />}
+
+      {hasUpdate && (
+        <UpdateBanner
+          onUpdate={() => window.location.reload()}
+        />
+      )}
 
       {/* Overlay untuk daily complete */}
       {mode === "dailyStory" && allDailyComplete && (
