@@ -185,7 +185,7 @@ Feature tambahan:
   };
 
   // ================== Update Version Notif ==================
-  const hasUpdate = true; // useCheckUpdate();
+  const hasUpdate = useCheckUpdate();
 
   // ================== autoCorrectionRef ==================
   const autoCorrectionRef = useRef(autoCorrection);
