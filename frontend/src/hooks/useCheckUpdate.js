@@ -1,15 +1,22 @@
 import { useEffect, useState } from "react";
 
+import { updateInfo } from "../config/updateInfo";
+import { linkBackend } from "../config";
+
 export function useCheckUpdate() {
   const [hasUpdate, setHasUpdate] = useState(false);
 
   useEffect(() => {
     const check = async () => {
       try {
-        const res = await fetch(`/version?t=${Date.now()}`);
+        const res = await fetch(`${linkBackend}/version?t=${Date.now()}`);
         const data = await res.json();
 
-        const currentVersion = "1.0.0"; // versi frontend build kamu
+        const currentVersion = updateInfo.version;
+
+        console.log("Backend version:", data.version);
+        console.log("Frontend version:", currentVersion);
+        console.log("Is update available:", data.version !== currentVersion);
 
         if (data.version !== currentVersion) {
           setHasUpdate(true);

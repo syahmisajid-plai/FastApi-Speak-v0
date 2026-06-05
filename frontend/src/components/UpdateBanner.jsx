@@ -1,4 +1,4 @@
-import { updateFeatures } from "../config/updateInfo";
+import { updateInfo } from "../config/updateInfo";
 
 export default function UpdateBanner({ onUpdate }) {
   return (
@@ -24,16 +24,28 @@ export default function UpdateBanner({ onUpdate }) {
           Kami telah meningkatkan performa dan stabilitas aplikasi.
         </p>
 
+        {/* 🔥 version (opsional ditampilkan) */}
+        <div className="text-xs text-white/40">
+          v{updateInfo.version}
+        </div>
+
         {/* 🔥 dynamic badges */}
         <div className="flex flex-wrap justify-center gap-2 mt-5">
-          {updateFeatures.map((item, index) => (
-            <span
-              key={index}
-              className="px-3 py-1 rounded-full bg-white/10 text-xs text-white/70"
-            >
-              {item.icon} {item.text}
-            </span>
-          ))}
+          {updateInfo.features.map((item, index) => {
+            const colorClass =
+              item.color === "emerald"
+                ? "bg-emerald-500/10 text-emerald-200 border-emerald-400/10"
+                : "bg-white/10 text-white/70 border-white/10";
+
+            return (
+              <span
+                key={index}
+                className={`px-3 py-1 rounded-full text-xs border ${colorClass}`}
+              >
+                {item.icon} {item.text}
+              </span>
+            );
+          })}
         </div>
 
         <button
