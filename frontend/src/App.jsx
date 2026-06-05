@@ -28,6 +28,8 @@ import SmartCallUI from "./components/SmartCallUI";
 
 import AndroidSTTTest from "./components/AndroidSTTTest";
 
+import UpdateBanner from "./components/UpdateBanner";
+
 // ================== STYLES ==================
 import "./App.css";
 
@@ -49,6 +51,8 @@ import useStreak from "./hooks/useStreak";
 import useVocabEngine from "./hooks/useVocabEngine";
 import useTranslationHistory from "./hooks/useTranslationHistory";
 import useSentenceLesson from "./hooks/useSentenceLesson";
+import { useCheckUpdate } from "./hooks/useCheckUpdate";
+
 
 // ================== AUDIO ==================
 import useTTS_Google from "./hooks/useTTS_Google";
@@ -179,6 +183,9 @@ Feature tambahan:
     setSessionId(null);
     setShowLogin(true);
   };
+
+  // ================== Update Version Notif ==================
+  const hasUpdate = true; // useCheckUpdate();
 
   // ================== autoCorrectionRef ==================
   const autoCorrectionRef = useRef(autoCorrection);
@@ -725,6 +732,14 @@ Feature tambahan:
           onClick={resetIdle}
           onWheel={resetIdle}
         >
+
+          {hasUpdate && (
+            <UpdateBanner
+              onUpdate={() => window.location.reload()}
+            />
+          )}
+
+
           <Header
             streak={streak}
             mode={mode}
