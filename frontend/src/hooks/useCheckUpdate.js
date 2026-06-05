@@ -6,10 +6,10 @@ export function useCheckUpdate() {
   useEffect(() => {
     const check = async () => {
       try {
-        const res = await fetch(`/version.json?t=${Date.now()}`);
+        const res = await fetch(`/version?t=${Date.now()}`);
         const data = await res.json();
 
-        const currentVersion = "1.0.0";
+        const currentVersion = "1.0.0"; // versi frontend build kamu
 
         if (data.version !== currentVersion) {
           setHasUpdate(true);
