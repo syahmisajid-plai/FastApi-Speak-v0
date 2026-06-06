@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { linkBackend } from "../config";
 
+// Stable VAD + Whisper STT
 export function useWhisperSTT() {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
