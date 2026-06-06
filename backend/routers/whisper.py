@@ -25,7 +25,9 @@ async def transcribe(file: UploadFile = File(...)):
     try:
         segments, info = model.transcribe(
             temp_path,
-            beam_size=5
+            language="en",
+            beam_size=1,
+            vad_filter=True
         )
 
         text = " ".join(segment.text for segment in segments)
