@@ -1,168 +1,191 @@
-import { useState, useRef } from "react";
-import { linkBackend } from "../config";
+import { useState } from "react";
 
-export default function WhisperSTTSimple() {
-  const [text, setText] = useState("");
-  const [loading, setLoading] = useState(false);
+export default function WebSpeechDiagnostic() {
+  const [logs, setLogs] = useState([]);
+  const [category, setCategory] = useState("Belum dites");
+  const [transcript, setTranscript] = useState("");
 
-  const recorderRef = useRef(null);
+  const addLog = (msg) => {
+    console.log(msg);
 
-  const startRecording = async () => {
-    console.log("🎤 Start recording clicked");
+    setLogs((prev) => [
+      ...prev,
+      `${new Date().toLocaleTimeString()} ${msg}`,
+    ]);
+  };
+
+  const testWebSpeech = () => {
+    setLogs([]);
+    setTranscript("");
+    setCategory("Testing...");
+
+    const SpeechRecognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    // ======================
+    // CATEGORY A
+    // ======================
+    if (!SpeechRecognition) {
+      addLog("❌ CATEGORY A - NOT SUPPORTED");
+
+      setCategory(
+        "A - Browser does not support Web Speech API"
+      );
+
+      return;
+    }
+
+    addLog("✅ Web Speech API Supported");
+
+    const recognition = new SpeechRecognition();
+
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    let gotResult = false;
+
+    recognition.onstart = () => {
+      addLog("🎤 onstart");
+    };
+
+    recognition.onaudiostart = () => {
+      addLog("🔊 onaudiostart");
+    };
+
+    recognition.onspeechstart = () => {
+      addLog("🗣 onspeechstart");
+    };
+
+    recognition.onresult = (event) => {
+      gotResult = true;
+
+      const text =
+        event.results[0][0].transcript;
+
+      setTranscript(text);
+
+      addLog(`📝 onresult: ${text}`);
+
+      // ======================
+      // CATEGORY B
+      // ======================
+      setCategory(
+        "B - Working (Web Speech is functioning)"
+      );
+    };
+
+    recognition.onerror = (event) => {
+      addLog(`❌ onerror: ${event.error}`);
+
+      // ======================
+      // CATEGORY C
+      // ======================
+      setCategory(
+        `C - Error (${event.error})`
+      );
+    };
+
+    recognition.onend = () => {
+      addLog("⏹ onend");
+    };
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-      });
+      recognition.start();
 
-      console.log("✅ Microphone access granted");
-
-      const mimeType = MediaRecorder.isTypeSupported(
-        "audio/webm;codecs=opus"
-      )
-        ? "audio/webm;codecs=opus"
-        : undefined;
-
-      const recorder = mimeType
-        ? new MediaRecorder(stream, { mimeType })
-        : new MediaRecorder(stream);
-
-      const chunks = [];
-
-      console.log("Recorder mimeType =", recorder.mimeType);
-
-      recorder.onstart = () => {
-        console.log("🔴 Recording started");
-      };
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          console.log(
-            "📦 Audio chunk received:",
-            e.data.size,
-            "bytes"
-          );
-          chunks.push(e.data);
-        }
-      };
-
-      recorder.onstop = async () => {
-        console.log("⏹ Recording stopped");
-        console.log("📊 Total chunks:", chunks.length);
-
-        const blob = new Blob(chunks, {
-          type: recorder.mimeType,
-        });
-
-        console.log("🎵 Blob created");
-        console.log("Type:", blob.type);
-        console.log("Size:", blob.size, "bytes");
-
-        const extension = recorder.mimeType.includes("mp4")
-          ? "m4a"
-          : "webm";
-
-        const formData = new FormData();
-        formData.append(
-          "file",
-          blob,
-          `audio.${extension}`
-        );
-
-        console.log(
-          "📤 Uploading to:",
-          `${linkBackend}/transcribe`
-        );
-
-        try {
-          setLoading(true);
-
-          const startTime = Date.now();
-
-          const res = await fetch(
-            `${linkBackend}/transcribe`,
-            {
-              method: "POST",
-              body: formData,
-            }
-          );
-
-          console.log("📥 Response status:", res.status);
-          console.log("📥 Response ok:", res.ok);
-
-          if (!res.ok) {
-            throw new Error(
-              `HTTP Error ${res.status}`
-            );
-          }
-
-          const data = await res.json();
-
-          console.log(
-            "📝 Transcription result:",
-            data
-          );
-
-          console.log(
-            "⏱ Processing time:",
-            ((Date.now() - startTime) / 1000).toFixed(
-              2
-            ),
-            "seconds"
-          );
-
-          setText(data.text || "");
-        } catch (err) {
-          console.error(
-            "❌ Upload/Transcribe Error:",
-            err
-          );
-        } finally {
-          setLoading(false);
-        }
-
-        stream.getTracks().forEach((track) =>
-          track.stop()
-        );
-      };
-
-      recorder.start();
-
-      recorderRef.current = recorder;
-
-      console.log("⏳ Auto stop in 5 seconds");
+      addLog(
+        "🚀 recognition.start() called"
+      );
 
       setTimeout(() => {
-        if (
-          recorder &&
-          recorder.state !== "inactive"
-        ) {
-          console.log("🛑 Stopping recorder...");
-          recorder.stop();
+        if (!gotResult) {
+          addLog(
+            "⚠️ No transcript received within 10 seconds"
+          );
+
+          // Jika belum masuk kategori C
+          setCategory((prev) => {
+            if (
+              typeof prev === "string" &&
+              prev.startsWith("C -")
+            ) {
+              return prev;
+            }
+
+            // ======================
+            // CATEGORY D
+            // ======================
+            return "D - No Transcript";
+          });
         }
-      }, 5000);
+      }, 10000);
     } catch (err) {
-      console.error("❌ Microphone Error:", err);
+      addLog(
+        `💥 Exception: ${err.message}`
+      );
+
+      setCategory(
+        `C - Error (${err.message})`
+      );
     }
   };
 
   return (
     <div style={{ padding: 20 }}>
-      <h3>Whisper STT Test</h3>
+      <h2>Web Speech Diagnostic</h2>
 
       <button
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        onClick={startRecording}
-        disabled={loading}
+        onClick={testWebSpeech}
+        style={{
+          padding: "10px 20px",
+          marginBottom: 20,
+        }}
       >
-        {loading
-          ? "⏳ Processing..."
-          : "🎤 Rekam 5 detik"}
+        🎤 Run Test
       </button>
 
-      <div style={{ marginTop: 20 }}>
-        <strong>Hasil:</strong>
-        <p>{text || "-"}</p>
+      <div
+        style={{
+          border: "1px solid #ccc",
+          padding: 10,
+          marginBottom: 20,
+        }}
+      >
+        <strong>Category:</strong>
+        <br />
+        {category}
+      </div>
+
+      <div
+        style={{
+          border: "1px solid #ccc",
+          padding: 10,
+          marginBottom: 20,
+        }}
+      >
+        <strong>Transcript:</strong>
+        <br />
+        {transcript || "-"}
+      </div>
+
+      <div
+        style={{
+          border: "1px solid #ccc",
+          padding: 10,
+          height: 300,
+          overflowY: "auto",
+          whiteSpace: "pre-wrap",
+        }}
+      >
+        <strong>Logs</strong>
+        <hr />
+
+        {logs.length === 0
+          ? "No logs yet"
+          : logs.map((log, index) => (
+              <div key={index}>{log}</div>
+            ))}
       </div>
     </div>
   );
