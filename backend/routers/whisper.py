@@ -1,25 +1,45 @@
 from fastapi import APIRouter, UploadFile, File
-from transformers import pipeline
+from faster_whisper import WhisperModel
+import tempfile
+import os
 
 router = APIRouter()
 
-# Inisialisasi pipeline sekali saja
-pipe = pipeline("automatic-speech-recognition", model="openai/whisper-tiny")
+# Load model sekali saat aplikasi startup
+model = WhisperModel(
+    "small",
+    device="cpu",
+    compute_type="int8"
+)
 
 @router.post("/transcribe")
 async def transcribe(file: UploadFile = File(...)):
-    # baca audio dari upload
     print("filename:", file.filename)
     print("content_type:", file.content_type)
 
-    audio_bytes = await file.read()
-    temp_path = "temp.wav"
-    with open(temp_path, "wb") as f:
-        f.write(audio_bytes)
+    # simpan file sementara
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
+        temp_file.write(await file.read())
+        temp_path = temp_file.name
 
-    # jalankan pipeline
-    result = pipe(temp_path)
+    try:
+        segments, info = model.transcribe(
+            temp_path,
+            beam_size=5
+        )
 
+        text = " ".join(segment.text for segment in segments)
 
+        print(
+            f"Detected language '{info.language}' "
+            f"with probability {info.language_probability:.2f}"
+        )
 
-    return {"text": result["text"]}
+        return {
+            "text": text.strip(),
+            "language": info.language,
+            "language_probability": info.language_probability,
+        }
+
+    finally:
+        os.remove(temp_path)

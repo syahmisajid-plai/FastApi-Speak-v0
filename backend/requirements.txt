@@ -19,7 +19,3 @@ google-cloud-texttospeech
 bcrypt==4.1.2
 
 supabase
-
-transformers
-datasets
-torch
