@@ -1,4 +1,4 @@
-import { useWhisperSTT } from "../hooks/useWhisperSTT";
+import useWhisperSTT from "../hooks/useWhisperSTT";
 
 export default function WhisperSTTSimple() {
   const {

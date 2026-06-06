@@ -38,6 +38,8 @@ import useSpeechRecognition from "./hooks/useSpeechRecognition";
 import useAudioPermission from "./hooks/useAudioPermission";
 import useMicController from "./hooks/useMicController";
 
+import useWhisperSTT from "./hooks/useWhisperSTT";
+
 // ================== FEATURE HOOKS ==================
 import useLupaKata from "./hooks/useLupaKata";
 import useSuggestions from "./hooks/useSuggestions";
@@ -631,7 +633,7 @@ Feature tambahan:
   };
 
   // ================== 2️⃣ SPEECH RECOGNITION ==================
-  const speech = useSpeechRecognition({
+  const speech = useWhisperSTT({
     recognitionRef,
     setIsRecording,
     shouldSendOnEndRef,
@@ -643,6 +645,9 @@ Feature tambahan:
         handleSpeech(text); // 🔥 kirim ke vocab engine
         return;
       }
+
+      console.log("🧠 Conversation mode → send to backend");
+      console.log("📤 Final recognized text:", text);
 
       sendTextToBackend(text);
     },

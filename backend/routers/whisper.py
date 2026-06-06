@@ -8,7 +8,7 @@ router = APIRouter()
 
 # Load model sekali saat aplikasi startup
 model = WhisperModel(
-    "small",
+    "base",
     device="cpu",
     compute_type="int8"
 )
