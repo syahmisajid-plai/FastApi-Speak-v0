@@ -24,6 +24,9 @@ export default function Header({
   autoCorrection,
 
   setAutoCorrection,
+
+  supportSTTWeb,
+  setSupportSTTWeb,
 }) {
   const [openMenu, setOpenMenu] = useState(false);
   const [showSummaryDaily, setShowSummaryDaily] = useState(false);
@@ -259,9 +262,31 @@ export default function Header({
                 </button>
 
                 {openMenu && (
-                  <div className="absolute right-0 mt-2 w-40 bg-black/80 backdrop-blur-md border border-white/10 rounded-xl shadow-lg overflow-hidden z-50">
+                  <div className="absolute right-0 mt-2 w-56 bg-black/80 backdrop-blur-md border border-white/10 rounded-xl shadow-lg overflow-hidden z-50">
                     <div className="px-3 py-2 text-gray-300 border-b border-white/10 truncate">
                       {user.username}
+                    </div>
+
+                    {/* STT ENGINE */}
+                    <div className="px-3 py-3 border-b border-white/10">
+                      <div className="text-xs text-gray-400 mb-2">
+                        Speech Recognition
+                      </div>
+
+                      <label className="flex items-center justify-between text-sm text-white">
+                        <span>
+                          {supportSTTWeb ? "Web Speech API" : "Whisper"}
+                        </span>
+
+                        <input
+                          type="checkbox"
+                          checked={supportSTTWeb}
+                          onChange={(e) =>
+                            setSupportSTTWeb(e.target.checked)
+                          }
+                          className="cursor-pointer"
+                        />
+                      </label>
                     </div>
 
                     <button

@@ -39,6 +39,8 @@ import useAudioPermission from "./hooks/useAudioPermission";
 import useMicController from "./hooks/useMicController";
 
 import useWhisperSTT from "./hooks/useWhisperSTT";
+import useSTTManager from "./hooks/useSTTManager";
+
 
 // ================== FEATURE HOOKS ==================
 import useLupaKata from "./hooks/useLupaKata";
@@ -121,6 +123,8 @@ Feature tambahan:
   const [showVocab, setShowVocab] = useState(false);
 
   const [autoCorrection, setAutoCorrection] = useState(true);
+
+  const [supportSTTWeb, setSupportSTTWeb] = useState(true);
 
   // ================== Tambahkan state ==================
   const [pendingMode, setPendingMode] = useState(null);
@@ -633,7 +637,8 @@ Feature tambahan:
   };
 
   // ================== 2️⃣ SPEECH RECOGNITION ==================
-  const speech = useWhisperSTT({
+  const speech = useSTTManager({
+    supportSTTWeb, // Set to false to use Whisper
     recognitionRef,
     setIsRecording,
     shouldSendOnEndRef,
@@ -754,6 +759,8 @@ Feature tambahan:
             modeLearn={modeLearn}
             autoCorrection={autoCorrection}
             setAutoCorrection={setAutoCorrection}
+            supportSTTWeb={supportSTTWeb}
+            setSupportSTTWeb={setSupportSTTWeb}
           />
 
           <OverlayFeedback message={overlayFavoritTranslated} />
