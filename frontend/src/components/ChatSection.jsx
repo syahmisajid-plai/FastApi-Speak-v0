@@ -13,6 +13,9 @@ export default function ChatSection({
   toggleFavorite,
   autoCorrectionRef,
   speakText,
+
+  isTranscribing,
+  isRecording,
 }) {
   const [floatingRewards, setFloatingRewards] = useState([]);
 
@@ -131,6 +134,25 @@ export default function ChatSection({
         <div className="flex justify-end">
           <div className="max-w-[75%] p-3 rounded-lg bg-yellow-100 text-gray-900 italic">
             🎤 {liveTranscript}
+
+            {isTranscribing && (
+              <span className="ml-1 inline-flex">
+                <span className="animate-pulse">...</span>
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Whisper processing */}
+      {isTranscribing && !liveTranscript && isRecording && (
+        <div className="flex justify-end">
+          <div className="max-w-[75%] p-3 rounded-lg bg-blue-500 text-white rounded-br-none">
+            <div className="flex gap-1">
+              <span className="w-2 h-2 bg-white rounded-full animate-bounce"></span>
+              <span className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:150ms]"></span>
+              <span className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:300ms]"></span>
+            </div>
           </div>
         </div>
       )}

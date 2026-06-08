@@ -670,6 +670,8 @@ Feature tambahan:
     startRecording: rawStartRecording,
     stopRecording,
     cancelRecording,
+
+    isTranscribing,
   } = speech;
 
   const { startRecording } = useMicController({
@@ -1125,6 +1127,9 @@ Feature tambahan:
               toggleFavorite={handleToggleFavorite}
               autoCorrectionRef={autoCorrectionRef}
               speakText={speakText}
+
+              isTranscribing={isTranscribing}
+              isRecording={isRecording}
             />
           )}
 

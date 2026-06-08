@@ -15,6 +15,9 @@ export default function useSpeechRecognition({
   const [currentTranscript, setCurrentTranscript] = useState("");
   const [isCanceled, setIsCanceled] = useState(false);
 
+  // Not use dummy for whisper
+  const [isTranscribing, setIsTranscribing] = useState(false);
+
   const lastInterimRef = useRef("");
   const isListeningRef = useRef(false);
   const lastStopTimeRef = useRef(null);
@@ -344,5 +347,7 @@ export default function useSpeechRecognition({
     cancelRecording,
     pauseRecording, // ⬅️ baru
     resumeRecording, // ⬅️ baru
+
+    isTranscribing,
   };
 }

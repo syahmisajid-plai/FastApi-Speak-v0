@@ -16,6 +16,8 @@ export default function useWhisperSTT({
   const [isCanceled, setIsCanceled] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
 
+  const [isTranscribing, setIsTranscribing] = useState(false);
+
   const streamRef = useRef(null);
   const recorderRef = useRef(null);
   const chunksRef = useRef([]);
@@ -92,6 +94,8 @@ export default function useWhisperSTT({
   // ================= UPLOAD =================
   const sendToBackend = async (blob) => {
     try {
+      console.log("🚀 SEND TO BACKEND");
+      setIsTranscribing(true);
       const formData = new FormData();
       formData.append("file", blob, "audio.webm");
 
@@ -112,11 +116,21 @@ export default function useWhisperSTT({
       setCurrentTranscript(text);
     } catch (err) {
       console.error("Whisper error:", err);
+    } finally {
+      setIsTranscribing(false);
     }
   };
 
   const handleStop = async (rec) => {
     console.log("=== RECORDER ONSTOP FIRED ===");
+
+    if (ignoreFlushRef.current) {
+      console.log("🚫 Skip upload because cancel/pause");
+
+      chunksRef.current = [];
+      isProcessingRef.current = false;
+      return;
+    }
 
     console.log(
       "DEBUG stopRequestedRef:",
@@ -286,6 +300,7 @@ export default function useWhisperSTT({
   // ================= CANCEL =================
     const cancelRecording = () => {
     console.log("=== WHISPER CANCEL RECORDING ===");
+    console.log("❌ CANCEL");
 
     ignoreFlushRef.current = true;
     stopRequestedRef.current = false;
@@ -370,5 +385,7 @@ export default function useWhisperSTT({
     cancelRecording,
     pauseRecording,
     resumeRecording,
+
+    isTranscribing,
   };
 }
