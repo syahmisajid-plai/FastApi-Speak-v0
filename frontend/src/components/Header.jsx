@@ -157,21 +157,21 @@ export default function Header({
               </div>
             )}
 
-            {mode === "vocab" && (
+            {mode === "learn" && (
               <div className="flex items-center gap-2">
                 {/* MAIN VOCAB BUTTON */}
                 {modeLearn === "vocab" && (
                   <button
                     onClick={onOpenVocab}
-                    className="
-                  px-3! py-1.5!
-                  rounded-full
-                  bg-blue-500/10!
-                  text-xs text-blue-400
-                  hover:bg-blue-500/20!
-                  transition
-                  flex items-center gap-1
-                "
+                        className="
+                      px-3! py-1.5!
+                      rounded-full
+                      bg-blue-500/10!
+                      text-xs text-blue-400
+                      hover:bg-blue-500/20!
+                      transition
+                      flex items-center gap-1
+                    "
                   >
                     📚 <span className="hidden sm:inline">Vocab</span>
                     <span className="ml-1 text-blue-300 font-medium">
@@ -186,15 +186,6 @@ export default function Header({
                 )}
               </div>
             )}
-
-            {/* 🕘 TRANSLATION HISTORY */}
-            <button
-              onClick={() => setShowHistory(true)}
-              title="Translation History"
-              className="w-8 h-8 rounded-full bg-white/10 text-white hover:bg-white/20 transition flex items-center justify-center"
-            >
-              🕘
-            </button>
 
             {/* AUTO CORRECTION TOGGLE */}
             <button
@@ -254,48 +245,88 @@ export default function Header({
             {/* USER */}
             {user && (
               <div className="relative">
+                {/* Avatar Button */}
                 <button
                   onClick={() => setOpenMenu(!openMenu)}
-                  className="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center text-sm font-semibold hover:bg-white/20 transition"
+                  className="w-9 h-9 rounded-full bg-gradient-to-br from-white/20 to-white/10 
+                            text-white flex items-center justify-center text-sm font-semibold
+                            ring-1 ring-white/10 hover:ring-white/20 hover:scale-105 
+                            transition-all duration-200"
                 >
                   {user.username?.charAt(0).toUpperCase()}
                 </button>
 
+                {/* Dropdown */}
                 {openMenu && (
-                  <div className="absolute right-0 mt-2 w-56 bg-black/80 backdrop-blur-md border border-white/10 rounded-xl shadow-lg overflow-hidden z-50">
-                    <div className="px-3 py-2 text-gray-300 border-b border-white/10 truncate">
-                      {user.username}
-                    </div>
+                  <>
+                    {/* overlay */}
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setOpenMenu(false)}
+                    />
 
-                    {/* STT ENGINE */}
-                    <div className="px-3 py-3 border-b border-white/10">
-                      <div className="text-xs text-gray-400 mb-2">
-                        Speech Recognition
+                    <div className="absolute right-0 mt-3 w-60 z-50
+                                    bg-zinc-900/80 backdrop-blur-xl
+                                    border border-white/10 rounded-2xl
+                                    shadow-xl overflow-hidden
+                                    animate-fadeIn">
+                      
+                      {/* User Info */}
+                      <div className="px-4 py-3 border-b border-white/10">
+                        <div className="text-sm font-medium text-white truncate">
+                          {user.username}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          Account settings
+                        </div>
                       </div>
 
-                      <label className="flex items-center justify-between text-sm text-white">
-                        <span>
-                          {supportSTTWeb ? "Web Speech API" : "Whisper"}
-                        </span>
+                      {/* Menu Items */}
+                      <div className="py-1">
 
-                        <input
-                          type="checkbox"
-                          checked={supportSTTWeb}
-                          onChange={(e) =>
-                            setSupportSTTWeb(e.target.checked)
-                          }
-                          className="cursor-pointer"
-                        />
-                      </label>
+                        {/* Translation History */}
+                        <button
+                          onClick={() => setShowHistory(true)}
+                          className="w-full flex items-center gap-2 px-4! py-2.5! text-sm!
+                                    text-white hover:bg-white/10 transition"
+                        >
+                          <span>🕘</span>
+                          <span>Translation History</span>
+                        </button>
+
+                        {/* STT Toggle */}
+                        <div className="px-4 py-3 border-t border-white/10">
+                          <div className="text-[11px] text-gray-400 mb-2 uppercase tracking-wide">
+                            Speech Recognition
+                          </div>
+
+                          <label className="flex items-center justify-between text-sm text-white cursor-pointer">
+                            <span className="text-sm">
+                              {supportSTTWeb ? "Web Speech API" : "Whisper"}
+                            </span>
+
+                            <input
+                              type="checkbox"
+                              checked={supportSTTWeb}
+                              onChange={(e) => setSupportSTTWeb(e.target.checked)}
+                              className="accent-white cursor-pointer scale-90"
+                            />
+                          </label>
+                        </div>
+
+                        {/* Logout */}
+                        <button
+                          onClick={onLogout}
+                          className="w-full flex items-center gap-2 px-4! py-2.5! text-sm!
+                                    text-red-400 hover:bg-red-500/10 transition"
+                        >
+                          <span>⎋</span>
+                          <span>Logout</span>
+                        </button>
+
+                      </div>
                     </div>
-
-                    <button
-                      onClick={onLogout}
-                      className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition"
-                    >
-                      Logout
-                    </button>
-                  </div>
+                  </>
                 )}
               </div>
             )}

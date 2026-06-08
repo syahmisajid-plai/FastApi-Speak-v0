@@ -30,7 +30,7 @@ export default function VocabUI({
     if (vocab) {
       const timer = setTimeout(() => {
         setStarted(true);
-      }, 3000); // ⏱️ 3 detik
+      }, 2000); // ⏱️ 2 detik
 
       return () => clearTimeout(timer);
     }

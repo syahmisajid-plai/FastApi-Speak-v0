@@ -31,15 +31,20 @@ export default function CompletedLessonsModal({ completedLessons = [] }) {
       <button
         onClick={() => setOpen(true)}
         className="
-          px-4! py-2! rounded-full
+          px-2! py-2! rounded-fullx
           bg-gradient-to-r from-indigo-500/30 to-purple-500/30
           text-white border border-white/20
           hover:from-indigo-500/50 hover:to-purple-500/50
-          transition text-sm shadow-md
+          transition shadow-md
         "
       >
-        🧩 <span className="hidden sm:inline">Patterns </span>
-        {completedLessons.length}
+        <div className="inline-flex items-center gap-2">
+          <span className="text-sm">🧩</span>
+          <span className="hidden sm:inline">Patterns</span>
+          <span className="text-sm rounded-full text-white leading-none">
+            {completedLessons.length}
+          </span>
+        </div>
       </button>
 
       {open && (

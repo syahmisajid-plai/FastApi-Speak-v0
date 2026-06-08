@@ -91,5 +91,7 @@
 
 - di mode roleplay belum ada auto corection
 
+- Perbaiki mode learn (khsusnya phase awal untuk mencegah i already know, jngn tampilkan terjemahan, klau dia pencet itu test pilgan, benar lanjut, salah suruh practice)
+
 
 ✅❌
