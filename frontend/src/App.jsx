@@ -30,6 +30,8 @@ import AndroidSTTTest from "./components/AndroidSTTTest";
 
 import UpdateBanner from "./components/UpdateBanner";
 
+import GamesUI from "./components/GamesUI";
+
 // ================== STYLES ==================
 import "./App.css";
 
@@ -734,7 +736,9 @@ Feature tambahan:
                 ? "bg-linear-to-b from-slate-900 to-indigo-950"
                 : mode === "ielts"
                   ? "bg-linear-to-b from-rose-300 to-rose-500"
-                  : "bg-linear-to-b from-slate-900 to-blue-950"
+                  : mode === "games"
+                    ? "bg-linear-to-b from-emerald-700 to-green-950"
+                    : "bg-linear-to-b from-slate-900 to-blue-950"
         }`}
       >
         <div
@@ -1014,6 +1018,10 @@ Feature tambahan:
 
               user={user}
             />
+          )}
+
+          {mode === "games" && (
+            <GamesUI/>
           )}
 
           {/* {mode === "vocab" && <LearnUI />} */}

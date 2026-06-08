@@ -85,7 +85,7 @@ export default function FreeTalkUI({ started, setStarted }) {
               rounded-xl
               bg-white!
               text-black
-              text-sm
+              text-base!
               font-medium
               transition
               hover:bg-white/90

@@ -14,7 +14,8 @@ export default function ModeSelector({
     { key: "scenarios", icon: "🎭", label: "Scenarios", color: "purple" },
     { key: "freeTalk", icon: "💬", label: "Talk", color: "blue" },
     { key: "smartcall", icon: "📞", label: "SmartCall", color: "cyan" },
-    { key: "ielts", icon: "📝", label: "IELTS", color: "rose" },
+    { key: "games", icon: "🎮", label: "Games", color: "emerald" },
+    // { key: "ielts", icon: "📝", label: "IELTS", color: "rose" },
   ];
 
   const modes = isTestUser
