@@ -19,6 +19,7 @@ import LoginOverlay from "./components/LoginOverlay";
 import VocabList from "./components/VocabList";
 import ComingSoonIELTS from "./components/ComingSoonIELTS";
 import ComingSoonScenarios from "./components/ComingSoonScenarios";
+import ComingSoonMultiplayerGames from "./components/ComingSoonMultiplayerGames";
 import OverlayFeedback from "./components/OverlayFeedback";
 import LearnUI from "./components/LearnUI";
 import DailyStoryContinue from "./components/DailyStoryContinue";
@@ -43,7 +44,6 @@ import useMicController from "./hooks/useMicController";
 import useWhisperSTT from "./hooks/useWhisperSTT";
 import useSTTManager from "./hooks/useSTTManager";
 
-
 // ================== FEATURE HOOKS ==================
 import useLupaKata from "./hooks/useLupaKata";
 import useSuggestions from "./hooks/useSuggestions";
@@ -58,7 +58,6 @@ import useVocabEngine from "./hooks/useVocabEngine";
 import useTranslationHistory from "./hooks/useTranslationHistory";
 import useSentenceLesson from "./hooks/useSentenceLesson";
 import { useCheckUpdate } from "./hooks/useCheckUpdate";
-
 
 // ================== AUDIO ==================
 import useTTS_Google from "./hooks/useTTS_Google";
@@ -144,7 +143,6 @@ Feature tambahan:
   const [modeLearn, setModeLearn] = useState("idle");
 
   const [modeScenario, setModeScenario] = useState("idle");
-  
 
   // ================== STATE Daily Greeting ==================
   const greetingSentRef = useRef(false);
@@ -375,7 +373,6 @@ Feature tambahan:
 
     resetModeState();
     setMode(newMode);
-    
 
     if (newMode === "roleplay") {
       setRoleplayModalOpen(true);
@@ -395,7 +392,10 @@ Feature tambahan:
   const { volume, showPopup } = useMicMonitor();
 
   // ================== HOOKS ==================
-  const { speakText, isSpeaking, forceStop , unlockAudio} = useTTS_Google(userIdRef, mode); // 🗣️ Text-to-Speech
+  const { speakText, isSpeaking, forceStop, unlockAudio } = useTTS_Google(
+    userIdRef,
+    mode,
+  ); // 🗣️ Text-to-Speech
 
   // ================== RolePlay ==================
   // const [checklistProgress, setChecklistProgress] = useState({
@@ -748,10 +748,11 @@ Feature tambahan:
           onClick={resetIdle}
           onWheel={resetIdle}
         >
-
           <Header
             streak={streak}
             mode={mode}
+            modeLearn={modeLearn}
+            modeScenario={modeScenario}
             isScrolled={isScrolled}
             dailyStory={dailyStory}
             user={user}
@@ -762,15 +763,12 @@ Feature tambahan:
             onOpenVocab={() => setShowVocab(true)}
             completedCountVocab={completedCountVocab}
             completedLessons={completedLessons}
-            modeLearn={modeLearn}
             autoCorrection={autoCorrection}
             setAutoCorrection={setAutoCorrection}
             supportSTTWeb={supportSTTWeb}
             setSupportSTTWeb={setSupportSTTWeb}
           />
-
           <OverlayFeedback message={overlayFavoritTranslated} />
-
           {/* VOCAB LIST */}
           {showVocab && (
             <VocabList
@@ -778,7 +776,6 @@ Feature tambahan:
               userId={userIdRef.current}
             />
           )}
-
           {mode === "testMicAndoid" &&
             user?.id === "21121b45-6987-432c-a2cd-fda17eabbd2b" && (
               <div className="text-white">
@@ -902,13 +899,11 @@ Feature tambahan:
               setStarted={setFreeTalkStarted}
             />
           )}
-
-          {mode === "scenarios" && <ComingSoonScenarios />}
-          {/* {mode === "scenarios" && (
+          {/* {mode === "scenarios" && <ComingSoonScenarios />} */}
+          {mode === "scenarios" && (
             <ScenariosUI
               modeScenario={modeScenario}
               setModeScenario={setModeScenario}
-
               roleplayProps={{
                 started: rolePlayStarted,
                 setStarted: setRolePlayStarted,
@@ -930,7 +925,6 @@ Feature tambahan:
                 showContext,
                 setShowContext,
               }}
-
               dailyStoryProps={{
                 progressData,
                 isDailyLocked,
@@ -958,8 +952,7 @@ Feature tambahan:
                 generateSummary,
               }}
             />
-          )} */}
-
+          )}
           {mode === "learn" && (
             <LearnUI
               vocabProps={{
@@ -999,35 +992,28 @@ Feature tambahan:
               setModeLearn={setModeLearn}
             />
           )}
-
           {mode === "smartcall" && (
             <SmartCallUI
               isRecording={isRecording}
               currentTranscript={currentTranscript}
               startRecording={startRecording}
               stopRecording={stopRecording}
-
               openLupaKata={() =>
                 lupaKata.toggleLupaKata(
                   isRecording,
                   speech.pauseRecording,
-                  speech.resumeRecording
+                  speech.resumeRecording,
                 )
               }
-
               isLupaKataActive={lupaKata.isLupaKataActive}
               lupaKata={lupaKata}
-
               user={user}
             />
           )}
-
-          {mode === "games" && (
-            <GamesUI/>
-          )}
+          {/* {mode === "games" && <GamesUI />} */}
+          {mode === "games" && <ComingSoonMultiplayerGames />}
 
           {/* {mode === "vocab" && <LearnUI />} */}
-
           <ModeSelector
             user_id={userId}
             mode={mode}
@@ -1127,12 +1113,10 @@ Feature tambahan:
               toggleFavorite={handleToggleFavorite}
               autoCorrectionRef={autoCorrectionRef}
               speakText={speakText}
-
               isTranscribing={isTranscribing}
               isRecording={isRecording}
             />
           )}
-
           {((mode === "freeTalk" && freeTalkStarted) ||
             (modeScenario === "dailyStory" && dailyStarted) ||
             (modeScenario === "roleplay" && rolePlayStarted)) && (
@@ -1174,11 +1158,7 @@ Feature tambahan:
 
       {mode === "ielts" && <ComingSoonIELTS />}
 
-      {hasUpdate && (
-        <UpdateBanner
-          onUpdate={() => window.location.reload()}
-        />
-      )}
+      {hasUpdate && <UpdateBanner onUpdate={() => window.location.reload()} />}
 
       {/* Overlay untuk daily complete */}
       {mode === "dailyStory" && allDailyComplete && (

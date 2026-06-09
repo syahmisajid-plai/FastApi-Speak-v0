@@ -7,14 +7,15 @@ export default function ModeSelector({
   micActive,
   lupaKataActive,
 }) {
-  const isTestUser = user_id === "21121b45-6987-432c-a2cd-fda17eabbd2b";
+  // const isTestUser = user_id === "21121b45-6987-432c-a2cd-fda17eabbd2b";
+  const isTestUser = user_id === "xxxx";
 
   const baseModes = [
     { key: "learn", icon: "🧠", label: "Learn", color: "indigo" },
     { key: "scenarios", icon: "🎭", label: "Scenarios", color: "purple" },
     { key: "freeTalk", icon: "💬", label: "Talk", color: "blue" },
     { key: "smartcall", icon: "📞", label: "SmartCall", color: "cyan" },
-    { key: "games", icon: "🎮", label: "Games", color: "emerald" },
+    { key: "games", icon: "🎮", label: "Multiplayer", color: "emerald" },
     // { key: "ielts", icon: "📝", label: "IELTS", color: "rose" },
   ];
 

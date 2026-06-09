@@ -20,6 +20,7 @@ export default function Header({
   completedLessons,
 
   modeLearn,
+  modeScenario,
 
   autoCorrection,
 
@@ -113,8 +114,8 @@ export default function Header({
               </button>
             )} */}
 
-            {/* 🔥 STREAK ONLY DAILY STORY */}
-            {mode === "dailyStory" && (
+            {/* 🔥 STREAK ONLY DAILY STORY (inside scenarios) */}
+            {mode === "scenarios" && modeScenario === "daily_story" && (
               <div className="flex items-center gap-2">
                 {/* 🔥 CURRENT */}
                 <button
@@ -137,10 +138,10 @@ export default function Header({
                     <div
                       onClick={(e) => e.stopPropagation()}
                       className="
-                        absolute top-16 right-4
-                        bg-black/80 border border-white/10
-                        rounded-xl p-3 text-white text-xs w-40
-                      "
+            absolute top-16 right-4
+            bg-black/80 border border-white/10
+            rounded-xl p-3 text-white text-xs w-40
+          "
                     >
                       <div className="flex justify-between mb-1">
                         <span>🔥 Current</span>
@@ -163,7 +164,7 @@ export default function Header({
                 {modeLearn === "vocab" && (
                   <button
                     onClick={onOpenVocab}
-                        className="
+                    className="
                       px-3! py-1.5!
                       rounded-full
                       bg-blue-500/10!
@@ -222,8 +223,6 @@ export default function Header({
               </div>
             </button>
 
-
-
             {/* COST MONITORING DASHBOARD */}
             {user?.id === "21121b45-6987-432c-a2cd-fda17eabbd2b" &&
               mode === "freeTalk" && (
@@ -265,12 +264,13 @@ export default function Header({
                       onClick={() => setOpenMenu(false)}
                     />
 
-                    <div className="absolute right-0 mt-3 w-60 z-50
+                    <div
+                      className="absolute right-0 mt-3 w-60 z-50
                                     bg-zinc-900/80 backdrop-blur-xl
                                     border border-white/10 rounded-2xl
                                     shadow-xl overflow-hidden
-                                    animate-fadeIn">
-                      
+                                    animate-fadeIn"
+                    >
                       {/* User Info */}
                       <div className="px-4 py-3 border-b border-white/10">
                         <div className="text-sm font-medium text-white truncate">
@@ -283,7 +283,6 @@ export default function Header({
 
                       {/* Menu Items */}
                       <div className="py-1">
-
                         {/* Translation History */}
                         <button
                           onClick={() => setShowHistory(true)}
@@ -308,7 +307,9 @@ export default function Header({
                             <input
                               type="checkbox"
                               checked={supportSTTWeb}
-                              onChange={(e) => setSupportSTTWeb(e.target.checked)}
+                              onChange={(e) =>
+                                setSupportSTTWeb(e.target.checked)
+                              }
                               className="accent-white cursor-pointer scale-90"
                             />
                           </label>
@@ -323,7 +324,6 @@ export default function Header({
                           <span>⎋</span>
                           <span>Logout</span>
                         </button>
-
                       </div>
                     </div>
                   </>
@@ -334,99 +334,99 @@ export default function Header({
         </div>
 
         {/* DAILY STORY PROGRESS ONLY DAILY MODE */}
-        {mode === "dailyStory" && isScrolled && (
-          <div className="flex justify-between items-center px-1">
-            {phases.map((phase) => {
-              const done = dailyStory?.[phase.key];
+        {mode === "scenarios" &&
+          modeScenario === "daily_story" &&
+          isScrolled && (
+            <div className="flex justify-between items-center px-1">
+              {phases.map((phase) => {
+                const done = dailyStory?.[phase.key];
 
-              const isUnlocked = unlockNext;
-              if (!done && unlockNext) unlockNext = false;
+                const isUnlocked = unlockNext;
+                if (!done && unlockNext) unlockNext = false;
 
-              return (
-                <div
-                  key={phase.key}
-                  className="relative flex flex-col items-center text-[10px] w-full"
-                >
+                return (
                   <div
-                    className={`w-7 h-7 mt-2 flex items-center justify-center rounded-full
-                    ${
-                      done
-                        ? "bg-green-400 text-black"
-                        : "bg-white/10 text-gray-300"
-                    }`}
+                    key={phase.key}
+                    className="relative flex flex-col items-center text-[10px] w-full"
                   >
-                    {phase.emoji}
-                  </div>
-
-                  <span
-                    className={`mt-1 ${done ? "text-gray-200" : "text-gray-400"}`}
-                  >
-                    {phase.label}
-                  </span>
-
-                  {!isUnlocked && !done && (
-                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center rounded-lg mx-2">
-                      🔒
+                    <div
+                      className={`w-7 h-7 mt-2 flex items-center justify-center rounded-full
+            ${done ? "bg-green-400 text-black" : "bg-white/10 text-gray-300"}`}
+                    >
+                      {phase.emoji}
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+
+                    <span
+                      className={`mt-1 ${done ? "text-gray-200" : "text-gray-400"}`}
+                    >
+                      {phase.label}
+                    </span>
+
+                    {!isUnlocked && !done && (
+                      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center rounded-lg mx-2">
+                        🔒
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
         {/* ================= ROLEPLAY MODE ================= */}
-        {mode === "roleplay" && isScrolled && activeChecklist && (
-          <div className="px-1 mt-2">
-            {/* HEADER */}
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-[11px] text-white/70 uppercase">
-                🎭 Roleplay Checklist
-              </p>
+        {mode === "scenarios" &&
+          modeScenario === "roleplay" &&
+          isScrolled &&
+          activeChecklist && (
+            <div className="px-1 mt-2">
+              {/* HEADER */}
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-[11px] text-white/70 uppercase">
+                  🎭 Roleplay Checklist
+                </p>
 
-              <p className="text-[10px] text-white/50">
-                {activeChecklist.filter((i) => i.done).length} /{" "}
-                {activeChecklist.length}
-              </p>
-            </div>
+                <p className="text-[10px] text-white/50">
+                  {activeChecklist.filter((i) => i.done).length} /{" "}
+                  {activeChecklist.length}
+                </p>
+              </div>
 
-            {/* PROGRESS BAR */}
-            <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden mb-2">
-              <div
-                className="h-full bg-indigo-400 transition-all duration-300"
-                style={{
-                  width: `${
-                    (activeChecklist.filter((i) => i.done).length /
-                      activeChecklist.length) *
-                    100
-                  }%`,
-                }}
-              />
-            </div>
-
-            {/* CHECKLIST ITEMS */}
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {activeChecklist.map((item, i) => (
+              {/* PROGRESS BAR */}
+              <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden mb-2">
                 <div
-                  key={i}
-                  className={`
-                    min-w-[140px] px-2 py-1 rounded-lg text-[10px]
-                    border transition flex items-center gap-1
-                    ${
-                      item.done
-                        ? "bg-green-500/10 border-green-400/30 text-green-300"
-                        : "bg-white/5 border-white/10 text-white/60"
-                    }
-                  `}
-                >
-                  <span className="text-xs">{item.done ? "✔" : "⬜"}</span>
+                  className="h-full bg-indigo-400 transition-all duration-300"
+                  style={{
+                    width: `${
+                      (activeChecklist.filter((i) => i.done).length /
+                        activeChecklist.length) *
+                      100
+                    }%`,
+                  }}
+                />
+              </div>
 
-                  <span className="truncate">{item.text}</span>
-                </div>
-              ))}
+              {/* CHECKLIST ITEMS */}
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {activeChecklist.map((item, i) => (
+                  <div
+                    key={i}
+                    className={`
+            min-w-[140px] px-2 py-1 rounded-lg text-[10px]
+            border transition flex items-center gap-1
+            ${
+              item.done
+                ? "bg-green-500/10 border-green-400/30 text-green-300"
+                : "bg-white/5 border-white/10 text-white/60"
+            }
+          `}
+                  >
+                    <span className="text-xs">{item.done ? "✔" : "⬜"}</span>
+                    <span className="truncate">{item.text}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </header>
 
       {/* MODAL ONLY DAILY MODE */}

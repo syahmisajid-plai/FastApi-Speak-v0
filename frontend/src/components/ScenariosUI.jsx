@@ -15,130 +15,141 @@ export default function ScenariosUI({
 
   return (
     <section
-    className={`mx-4 transition-all duration-500 ${
+      className={`mx-4 transition-all duration-500 ${
         modeScenario === "idle" ? "mt-36" : ""
-    }`}
+      }`}
     >
       <div className="relative">
         {/* ================= MAIN UI ================= */}
         {modeScenario === "idle" && (
-            <div
+          <div
             className={`text-white border border-white/10 backdrop-blur-xl rounded-3xl p-6 
             bg-linear-to-b from-slate-900/80 to-purple-900/60 
             shadow-lg shadow-black/30 flex flex-col justify-center
             transition-all duration-300 ease-out
             ${
-                modeScenario !== "idle"
+              modeScenario !== "idle"
                 ? "opacity-0 scale-[0.98] translate-y-1 pointer-events-none"
                 : "opacity-100 scale-100"
             }`}
-            >
+          >
             {/* ================= BEFORE ================= */}
             <div
-                className={`transition-all duration-500 ${
+              className={`transition-all duration-500 ${
                 started
-                    ? "opacity-0 -translate-y-3 pointer-events-none absolute"
-                    : "opacity-100 translate-y-0"
-                }`}
+                  ? "opacity-0 -translate-y-3 pointer-events-none absolute"
+                  : "opacity-100 translate-y-0"
+              }`}
             >
-                <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center">
                 <div
-                    className="w-14 h-14 rounded-2xl 
+                  className="w-14 h-14 rounded-2xl 
                     bg-gradient-to-br from-purple-500/20 to-white/10 
                     flex items-center justify-center text-2xl mb-4 
                     border border-white/10"
                 >
-                    🎭
+                  🎭
                 </div>
 
                 <p className="text-sm font-semibold tracking-wide">
-                    Scenarios Mode
+                  Scenarios Mode
                 </p>
 
                 <p className="text-xs text-white/60 mt-1 text-center">
-                    Practice speaking through immersive situations
+                  Practice speaking through immersive situations
                 </p>
-                </div>
+              </div>
 
-                <button
+              <button
                 onClick={() => setStarted(true)}
                 className="mt-5 w-full py-2.5! rounded-xl 
                 bg-gradient-to-r from-purple-500 to-purple-600 
                 text-white text-sm font-medium 
                 active:scale-[0.98] transition-all duration-200
                 shadow-md shadow-purple-900/40"
-                >
+              >
                 Start Scenario
-                </button>
+              </button>
             </div>
 
             {/* ================= AFTER ================= */}
             <div
-                className={`transition-all duration-500 ${
+              className={`transition-all duration-500 ${
                 started
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-3 pointer-events-none absolute"
-                }`}
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-3 pointer-events-none absolute"
+              }`}
             >
-                {/* HEADER */}
-                <div className="flex items-center gap-3 mb-4">
+              {/* HEADER */}
+              <div className="flex items-center gap-3 mb-4">
                 <div
-                    className="w-10 h-10 rounded-xl 
+                  className="w-10 h-10 rounded-xl 
                     bg-gradient-to-br from-purple-500/20 to-white/10 
                     flex items-center justify-center text-base 
                     border border-white/10"
                 >
-                    🎭
+                  🎬
                 </div>
 
                 <div className="leading-tight">
-                    <p className="text-sm font-semibold">
-                    Choose Your Scenario
-                    </p>
+                  <p className="text-sm font-semibold">Choose Your Scenario</p>
 
-                    <p className="text-xs text-white/60">
+                  <p className="text-xs text-white/60">
                     Pick how you want to practice
-                    </p>
+                  </p>
                 </div>
-                </div>
+              </div>
 
-                {/* OPTIONS */}
-                <div className="grid grid-cols-2 gap-3">
+              {/* OPTIONS */}
+              <div className="grid grid-cols-2 gap-3">
                 {/* DAILY STORY */}
-                <button
-                    onClick={() => setModeScenario("daily_story")}
+                <div className="relative">
+                  <button
+                    disabled
                     className="bg-white/5 rounded-xl p-4 text-center 
-                    hover:bg-white/10 transition border border-white/10
-                    active:scale-[0.98]"
-                >
+                        hover:bg-white/10 transition border border-white/10
+                        active:scale-[0.98] w-full opacity-60 cursor-not-allowed"
+                  >
                     <div className="text-2xl mb-2">📖</div>
 
                     <p className="text-sm font-medium">Daily Story</p>
 
                     <p className="text-[10px] text-white/50 mt-1">
-                    Share your day naturally
+                      Share your day naturally
                     </p>
-                </button>
+                  </button>
+
+                  {/* OVERLAY */}
+                  <div
+                    className="absolute inset-0 flex flex-col items-center justify-center 
+                    bg-black/60 backdrop-blur-[2px] rounded-xl"
+                  >
+                    <div className="text-2xl">🔒</div>
+                    <p className="text-xs font-semibold text-white mt-1">
+                      Coming Soon
+                    </p>
+                  </div>
+                </div>
 
                 {/* ROLEPLAY */}
                 <button
-                    onClick={() => setModeScenario("roleplay")}
-                    className="bg-gradient-to-br from-purple-500/10 to-white/5 
+                  onClick={() => setModeScenario("roleplay")}
+                  className="bg-gradient-to-br from-purple-500/10 to-white/5 
                     rounded-xl p-4 text-center 
                     hover:scale-[1.02] transition border border-purple-500/20
                     active:scale-[0.98]"
                 >
-                    <div className="text-2xl mb-2">🎬</div>
+                  <div className="text-2xl mb-2">🎭</div>
 
-                    <p className="text-sm font-medium">Roleplay</p>
+                  <p className="text-sm font-medium">Roleplay</p>
 
-                    <p className="text-[10px] text-white/50 mt-1">
+                  <p className="text-[10px] text-white/50 mt-1">
                     Simulate conversations
-                    </p>
+                  </p>
                 </button>
-                </div>
+              </div>
             </div>
-            </div>
+          </div>
         )}
 
         {/* ================= DAILY STORY OVERLAY ================= */}
@@ -181,25 +192,25 @@ export default function ScenariosUI({
 
         {/* ================= ROLEPLAY OVERLAY ================= */}
         <div
-        className={`transition-all duration-300 ease-out ${
+          className={`transition-all duration-300 ease-out ${
             modeScenario === "roleplay"
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 translate-y-2 pointer-events-none"
-        }`}
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-2 pointer-events-none"
+          }`}
         >
-        {modeScenario === "roleplay" && (
+          {modeScenario === "roleplay" && (
             <RoleplayToggleSwipe {...roleplayProps} />
-        )}
+          )}
         </div>
 
         {/* FLOATING CONTEXT BUTTON */}
         {modeScenario === "roleplay" &&
-        roleplayProps.selectedScenario &&
-        roleplayProps.activeContext &&
-        !roleplayProps.showContext && (
+          roleplayProps.selectedScenario &&
+          roleplayProps.activeContext &&
+          !roleplayProps.showContext && (
             <button
-            onClick={() => roleplayProps.setShowContext(true)}
-            className="
+              onClick={() => roleplayProps.setShowContext(true)}
+              className="
                 fixed
                 bottom-65
                 right-4
@@ -216,9 +227,9 @@ export default function ScenariosUI({
                 active:scale-95
             "
             >
-            📌
+              📌
             </button>
-        )}
+          )}
       </div>
     </section>
   );
