@@ -6,7 +6,8 @@ export async function streamChat({
   sessionId,
   userId,
   scenarioId = 0,
-  mode = "roleplay",
+  mode,
+  modeScenario,
 
   onUserMessage,
   onStreamUpdate,
@@ -14,16 +15,29 @@ export async function streamChat({
   onMeta, // ⭐ NEW
 }) {
   console.log("🚀 SEND TO AI:", text);
+  console.log("📤 xxxxx Selected modeScenario xxxxx:", modeScenario);
 
   onUserMessage(text);
 
-  const endpointMap = {
-    roleplay: "/roleplay/stream_answer",
-    dailyStory: "/daily-story/stream_answer",
-    freeTalk: "/free-talk/stream_answer",
-  };
+  let endpoint;
 
-  const endpoint = endpointMap[mode];
+  if (mode === "freeTalk") {
+    endpoint = "/free-talk/stream_answer";
+  }
+
+  if (mode === "scenarios") {
+    if (modeScenario === "roleplay") {
+      endpoint = "/roleplay/stream_answer";
+    }
+
+    if (modeScenario === "dailyStory") {
+      endpoint = "/daily-story/stream_answer";
+    }
+  }
+
+  
+  console.log("📤 Full API URL:", `${linkBackend}${endpoint}`);
+
   const fullUrl = `${linkBackend}${endpoint}`;
 
   console.log("📤 ==================== chatService.js: ====================", {
@@ -32,6 +46,7 @@ export async function streamChat({
     input: text,
     scenario_id: scenarioId,
     mode,
+    modeScenario,
     endpoint,
   });
 

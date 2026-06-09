@@ -7,6 +7,7 @@ export default function useConversationEngine({
   userIdRef,
   scenarioRef,
   modeRef,
+  modeScenarioRef,
   setChatHistory,
   speakText,
   unlockAudio,
@@ -30,7 +31,8 @@ export default function useConversationEngine({
     console.log("🆔 sessionId:", sessionIdRef.current);
     console.log("🎭 scenarioId:", scenarioRef.current?.id ?? 0);
     console.log("🧭 mode:", modeRef.current);
-
+    console.log("🧭 modeScenario:", modeScenarioRef.current);
+    
     const currentUserId = userIdRef.current;
 
     await unlockAudio();
@@ -40,6 +42,7 @@ export default function useConversationEngine({
       userId: currentUserId,
       scenarioId: scenarioRef.current?.id ?? 0,
       mode: modeRef.current,
+      modeScenario: modeScenarioRef.current, // ⭐ NEW
 
       // =========================
       // USER MESSAGE

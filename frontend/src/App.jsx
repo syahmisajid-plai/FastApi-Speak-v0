@@ -143,6 +143,7 @@ Feature tambahan:
   const [modeLearn, setModeLearn] = useState("idle");
 
   const [modeScenario, setModeScenario] = useState("idle");
+  const modeScenarioRef = useRef(modeScenario);
 
   // ================== STATE Daily Greeting ==================
   const greetingSentRef = useRef(false);
@@ -448,10 +449,15 @@ Feature tambahan:
 
   // console.log("======================= userId =======================", userId);
 
-  useEffect(() => {
-    modeRef.current = mode;
-    console.log("🧠 modeRef updated:", mode);
-  }, [mode]);
+    useEffect(() => {
+      modeRef.current = mode;
+      console.log("🧠 modeRef updated:", mode);
+    }, [mode]);
+
+    useEffect(() => {
+      modeScenarioRef.current = modeScenario;
+      console.log("🧠 modeScenarioRef updated:", modeScenario);
+    }, [modeScenario]);
 
   // const { checkGrammar, result, loading, error } = useGrammarCheck();
 
@@ -476,6 +482,7 @@ Feature tambahan:
     userIdRef,
     scenarioRef,
     modeRef,
+    modeScenarioRef,
     setChatHistory,
     speakText,
     unlockAudio,
