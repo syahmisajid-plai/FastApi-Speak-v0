@@ -380,6 +380,14 @@ export default function useVocabEngine(userIdRef) {
     markKnown(userId, vocabId);
   };
 
+  const resetVocab = () => {
+    setIndex(0);
+    setExampleIndex(0);
+    setAttempt(0);
+    setFeedback("");
+    setPhase("wordIntro");
+  };
+
   // =========================
   // PROGRESS
   // =========================
@@ -401,5 +409,6 @@ export default function useVocabEngine(userIdRef) {
     startSession,
     completedCountVocab,
     skipbutton,
+    resetVocab,
   };
 }

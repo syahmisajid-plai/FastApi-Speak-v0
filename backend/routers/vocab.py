@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from db import get_all_vocab, mark_vocab, get_completed_vocab_ids
+from db import get_all_vocab, mark_vocab, get_completed_vocab_ids, get_user_vocab
 
 router = APIRouter(prefix="/vocab", tags=["Vocab"])
 
@@ -90,3 +90,19 @@ def get_completed_ids(user_id: str):
     except Exception as e:
         print("❌ GET COMPLETED IDS ERROR:", str(e))
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/saved/{user_id}")
+def get_saved_vocab(user_id: str):
+    try:
+        data = get_user_vocab(user_id)
+
+        return {
+            "success": True,
+            "data": data
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )

@@ -79,12 +79,12 @@ export default function VocabList({ onClose, userId }) {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="bg-white/10 text-white px-3 py-2 rounded-lg w-[48%] md:w-auto"
               >
-                <option value="all" className="text-black bg-white">
+                {/* <option value="all" className="text-black bg-white">
                   All Status
                 </option>
                 <option value="learning" className="text-black bg-white">
                   not Completed
-                </option>
+                </option> */}
                 <option value="completed" className="text-black bg-white">
                   Completed
                 </option>

@@ -232,6 +232,7 @@ Feature tambahan:
     startSession,
     completedCountVocab,
     skipbutton,
+    resetVocab,
   } = useVocabEngine(userIdRef);
 
   // showVocab List
@@ -375,9 +376,16 @@ Feature tambahan:
     resetModeState();
     setMode(newMode);
 
-    if (newMode === "roleplay") {
-      setRoleplayModalOpen(true);
+    // 🔥 kalau masuk ke learn, mulai dari awal
+    if (newMode === "learn") {
+      resetVocab();
     }
+
+    // if (newMode === "scenarios") {
+    //   setRoleplayModalOpen(true);
+    // }
+
+    
   };
 
   // ================== AUDIO PERMISSION ==================
