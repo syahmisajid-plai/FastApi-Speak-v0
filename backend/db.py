@@ -1243,6 +1243,57 @@ def mark_vocab(user_id: str, vocab_id: int, status: str = "completed"):
     finally:
         conn.close()
 
+def get_user_vocab(user_id: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            v.id,
+            v.word,
+            v.meaning,
+            v.type,
+            v.level,
+            ucv.status,
+            ve.example,
+            ve.translation
+        FROM user_completed_vocab ucv
+        JOIN vocab v
+            ON v.id = ucv.vocab_id
+        LEFT JOIN vocab_examples ve
+            ON v.id = ve.vocab_id
+        WHERE ucv.user_id = %s
+          AND ucv.status IN ('completed', 'known')
+        ORDER BY v.id
+    """, (user_id,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    vocab_map = {}
+
+    for row in rows:
+        vocab_id = row[0]
+
+        if vocab_id not in vocab_map:
+            vocab_map[vocab_id] = {
+                "id": vocab_id,
+                "word": row[1],
+                "meaning": row[2],
+                "type": row[3],
+                "level": row[4],
+                "status": row[5],
+                "examples": []
+            }
+
+        if row[6]:
+            vocab_map[vocab_id]["examples"].append({
+                "en": row[6],
+                "id": row[7] or ""
+            })
+
+    return list(vocab_map.values())
+
 def get_completed_vocab_ids(user_id: str):
     conn = get_db_connection()
     cursor = conn.cursor()

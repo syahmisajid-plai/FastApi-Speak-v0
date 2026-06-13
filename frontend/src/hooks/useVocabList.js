@@ -7,32 +7,21 @@ export default function useVocabList(userId) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
+    if (!userId) return;
 
     const fetchData = async () => {
-      setLoading(true); // penting supaya reset tiap userId berubah
+      setLoading(true);
 
       try {
-        const [vocabRes, completedRes] = await Promise.all([
-          fetch(`${linkBackend}/vocab/all`),
-          fetch(`${linkBackend}/vocab/completed-ids/${userId}`),
-        ]);
+        const res = await fetch(
+          `${linkBackend}/vocab/saved/${userId}`
+        );
 
-        const vocabJson = await vocabRes.json();
-        const completedJson = await completedRes.json();
+        const json = await res.json();
 
-        setVocabList(vocabJson.data || []);
-        const map = {};
-        (completedJson.completed_vocab_ids || []).forEach((item) => {
-          map[item.vocab_id] = item.status;
-        });
-
-        setStatusMap(map);
+        setVocabList(json.data || []);
       } catch (err) {
-        console.log("❌ Failed:", err);
+        console.log(err);
       } finally {
         setLoading(false);
       }
