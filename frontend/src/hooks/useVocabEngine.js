@@ -405,7 +405,7 @@ export default function useVocabEngine(userIdRef) {
   };
 
   const goToJourney = (chapterId = 1) => {
-    setVocabStage("journey");
+    setVocabStage("session");
 
     loadChapter(chapterId);
 
