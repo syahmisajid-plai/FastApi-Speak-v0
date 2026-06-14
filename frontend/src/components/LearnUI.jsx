@@ -19,7 +19,10 @@ export default function LearnUI({
   const setVocabStage = vocabProps.setVocabStage;
   // console.log("LearnUI vocabStage:", vocabStage);
 
-  const startSession = vocabProps.startSession;
+  // const startSession = vocabProps.startSession;
+
+  const chapterList = vocabProps.chapterList;
+  const goToJourney = vocabProps.goToJourney;
 
   // const [showVocab, setShowVocab] = useState(false);
   // const [showSentence, setShowSentence] = useState(false);
@@ -151,7 +154,12 @@ export default function LearnUI({
           {/* {modeLearn === "vocab" && <VocabJourney/>} */}
 
           {modeLearn === "vocab" && vocabStage === "journey" && (
-            <VocabJourney onStart={startSession} />
+            <VocabJourney
+              chapters={chapterList}
+              onStart={(chapterId) => {
+                goToJourney(chapterId);
+              }}
+            />
           )}
 
           {modeLearn === "vocab" && vocabStage === "session" && (

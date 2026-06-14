@@ -227,7 +227,7 @@ def init_db():
             meaning TEXT NOT NULL,
             type TEXT NOT NULL,
             level TEXT NOT NULL,
-            category TEXT,
+            category TEXT
         )
     """)
 

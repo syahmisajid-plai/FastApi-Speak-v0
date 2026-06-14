@@ -132,19 +132,30 @@ export default function useVocabEngine(userIdRef) {
   useEffect(() => {
     const fetchChapters = async () => {
       try {
+        console.log("📡 fetching chapters...");
+
         const res = await fetch(`${linkBackend}/vocab/chapters`);
         const json = await res.json();
 
+        console.log("📦 raw response:", json);
+
         if (json?.data?.length) {
           setChapterList(json.data);
+          console.log("📚 chapterList set:", json.data);
+        } else {
+          console.log("⚠️ chapter data kosong");
         }
       } catch (err) {
-        console.log("❌ Failed fetch chapters:", err);
+        console.log("❌ failed fetch chapters:", err);
       }
     };
 
     fetchChapters();
   }, []);
+
+  useEffect(() => {
+    console.log("📚 chapterList STATE UPDATED:", chapterList);
+  }, [chapterList]);
 
   const loadChapter = async (chapterId) => {
     try {
@@ -527,6 +538,8 @@ export default function useVocabEngine(userIdRef) {
     completedCountVocab,
     // skipbutton,
     resetVocab,
+
+    chapterList,
 
     meaningOptions,
     startPractice,

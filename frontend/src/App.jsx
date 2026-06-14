@@ -237,6 +237,8 @@ Feature tambahan:
     skipbutton,
     resetVocab,
 
+    chapterList,
+
     meaningOptions,
     startPractice,
     startVerifyMeaning,
@@ -393,8 +395,6 @@ Feature tambahan:
     // if (newMode === "scenarios") {
     //   setRoleplayModalOpen(true);
     // }
-
-    
   };
 
   // ================== AUDIO PERMISSION ==================
@@ -466,15 +466,15 @@ Feature tambahan:
 
   // console.log("======================= userId =======================", userId);
 
-    useEffect(() => {
-      modeRef.current = mode;
-      console.log("🧠 modeRef updated:", mode);
-    }, [mode]);
+  useEffect(() => {
+    modeRef.current = mode;
+    console.log("🧠 modeRef updated:", mode);
+  }, [mode]);
 
-    useEffect(() => {
-      modeScenarioRef.current = modeScenario;
-      console.log("🧠 modeScenarioRef updated:", modeScenario);
-    }, [modeScenario]);
+  useEffect(() => {
+    modeScenarioRef.current = modeScenario;
+    console.log("🧠 modeScenarioRef updated:", modeScenario);
+  }, [modeScenario]);
 
   // const { checkGrammar, result, loading, error } = useGrammarCheck();
 
@@ -996,9 +996,11 @@ Feature tambahan:
                 progress: progress,
                 showDice: showDice,
                 startSession: startSession,
-                vocabStage:vocabStage,
-                setVocabStage:setVocabStage,
-                goToJourney:goToJourney,
+                vocabStage: vocabStage,
+                setVocabStage: setVocabStage,
+                goToJourney: goToJourney,
+
+                chapterList: chapterList,
 
                 // 🔥 TAMBAHAN
                 startRecording: startRecording,
@@ -1007,11 +1009,11 @@ Feature tambahan:
                 liveTranscript: liveTranscript,
                 user_id: userId,
                 // skipbutton: skipbutton,
-                meaningOptions:meaningOptions,
-                startPractice:startPractice,
-                startVerifyMeaning:startVerifyMeaning,
-                verifyMeaningAnswer:verifyMeaningAnswer,
-                continuePractice:continuePractice,
+                meaningOptions: meaningOptions,
+                startPractice: startPractice,
+                startVerifyMeaning: startVerifyMeaning,
+                verifyMeaningAnswer: verifyMeaningAnswer,
+                continuePractice: continuePractice,
               }}
               sentenceProps={{
                 lesson: lesson,
