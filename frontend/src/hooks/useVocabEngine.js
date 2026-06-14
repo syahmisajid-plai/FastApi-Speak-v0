@@ -12,10 +12,8 @@ export default function useVocabEngine(userIdRef) {
   // idle | journey | session
 
   const [apiVocab, setApiVocab] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   const [chapterList, setChapterList] = useState([]);
-  const [activeChapter, setActiveChapter] = useState(null);
 
   const [completedMap, setCompletedMap] = useState({});
 
@@ -107,25 +105,6 @@ export default function useVocabEngine(userIdRef) {
     attemptRef.current = attempt;
   }, [attempt]);
 
-  useEffect(() => {
-    const fetchVocab = async () => {
-      try {
-        const res = await fetch(`${linkBackend}/vocab/all`);
-        const json = await res.json();
-
-        if (json?.data?.length) {
-          setApiVocab(json.data);
-        }
-      } catch (err) {
-        console.log("❌ Failed to fetch vocab:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchVocab();
-  }, []);
-
   // =========================
   // CHAPTER-VOCAB
   // =========================
@@ -149,7 +128,6 @@ export default function useVocabEngine(userIdRef) {
               sort_order: c[3],
             })),
           );
-          console.log("📚 chapterList set:", json.data);
         } else {
           console.log("⚠️ chapter data kosong");
         }
@@ -161,20 +139,23 @@ export default function useVocabEngine(userIdRef) {
     fetchChapters();
   }, []);
 
-  useEffect(() => {
-    console.log("📚 chapterList STATE UPDATED:", chapterList);
-  }, [chapterList]);
-
   const loadChapter = async (chapterId) => {
     try {
       const res = await fetch(`${linkBackend}/vocab/chapters/${chapterId}`);
       const json = await res.json();
 
-      console.log("📚 Data chapter:", json?.data);
-
       if (json?.data?.length) {
-        setApiVocab(json.data);
-        setActiveChapter(chapterId);
+        const vocabData = json.data.map((v) => ({
+          id: v[0],
+          word: v[1],
+          meaning: v[2],
+          type: v[3],
+          level: v[4],
+          category: v[5],
+          chapter: v[6],
+        }));
+
+        setApiVocab(vocabData);
       }
     } catch (err) {
       console.log("❌ Failed load chapter:", err);
@@ -236,11 +217,7 @@ export default function useVocabEngine(userIdRef) {
         }),
       });
 
-      console.log("📡 response status:", res.status);
-
       const data = await res.json().catch(() => null);
-
-      console.log("📦 response body:", data);
 
       setCompletedMap((prev) => ({
         ...prev,
@@ -394,9 +371,10 @@ export default function useVocabEngine(userIdRef) {
     return () => clearTimeout(t);
   }, [showDice]);
 
-  const startSession = () => {
-    setVocabStage("session");
+  const startSession = async (chapterId) => {
+    await loadChapter(chapterId);
 
+    setVocabStage("session");
     setIndex(0);
     setExampleIndex(0);
     setMeaningOptions([]);
@@ -404,11 +382,10 @@ export default function useVocabEngine(userIdRef) {
     setShowDice(true);
   };
 
-  const goToJourney = (chapterId = 1) => {
+  const goToJourney = async (chapterId) => {
+    await loadChapter(chapterId);
+
     setVocabStage("session");
-
-    loadChapter(chapterId);
-
     setIndex(0);
     setExampleIndex(0);
     setPhase("wordIntro");
@@ -419,8 +396,8 @@ export default function useVocabEngine(userIdRef) {
   // JUMLAH KATA SELESAI
   // =========================
   const completedCountVocab = useMemo(() => {
-    return Object.keys(completedMap).length;
-  }, [completedMap]);
+    return apiVocab.filter((v) => completedMap[v.id]).length;
+  }, [apiVocab, completedMap]);
 
   // =========================
   // SKIP BUTTON

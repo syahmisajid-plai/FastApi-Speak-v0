@@ -304,7 +304,6 @@ export default function VocabUI({
                                       {option}
                                     </span>
                                   </div>
-
                                 </div>
                               </button>
                             ))}
