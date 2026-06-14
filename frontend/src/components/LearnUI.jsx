@@ -2,6 +2,9 @@ import { useState } from "react";
 import VocabUI from "./VocabUI";
 import SentenceUI from "./SentenceUI";
 
+import VocabJourney from "./VocabJourney";
+
+
 export default function LearnUI({
   vocabProps,
   sentenceProps,
@@ -10,13 +13,30 @@ export default function LearnUI({
 }) {
   const [started, setStarted] = useState(false);
 
+  const phase = vocabProps.phase;
+  // console.log("LearnUI phase:", phase);
+
+  const vocabStage = vocabProps.vocabStage;
+  const setVocabStage = vocabProps.setVocabStage;
+  // console.log("LearnUI vocabStage:", vocabStage);
+  
+  
+  const startSession = vocabProps.startSession;
+  
+
   // const [showVocab, setShowVocab] = useState(false);
   // const [showSentence, setShowSentence] = useState(false);
   // idle | vocab | sentence
 
   return (
     <section
-      className={`mx-4 mt-36 transition-all duration-500 ${
+      className={`mx-4 transition-all duration-500 ${
+        phase === "verifyMeaning" || vocabStage === "journey"
+          ? "mt-8 md:mt-0"
+          : phase === "guidedPractice" || phase === "makeSentence"
+          ? "mt-16 md:mt-4"
+          : "mt-36 md:mt-12"
+      } ${
         modeLearn === "sentence" ? "min-h-128" : ""
       }`}
     >
@@ -97,7 +117,10 @@ export default function LearnUI({
             <div className="grid grid-cols-2 gap-3">
               {/* WORDS */}
               <button
-                onClick={() => setModeLearn("vocab")}
+                onClick={() => {
+                  setModeLearn("vocab");
+                  setVocabStage("journey");
+                }}
                 className="bg-white/5 rounded-xl p-4 text-center 
                 hover:bg-white/10 transition border border-white/10
                 active:scale-[0.98]"
@@ -131,7 +154,17 @@ export default function LearnUI({
               : "opacity-0 translate-y-2 pointer-events-none"
           }`}
         >
-          {modeLearn === "vocab" && <VocabUI {...vocabProps} />}
+          {/* {modeLearn === "vocab" && <VocabUI {...vocabProps} />} */}
+          {/* {modeLearn === "vocab" && <VocabJourney/>} */}
+
+          {modeLearn === "vocab" && vocabStage === "journey" && (
+            <VocabJourney onStart={startSession} />
+          )}
+
+          {modeLearn === "vocab" && vocabStage === "session" && (
+            <VocabUI {...vocabProps} />
+          )}
+          
         </div>
       </div>
 
@@ -145,6 +178,7 @@ export default function LearnUI({
       >
         {modeLearn === "sentence" && <SentenceUI {...sentenceProps} />}
       </div>
+      <div className="mt-24"></div>
     </section>
   );
 }

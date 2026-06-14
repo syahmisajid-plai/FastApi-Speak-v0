@@ -399,6 +399,42 @@ def init_db():
     );
     """)
 
+    # -----------------------------
+    # Chapters for Vocab Sub Mode
+    # -----------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS chapters (
+        id BIGSERIAL PRIMARY KEY,
+
+        category TEXT NOT NULL,
+        title TEXT NOT NULL,
+        sort_order INT NOT NULL,
+
+        estimated_minutes INT,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    # -----------------------------
+    # Connect Chapters and Vocab
+    # -----------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS chapter_vocab (
+        id BIGSERIAL PRIMARY KEY,
+
+        chapter_id BIGINT NOT NULL REFERENCES chapters(id) ON DELETE CASCADE,
+        vocab_id BIGINT NOT NULL REFERENCES vocab(id) ON DELETE CASCADE,
+
+        position INT NOT NULL,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        UNIQUE(chapter_id, vocab_id)
+    );
+""")
+
     conn.commit()
     conn.close()
 

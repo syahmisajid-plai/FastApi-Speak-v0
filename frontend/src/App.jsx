@@ -229,10 +229,19 @@ Feature tambahan:
     setPhase,
     progress,
     showDice,
+    vocabStage,
+    setVocabStage,
     startSession,
+    goToJourney,
     completedCountVocab,
     skipbutton,
     resetVocab,
+
+    meaningOptions,
+    startPractice,
+    startVerifyMeaning,
+    verifyMeaningAnswer,
+    continuePractice,
   } = useVocabEngine(userIdRef);
 
   // showVocab List
@@ -759,7 +768,11 @@ Feature tambahan:
         }`}
       >
         <div
-          className="w-full max-w-md flex flex-col space-y-4 sm:space-y-6 mb-16"
+          className={`w-full max-w-md flex flex-col space-y-4 sm:space-y-6 ${
+            phase === "verifyMeaning" && mode === "learn"
+              ? "md:mb-96 mb-24"
+              : "md:mb-0 mb-16"
+          }`}
           onClick={resetIdle}
           onWheel={resetIdle}
         >
@@ -983,13 +996,22 @@ Feature tambahan:
                 progress: progress,
                 showDice: showDice,
                 startSession: startSession,
+                vocabStage:vocabStage,
+                setVocabStage:setVocabStage,
+                goToJourney:goToJourney,
+
                 // 🔥 TAMBAHAN
                 startRecording: startRecording,
                 stopRecording: stopRecording,
                 isRecording: isRecording,
                 liveTranscript: liveTranscript,
                 user_id: userId,
-                skipbutton: skipbutton,
+                // skipbutton: skipbutton,
+                meaningOptions:meaningOptions,
+                startPractice:startPractice,
+                startVerifyMeaning:startVerifyMeaning,
+                verifyMeaningAnswer:verifyMeaningAnswer,
+                continuePractice:continuePractice,
               }}
               sentenceProps={{
                 lesson: lesson,

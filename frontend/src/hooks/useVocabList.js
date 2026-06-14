@@ -1,13 +1,16 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { linkBackend } from "../config";
 
 export default function useVocabList(userId) {
   const [vocabList, setVocabList] = useState([]);
-  const [statusMap, setStatusMap] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      setVocabList([]);
+      setLoading(false);
+      return;
+    }
 
     const fetchData = async () => {
       setLoading(true);
@@ -19,9 +22,14 @@ export default function useVocabList(userId) {
 
         const json = await res.json();
 
-        setVocabList(json.data || []);
+        if (json.success) {
+          setVocabList(json.data || []);
+        } else {
+          setVocabList([]);
+        }
       } catch (err) {
-        console.log(err);
+        console.error("❌ Failed to fetch vocab:", err);
+        setVocabList([]);
       } finally {
         setLoading(false);
       }
@@ -30,16 +38,8 @@ export default function useVocabList(userId) {
     fetchData();
   }, [userId]);
 
-  // 🔥 merge status
-  const enrichedVocabList = useMemo(() => {
-    return vocabList.map((v) => ({
-      ...v,
-      status: statusMap[v.id] || "learning",
-    }));
-  }, [vocabList, statusMap]);
-
   return {
-    vocabList: enrichedVocabList,
+    vocabList,
     loading,
   };
 }

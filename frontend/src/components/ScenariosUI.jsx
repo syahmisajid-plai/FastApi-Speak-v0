@@ -16,7 +16,7 @@ export default function ScenariosUI({
   return (
     <section
       className={`mx-4 transition-all duration-500 ${
-        modeScenario === "idle" ? "mt-36" : ""
+        modeScenario === "idle" ? "mt-36 md:mt-12" : ""
       }`}
     >
       <div className="relative">
@@ -57,6 +57,10 @@ export default function ScenariosUI({
 
                 <p className="text-xs text-white/60 mt-1 text-center">
                   Practice speaking through immersive situations
+                </p>
+
+                <p className="text-[10px] text-white/35 uppercase tracking-[0.2em] mt-3">
+                  Roleplay • Scenarios • Daily Talks
                 </p>
               </div>
 

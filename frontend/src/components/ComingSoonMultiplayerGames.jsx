@@ -22,7 +22,7 @@ export default function ComingSoonMultiplayerGames() {
         {/* description */}
         <p className="mt-4 text-sm text-white/70 leading-relaxed max-w-xs">
           Learn English together through competitive and cooperative multiplayer
-          games.
+          games with your friends.
         </p>
 
         {/* keywords */}

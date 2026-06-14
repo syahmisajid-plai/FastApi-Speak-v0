@@ -8,6 +8,9 @@ import { linkBackend } from "../config";
 export default function useVocabEngine(userIdRef) {
   //   const data = apiVocab?.length ? apiVocab : defaultVocab;
 
+  const [vocabStage, setVocabStage] = useState("idle");
+  // idle | journey | session
+
   const [apiVocab, setApiVocab] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,6 +23,8 @@ export default function useVocabEngine(userIdRef) {
   // }, [apiVocab, completedMap]);
 
   const [shuffledData, setShuffledData] = useState([]);
+
+  const [meaningOptions, setMeaningOptions] = useState([]);
 
   // useEffect(() => {
   //   if (!filteredData.length) return;
@@ -281,7 +286,7 @@ export default function useVocabEngine(userIdRef) {
     else if (currentPhase === "makeSentence") {
       const containsWord = user.includes(currentVocab.word.toLowerCase());
 
-      setFeedback(containsWord ? "🔥 Good!" : "👍 Try using the target word");
+      setFeedback(containsWord ? "🔥 Good!" : "👍 Good!");
 
       setPhase("completed");
     }
@@ -307,6 +312,7 @@ export default function useVocabEngine(userIdRef) {
   const next = () => {
     setIndex((i) => getNextIndex(i));
 
+    setMeaningOptions([]);
     setFeedback("");
     setAttempt(0);
     setExampleIndex(0);
@@ -331,10 +337,22 @@ export default function useVocabEngine(userIdRef) {
   }, [showDice]);
 
   const startSession = () => {
+    setVocabStage("session");
+
+    setIndex(0);
+    setExampleIndex(0);
+    setMeaningOptions([]);
+    setPhase("wordIntro");
+    setShowDice(true);
+  };
+
+  const goToJourney = () => {
+    setVocabStage("journey");
+
     setIndex(0);
     setExampleIndex(0);
     setPhase("wordIntro");
-    setShowDice(true);
+    setFeedback("");
   };
 
   // =========================
@@ -366,26 +384,86 @@ export default function useVocabEngine(userIdRef) {
     }
   };
 
-  const skipbutton = () => {
-    const vocabId = vocabRef.current?.id;
-    const userId = userIdRef?.current;
+  // const skipbutton = () => {
+  //   const vocabId = vocabRef.current?.id;
+  //   const userId = userIdRef?.current;
 
-    // 🔥 update UI dulu
-    setCompletedMap((prev) => ({
-      ...prev,
-      [vocabId]: "known",
-    }));
+  //   // 🔥 update UI dulu
+  //   setCompletedMap((prev) => ({
+  //     ...prev,
+  //     [vocabId]: "known",
+  //   }));
 
-    next();
-    markKnown(userId, vocabId);
-  };
+  //   next();
+  //   markKnown(userId, vocabId);
+  // };
 
   const resetVocab = () => {
     setIndex(0);
     setExampleIndex(0);
     setAttempt(0);
     setFeedback("");
+    setMeaningOptions([]);
     setPhase("wordIntro");
+
+    setVocabStage("idle");
+  };
+
+  // =========================
+  // MEANING QUIZ
+  // =========================
+  const generateMeaningQuiz = () => {
+    if (!vocabRef.current) return;
+
+    const correct = vocabRef.current.meaning;
+
+    const distractors = data
+      .filter(
+        (v) =>
+          v.id !== vocabRef.current.id &&
+          v.meaning &&
+          v.meaning !== correct
+      )
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3)
+      .map((v) => v.meaning);
+
+    const options = [correct, ...distractors]
+      .sort(() => Math.random() - 0.5);
+
+    setMeaningOptions(options);
+  };
+
+  const startPractice = () => {
+    setPhase("showMeaning");
+  };
+
+  const startVerifyMeaning = () => {
+    generateMeaningQuiz();
+    setPhase("verifyMeaning");
+  };
+
+  const verifyMeaningAnswer = (answer) => {
+    const correct = vocabRef.current?.meaning;
+
+    if (answer === correct) {
+      const vocabId = vocabRef.current?.id;
+      const userId = userIdRef?.current;
+
+      setCompletedMap((prev) => ({
+        ...prev,
+        [vocabId]: "known",
+      }));
+      
+      markKnown(userId, vocabId);
+      next();
+    } else {
+      setPhase("showMeaning");
+    }
+  };
+
+  const continuePractice = () => {
+    setPhase("guidedPractice");
   };
 
   // =========================
@@ -406,9 +484,18 @@ export default function useVocabEngine(userIdRef) {
     next,
     setPhase,
     showDice,
+    vocabStage,
+    setVocabStage,
     startSession,
+    goToJourney,
     completedCountVocab,
-    skipbutton,
+    // skipbutton,
     resetVocab,
+
+    meaningOptions,
+    startPractice,
+    startVerifyMeaning,
+    verifyMeaningAnswer,
+    continuePractice,
   };
 }

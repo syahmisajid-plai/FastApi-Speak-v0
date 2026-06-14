@@ -281,7 +281,7 @@ export default function SmartCallUI({
   return (
     <section
       className={`
-        mt-24 md:mb-90 text-white flex items-center justify-center
+        mt-24 md:mt-0 md:mb-90 text-white flex items-center justify-center
         bg-linear-to-b from-slate-900 to-cyan-950
         ${(stage === "A" || stage === "B") ? "mx-4" : ""}
       `}
@@ -353,11 +353,15 @@ export default function SmartCallUI({
                   </div>
 
                   <p className="text-base font-semibold tracking-wide">
-                    SmartCall
+                    Smart Call Mode
                   </p>
 
                   <p className="text-xs text-white/60 mt-1">
                     Talk with friends in real-time, with AI support when needed
+                  </p>
+
+                  <p className="text-[10px] text-white/35 uppercase tracking-[0.2em] mt-3">
+                    CONNECT WITH FRIENDS • AI ASSISTED
                   </p>
 
                   <button

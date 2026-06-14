@@ -20,7 +20,13 @@ export default function VocabUI({
   startSession,
 
   user_id,
-  skipbutton,
+  // skipbutton,
+
+  meaningOptions,
+  startPractice,
+  startVerifyMeaning,
+  verifyMeaningAnswer,
+  continuePractice,
 }) {
   // vocab = false;
 
@@ -52,6 +58,15 @@ export default function VocabUI({
   }, [phase]);
 
   const canSpeak = phase === "guidedPractice" || phase === "makeSentence";
+
+  const phaseLabel = {
+    wordIntro: "Learn",
+    verifyMeaning: "Understand",
+    showMeaning: "Review",
+    guidedPractice: "Practice",
+    makeSentence: "Create",
+    completed: "Complete",
+  };
 
   const Button = ({ children, onClick, disabled, variant = "primary" }) => {
     const base =
@@ -121,8 +136,21 @@ export default function VocabUI({
                   <>
                     {/* TOP INFO */}
                     <div className="flex justify-between text-xs text-white/50 mb-6">
-                      <span className="uppercase tracking-wide">{phase}</span>
-                      <span className="italic">{vocab.word}</span>
+                      {/* phase */}
+                      <div className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/20">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="text-[10px] uppercase tracking-widest text-emerald-300">
+                          {phaseLabel[phase] || "Practice"}
+                        </span>
+                      </div>
+
+                      {/* word */}
+                      <div className="inline-flex items-center gap-2 px-2 py-1 rounded-full">
+                        <span className="w-2 h-2 rounded-full bg-indigo-400" />
+                        <span className="text-[10px] uppercase tracking-widest text-indigo-400">
+                          {vocab.word}
+                        </span>
+                      </div>
                     </div>
 
                     {/* PROGRESS */}
@@ -152,9 +180,9 @@ export default function VocabUI({
                             </div>
 
                             {/* MEANING */}
-                            <p className="text-sm text-white/60 italic">
+                            {/* <p className="text-sm text-white/60 italic">
                               {vocab.meaning}
-                            </p>
+                            </p> */}
 
                             {/* META BADGES */}
                             <div className="flex justify-center gap-2 pt-2">
@@ -179,7 +207,7 @@ export default function VocabUI({
                           <div className="flex items-center justify-center gap-2 pt-3 flex-nowrap">
                             {/* SECONDARY ACTION */}
                             <button
-                              onClick={skipbutton}
+                              onClick={startVerifyMeaning}
                               className="
                               text-xs! md:text-base! px-4! py-2! rounded-xl
                               bg-white/10! hover:bg-white/15! active:bg-white/20!
@@ -196,10 +224,7 @@ export default function VocabUI({
 
                             {/* MAIN CTA */}
                             <button
-                              onClick={() => {
-                                setPhase("guidedPractice");
-                                setTimeout(() => startRecording(), 100);
-                              }}
+                              onClick={startPractice}
                               className="
                               text-xs! md:text-base! px-4! py-2! rounded-xl
                               bg-green-500! hover:bg-green-600! active:bg-green-700!
@@ -214,6 +239,125 @@ export default function VocabUI({
                               Start Practice →
                             </button>
                           </div>
+                        </div>
+                      )}
+
+                      {phase === "verifyMeaning" && (
+                        <div className="animate-pop">
+                          <div className="text-center mb-8">
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-400/20 mb-4">
+                              <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
+                              <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-indigo-200/90">
+                                Meaning Check
+                              </span>
+                            </div>
+
+                            <h3 className="text-white/70 text-sm font-medium mb-4">
+                              What does this word mean?
+                            </h3>
+
+                            <p className="text-5xl font-black tracking-tight text-white">
+                              {vocab.word}
+                            </p>
+                          </div>
+
+                          <div className="space-y-3">
+                            {meaningOptions.map((option, index) => (
+                              <button
+                                key={option}
+                                onClick={() => verifyMeaningAnswer(option)}
+                                className="
+                                  group w-full
+                                  rounded-2xl
+                                  border border-white/10
+                                  bg-white/[0.04]!
+                                  px-4! py-4!
+                                  text-left
+                                  transition-all duration-200
+
+                                  hover:bg-white/[0.08]
+                                  hover:border-indigo-400/30
+                                  hover:-translate-y-0.5
+
+                                  active:scale-[0.98]
+                                "
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className="
+                                        w-8 h-8 rounded-full
+                                        border border-white/10
+                                        bg-white/5
+                                        flex items-center justify-center
+                                        text-xs font-bold
+                                        text-white/60
+                                        group-hover:text-indigo-300
+                                        group-hover:border-indigo-400/30
+                                        transition-all
+                                      "
+                                    >
+                                      {String.fromCharCode(65 + index)}
+                                    </div>
+
+                                    <span className="text-sm font-medium text-white/85">
+                                      {option}
+                                    </span>
+                                  </div>
+
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {phase === "showMeaning" && (
+                        <div className="text-center space-y-5 animate-pop">
+                          <h3 className="text-4xl font-extrabold text-indigo-300">
+                            {vocab.word}
+                          </h3>
+
+                          <p className="text-lg text-white/80 italic">
+                            {vocab.meaning}
+                          </p>
+
+                          <div className="flex justify-center gap-2 pt-2">
+                            <span
+                              className="
+                              px-3 py-1 text-xs rounded-full
+                              bg-white/5 border border-white/10
+                              "
+                            >
+                              {vocab.type}
+                            </span>
+
+                            <span
+                              className="
+                              px-3 py-1 text-xs rounded-full
+                              bg-indigo-500/10 border border-indigo-400/20
+                              text-indigo-300
+                              "
+                            >
+                              Level {vocab.level}
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              continuePractice();
+
+                              setTimeout(() => {
+                                startRecording();
+                              }, 100);
+                            }}
+                            className="
+                            px-5! py-2! rounded-xl
+                            bg-green-500! hover:bg-green-600
+                            "
+                          >
+                            Continue →
+                          </button>
                         </div>
                       )}
 

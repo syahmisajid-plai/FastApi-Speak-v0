@@ -4,7 +4,7 @@ export default function FreeTalkUI({ started, setStarted }) {
   return (
     <section
       className={`mx-4 transition-all duration-500 ${
-        started ? "mt-4" : "mt-36"
+        started ? "mt-4" : "mt-36 md:mt-12"
       }`}
     >
       <div
