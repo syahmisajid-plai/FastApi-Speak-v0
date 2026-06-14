@@ -4,7 +4,6 @@ import SentenceUI from "./SentenceUI";
 
 import VocabJourney from "./VocabJourney";
 
-
 export default function LearnUI({
   vocabProps,
   sentenceProps,
@@ -19,10 +18,8 @@ export default function LearnUI({
   const vocabStage = vocabProps.vocabStage;
   const setVocabStage = vocabProps.setVocabStage;
   // console.log("LearnUI vocabStage:", vocabStage);
-  
-  
+
   const startSession = vocabProps.startSession;
-  
 
   // const [showVocab, setShowVocab] = useState(false);
   // const [showSentence, setShowSentence] = useState(false);
@@ -34,11 +31,9 @@ export default function LearnUI({
         phase === "verifyMeaning" || vocabStage === "journey"
           ? "mt-8 md:mt-0"
           : phase === "guidedPractice" || phase === "makeSentence"
-          ? "mt-16 md:mt-4"
-          : "mt-36 md:mt-12"
-      } ${
-        modeLearn === "sentence" ? "min-h-128" : ""
-      }`}
+            ? "mt-16 md:mt-4"
+            : "mt-36 md:mt-12"
+      } ${modeLearn === "sentence" ? "min-h-128" : ""}`}
     >
       <div className="relative">
         {/* ================= QUICK UI ================= */}
@@ -66,9 +61,7 @@ export default function LearnUI({
                 🧠
               </div>
 
-              <p className="text-sm font-semibold tracking-wide">
-                Learn Mode
-              </p>
+              <p className="text-sm font-semibold tracking-wide">Learn Mode</p>
 
               <p className="text-xs text-white/60 mt-1">
                 Build vocabulary and speaking skills
@@ -164,7 +157,6 @@ export default function LearnUI({
           {modeLearn === "vocab" && vocabStage === "session" && (
             <VocabUI {...vocabProps} />
           )}
-          
         </div>
       </div>
 

@@ -226,7 +226,8 @@ def init_db():
             word TEXT NOT NULL UNIQUE,
             meaning TEXT NOT NULL,
             type TEXT NOT NULL,
-            level TEXT NOT NULL
+            level TEXT NOT NULL,
+            category TEXT,
         )
     """)
 
@@ -433,7 +434,7 @@ def init_db():
 
         UNIQUE(chapter_id, vocab_id)
     );
-""")
+    """)
 
     conn.commit()
     conn.close()
@@ -1703,3 +1704,27 @@ def get_completed_lessons(user_id):
         }
         for r in rows
     ]
+
+def get_all_chapters():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT *
+        FROM chapters
+        ORDER BY sort_order ASC
+    """)
+    return cursor.fetchall()
+
+def get_vocab_by_chapter(chapter_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT v.*, cv.position
+        FROM chapter_vocab cv
+        JOIN vocab v ON v.id = cv.vocab_id
+        WHERE cv.chapter_id = %s
+        ORDER BY cv.position ASC
+    """, (chapter_id,))
+    
+    return cursor.fetchall()

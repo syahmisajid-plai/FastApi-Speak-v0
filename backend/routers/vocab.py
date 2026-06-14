@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from db import get_all_vocab, mark_vocab, get_completed_vocab_ids, get_user_vocab
+from db import get_all_chapters, get_vocab_by_chapter
 
 router = APIRouter(prefix="/vocab", tags=["Vocab"])
 
@@ -106,3 +107,30 @@ def get_saved_vocab(user_id: str):
             status_code=500,
             detail=str(e)
         )
+    
+@router.get("/chapters")
+def get_chapters():
+    try:
+        data = get_all_chapters()
+        return {
+            "success": True,
+            "data": data
+        }
+    except Exception as e:
+        print("❌ CHAPTER ERROR:", e)
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/chapters/{chapter_id}")
+def get_chapter_vocab(chapter_id: int):
+    try:
+        data = get_vocab_by_chapter(chapter_id)
+
+        return {
+            "success": True,
+            "chapter_id": chapter_id,
+            "data": data
+        }
+
+    except Exception as e:
+        print("❌ CHAPTER VOCAB ERROR:", e)
+        raise HTTPException(status_code=500, detail=str(e))

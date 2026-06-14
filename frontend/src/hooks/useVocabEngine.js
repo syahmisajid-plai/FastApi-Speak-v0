@@ -14,6 +14,9 @@ export default function useVocabEngine(userIdRef) {
   const [apiVocab, setApiVocab] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [chapterList, setChapterList] = useState([]);
+  const [activeChapter, setActiveChapter] = useState(null);
+
   const [completedMap, setCompletedMap] = useState({});
 
   // const filteredData = useMemo(() => {
@@ -122,6 +125,40 @@ export default function useVocabEngine(userIdRef) {
 
     fetchVocab();
   }, []);
+
+  // =========================
+  // CHAPTER-VOCAB
+  // =========================
+  useEffect(() => {
+    const fetchChapters = async () => {
+      try {
+        const res = await fetch(`${linkBackend}/vocab/chapters`);
+        const json = await res.json();
+
+        if (json?.data?.length) {
+          setChapterList(json.data);
+        }
+      } catch (err) {
+        console.log("❌ Failed fetch chapters:", err);
+      }
+    };
+
+    fetchChapters();
+  }, []);
+
+  const loadChapter = async (chapterId) => {
+    try {
+      const res = await fetch(`${linkBackend}/vocab/chapters/${chapterId}`);
+      const json = await res.json();
+
+      if (json?.data?.length) {
+        setApiVocab(json.data);
+        setActiveChapter(chapterId);
+      }
+    } catch (err) {
+      console.log("❌ Failed load chapter:", err);
+    }
+  };
 
   useEffect(() => {
     const userId = userIdRef?.current;
@@ -346,8 +383,10 @@ export default function useVocabEngine(userIdRef) {
     setShowDice(true);
   };
 
-  const goToJourney = () => {
+  const goToJourney = (chapterId = 1) => {
     setVocabStage("journey");
+
+    loadChapter(chapterId);
 
     setIndex(0);
     setExampleIndex(0);
@@ -420,16 +459,13 @@ export default function useVocabEngine(userIdRef) {
     const distractors = data
       .filter(
         (v) =>
-          v.id !== vocabRef.current.id &&
-          v.meaning &&
-          v.meaning !== correct
+          v.id !== vocabRef.current.id && v.meaning && v.meaning !== correct,
       )
       .sort(() => Math.random() - 0.5)
       .slice(0, 3)
       .map((v) => v.meaning);
 
-    const options = [correct, ...distractors]
-      .sort(() => Math.random() - 0.5);
+    const options = [correct, ...distractors].sort(() => Math.random() - 0.5);
 
     setMeaningOptions(options);
   };
@@ -454,7 +490,7 @@ export default function useVocabEngine(userIdRef) {
         ...prev,
         [vocabId]: "known",
       }));
-      
+
       markKnown(userId, vocabId);
       next();
     } else {
