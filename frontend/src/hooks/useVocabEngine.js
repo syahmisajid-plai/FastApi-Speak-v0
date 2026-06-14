@@ -140,7 +140,18 @@ export default function useVocabEngine(userIdRef) {
         console.log("📦 raw response:", json);
 
         if (json?.data?.length) {
-          setChapterList(json.data);
+          // setChapterList(json.data);
+          setChapterList(
+            json.data.map((c) => ({
+              id: c[0],
+              category: c[1],
+              title: c[2],
+              sort_order: c[3],
+              estimated_minutes: c[4],
+              created_at: c[5],
+              updated_at: c[6],
+            })),
+          );
           console.log("📚 chapterList set:", json.data);
         } else {
           console.log("⚠️ chapter data kosong");
@@ -161,6 +172,8 @@ export default function useVocabEngine(userIdRef) {
     try {
       const res = await fetch(`${linkBackend}/vocab/chapters/${chapterId}`);
       const json = await res.json();
+
+      console.log("📚 Data chapter:", json?.data);
 
       if (json?.data?.length) {
         setApiVocab(json.data);

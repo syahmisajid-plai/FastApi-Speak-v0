@@ -112,7 +112,7 @@ def get_saved_vocab(user_id: str):
 def get_chapters():
     try:
         data = get_all_chapters()
-        print("📦 RAW CHAPTER DATA:", data)  # 🔥 ADD INI
+        # print("📦 RAW CHAPTER DATA:", data)  # 🔥 ADD INI
         
         return {
             "success": True,

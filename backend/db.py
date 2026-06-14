@@ -1710,7 +1710,7 @@ def get_all_chapters():
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT *
+        SELECT id, category, title, sort_order
         FROM chapters
         ORDER BY sort_order ASC
     """)

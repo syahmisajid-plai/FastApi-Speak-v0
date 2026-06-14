@@ -55,7 +55,7 @@ export default function IslandMapJourney({ chapters = [], onStart, onSelect }) {
         </svg>
 
         {/* 🏝 ISLANDS */}
-        {chapters.map((ch, i) => {
+        {chapters.slice(0, 5).map((ch, i) => {
           // 🔥 SAFE POSITION (tidak crash walau chapter > mapPoints)
           const pos = mapPoints[i] || {
             x: 100 + (i % 3) * 100,
