@@ -147,9 +147,6 @@ export default function useVocabEngine(userIdRef) {
               category: c[1],
               title: c[2],
               sort_order: c[3],
-              estimated_minutes: c[4],
-              created_at: c[5],
-              updated_at: c[6],
             })),
           );
           console.log("📚 chapterList set:", json.data);

@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
-// 🎯 fixed map points (style “game path”)
 const mapPoints = [
   { x: 60, y: 120 },
   { x: 160, y: 80 },
@@ -10,34 +9,67 @@ const mapPoints = [
   { x: 220, y: 320 },
 ];
 
+const categoryStyle = {
+  people: {
+    icon: "🏘️",
+    color: "text-amber-300",
+    name: "Village",
+  },
+  education: {
+    icon: "🏛️",
+    color: "text-emerald-300",
+    name: "Academy",
+  },
+  communication: {
+    icon: "🗼",
+    color: "text-sky-300",
+    name: "Signal Tower",
+  },
+};
+
 export default function IslandMapJourney({ chapters = [], onStart, onSelect }) {
   const [selected, setSelected] = useState(null);
 
-  const getIslandStyle = (status) => {
+  const enriched = useMemo(() => {
+    return chapters.slice(0, 6).map((ch, i) => {
+      let status = "locked";
+      if (i < 2) status = "done";
+      else if (i === 2) status = "current";
+
+      return {
+        ...ch,
+        status,
+        category: ch.category || "education",
+      };
+    });
+  }, [chapters]);
+
+  const getNodeStyle = (status) => {
     switch (status) {
       case "done":
-        return "bg-emerald-400 shadow-emerald-400/40";
+        return "bg-emerald-500/90 border-emerald-400/40";
       case "current":
-        return "bg-indigo-400 shadow-indigo-400/60 animate-pulse";
+        return "bg-slate-100 border-slate-300 animate-pulse-soft";
       default:
-        return "bg-white/10 opacity-40";
+        return "bg-slate-800/40 border-slate-700 opacity-50";
     }
   };
 
   return (
-    <div className="bg-slate-950 text-white overflow-hidden">
+    <div className="bg-slate-950 text-white">
       {/* HEADER */}
       <div className="text-center pt-8 pb-4">
-        <h1 className="text-2xl font-bold">Adventure Map</h1>
-        <p className="text-white/50 text-sm">Explore your learning world</p>
+        <h2 className="text-xl font-semibold">Learning Path</h2>
+        <p className="text-white/40 text-sm mt-1">
+          Progress through your chapters
+        </p>
       </div>
 
-      {/* MAP AREA */}
-      <div className="relative w-full h-[400px]">
-        {/* 🌊 BACKGROUND */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-950 to-black" />
+      {/* MAP */}
+      <div className="relative w-full h-[420px]">
+        <div className="absolute inset-0 bg-slate-950" />
 
-        {/* 🌊 PATH */}
+        {/* subtle path */}
         <svg className="absolute inset-0 w-full h-full">
           <path
             d="
@@ -48,54 +80,53 @@ export default function IslandMapJourney({ chapters = [], onStart, onSelect }) {
               S 40 300, 80 260
               S 300 340, 220 320
             "
-            stroke="rgba(99,102,241,0.25)"
-            strokeWidth="3"
+            stroke="rgba(148,163,184,0.15)"
+            strokeWidth="2"
             fill="none"
           />
         </svg>
 
-        {/* 🏝 ISLANDS */}
-        {chapters.slice(0, 5).map((ch, i) => {
-          // 🔥 SAFE POSITION (tidak crash walau chapter > mapPoints)
-          const pos = mapPoints[i] || {
-            x: 100 + (i % 3) * 100,
-            y: 120 + Math.floor(i / 3) * 100,
-          };
+        {/* NODES */}
+        {enriched.map((ch, i) => {
+          const pos = mapPoints[i];
+          const cat = categoryStyle[ch.category];
 
           return (
             <div
-              key={ch.id}
+              key={ch.id || i}
               onClick={() => {
+                if (ch.status === "locked") return;
                 setSelected(ch);
                 onSelect?.(ch);
               }}
-              className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer"
-              style={{
-                left: pos.x,
-                top: pos.y,
-              }}
+              className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer"
+              style={{ left: pos.x, top: pos.y }}
             >
-              {/* island node */}
+              {/* current subtle glow */}
+              {ch.status === "current" && (
+                <div className="absolute inset-0 rounded-lg bg-white/20 blur-md animate-ping" />
+              )}
+
+              {/* node */}
               <div
                 className={`
-                  w-14 h-14 rounded-full border border-white/10
+                  w-10 h-10 rounded-lg
+                  border
                   flex items-center justify-center
-                  transition-all duration-300
-                  ${getIslandStyle(ch.status)}
+                  transition
+                  relative
+                  ${getNodeStyle(ch.status)}
                 `}
               >
-                🏝️
+                <span className={`text-sm ${cat.color}`}>
+                  {ch.status === "locked" ? "🔒" : cat.icon}
+                </span>
               </div>
 
               {/* label */}
-              <div className="text-[10px] text-center mt-2 text-white/70 w-20 -ml-3">
+              <div className="text-[10px] text-center mt-2 text-white/50 w-20 -ml-2">
                 {ch.title}
               </div>
-
-              {/* glow effect for current */}
-              {ch.status === "current" && (
-                <div className="absolute inset-0 rounded-full animate-ping bg-indigo-400/30" />
-              )}
             </div>
           );
         })}
@@ -103,19 +134,24 @@ export default function IslandMapJourney({ chapters = [], onStart, onSelect }) {
 
       {/* MODAL */}
       {selected && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-sm">
-            <h3 className="text-lg font-semibold">{selected.title}</h3>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-white/10 rounded-xl p-5 w-full max-w-sm">
+            <h3 className="text-base font-medium">{selected.title}</h3>
 
-            <p className="text-sm text-white/60 mt-2">
-              Ready to explore this island?
-            </p>
+            <p className="text-sm text-white/50 mt-2">Continue this lesson?</p>
 
             <button
               onClick={() => onStart?.(selected.id)}
-              className="mt-4 w-full py-2 rounded-xl bg-indigo-500 hover:bg-indigo-600"
+              className="mt-4 w-full py-2! rounded-lg bg-white! text-black font-medium! hover:bg-white/90!"
             >
-              Start Journey →
+              Start
+            </button>
+
+            <button
+              onClick={() => setSelected(null)}
+              className="mt-2 w-full text-md! text-white/40! hover:text-white"
+            >
+              Close
             </button>
           </div>
         </div>
