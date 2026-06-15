@@ -257,6 +257,7 @@ export default function useVocabEngine(userIdRef) {
           level: v[4],
           category: v[5],
           chapter: v[6],
+          example: v[7],
         }));
 
         const totalVocab = vocabData.length;

@@ -1670,6 +1670,52 @@ def mark_lesson_completed(user_id, lesson_id):
         "status": "completed"
     }
 
+def get_completed_lessons(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT 
+            sl.id,
+            sl.context,
+            sl.partner_utterance,
+            sl.key_expression,
+            sl.pattern_display,
+            sl.insight,
+            sl.function_type
+        FROM user_lesson_progress ulp
+        JOIN sentence_lessons sl ON sl.id = ulp.lesson_id
+        WHERE ulp.user_id = %s
+        AND ulp.is_completed = TRUE
+    """, (user_id,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        {
+            "id": r[0],
+            "context": r[1],
+            "partner_utterance": r[2],
+            "key_expression": r[3],
+            "pattern_display": r[4],
+            "insight": r[5],
+            "function_type": r[6],
+        }
+        for r in rows
+    ]
+
+def get_all_chapters():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id, category, title, sort_order
+        FROM chapters
+        ORDER BY sort_order ASC
+    """)
+    return cursor.fetchall()
+
 def get_vocab_by_chapter(chapter_id: int):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -1685,10 +1731,8 @@ def get_vocab_by_chapter(chapter_id: int):
             ve.translation,
             cv.position
         FROM chapter_vocab cv
-        JOIN vocab v
-            ON v.id = cv.vocab_id
-        LEFT JOIN vocab_examples ve
-            ON ve.vocab_id = v.id
+        JOIN vocab v ON v.id = cv.vocab_id
+        LEFT JOIN vocab_examples ve ON ve.vocab_id = v.id
         WHERE cv.chapter_id = %s
         ORDER BY cv.position ASC
     """, (chapter_id,))
@@ -1711,37 +1755,10 @@ def get_vocab_by_chapter(chapter_id: int):
                 "examples": []
             }
 
-        example = row[5]
-        translation = row[6]
-
-        if example:
+        if row[5]:
             vocab_map[vocab_id]["examples"].append({
-                "en": example,
-                "id": translation or ""
+                "en": row[5],
+                "id": row[6] or ""
             })
 
     return list(vocab_map.values())
-
-def get_all_chapters():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT id, category, title, sort_order
-        FROM chapters
-        ORDER BY sort_order ASC
-    """)
-    return cursor.fetchall()
-
-def get_vocab_by_chapter(chapter_id: int):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT v.*, cv.position
-        FROM chapter_vocab cv
-        JOIN vocab v ON v.id = cv.vocab_id
-        WHERE cv.chapter_id = %s
-        ORDER BY cv.position ASC
-    """, (chapter_id,))
-    
-    return cursor.fetchall()
