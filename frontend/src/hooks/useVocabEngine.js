@@ -173,6 +173,9 @@ export default function useVocabEngine(userIdRef) {
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [showModal, setShowModal] = useState(null);
 
+  // =========================
+  // GET CHAPTER STATS
+  // =========================
   const getChapterStats = async (chapterId) => {
     try {
       const res = await fetch(`${linkBackend}/vocab/chapters/${chapterId}`);
@@ -187,21 +190,32 @@ export default function useVocabEngine(userIdRef) {
         };
       }
 
+      // =========================
+      // MAP DATA (NEW BACKEND SHAPE)
+      // =========================
       const vocabData = json.data.map((v) => ({
-        id: v[0],
+        id: v.id,
+        position: v.position ?? 0,
       }));
 
-      const total = vocabData.length;
-
-      const completed = vocabData.filter((v) => completedMap[v.id]).length;
+      // console.log("🔥 SAMPLE VOCAB:", json.data?.[0]);
 
       // =========================
-      // UNIT PROGRESS
+      // SORT BY POSITION (IMPORTANT)
+      // =========================
+      const sorted = vocabData.sort((a, b) => a.position - b.position);
+
+      const total = sorted.length;
+
+      const completed = sorted.filter((v) => completedMap[v.id]).length;
+
+      // =========================
+      // UNIT PROGRESS (10 items per unit)
       // =========================
       const units = [];
 
-      for (let i = 0; i < vocabData.length; i += 10) {
-        const unitVocab = vocabData.slice(i, i + 10);
+      for (let i = 0; i < sorted.length; i += 10) {
+        const unitVocab = sorted.slice(i, i + 10);
 
         const unitCompleted = unitVocab.filter(
           (v) => completedMap[v.id],
@@ -213,6 +227,21 @@ export default function useVocabEngine(userIdRef) {
           total: unitVocab.length,
         });
       }
+
+      // console.log(
+      //   "📦 sorted vocab IDs:",
+      //   sorted.map((v) => v.id),
+      // );
+
+      // console.log("🧠 completedMap:", completedMap);
+
+      // console.log(
+      //   "🔥 match test:",
+      //   sorted.map((v) => ({
+      //     id: v.id,
+      //     matched: !!completedMap[String(v.id)],
+      //   })),
+      // );
 
       return {
         total,
@@ -232,11 +261,11 @@ export default function useVocabEngine(userIdRef) {
     }
   };
 
+  // =========================
+  // OPEN MODAL
+  // =========================
   const openChapterModal = async (chapterId) => {
     const stats = await getChapterStats(chapterId);
-
-    // console.log(stats);
-    // { total: 47, completed: 18, remaining: 29 }
 
     setSelectedChapter(chapterId);
     setChapterStats(stats);
@@ -248,16 +277,12 @@ export default function useVocabEngine(userIdRef) {
       const res = await fetch(`${linkBackend}/vocab/chapters/${chapterId}`);
       const json = await res.json();
 
+      console.log("🔥 RAW CHAPTER DATA:", json.data?.[0]);
+
       if (json?.data?.length) {
         const vocabData = json.data.map((v) => ({
-          id: v[0],
-          word: v[1],
-          meaning: v[2],
-          type: v[3],
-          level: v[4],
-          category: v[5],
-          chapter: v[6],
-          example: v[7],
+          ...v,
+          examples: v.examples || [],
         }));
 
         const totalVocab = vocabData.length;
@@ -266,9 +291,9 @@ export default function useVocabEngine(userIdRef) {
           (v) => completedMap[v.id],
         ).length;
 
-        // console.log("📚 total vocab:", totalVocab);
-        // console.log("✅ completed vocab:", completedVocab);
-        // console.log("⏳ remaining vocab:", totalVocab - completedVocab);
+        console.log("📚 total vocab:", totalVocab);
+        console.log("✅ completed vocab:", completedVocab);
+        console.log("⏳ remaining vocab:", totalVocab - completedVocab);
 
         setApiVocab(vocabData);
       }
