@@ -11,41 +11,36 @@ export default function useVocabEngine(userIdRef) {
   const [vocabStage, setVocabStage] = useState("idle");
   // idle | journey | session
 
+  const [allVocab, setAllVocab] = useState([]);
   const [apiVocab, setApiVocab] = useState([]);
 
   const [chapterList, setChapterList] = useState([]);
 
   const [completedMap, setCompletedMap] = useState({});
 
-  // const filteredData = useMemo(() => {
-  //   if (!apiVocab.length) return [];
-
-  //   return apiVocab.filter((v) => !completedMap[v.id]);
-  // }, [apiVocab, completedMap]);
-
-  const [shuffledData, setShuffledData] = useState([]);
-
   const [meaningOptions, setMeaningOptions] = useState([]);
 
-  // useEffect(() => {
-  //   if (!filteredData.length) return;
+  const [currentId, setCurrentId] = useState(null);
 
-  //   const shuffled = [...filteredData].sort(() => Math.random() - 0.5);
+  // =========================
+  // SHUFFLE DATA
+  // =========================
+  // const [shuffledData, setShuffledData] = useState([]);
+
+  // useEffect(() => {
+  //   if (!apiVocab.length) return;
+
+  //   const shuffled = [...apiVocab].sort(() => Math.random() - 0.5);
   //   setShuffledData(shuffled);
-  // }, [filteredData]);
+  // }, [apiVocab]);
 
-  useEffect(() => {
-    if (!apiVocab.length) return;
+  const filteredApiVocab = useMemo(() => {
+    if (!apiVocab.length) return [];
 
-    const shuffled = [...apiVocab].sort(() => Math.random() - 0.5);
-    setShuffledData(shuffled);
-  }, [apiVocab]);
+    return apiVocab.filter((v) => !completedMap[v.id]);
+  }, [apiVocab, completedMap]);
 
-  const data = shuffledData;
-
-  // useEffect(() => {
-  //   setIndex(0);
-  // }, [shuffledData]);
+  const data = filteredApiVocab;
 
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState("wordIntro");
@@ -58,19 +53,28 @@ export default function useVocabEngine(userIdRef) {
   // =========================
   // CURRENT VOCAB
   // =========================
+  // const vocab = useMemo(() => {
+  //   if (!data.length) return null;
+
+  //   let i = index;
+  //   let tries = 0;
+
+  //   while (completedMap[data[i % data.length]?.id] && tries < data.length) {
+  //     i++;
+  //     tries++;
+  //   }
+
+  //   return data[i % data.length];
+  // }, [data, index, completedMap]);
+
+  // =========================
+  // NEW CURRENT VOCAB
+  // =========================
   const vocab = useMemo(() => {
     if (!data.length) return null;
+    return data.find((v) => v.id === currentId) || data[0];
+  }, [data, currentId]);
 
-    let i = index;
-    let tries = 0;
-
-    while (completedMap[data[i % data.length]?.id] && tries < data.length) {
-      i++;
-      tries++;
-    }
-
-    return data[i % data.length];
-  }, [data, index, completedMap]);
   const examples = useMemo(() => vocab?.examples || [], [vocab]);
   const exampleObj = examples[exampleIndex] || {};
   const example = exampleObj.en || "";
@@ -106,6 +110,26 @@ export default function useVocabEngine(userIdRef) {
   }, [attempt]);
 
   // =========================
+  // ALL-VOCAB
+  // =========================
+  useEffect(() => {
+    const fetchAllVocab = async () => {
+      try {
+        const res = await fetch(`${linkBackend}/vocab/all`);
+        const json = await res.json();
+
+        if (json?.data) {
+          setAllVocab(json.data);
+        }
+      } catch (err) {
+        console.log("❌ failed fetch all vocab:", err);
+      }
+    };
+
+    fetchAllVocab();
+  }, []);
+
+  // =========================
   // CHAPTER-VOCAB
   // =========================
   useEffect(() => {
@@ -139,6 +163,63 @@ export default function useVocabEngine(userIdRef) {
     fetchChapters();
   }, []);
 
+  const [chapterStats, setChapterStats] = useState({
+    total: 0,
+    completed: 0,
+    remaining: 0,
+  });
+
+  const [selectedChapter, setSelectedChapter] = useState(null);
+  const [showModal, setShowModal] = useState(null);
+
+  const getChapterStats = async (chapterId) => {
+    try {
+      const res = await fetch(`${linkBackend}/vocab/chapters/${chapterId}`);
+      const json = await res.json();
+
+      if (!json?.data?.length) {
+        return {
+          total: 0,
+          completed: 0,
+          remaining: 0,
+        };
+      }
+
+      const vocabData = json.data.map((v) => ({
+        id: v[0],
+      }));
+
+      const total = vocabData.length;
+
+      const completed = vocabData.filter((v) => completedMap[v.id]).length;
+
+      return {
+        total,
+        completed,
+        remaining: total - completed,
+      };
+    } catch (err) {
+      console.log("❌ Failed get chapter stats:", err);
+
+      return {
+        total: 0,
+        completed: 0,
+        remaining: 0,
+      };
+    }
+  };
+
+  const openChapterModal = async (chapterId) => {
+    const stats = await getChapterStats(chapterId);
+
+    console.log(stats);
+    // { total: 47, completed: 18, remaining: 29 }
+
+    setSelectedChapter(chapterId);
+    setChapterStats(stats);
+    setShowModal(true);
+  };
+
   const loadChapter = async (chapterId) => {
     try {
       const res = await fetch(`${linkBackend}/vocab/chapters/${chapterId}`);
@@ -155,12 +236,26 @@ export default function useVocabEngine(userIdRef) {
           chapter: v[6],
         }));
 
+        const totalVocab = vocabData.length;
+
+        const completedVocab = vocabData.filter(
+          (v) => completedMap[v.id],
+        ).length;
+
+        console.log("📚 total vocab:", totalVocab);
+        console.log("✅ completed vocab:", completedVocab);
+        console.log("⏳ remaining vocab:", totalVocab - completedVocab);
+
         setApiVocab(vocabData);
       }
     } catch (err) {
       console.log("❌ Failed load chapter:", err);
     }
   };
+
+  useEffect(() => {
+    console.log("📦 filtered vocab (data):", data);
+  }, [data]);
 
   useEffect(() => {
     const userId = userIdRef?.current;
@@ -330,32 +425,39 @@ export default function useVocabEngine(userIdRef) {
   // =========================
   // NEXT VOCAB
   // =========================
+  // const getNextIndex = (current) => {
+  //   if (!data.length) return 0;
+
+  //   let i = current + 1;
+  //   let tries = 0;
+
+  //   while (completedMap[data[i % data.length]?.id] && tries < data.length) {
+  //     i++;
+  //     tries++;
+  //   }
+
+  //   return i;
+  // };
+
+  // =========================
+  // NEW NEXT VOCAB
+  // =========================
   const getNextIndex = (current) => {
     if (!data.length) return 0;
-
-    let i = current + 1;
-    let tries = 0;
-
-    while (completedMap[data[i % data.length]?.id] && tries < data.length) {
-      i++;
-      tries++;
-    }
-
-    return i;
+    return (current + 1) % data.length;
   };
 
   const next = () => {
-    setIndex((i) => getNextIndex(i));
-
     setMeaningOptions([]);
     setFeedback("");
     setAttempt(0);
     setExampleIndex(0);
     setPhase("wordIntro");
 
-    setTimeout(() => {
-      setShowDice(true);
-    }, 0);
+    const currentIndex = data.findIndex((v) => v.id === currentId);
+    const nextItem = data[(currentIndex + 1) % data.length];
+
+    setCurrentId(nextItem?.id);
   };
 
   // =========================
@@ -396,8 +498,8 @@ export default function useVocabEngine(userIdRef) {
   // JUMLAH KATA SELESAI
   // =========================
   const completedCountVocab = useMemo(() => {
-    return apiVocab.filter((v) => completedMap[v.id]).length;
-  }, [apiVocab, completedMap]);
+    return allVocab.filter((v) => completedMap[v.id]).length;
+  }, [allVocab, completedMap]);
 
   // =========================
   // SKIP BUTTON
@@ -500,6 +602,12 @@ export default function useVocabEngine(userIdRef) {
     setPhase("guidedPractice");
   };
 
+  useEffect(() => {
+    if (apiVocab.length && filteredApiVocab.length === 0) {
+      setFeedback("🎉 Semua kata sudah selesai!");
+    }
+  }, [apiVocab, filteredApiVocab]);
+
   // =========================
   // PROGRESS
   // =========================
@@ -526,6 +634,8 @@ export default function useVocabEngine(userIdRef) {
     // skipbutton,
     resetVocab,
 
+    chapterStats, // 👈 tambahkan ini
+    openChapterModal, // 👈 kalau mau dipanggil dari UI
     chapterList,
 
     meaningOptions,

@@ -27,7 +27,13 @@ const categoryStyle = {
   },
 };
 
-export default function IslandMapJourney({ chapters = [], onStart, onSelect }) {
+export default function IslandMapJourney({
+  chapters = [],
+  onStart,
+  onSelect,
+  chapterStats,
+  openChapterModal,
+}) {
   const [selected, setSelected] = useState(null);
 
   const enriched = useMemo(() => {
@@ -94,10 +100,11 @@ export default function IslandMapJourney({ chapters = [], onStart, onSelect }) {
           return (
             <div
               key={ch.id || i}
-              onClick={() => {
+              onClick={async () => {
                 if (ch.status === "locked") return;
+
+                await openChapterModal?.(ch.id);
                 setSelected(ch);
-                onSelect?.(ch);
               }}
               className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer"
               style={{ left: pos.x, top: pos.y }}
@@ -139,6 +146,21 @@ export default function IslandMapJourney({ chapters = [], onStart, onSelect }) {
             <h3 className="text-base font-medium">{selected.title}</h3>
 
             <p className="text-sm text-white/50 mt-2">Continue this lesson?</p>
+
+            {/* Progress */}
+            <div className="mt-4 rounded-lg bg-slate-800/50 p-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-white/60">Completed</span>
+                <span>
+                  {chapterStats?.completed ?? 0}/{chapterStats?.total ?? 0}
+                </span>
+              </div>
+
+              <div className="flex justify-between text-sm mt-1">
+                <span className="text-white/60">Remaining</span>
+                <span>{chapterStats?.remaining ?? 0}</span>
+              </div>
+            </div>
 
             <button
               onClick={() => onStart?.(selected.id)}

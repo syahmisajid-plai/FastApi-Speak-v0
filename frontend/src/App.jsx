@@ -237,6 +237,9 @@ Feature tambahan:
     skipbutton,
     resetVocab,
 
+    chapterStats, // 👈 tambahkan ini
+    openChapterModal, // 👈 kalau mau dipanggil dari UI
+
     chapterList,
 
     meaningOptions,
@@ -1001,6 +1004,9 @@ Feature tambahan:
                 goToJourney: goToJourney,
 
                 chapterList: chapterList,
+
+                chapterStats: chapterStats, // 👈 tambahkan ini
+                openChapterModal: openChapterModal, // 👈 kalau mau dipanggil dari UI
 
                 // 🔥 TAMBAHAN
                 startRecording: startRecording,

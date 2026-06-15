@@ -24,6 +24,9 @@ export default function LearnUI({
   const chapterList = vocabProps.chapterList;
   const goToJourney = vocabProps.goToJourney;
 
+  const chapterStats = vocabProps.chapterStats;
+  const openChapterModal = vocabProps.openChapterModal;
+
   // const [showVocab, setShowVocab] = useState(false);
   // const [showSentence, setShowSentence] = useState(false);
   // idle | vocab | sentence
@@ -159,6 +162,8 @@ export default function LearnUI({
               onStart={(chapterId) => {
                 goToJourney(chapterId);
               }}
+              chapterStats={chapterStats}
+              openChapterModal={openChapterModal}
             />
           )}
 
