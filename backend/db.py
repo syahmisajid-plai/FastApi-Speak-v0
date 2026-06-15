@@ -1670,40 +1670,57 @@ def mark_lesson_completed(user_id, lesson_id):
         "status": "completed"
     }
 
-def get_completed_lessons(user_id):
+def get_vocab_by_chapter(chapter_id: int):
     conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT 
-            sl.id,
-            sl.context,
-            sl.partner_utterance,
-            sl.key_expression,
-            sl.pattern_display,
-            sl.insight,
-            sl.function_type
-        FROM user_lesson_progress ulp
-        JOIN sentence_lessons sl ON sl.id = ulp.lesson_id
-        WHERE ulp.user_id = %s
-        AND ulp.is_completed = TRUE
-    """, (user_id,))
+        SELECT
+            v.id,
+            v.word,
+            v.meaning,
+            v.type,
+            v.level,
+            ve.example,
+            ve.translation,
+            cv.position
+        FROM chapter_vocab cv
+        JOIN vocab v
+            ON v.id = cv.vocab_id
+        LEFT JOIN vocab_examples ve
+            ON ve.vocab_id = v.id
+        WHERE cv.chapter_id = %s
+        ORDER BY cv.position ASC
+    """, (chapter_id,))
 
     rows = cursor.fetchall()
     conn.close()
 
-    return [
-        {
-            "id": r[0],
-            "context": r[1],
-            "partner_utterance": r[2],
-            "key_expression": r[3],
-            "pattern_display": r[4],
-            "insight": r[5],
-            "function_type": r[6],
-        }
-        for r in rows
-    ]
+    vocab_map = {}
+
+    for row in rows:
+        vocab_id = row[0]
+
+        if vocab_id not in vocab_map:
+            vocab_map[vocab_id] = {
+                "id": row[0],
+                "word": row[1],
+                "meaning": row[2],
+                "type": row[3],
+                "level": row[4],
+                "examples": []
+            }
+
+        example = row[5]
+        translation = row[6]
+
+        if example:
+            vocab_map[vocab_id]["examples"].append({
+                "en": example,
+                "id": translation or ""
+            })
+
+    return list(vocab_map.values())
 
 def get_all_chapters():
     conn = get_db_connection()
