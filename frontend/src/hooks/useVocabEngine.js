@@ -135,12 +135,12 @@ export default function useVocabEngine(userIdRef) {
   useEffect(() => {
     const fetchChapters = async () => {
       try {
-        console.log("📡 fetching chapters...");
+        // console.log("📡 fetching chapters...");
 
         const res = await fetch(`${linkBackend}/vocab/chapters`);
         const json = await res.json();
 
-        console.log("📦 raw response:", json);
+        // console.log("📦 raw response:", json);
 
         if (json?.data?.length) {
           // setChapterList(json.data);
@@ -167,6 +167,7 @@ export default function useVocabEngine(userIdRef) {
     total: 0,
     completed: 0,
     remaining: 0,
+    units: [],
   });
 
   const [selectedChapter, setSelectedChapter] = useState(null);
@@ -182,6 +183,7 @@ export default function useVocabEngine(userIdRef) {
           total: 0,
           completed: 0,
           remaining: 0,
+          units: [],
         };
       }
 
@@ -193,10 +195,30 @@ export default function useVocabEngine(userIdRef) {
 
       const completed = vocabData.filter((v) => completedMap[v.id]).length;
 
+      // =========================
+      // UNIT PROGRESS
+      // =========================
+      const units = [];
+
+      for (let i = 0; i < vocabData.length; i += 10) {
+        const unitVocab = vocabData.slice(i, i + 10);
+
+        const unitCompleted = unitVocab.filter(
+          (v) => completedMap[v.id],
+        ).length;
+
+        units.push({
+          unit: units.length + 1,
+          completed: unitCompleted,
+          total: unitVocab.length,
+        });
+      }
+
       return {
         total,
         completed,
         remaining: total - completed,
+        units,
       };
     } catch (err) {
       console.log("❌ Failed get chapter stats:", err);
@@ -205,6 +227,7 @@ export default function useVocabEngine(userIdRef) {
         total: 0,
         completed: 0,
         remaining: 0,
+        units: [],
       };
     }
   };
@@ -212,7 +235,7 @@ export default function useVocabEngine(userIdRef) {
   const openChapterModal = async (chapterId) => {
     const stats = await getChapterStats(chapterId);
 
-    console.log(stats);
+    // console.log(stats);
     // { total: 47, completed: 18, remaining: 29 }
 
     setSelectedChapter(chapterId);
@@ -242,9 +265,9 @@ export default function useVocabEngine(userIdRef) {
           (v) => completedMap[v.id],
         ).length;
 
-        console.log("📚 total vocab:", totalVocab);
-        console.log("✅ completed vocab:", completedVocab);
-        console.log("⏳ remaining vocab:", totalVocab - completedVocab);
+        // console.log("📚 total vocab:", totalVocab);
+        // console.log("✅ completed vocab:", completedVocab);
+        // console.log("⏳ remaining vocab:", totalVocab - completedVocab);
 
         setApiVocab(vocabData);
       }
@@ -253,9 +276,9 @@ export default function useVocabEngine(userIdRef) {
     }
   };
 
-  useEffect(() => {
-    console.log("📦 filtered vocab (data):", data);
-  }, [data]);
+  // useEffect(() => {
+  //   console.log("📦 filtered vocab (data):", data);
+  // }, [data]);
 
   useEffect(() => {
     const userId = userIdRef?.current;

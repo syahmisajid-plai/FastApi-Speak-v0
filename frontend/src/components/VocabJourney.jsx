@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 
 const mapPoints = [
   { x: 60, y: 120 },
@@ -26,6 +27,8 @@ const categoryStyle = {
     name: "Signal Tower",
   },
 };
+
+const unitIcons = ["⛵", "🏘️", "🌲", "🏰", "🏔️", "👑"];
 
 export default function IslandMapJourney({
   chapters = [],
@@ -61,6 +64,11 @@ export default function IslandMapJourney({
     }
   };
 
+  const unitRows = [];
+
+  for (let i = 0; i < chapterStats?.units?.length; i += 4) {
+    unitRows.push(chapterStats.units.slice(i, i + 4));
+  }
   return (
     <div className="bg-slate-950 text-white">
       {/* HEADER */}
@@ -140,44 +148,182 @@ export default function IslandMapJourney({
       </div>
 
       {/* MODAL */}
-      {selected && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-white/10 rounded-xl p-5 w-full max-w-sm">
-            <h3 className="text-base font-medium">{selected.title}</h3>
+      {selected &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 text-white"
+            onClick={() => setSelected(null)}
+          >
+            <div
+              className="
+          bg-slate-900
+          border border-white/10
+          rounded-2xl
+          p-5
+          w-full
+          max-w-md
+          max-h-[85vh]
+          overflow-y-auto
+          shadow-2xl
+        "
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* HEADER */}
+              <div className="text-center">
+                <div className="text-3xl mb-2">🗺️</div>
 
-            <p className="text-sm text-white/50 mt-2">Continue this lesson?</p>
+                <h3 className="text-lg font-semibold">{selected.title}</h3>
 
-            {/* Progress */}
-            <div className="mt-4 rounded-lg bg-slate-800/50 p-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-white/60">Completed</span>
-                <span>
-                  {chapterStats?.completed ?? 0}/{chapterStats?.total ?? 0}
-                </span>
+                <p className="text-sm text-white/50 mt-1">
+                  Continue your learning journey
+                </p>
               </div>
 
-              <div className="flex justify-between text-sm mt-1">
-                <span className="text-white/60">Remaining</span>
-                <span>{chapterStats?.remaining ?? 0}</span>
+              {/* CHAPTER PROGRESS */}
+              <div className="mt-5 rounded-xl bg-slate-800/50 p-4">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-white/60">Progress</span>
+
+                  <span>
+                    {chapterStats?.completed ?? 0}/{chapterStats?.total ?? 0}
+                  </span>
+                </div>
+
+                <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500 transition-all"
+                    style={{
+                      width: `${
+                        chapterStats?.total
+                          ? (chapterStats.completed / chapterStats.total) * 100
+                          : 0
+                      }%`,
+                    }}
+                  />
+                </div>
+
+                <div className="flex justify-between text-xs text-white/40 mt-2">
+                  <span>{chapterStats?.completed ?? 0} mastered</span>
+
+                  <span>{chapterStats?.remaining ?? 0} remaining</span>
+                </div>
+              </div>
+
+              {/* JOURNEY */}
+              <div className="mt-6">
+                <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-4 text-center">
+                  Journey Path
+                </p>
+
+                <div className="space-y-6">
+                  {unitRows.map((row, rowIndex) => (
+                    <div
+                      key={rowIndex}
+                      className="flex items-center justify-between"
+                    >
+                      {row.map((unit, index) => {
+                        const isCompleted =
+                          unit.total > 0 && unit.completed === unit.total;
+
+                        const progress =
+                          unit.total > 0 ? unit.completed / unit.total : 0;
+
+                        const isCurrent = progress > 0 && !isCompleted;
+
+                        return (
+                          <div
+                            key={unit.unit}
+                            className="flex items-center flex-1"
+                          >
+                            <div className="flex flex-col items-center min-w-[56px]">
+                              <div className="relative">
+                                {isCurrent && (
+                                  <div className="absolute inset-0 rounded-full bg-sky-400/30 blur-md animate-pulse" />
+                                )}
+
+                                <div
+                                  className={`
+                                    relative
+                                    w-11 h-11 rounded-full border
+                                    flex items-center justify-center text-lg
+                                    transition-all duration-300
+                                    ${
+                                      isCompleted
+                                        ? "bg-emerald-500 border-emerald-400"
+                                        : isCurrent
+                                          ? "bg-sky-500 border-sky-400 shadow-lg shadow-sky-500/30"
+                                          : "bg-slate-800 border-slate-700"
+                                    }
+                                  `}
+                                >
+                                  {isCompleted
+                                    ? "✓"
+                                    : unitIcons[
+                                        (rowIndex * 4 + index) %
+                                          unitIcons.length
+                                      ]}
+                                </div>
+                              </div>
+
+                              <span className="text-[10px] text-white/70 mt-1">
+                                Unit {unit.unit}
+                              </span>
+
+                              <span className="text-[10px] text-white/40">
+                                {unit.completed}/{unit.total}
+                              </span>
+                            </div>
+
+                            {index < row.length - 1 && (
+                              <div
+                                className={`
+                            flex-1 h-[2px] mx-2
+                            ${
+                              isCompleted ? "bg-emerald-500/50" : "bg-slate-700"
+                            }
+                          `}
+                              />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ACTIONS */}
+              <div className="mt-6 flex gap-2">
+                <button
+                  onClick={() => setSelected(null)}
+                  className="
+              flex-1 py-2 rounded-xl
+              bg-white/5
+              border border-white/10
+              hover:bg-white/10
+              transition
+            "
+                >
+                  Close
+                </button>
+
+                <button
+                  onClick={() => onStart?.(selected.id)}
+                  className="
+              flex-1 py-2 rounded-xl
+              bg-indigo-500
+              hover:bg-indigo-400
+              font-medium
+              transition
+            "
+                >
+                  Continue
+                </button>
               </div>
             </div>
-
-            <button
-              onClick={() => onStart?.(selected.id)}
-              className="mt-4 w-full py-2! rounded-lg bg-white! text-black font-medium! hover:bg-white/90!"
-            >
-              Start
-            </button>
-
-            <button
-              onClick={() => setSelected(null)}
-              className="mt-2 w-full text-md! text-white/40! hover:text-white"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
