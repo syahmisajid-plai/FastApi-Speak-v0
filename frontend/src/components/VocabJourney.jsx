@@ -1,3 +1,4 @@
+// components/VocabJourney.jsx
 import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 
@@ -37,13 +38,60 @@ export default function IslandMapJourney({
   chapterStats,
   openChapterModal,
 }) {
+  // const [chapterStats, setChapterStats] = useState({
+  //   total: 6,
+  //   completed: 1,
+  //   remaining: 5,
+  //   units: [
+  //     { unit: 1, completed: 10, total: 10 }, // ✅ DONE (chapter 1)
+  //     { unit: 2, completed: 10, total: 10 },
+  //     { unit: 3, completed: 0, total: 10 },
+  //     { unit: 4, completed: 0, total: 10 },
+  //     { unit: 5, completed: 0, total: 10 },
+  //     { unit: 6, completed: 0, total: 10 },
+  //   ],
+  // });
+
   const [selected, setSelected] = useState(null);
 
+  const [startIndex, setStartIndex] = useState(0);
+  const PAGE_SIZE = 6;
+
+  const currentPage = Math.floor(startIndex / PAGE_SIZE) + 1;
+  const totalPages = Math.ceil(chapters.length / PAGE_SIZE);
+
   const enriched = useMemo(() => {
-    return chapters.slice(0, 6).map((ch, i) => {
+    const units = chapterStats?.units || [];
+
+    const firstCurrent = chapters.findIndex((_, i) => {
+      const unit = units[i];
+      const completed = unit?.completed ?? 0;
+      const total = unit?.total ?? 0;
+
+      return total > 0 && completed < total;
+    });
+
+    const safeCurrent = firstCurrent === -1 ? 0 : firstCurrent;
+
+    const pageChapters = chapters.slice(startIndex, startIndex + PAGE_SIZE);
+    const pageUnits = units.slice(startIndex, startIndex + PAGE_SIZE);
+
+    return pageChapters.map((ch, i) => {
+      const globalIndex = startIndex + i;
+
+      const unit = pageUnits[i];
+      const completed = unit?.completed ?? 0;
+      const total = unit?.total ?? 0;
+
+      const isDone = total > 0 && completed === total;
+
       let status = "locked";
-      if (i < 2) status = "done";
-      else if (i === 2) status = "current";
+
+      if (globalIndex < safeCurrent) {
+        status = "done";
+      } else if (globalIndex === safeCurrent) {
+        status = "current";
+      }
 
       return {
         ...ch,
@@ -51,16 +99,18 @@ export default function IslandMapJourney({
         category: ch.category || "education",
       };
     });
-  }, [chapters]);
+  }, [chapters, chapterStats, startIndex]);
 
   const getNodeStyle = (status) => {
     switch (status) {
       case "done":
-        return "bg-emerald-500/90 border-emerald-400/40";
+        return "bg-emerald-500/90 border-emerald-300/50 shadow-[0_0_12px_rgba(16,185,129,0.35)]";
+
       case "current":
-        return "bg-slate-100 border-slate-300 animate-pulse-soft";
+        return "bg-gradient-to-br from-sky-400 to-indigo-500 border-white/20 shadow-[0_0_18px_rgba(59,130,246,0.6)] animate-pulse-soft ring-2 ring-sky-300/40";
+
       default:
-        return "bg-slate-800/40 border-slate-700 opacity-50";
+        return "bg-slate-600/30 border-slate-400/30 opacity-60";
     }
   };
 
@@ -70,7 +120,7 @@ export default function IslandMapJourney({
     unitRows.push(chapterStats.units.slice(i, i + 4));
   }
   return (
-    <div className="bg-slate-950 text-white">
+    <div className="bg-gradient-to-br from-indigo-500/10 via-transparent to-sky-500/5 text-white">
       {/* HEADER */}
       <div className="text-center pt-8 pb-4">
         <h2 className="text-xl font-semibold">Learning Path</h2>
@@ -79,9 +129,16 @@ export default function IslandMapJourney({
         </p>
       </div>
 
+      {/* MAP HEADER */}
+      <div className="flex justify-center mb-2">
+        <div className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-white/60 backdrop-blur-md">
+          Page {currentPage} / {totalPages}
+        </div>
+      </div>
+
       {/* MAP */}
-      <div className="relative w-full h-[420px]">
-        <div className="absolute inset-0 bg-slate-950" />
+      <div className="relative w-full h-[380px]">
+        <div className="absolute inset-0 " />
 
         {/* subtle path */}
         <svg className="absolute inset-0 w-full h-full">
@@ -118,9 +175,9 @@ export default function IslandMapJourney({
               style={{ left: pos.x, top: pos.y }}
             >
               {/* current subtle glow */}
-              {ch.status === "current" && (
-                <div className="absolute inset-0 rounded-lg bg-white/20 blur-md animate-ping" />
-              )}
+              {/* {ch.status === "current" && (
+                <div className="absolute inset-0 rounded-lg bg-sky-400/20 blur-md animate-pulse" />
+              )} */}
 
               {/* node */}
               <div
@@ -133,8 +190,14 @@ export default function IslandMapJourney({
                   ${getNodeStyle(ch.status)}
                 `}
               >
-                <span className={`text-sm ${cat.color}`}>
-                  {ch.status === "locked" ? "🔒" : cat.icon}
+                <span className={`relative text-sm ${cat.color} inline-block`}>
+                  {ch.status === "current" && (
+                    <span className="absolute inset-0 rounded-full bg-sky-300 blur-md animate-pulse scale-200" />
+                  )}
+
+                  <span className="relative z-10 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-6">
+                    {ch.status === "locked" ? "🔒" : cat.icon}
+                  </span>
                 </span>
               </div>
 
@@ -145,6 +208,32 @@ export default function IslandMapJourney({
             </div>
           );
         })}
+      </div>
+
+      {/* Button Next & Prev */}
+      <div className="flex justify-between py-2 px-6">
+        <button
+          onClick={() => setStartIndex((prev) => Math.max(prev - PAGE_SIZE, 0))}
+          disabled={startIndex === 0}
+          className="px-3! py-1! rounded bg-white/10! disabled:opacity-30"
+        >
+          ← Prev
+        </button>
+
+        <button
+          onClick={() =>
+            setStartIndex((prev) => {
+              const next = prev + PAGE_SIZE;
+              const maxStart =
+                Math.floor((chapters.length - 1) / PAGE_SIZE) * PAGE_SIZE;
+              return Math.min(next, maxStart);
+            })
+          }
+          disabled={startIndex + PAGE_SIZE >= chapters.length}
+          className="px-3! py-1! rounded bg-white/10! disabled:opacity-30"
+        >
+          Next →
+        </button>
       </div>
 
       {/* MODAL */}
@@ -294,31 +383,48 @@ export default function IslandMapJourney({
 
               {/* ACTIONS */}
               <div className="mt-6 flex gap-2">
-                <button
-                  onClick={() => setSelected(null)}
-                  className="
-              flex-1 py-2 rounded-xl
-              bg-white/5
-              border border-white/10
-              hover:bg-white/10
-              transition
-            "
-                >
-                  Close
-                </button>
+                {selected.status === "current" ? (
+                  <>
+                    <button
+                      onClick={() => setSelected(null)}
+                      className="
+                        flex-1 py-2! rounded-xl
+                        bg-white/5!
+                        border border-white/10
+                        hover:bg-white/10
+                        transition
+                      "
+                    >
+                      Cancel
+                    </button>
 
-                <button
-                  onClick={() => onStart?.(selected.id)}
-                  className="
-              flex-1 py-2 rounded-xl
-              bg-indigo-500
-              hover:bg-indigo-400
-              font-medium
-              transition
-            "
-                >
-                  Continue
-                </button>
+                    <button
+                      onClick={() => onStart?.(selected.id)}
+                      className="
+                        flex-1 py-2! rounded-xl
+                        bg-indigo-500!
+                        hover:bg-indigo-400
+                        font-medium
+                        transition
+                      "
+                    >
+                      Continue
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setSelected(null)}
+                    className="
+                      flex-1 py-2! rounded-xl
+                      bg-white/5!
+                      border border-white/10
+                      hover:bg-white/10
+                      transition
+                    "
+                  >
+                    Close
+                  </button>
+                )}
               </div>
             </div>
           </div>,

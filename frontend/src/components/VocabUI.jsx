@@ -1,3 +1,4 @@
+// components/VocabUI.jsx
 import { useEffect, useState } from "react";
 import useAudioVocab from "../hooks/useAudioVocab";
 
@@ -18,6 +19,11 @@ export default function VocabUI({
   liveTranscript,
   examples, // optional (kalau mau debug / progress)
   startSession,
+
+  totalChapterVocab,
+  completedChapterVocab,
+  remainingChapterVocab,
+  currentChapter,
 
   user_id,
   // skipbutton,
@@ -87,6 +93,29 @@ export default function VocabUI({
     );
   };
 
+  const UNIT_SIZE = 10;
+
+  const unit = Math.floor(completedChapterVocab / UNIT_SIZE) + 1;
+  const unitProgress = completedChapterVocab % UNIT_SIZE;
+  const isUnitComplete = completedChapterVocab > 0 && unitProgress === 0;
+  const totalUnit = Math.ceil(totalChapterVocab / UNIT_SIZE);
+
+  const [showUnitCongrats, setShowUnitCongrats] = useState(false);
+  const [prevUnit, setPrevUnit] = useState(1);
+
+  useEffect(() => {
+    const currentUnit = Math.floor(completedChapterVocab / 10) + 1;
+
+    if (currentUnit !== prevUnit && completedChapterVocab > 0) {
+      setShowUnitCongrats(true);
+      setPrevUnit(currentUnit);
+
+      setTimeout(() => {
+        setShowUnitCongrats(false);
+      }, 2000);
+    }
+  }, [completedChapterVocab]);
+
   return (
     <section className="mx-4 transition-all duration-500">
       <div
@@ -122,6 +151,28 @@ export default function VocabUI({
         {started && (
           <div className="flex justify-center items-start">
             <div className="w-full max-w-md text-white px-4 space-y-6 animate-fade-in">
+              {/* CONGRATS NEXT UNIT */}
+              {showUnitCongrats && (
+                <div className="absolute inset-0 h-full flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 animate-fadeIn">
+                  <div className="text-center animate-bounceIn">
+                    {/* ICON */}
+                    <div className="text-5xl mb-3 animate-pulse drop-shadow-[0_0_10px_rgba(255,255,255,0.6)]">
+                      🎉
+                    </div>
+
+                    {/* TITLE */}
+                    <h3 className="text-lg font-bold text-white animate-glow">
+                      Unit Completed!
+                    </h3>
+
+                    {/* SUBTITLE */}
+                    <p className="text-sm text-white/60 mt-1">
+                      Moving to next unit...
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* CARD */}
               <div>
                 {/* 🎲 LOADING DICE (DI DALAM CARD) */}
@@ -135,21 +186,28 @@ export default function VocabUI({
                 ) : (
                   <>
                     {/* TOP INFO */}
-                    <div className="flex justify-between text-xs text-white/50 mb-6">
-                      {/* phase */}
-                      <div className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/20">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <span className="text-[10px] uppercase tracking-widest text-emerald-300">
-                          {phaseLabel[phase] || "Practice"}
+                    <div className="mb-6 flex items-start justify-between text-xs text-white/50">
+                      {/* LEFT: CHAPTER */}
+                      <div className="flex flex-col max-w-[70%] w-1/2 min-w-0">
+                        <span className="block w-full text-left text-[9px] uppercase tracking-widest text-white/40 leading-snug">
+                          📘 {currentChapter?.title || "Chapter"}
                         </span>
                       </div>
 
-                      {/* word */}
-                      <div className="inline-flex items-center gap-2 px-2 py-1 rounded-full">
-                        <span className="w-2 h-2 rounded-full bg-indigo-400" />
-                        <span className="text-[10px] uppercase tracking-widest text-indigo-400">
-                          {vocab.word}
-                        </span>
+                      {/* RIGHT: WORD + PROGRESS */}
+                      <div className="flex flex-col items-end gap-1">
+                        {/* PROGRESS */}
+                        <div className="text-[9px] text-indigo-300 font-medium tracking-wide">
+                          📘 Unit {unit} of {totalUnit} · {unitProgress}/
+                          {UNIT_SIZE}
+                        </div>
+                        {/* WORD */}
+                        <div className="flex items-center gap-2 text-indigo-400">
+                          <span className="w-2 h-2 rounded-full bg-indigo-400" />
+                          <span className="text-[9px] uppercase tracking-widest">
+                            {vocab.word}
+                          </span>
+                        </div>
                       </div>
                     </div>
 

@@ -240,6 +240,12 @@ Feature tambahan:
     chapterStats, // 👈 tambahkan ini
     openChapterModal, // 👈 kalau mau dipanggil dari UI
 
+    totalChapterVocab,
+    completedChapterVocab,
+    remainingChapterVocab,
+    currentChapter,
+    activeChapterId,
+
     chapterList,
 
     meaningOptions,
@@ -1007,6 +1013,13 @@ Feature tambahan:
 
                 chapterStats: chapterStats, // 👈 tambahkan ini
                 openChapterModal: openChapterModal, // 👈 kalau mau dipanggil dari UI
+
+                totalChapterVocab: totalChapterVocab,
+                completedChapterVocab: completedChapterVocab,
+                remainingChapterVocab: remainingChapterVocab,
+                currentChapter: currentChapter,
+
+                activeChapterId: activeChapterId,
 
                 // 🔥 TAMBAHAN
                 startRecording: startRecording,

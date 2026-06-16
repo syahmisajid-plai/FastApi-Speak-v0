@@ -35,7 +35,7 @@ export default function LearnUI({
     <section
       className={`mx-4 transition-all duration-500 ${
         phase === "verifyMeaning" || vocabStage === "journey"
-          ? "mt-8 md:mt-0"
+          ? "mt-8 md:mt-0 md:mb-96"
           : phase === "guidedPractice" || phase === "makeSentence"
             ? "mt-16 md:mt-4"
             : "mt-36 md:mt-12"

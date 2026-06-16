@@ -22,6 +22,14 @@ export default function useVocabEngine(userIdRef) {
 
   const [currentId, setCurrentId] = useState(null);
 
+  const [currentChapter, setCurrentChapter] = useState(null);
+
+  const totalChapterVocab = apiVocab.length;
+  const completedChapterVocab = useMemo(() => {
+    return apiVocab.filter((v) => completedMap[v.id]).length;
+  }, [apiVocab, completedMap]);
+  const remainingChapterVocab = totalChapterVocab - completedChapterVocab;
+
   // =========================
   // SHUFFLE DATA
   // =========================
@@ -183,6 +191,7 @@ export default function useVocabEngine(userIdRef) {
 
       if (!json?.data?.length) {
         return {
+          id: chapterId,
           total: 0,
           completed: 0,
           remaining: 0,
@@ -190,28 +199,17 @@ export default function useVocabEngine(userIdRef) {
         };
       }
 
-      // =========================
-      // MAP DATA (NEW BACKEND SHAPE)
-      // =========================
-      const vocabData = json.data.map((v) => ({
-        id: v.id,
-        position: v.position ?? 0,
-      }));
-
-      // console.log("🔥 SAMPLE VOCAB:", json.data?.[0]);
-
-      // =========================
-      // SORT BY POSITION (IMPORTANT)
-      // =========================
-      const sorted = vocabData.sort((a, b) => a.position - b.position);
+      const sorted = json.data
+        .map((v) => ({
+          id: v.id,
+          position: v.position ?? 0,
+        }))
+        .sort((a, b) => a.position - b.position);
 
       const total = sorted.length;
 
       const completed = sorted.filter((v) => completedMap[v.id]).length;
 
-      // =========================
-      // UNIT PROGRESS (10 items per unit)
-      // =========================
       const units = [];
 
       for (let i = 0; i < sorted.length; i += 10) {
@@ -228,22 +226,8 @@ export default function useVocabEngine(userIdRef) {
         });
       }
 
-      // console.log(
-      //   "📦 sorted vocab IDs:",
-      //   sorted.map((v) => v.id),
-      // );
-
-      // console.log("🧠 completedMap:", completedMap);
-
-      // console.log(
-      //   "🔥 match test:",
-      //   sorted.map((v) => ({
-      //     id: v.id,
-      //     matched: !!completedMap[String(v.id)],
-      //   })),
-      // );
-
       return {
+        id: chapterId,
         total,
         completed,
         remaining: total - completed,
@@ -253,6 +237,7 @@ export default function useVocabEngine(userIdRef) {
       console.log("❌ Failed get chapter stats:", err);
 
       return {
+        id: chapterId,
         total: 0,
         completed: 0,
         remaining: 0,
@@ -296,6 +281,12 @@ export default function useVocabEngine(userIdRef) {
         console.log("⏳ remaining vocab:", totalVocab - completedVocab);
 
         setApiVocab(vocabData);
+
+        // 🔥 ADD THIS
+        setCurrentChapter({
+          id: chapterId,
+          title: chapterList.find((c) => c.id === chapterId)?.title || "",
+        });
       }
     } catch (err) {
       console.log("❌ Failed load chapter:", err);
@@ -686,6 +677,11 @@ export default function useVocabEngine(userIdRef) {
     chapterStats, // 👈 tambahkan ini
     openChapterModal, // 👈 kalau mau dipanggil dari UI
     chapterList,
+    currentChapter,
+
+    totalChapterVocab,
+    completedChapterVocab,
+    remainingChapterVocab,
 
     meaningOptions,
     startPractice,
