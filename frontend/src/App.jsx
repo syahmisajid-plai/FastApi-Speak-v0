@@ -1068,8 +1068,8 @@ Feature tambahan:
               user={user}
             />
           )}
-          {/* {mode === "games" && <GamesUI />} */}
-          {mode === "games" && <ComingSoonMultiplayerGames />}
+          {mode === "games" && <GamesUI />}
+          {/* {mode === "games" && <ComingSoonMultiplayerGames />} */}
 
           {/* {mode === "vocab" && <LearnUI />} */}
           <ModeSelector

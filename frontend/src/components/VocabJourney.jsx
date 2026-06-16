@@ -12,20 +12,130 @@ const mapPoints = [
 ];
 
 const categoryStyle = {
+  default: {
+    icon: "🗺️",
+    color: "text-white/80",
+    name: "Unknown Land",
+  },
+
+  general: {
+    icon: "📚",
+    color: "text-indigo-300",
+    name: "Library",
+  },
+
   people: {
     icon: "🏘️",
     color: "text-amber-300",
     name: "Village",
   },
+
   education: {
     icon: "🏛️",
     color: "text-emerald-300",
     name: "Academy",
   },
+
   communication: {
     icon: "🗼",
     color: "text-sky-300",
     name: "Signal Tower",
+  },
+
+  technology: {
+    icon: "⚙️",
+    color: "text-cyan-300",
+    name: "Tech Hub",
+  },
+
+  business: {
+    icon: "🏦",
+    color: "text-yellow-300",
+    name: "Market",
+  },
+
+  work: {
+    icon: "🏢",
+    color: "text-orange-300",
+    name: "Office",
+  },
+
+  travel: {
+    icon: "⛵",
+    color: "text-blue-300",
+    name: "Harbor",
+  },
+
+  transportation: {
+    icon: "🚂",
+    color: "text-slate-300",
+    name: "Station",
+  },
+
+  shopping: {
+    icon: "🛍️",
+    color: "text-pink-300",
+    name: "Bazaar",
+  },
+
+  entertainment: {
+    icon: "🎭",
+    color: "text-fuchsia-300",
+    name: "Theater",
+  },
+
+  sports: {
+    icon: "🏟️",
+    color: "text-lime-300",
+    name: "Arena",
+  },
+
+  health: {
+    icon: "🏥",
+    color: "text-red-300",
+    name: "Clinic",
+  },
+
+  home: {
+    icon: "🏠",
+    color: "text-rose-300",
+    name: "Homestead",
+  },
+
+  emotion: {
+    icon: "💖",
+    color: "text-pink-400",
+    name: "Heart Garden",
+  },
+
+  nature: {
+    icon: "🌲",
+    color: "text-green-300",
+    name: "Forest",
+  },
+
+  time: {
+    icon: "⏰",
+    color: "text-violet-300",
+    name: "Clock Tower",
+  },
+
+  animal: {
+    icon: "🦊",
+    color: "text-orange-300",
+    name: "Wild Forest",
+  },
+
+  food: {
+    icon: "🍖",
+    color: "text-red-300",
+    name: "Harvest Town",
+  },
+
+  family: {
+    icon: "🏡",
+    color: "text-purple-300",
+    name: "Family Hamlet",
   },
 };
 
@@ -53,6 +163,8 @@ export default function IslandMapJourney({
   // });
 
   const [selected, setSelected] = useState(null);
+
+  const [loadingChapter, setLoadingChapter] = useState(null);
 
   const [startIndex, setStartIndex] = useState(0);
   const PAGE_SIZE = 6;
@@ -160,16 +272,29 @@ export default function IslandMapJourney({
         {/* NODES */}
         {enriched.map((ch, i) => {
           const pos = mapPoints[i];
-          const cat = categoryStyle[ch.category];
+          const cat = categoryStyle[ch.category] || {
+            icon: "❓",
+            color: "text-white",
+            name: ch.category || "Unknown",
+          };
+
+          const isLoading = loadingChapter === ch.id;
 
           return (
             <div
               key={ch.id || i}
               onClick={async () => {
+                if (loadingChapter) return;
                 if (ch.status === "locked") return;
 
-                await openChapterModal?.(ch.id);
-                setSelected(ch);
+                setLoadingChapter(ch.id);
+
+                try {
+                  await openChapterModal?.(ch.id);
+                  setSelected(ch);
+                } finally {
+                  setLoadingChapter(null);
+                }
               }}
               className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer"
               style={{ left: pos.x, top: pos.y }}
@@ -185,8 +310,11 @@ export default function IslandMapJourney({
                   w-10 h-10 rounded-lg
                   border
                   flex items-center justify-center
-                  transition
                   relative
+                  transition-all duration-150
+
+                  ${isLoading ? "scale-90 opacity-70" : ""}
+
                   ${getNodeStyle(ch.status)}
                 `}
               >
@@ -195,8 +323,12 @@ export default function IslandMapJourney({
                     <span className="absolute inset-0 rounded-full bg-sky-300 blur-md animate-pulse scale-200" />
                   )}
 
-                  <span className="relative z-10 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-6">
-                    {ch.status === "locked" ? "🔒" : cat.icon}
+                  <span className="relative z-10">
+                    {isLoading
+                      ? "⏳"
+                      : ch.status === "locked"
+                        ? "🔒"
+                        : cat.icon}
                   </span>
                 </span>
               </div>
