@@ -61,14 +61,14 @@ def normalize_word(word: str):
     return word
 
 
-def get_audio_url(word: str):
+def get_audio_url(text: str, folder: str = "word"):
     # normalize biar konsisten
 
-    clean_word = normalize_word(word)
-    path = f"word/{clean_word}.mp3"
+    clean_text = normalize_word(text)
+    path = f"{folder}/{clean_text}.mp3"
 
-    print("WORD:", word)
-    print("clean_word:", clean_word)
+    print("WORD:", text)
+    print("clean_text:", clean_text)
     print("PATH:", path)
     print("SUPABASE_URL:", SUPABASE_URL)
     print("SUPABASE_KEY exists:", SUPABASE_KEY is not None)
@@ -81,8 +81,8 @@ def get_audio_url(word: str):
     print("CACHE MISS")
 
     # 2. generate TTS
-    print(f"GENERATE: {word}")
-    audio_bytes = generate_tts_audio(word)
+    print(f"GENERATE: {text}")
+    audio_bytes = generate_tts_audio(text)
 
     # 3. upload ke storage
     upload_audio(path, audio_bytes)
