@@ -26,6 +26,8 @@ export default function useVocabEngine(userIdRef) {
 
   const [chapterCompleted, setChapterCompleted] = useState(false);
 
+  const [chapterProgressMap, setChapterProgressMap] = useState({});
+
   const totalChapterVocab = apiVocab.length;
   const completedChapterVocab = useMemo(() => {
     return apiVocab.filter((v) => completedMap[v.id]).length;
@@ -259,6 +261,9 @@ export default function useVocabEngine(userIdRef) {
     setShowModal(true);
   };
 
+  // =========================
+  // LOAD CHAPTER
+  // =========================
   const loadChapter = async (chapterId) => {
     try {
       const res = await fetch(`${linkBackend}/vocab/chapters/${chapterId}`);
@@ -293,6 +298,25 @@ export default function useVocabEngine(userIdRef) {
     } catch (err) {
       console.log("❌ Failed load chapter:", err);
     }
+  };
+
+  // =========================
+  // fetchAllProgress for Status Chapters
+  // =========================
+  const fetchAllProgress = async () => {
+    const result = {};
+
+    const promises = chapterList.map(async (chapter) => {
+      const stats = await getChapterStats(chapter.id);
+      result[chapter.id] = {
+        completed: stats.completed,
+        total: stats.total,
+      };
+    });
+
+    await Promise.allSettled(promises);
+
+    setChapterProgressMap(result);
   };
 
   // useEffect(() => {
@@ -712,6 +736,7 @@ export default function useVocabEngine(userIdRef) {
 
     chapterCompleted,
     goNextChapter,
+    chapterProgressMap,
 
     meaningOptions,
     startPractice,

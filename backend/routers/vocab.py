@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from db import get_all_vocab, mark_vocab, get_completed_vocab_ids, get_user_vocab
 from db import get_all_chapters, get_vocab_by_chapter
+from db import get_user_chapter_progress, update_user_chapter_progress
 
 router = APIRouter(prefix="/vocab", tags=["Vocab"])
 
@@ -135,4 +136,26 @@ def get_chapter_vocab(chapter_id: int):
 
     except Exception as e:
         print("❌ CHAPTER VOCAB ERROR:", e)
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/chapter/progress/{user_id}")
+def get_progress(user_id: str):
+    return {
+        "success": True,
+        "data": get_user_chapter_progress(user_id)
+    }
+
+@router.post("/chapter/progress/{chapter_id}")
+def refresh_progress(chapter_id: int, payload: dict):
+    user_id = payload["user_id"]
+
+    try:
+        data = update_user_chapter_progress(user_id, chapter_id)
+
+        return {
+            "success": True,
+            "data": data
+        }
+
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

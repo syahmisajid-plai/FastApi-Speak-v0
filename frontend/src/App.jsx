@@ -250,6 +250,7 @@ Feature tambahan:
 
     chapterCompleted,
     goNextChapter,
+    chapterProgressMap,
 
     meaningOptions,
     startPractice,
@@ -1017,6 +1018,8 @@ Feature tambahan:
                 chapterCompleted: chapterCompleted,
                 goNextChapter: goNextChapter,
                 resetVocab: resetVocab,
+
+                chapterProgressMap: chapterProgressMap,
 
                 chapterStats: chapterStats, // 👈 tambahkan ini
                 openChapterModal: openChapterModal, // 👈 kalau mau dipanggil dari UI

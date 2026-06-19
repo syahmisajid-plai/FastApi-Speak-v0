@@ -280,6 +280,28 @@ def init_db():
     """)
 
     # -----------------------------
+    # NEW: Chapter Progress
+    # -----------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS user_chapter_progress (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        chapter_id INT REFERENCES chapters(id) ON DELETE CASCADE,
+
+        completed_vocab_count INT DEFAULT 0,
+        total_vocab_count INT DEFAULT 0,
+
+        status VARCHAR(20) DEFAULT 'not_started'
+            CHECK (status IN ('not_started', 'in_progress', 'completed')),
+
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        UNIQUE(user_id, chapter_id)
+    );
+    """)
+
+    # -----------------------------
     # NEW: USAGE LOGS (OPENAI + TTS)
     # -----------------------------
     # cursor.execute("""
@@ -1762,3 +1784,96 @@ def get_vocab_by_chapter(chapter_id: int):
             })
 
     return list(vocab_map.values())
+
+def get_user_chapter_progress(user_id: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT
+                chapter_id,
+                completed_vocab_count,
+                total_vocab_count,
+                status
+            FROM user_chapter_progress
+            WHERE user_id = %s
+            ORDER BY chapter_id;
+        """, (user_id,))
+
+        rows = cursor.fetchall()
+
+        return [
+            {
+                "chapter_id": r[0],
+                "completed": r[1],
+                "total": r[2],
+                "status": r[3]
+            }
+            for r in rows
+        ]
+
+    finally:
+        conn.close()
+
+def update_user_chapter_progress(user_id: str, chapter_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # 1. total vocab dalam chapter
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM chapter_vocab
+            WHERE chapter_id = %s
+        """, (chapter_id,))
+        total = cursor.fetchone()[0]
+
+        # 2. completed vocab user di chapter itu
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM user_completed_vocab ucv
+            JOIN chapter_vocab cv ON cv.vocab_id = ucv.vocab_id
+            WHERE ucv.user_id = %s
+              AND cv.chapter_id = %s
+              AND ucv.status IN ('completed','known')
+        """, (user_id, chapter_id))
+        completed = cursor.fetchone()[0]
+
+        # 3. status logic
+        if completed == 0:
+            status = "not_started"
+        elif completed < total:
+            status = "in_progress"
+        else:
+            status = "completed"
+
+        # 4. upsert ke tabel progress
+        cursor.execute("""
+            INSERT INTO user_chapter_progress (
+                user_id,
+                chapter_id,
+                completed_vocab_count,
+                total_vocab_count,
+                status
+            )
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (user_id, chapter_id)
+            DO UPDATE SET
+                completed_vocab_count = EXCLUDED.completed_vocab_count,
+                total_vocab_count = EXCLUDED.total_vocab_count,
+                status = EXCLUDED.status,
+                updated_at = CURRENT_TIMESTAMP
+        """, (user_id, chapter_id, completed, total, status))
+
+        conn.commit()
+
+        return {
+            "chapter_id": chapter_id,
+            "completed": completed,
+            "total": total,
+            "status": status
+        }
+
+    finally:
+        conn.close()

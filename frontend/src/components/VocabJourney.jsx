@@ -147,6 +147,7 @@ export default function IslandMapJourney({
   onSelect,
   chapterStats,
   openChapterModal,
+  chapterProgressMap,
 }) {
   // const [chapterStats, setChapterStats] = useState({
   //   total: 6,
@@ -172,47 +173,26 @@ export default function IslandMapJourney({
   const currentPage = Math.floor(startIndex / PAGE_SIZE) + 1;
   const totalPages = Math.ceil(chapters.length / PAGE_SIZE);
 
-  console.log("chapterStats raw:", chapterStats);
+  console.log("===== chapters ======", chapters);
+  console.log("===== chapterProgressMap ======", chapterProgressMap);
+  console.log("===== startIndex ======", startIndex);
 
   const enriched = useMemo(() => {
-    const units = chapterStats?.units || [];
+    const pageChapters = chapters.slice(startIndex, startIndex + PAGE_SIZE);
 
-    console.log("=== DEBUG CHAPTER PROGRESS ===");
-    console.log("chapters:", chapters);
-    console.log("units:", units);
-
-    const firstCurrent = chapters.findIndex((_, i) => {
-      const unit = units[i];
-      const completed = unit?.completed ?? 0;
-      const total = unit?.total ?? 0;
-
-      console.log(`chapter ${i}`, { completed, total });
+    // cari chapter pertama yang belum selesai (GLOBAL)
+    const firstCurrent = chapters.findIndex((ch) => {
+      const p = chapterProgressMap[ch.id];
+      const completed = p?.completed ?? 0;
+      const total = p?.total ?? 0;
 
       return total > 0 && completed < total;
     });
 
-    console.log("firstCurrent:", firstCurrent);
-
     const safeCurrent = firstCurrent === -1 ? 0 : firstCurrent;
-
-    console.log("safeCurrent:", safeCurrent);
-
-    const pageChapters = chapters.slice(startIndex, startIndex + PAGE_SIZE);
-    const pageUnits = units.slice(startIndex, startIndex + PAGE_SIZE);
 
     return pageChapters.map((ch, i) => {
       const globalIndex = startIndex + i;
-
-      const unit = pageUnits[i];
-      const completed = unit?.completed ?? 0;
-      const total = unit?.total ?? 0;
-
-      console.log("mapping chapter:", {
-        globalIndex,
-        completed,
-        total,
-        safeCurrent,
-      });
 
       let status = "locked";
 
@@ -228,7 +208,7 @@ export default function IslandMapJourney({
         category: ch.category || "education",
       };
     });
-  }, [chapters, chapterStats, startIndex]);
+  }, [chapters, chapterProgressMap, startIndex]);
 
   const getNodeStyle = (status) => {
     switch (status) {

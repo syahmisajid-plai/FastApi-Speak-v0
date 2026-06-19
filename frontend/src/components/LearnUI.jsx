@@ -27,6 +27,8 @@ export default function LearnUI({
   const chapterStats = vocabProps.chapterStats;
   const openChapterModal = vocabProps.openChapterModal;
 
+  const chapterProgressMap = vocabProps.chapterProgressMap;
+
   // const [showVocab, setShowVocab] = useState(false);
   // const [showSentence, setShowSentence] = useState(false);
   // idle | vocab | sentence
@@ -164,6 +166,7 @@ export default function LearnUI({
               }}
               chapterStats={chapterStats}
               openChapterModal={openChapterModal}
+              chapterProgressMap={chapterProgressMap}
             />
           )}
 
