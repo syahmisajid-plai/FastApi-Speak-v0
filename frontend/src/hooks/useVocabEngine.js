@@ -24,6 +24,8 @@ export default function useVocabEngine(userIdRef) {
 
   const [currentChapter, setCurrentChapter] = useState(null);
 
+  const [chapterCompleted, setChapterCompleted] = useState(false);
+
   const totalChapterVocab = apiVocab.length;
   const completedChapterVocab = useMemo(() => {
     return apiVocab.filter((v) => completedMap[v.id]).length;
@@ -297,6 +299,27 @@ export default function useVocabEngine(userIdRef) {
   //   console.log("📦 filtered vocab (data):", data);
   // }, [data]);
 
+  const goNextChapter = async () => {
+    if (!currentChapter) return;
+
+    const currentIndex = chapterList.findIndex(
+      (c) => c.id === currentChapter.id,
+    );
+
+    const nextChapter = chapterList[currentIndex + 1];
+
+    if (!nextChapter) {
+      return; // chapter terakhir
+    }
+
+    await loadChapter(nextChapter.id);
+
+    setChapterCompleted(false);
+    setCurrentId(null);
+    setFeedback("");
+    setPhase("wordIntro");
+  };
+
   useEffect(() => {
     const userId = userIdRef?.current;
     if (!userId) return;
@@ -522,6 +545,8 @@ export default function useVocabEngine(userIdRef) {
     setMeaningOptions([]);
     setPhase("wordIntro");
     setShowDice(true);
+
+    setChapterCompleted(false);
   };
 
   const goToJourney = async (chapterId) => {
@@ -532,6 +557,8 @@ export default function useVocabEngine(userIdRef) {
     setExampleIndex(0);
     setPhase("wordIntro");
     setFeedback("");
+
+    setChapterCompleted(false);
   };
 
   // =========================
@@ -644,7 +671,7 @@ export default function useVocabEngine(userIdRef) {
 
   useEffect(() => {
     if (apiVocab.length && filteredApiVocab.length === 0) {
-      setFeedback("🎉 Semua kata sudah selesai!");
+      setChapterCompleted(true);
     }
   }, [apiVocab, filteredApiVocab]);
 
@@ -682,6 +709,9 @@ export default function useVocabEngine(userIdRef) {
     totalChapterVocab,
     completedChapterVocab,
     remainingChapterVocab,
+
+    chapterCompleted,
+    goNextChapter,
 
     meaningOptions,
     startPractice,

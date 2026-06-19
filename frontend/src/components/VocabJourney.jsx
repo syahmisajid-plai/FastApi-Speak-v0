@@ -172,18 +172,30 @@ export default function IslandMapJourney({
   const currentPage = Math.floor(startIndex / PAGE_SIZE) + 1;
   const totalPages = Math.ceil(chapters.length / PAGE_SIZE);
 
+  console.log("chapterStats raw:", chapterStats);
+
   const enriched = useMemo(() => {
     const units = chapterStats?.units || [];
+
+    console.log("=== DEBUG CHAPTER PROGRESS ===");
+    console.log("chapters:", chapters);
+    console.log("units:", units);
 
     const firstCurrent = chapters.findIndex((_, i) => {
       const unit = units[i];
       const completed = unit?.completed ?? 0;
       const total = unit?.total ?? 0;
 
+      console.log(`chapter ${i}`, { completed, total });
+
       return total > 0 && completed < total;
     });
 
+    console.log("firstCurrent:", firstCurrent);
+
     const safeCurrent = firstCurrent === -1 ? 0 : firstCurrent;
+
+    console.log("safeCurrent:", safeCurrent);
 
     const pageChapters = chapters.slice(startIndex, startIndex + PAGE_SIZE);
     const pageUnits = units.slice(startIndex, startIndex + PAGE_SIZE);
@@ -195,7 +207,12 @@ export default function IslandMapJourney({
       const completed = unit?.completed ?? 0;
       const total = unit?.total ?? 0;
 
-      const isDone = total > 0 && completed === total;
+      console.log("mapping chapter:", {
+        globalIndex,
+        completed,
+        total,
+        safeCurrent,
+      });
 
       let status = "locked";
 
