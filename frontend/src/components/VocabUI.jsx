@@ -70,6 +70,14 @@ export default function VocabUI({
     console.log("🔥 PHASE UPDATED:", phase);
   }, [phase]);
 
+  // AUTO PLAY
+  // useEffect(() => {
+  //   if (!started || !vocab) return;
+  //   if (phase === "wordIntro") {
+  //     playWord(vocab.word);
+  //   }
+  // }, [phase, vocab, started]);
+
   const canSpeak = phase === "guidedPractice" || phase === "makeSentence";
 
   const phaseLabel = {
