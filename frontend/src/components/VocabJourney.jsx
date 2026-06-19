@@ -173,33 +173,41 @@ export default function IslandMapJourney({
   const currentPage = Math.floor(startIndex / PAGE_SIZE) + 1;
   const totalPages = Math.ceil(chapters.length / PAGE_SIZE);
 
-  console.log("===== chapters ======", chapters);
-  console.log("===== chapterProgressMap ======", chapterProgressMap);
-  console.log("===== startIndex ======", startIndex);
+  // console.log("===== chapters ======", chapters);
+  // console.log("===== chapterProgressMap ======", chapterProgressMap);
+  // console.log("===== startIndex ======", startIndex);
+
+  const lastCompletedIndex = chapters.reduce((acc, ch, idx) => {
+    const p = chapterProgressMap[ch.id];
+    const isDone = p?.completed >= p?.total && p?.total > 0;
+
+    return isDone ? idx : acc;
+  }, -1);
 
   const enriched = useMemo(() => {
     const pageChapters = chapters.slice(startIndex, startIndex + PAGE_SIZE);
 
-    // cari chapter pertama yang belum selesai (GLOBAL)
-    const firstCurrent = chapters.findIndex((ch) => {
+    const lastCompletedIndex = chapters.reduce((acc, ch, idx) => {
       const p = chapterProgressMap[ch.id];
-      const completed = p?.completed ?? 0;
-      const total = p?.total ?? 0;
-
-      return total > 0 && completed < total;
-    });
-
-    const safeCurrent = firstCurrent === -1 ? 0 : firstCurrent;
+      const isDone = p?.completed >= p?.total && p?.total > 0;
+      return isDone ? idx : acc;
+    }, -1);
 
     return pageChapters.map((ch, i) => {
       const globalIndex = startIndex + i;
 
+      const p = chapterProgressMap[ch.id];
+      const completed = p?.completed ?? 0;
+      const total = p?.total ?? 0;
+
       let status = "locked";
 
-      if (globalIndex < safeCurrent) {
+      if (completed >= total && total > 0) {
         status = "done";
-      } else if (globalIndex === safeCurrent) {
+      } else if (globalIndex === lastCompletedIndex + 1) {
         status = "current";
+      } else if (globalIndex <= lastCompletedIndex) {
+        status = "done";
       }
 
       return {

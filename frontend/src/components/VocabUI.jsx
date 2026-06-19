@@ -31,6 +31,9 @@ export default function VocabUI({
   chapterCompleted,
   goNextChapter,
   resetVocab,
+  GoBackJourney,
+
+  setShowDice,
 
   meaningOptions,
   startPractice,
@@ -53,7 +56,7 @@ export default function VocabUI({
   }, [vocab]);
 
   // AUDIO
-  const { playAudio, loading } = useAudioVocab(user_id);
+  const { playWord, playSentence, loading } = useAudioVocab(user_id);
 
   // useEffect(() => {
   //   if (!started || !vocab) return;
@@ -158,7 +161,7 @@ export default function VocabUI({
         )}
 
         {/* ================= AFTER START ================= */}
-        {started && !(chapterCompleted || FORCE_CHAPTER_COMPLETE) && (
+        {started && !chapterCompleted && vocab && (
           <div className="flex justify-center items-start">
             <div className="w-full max-w-md text-white px-4 space-y-6 animate-fade-in">
               {/* CONGRATS NEXT UNIT */}
@@ -240,7 +243,7 @@ export default function VocabUI({
                               </h3>
 
                               <button
-                                onClick={() => playAudio(vocab.word)}
+                                onClick={() => playWord(vocab.word)}
                                 className="text-xs px-3 py-1 rounded-full bg-white/10 hover:bg-white/20"
                               >
                                 🔊 Play
@@ -332,7 +335,7 @@ export default function VocabUI({
                           <div className="space-y-3">
                             {meaningOptions.map((option, index) => (
                               <button
-                                key={option}
+                                key={`${option}-${index}`}
                                 onClick={() => verifyMeaningAnswer(option)}
                                 className="
                                   group w-full
@@ -447,7 +450,12 @@ export default function VocabUI({
                                 <p className="text-sm text-indigo-200 leading-relaxed">
                                   {example}
                                 </p>
-
+                                <button
+                                  onClick={() => playSentence(example)}
+                                  className="text-xs px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 mt-2"
+                                >
+                                  🔊 Play Sentence
+                                </button>
                                 {/* Indonesian */}
                                 {translation && (
                                   <p className="text-xs text-white/50 italic">
@@ -533,7 +541,14 @@ export default function VocabUI({
                             </p>
                           )}
 
-                          <Button onClick={next}>Kata Berikutnya →</Button>
+                          <Button
+                            onClick={() => {
+                              setShowDice(true);
+                              next();
+                            }}
+                          >
+                            Kata Berikutnya →
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -544,7 +559,7 @@ export default function VocabUI({
           </div>
         )}
 
-        {(chapterCompleted || FORCE_CHAPTER_COMPLETE) && (
+        {chapterCompleted && (
           <div className="flex flex-col items-center justify-center py-10 space-y-6">
             <div className="text-6xl">🏆</div>
 
@@ -554,21 +569,12 @@ export default function VocabUI({
               {completedChapterVocab} words mastered
             </p>
 
-            <div className="flex gap-3">
-              <button
-                onClick={goNextChapter}
-                className="px-4! py-2! rounded-xl bg-green-500! hover:bg-green-600!"
-              >
-                Next Chapter →
-              </button>
-
-              <button
-                onClick={resetVocab}
-                className="px-4! py-2! rounded-xl bg-white/10! hover:bg-white/20!"
-              >
-                Back to Journey
-              </button>
-            </div>
+            <button
+              onClick={resetVocab}
+              className="px-4! py-2! rounded-xl bg-white/10! hover:bg-white/20!"
+            >
+              Back to Journey
+            </button>
           </div>
         )}
       </div>

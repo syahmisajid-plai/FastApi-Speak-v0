@@ -294,6 +294,8 @@ export default function useVocabEngine(userIdRef) {
           id: chapterId,
           title: chapterList.find((c) => c.id === chapterId)?.title || "",
         });
+
+        await updateChapterProgress(chapterId);
       }
     } catch (err) {
       console.log("❌ Failed load chapter:", err);
@@ -301,22 +303,79 @@ export default function useVocabEngine(userIdRef) {
   };
 
   // =========================
-  // fetchAllProgress for Status Chapters
+  // fetchAllProgress (FIXED)
   // =========================
   const fetchAllProgress = async () => {
-    const result = {};
+    try {
+      const userId = userIdRef?.current;
+      if (!userId || !chapterList.length) return;
 
-    const promises = chapterList.map(async (chapter) => {
-      const stats = await getChapterStats(chapter.id);
-      result[chapter.id] = {
-        completed: stats.completed,
-        total: stats.total,
-      };
-    });
+      const res = await fetch(
+        `${linkBackend}/vocab/chapter/progress/${userId}`,
+      );
 
-    await Promise.allSettled(promises);
+      const json = await res.json();
+      if (!Array.isArray(json?.data)) return;
 
-    setChapterProgressMap(result);
+      const map = {};
+
+      json.data.forEach((chapter) => {
+        map[chapter.chapter_id] = {
+          completed: chapter.completed ?? 0,
+          total: chapter.total ?? 0,
+          status: chapter.status ?? "not_started",
+        };
+      });
+
+      setChapterProgressMap(map);
+    } catch (err) {
+      console.log("❌ fetchAllProgress error:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (userIdRef?.current && chapterList.length) {
+      fetchAllProgress();
+    }
+  }, [userIdRef?.current, chapterList]);
+
+  // =========================
+  // update chapter progress (POST)
+  // =========================
+  const updateChapterProgress = async (chapterId) => {
+    try {
+      const userId = userIdRef?.current;
+      if (!userId) return;
+
+      const res = await fetch(
+        `${linkBackend}/vocab/chapter/progress/${chapterId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            user_id: userId,
+          }),
+        },
+      );
+
+      const json = await res.json();
+
+      if (!json?.data) return;
+
+      // update local state biar UI langsung update
+      setChapterProgressMap((prev) => ({
+        ...prev,
+        [chapterId]: {
+          completed: json.data.completed,
+          total: json.data.total,
+          status: json.data.status,
+        },
+      }));
+    } catch (err) {
+      console.log("❌ updateChapterProgress error:", err);
+    }
   };
 
   // useEffect(() => {
@@ -405,6 +464,8 @@ export default function useVocabEngine(userIdRef) {
         ...prev,
         [vocabId]: "completed",
       }));
+
+      await updateChapterProgress(currentChapter?.id);
     } catch (err) {
       console.log("❌ mark completed error:", err);
     }
@@ -540,6 +601,7 @@ export default function useVocabEngine(userIdRef) {
     setAttempt(0);
     setExampleIndex(0);
     setPhase("wordIntro");
+    // setShowDice(true);
 
     const currentIndex = data.findIndex((v) => v.id === currentId);
     const nextItem = data[(currentIndex + 1) % data.length];
@@ -555,7 +617,7 @@ export default function useVocabEngine(userIdRef) {
 
     const t = setTimeout(() => {
       setShowDice(false);
-    }, 1000);
+    }, 2500);
 
     return () => clearTimeout(t);
   }, [showDice]);
@@ -639,6 +701,17 @@ export default function useVocabEngine(userIdRef) {
     setVocabStage("idle");
   };
 
+  const GoBackJourney = () => {
+    setIndex(0);
+    setExampleIndex(0);
+    setAttempt(0);
+    setFeedback("");
+    setMeaningOptions([]);
+    setPhase("wordIntro");
+
+    setVocabStage("journey");
+  };
+
   // =========================
   // MEANING QUIZ
   // =========================
@@ -670,10 +743,12 @@ export default function useVocabEngine(userIdRef) {
     setPhase("verifyMeaning");
   };
 
-  const verifyMeaningAnswer = (answer) => {
+  const verifyMeaningAnswer = async (answer) => {
     const correct = vocabRef.current?.meaning;
 
     if (answer === correct) {
+      setShowDice(true);
+
       const vocabId = vocabRef.current?.id;
       const userId = userIdRef?.current;
 
@@ -683,6 +758,8 @@ export default function useVocabEngine(userIdRef) {
       }));
 
       markKnown(userId, vocabId);
+      await updateChapterProgress(currentChapter?.id);
+
       next();
     } else {
       setPhase("showMeaning");
@@ -724,6 +801,8 @@ export default function useVocabEngine(userIdRef) {
     completedCountVocab,
     // skipbutton,
     resetVocab,
+    GoBackJourney,
+    setShowDice,
 
     chapterStats, // 👈 tambahkan ini
     openChapterModal, // 👈 kalau mau dipanggil dari UI

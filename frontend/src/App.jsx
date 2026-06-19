@@ -236,6 +236,7 @@ Feature tambahan:
     completedCountVocab,
     skipbutton,
     resetVocab,
+    GoBackJourney,
 
     chapterStats, // 👈 tambahkan ini
     openChapterModal, // 👈 kalau mau dipanggil dari UI
@@ -251,6 +252,8 @@ Feature tambahan:
     chapterCompleted,
     goNextChapter,
     chapterProgressMap,
+
+    setShowDice,
 
     meaningOptions,
     startPractice,
@@ -1018,6 +1021,8 @@ Feature tambahan:
                 chapterCompleted: chapterCompleted,
                 goNextChapter: goNextChapter,
                 resetVocab: resetVocab,
+                GoBackJourney: GoBackJourney,
+                setShowDice: setShowDice,
 
                 chapterProgressMap: chapterProgressMap,
 

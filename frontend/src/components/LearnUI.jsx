@@ -1,6 +1,7 @@
 import { useState } from "react";
 import VocabUI from "./VocabUI";
 import SentenceUI from "./SentenceUI";
+import SentenceChoice from "./SentenceChoice";
 
 import VocabJourney from "./VocabJourney";
 
@@ -28,6 +29,17 @@ export default function LearnUI({
   const openChapterModal = vocabProps.openChapterModal;
 
   const chapterProgressMap = vocabProps.chapterProgressMap;
+
+  const [localSentenceStage, setLocalSentenceStage] = useState("choice");
+  const [localSentenceType, setLocalSentenceType] = useState(null);
+
+  const sentenceStage = sentenceProps?.sentenceStage ?? localSentenceStage;
+
+  const setSentenceStage =
+    sentenceProps?.setSentenceStage ?? setLocalSentenceStage;
+
+  const setSentenceType =
+    sentenceProps?.setSentenceType ?? setLocalSentenceType;
 
   // const [showVocab, setShowVocab] = useState(false);
   // const [showSentence, setShowSentence] = useState(false);
@@ -176,7 +188,7 @@ export default function LearnUI({
         </div>
       </div>
 
-      {/* ================= SENTENCE UI (OVERLAY) ================= */}
+      {/* ================= SENTENCE UI ================= */}
       <div
         className={`absolute inset-0 transition-all duration-300 ease-out ${
           modeLearn === "sentence"
@@ -184,7 +196,20 @@ export default function LearnUI({
             : "opacity-0 translate-y-2 pointer-events-none"
         }`}
       >
-        {modeLearn === "sentence" && <SentenceUI {...sentenceProps} />}
+        {/* CHOICE */}
+        {modeLearn === "sentence" && sentenceStage === "choice" && (
+          <SentenceChoice
+            onSelect={(type) => {
+              setSentenceType(type);
+              setSentenceStage("session");
+            }}
+          />
+        )}
+
+        {/* SESSION */}
+        {modeLearn === "sentence" && sentenceStage === "session" && (
+          <SentenceUI {...sentenceProps} />
+        )}
       </div>
       <div className="mt-24"></div>
     </section>
