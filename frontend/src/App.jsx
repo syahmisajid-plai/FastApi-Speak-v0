@@ -32,6 +32,7 @@ import AndroidSTTTest from "./components/AndroidSTTTest";
 import UpdateBanner from "./components/UpdateBanner";
 
 import GamesUI from "./components/GamesUI";
+import PWADebug from "./components/PWADebug";
 
 // ================== STYLES ==================
 import "./App.css";
@@ -1229,6 +1230,7 @@ Feature tambahan:
         </div>
       </div>
 
+      <PWADebug />
       {mode === "ielts" && <ComingSoonIELTS />}
 
       {hasUpdate && <UpdateBanner onUpdate={() => window.location.reload()} />}
