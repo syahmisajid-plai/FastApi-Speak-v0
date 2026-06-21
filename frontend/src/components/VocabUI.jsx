@@ -425,9 +425,9 @@ export default function VocabUI({
                             onClick={() => {
                               continuePractice();
 
-                              setTimeout(() => {
-                                startRecording();
-                              }, 100);
+                              // setTimeout(() => {
+                              //   startRecording();
+                              // }, 100);
                             }}
                             className="
                             px-5! py-2! rounded-xl
@@ -458,18 +458,20 @@ export default function VocabUI({
                                 <p className="text-sm text-indigo-200 leading-relaxed">
                                   {example}
                                 </p>
-                                <button
-                                  onClick={() => playSentence(example)}
-                                  className="text-xs px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 mt-2"
-                                >
-                                  🔊 Play Sentence
-                                </button>
+
                                 {/* Indonesian */}
                                 {translation && (
                                   <p className="text-xs text-white/50 italic">
                                     {translation}
                                   </p>
                                 )}
+
+                                <button
+                                  onClick={() => playSentence(example)}
+                                  className="text-xs px-3! py-1! rounded-full bg-white/10! hover:bg-white/20 mt-2"
+                                >
+                                  🔊 Play Sentence
+                                </button>
                               </div>
                             ) : (
                               <p className="text-xl font-bold text-indigo-300">

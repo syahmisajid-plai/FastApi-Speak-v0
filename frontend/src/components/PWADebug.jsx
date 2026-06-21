@@ -1,8 +1,11 @@
+import { useEffect, useState } from "react";
+
 import usePWA from "../hooks/usePWA";
 import useInstallPWA from "../hooks/useInstallPWA";
 
 export default function PWADebug() {
-  const isPWA = usePWA();
+  //   const isPWA = usePWA();
+  const [isPWA, setIsPWA] = useState(true);
   const { canInstall, install } = useInstallPWA();
 
   if (isPWA) return null;
