@@ -1,6 +1,7 @@
 # routers/sentence_lesson.py
 
-from fastapi import APIRouter, HTTPException
+from typing import Optional
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from db import (
@@ -22,9 +23,15 @@ class LessonCompleteRequest(BaseModel):
 # GET RANDOM LESSON (BASED ON USER PROGRESS)
 # =========================
 @router.get("/next/{user_id}")
-def get_next_lesson(user_id: str):
+def get_next_lesson(
+    user_id: str,
+    function_type: Optional[str] = Query(None)
+):
     try:
-        lesson = get_random_uncompleted_lesson(user_id)
+        lesson = get_random_uncompleted_lesson(
+            user_id=user_id,
+            function_type=function_type
+        )
 
         if not lesson:
             return {

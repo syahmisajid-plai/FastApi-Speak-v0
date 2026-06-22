@@ -49,7 +49,7 @@ export default function SentenceChoice({ onSelect }) {
   const [loading, setLoading] = useState(null);
 
   return (
-    <div className="min-h-[400px] text-white px-6 py-8 mt-24">
+    <div className="relative w-full max-w-md mx-auto min-h-[400px] text-white px-6 py-8 mt-24">
       {/* HEADER */}
       <div className="text-center mb-8">
         <h2 className="text-xl font-semibold">Sentence Training</h2>

@@ -23,6 +23,8 @@ export default function SentenceUI({
 
   const [showID, setShowID] = useState(true);
 
+  const [hasStarted, setHasStarted] = useState(false);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowLoading(false);
@@ -278,13 +280,61 @@ export default function SentenceUI({
             </div>
           </div>
 
-          {step === 0 && (
-            <div>
+          {step === 0 && !hasStarted && (
+            <div className="space-y-6">
+              {/* READY CARD */}
+              <div
+                className="
+                  bg-gradient-to-br
+                  from-indigo-500/10
+                  to-purple-500/10
+                  border border-white/10
+                  rounded-3xl
+                  p-6
+                  text-center
+                  backdrop-blur-xl
+                "
+              >
+                <div className="text-5xl mb-4">🎯</div>
+
+                <h2 className="text-2xl font-bold mb-2">Ready to Respond?</h2>
+
+                <p className="text-white/70 text-sm leading-relaxed">
+                  Imagine you're in this situation. Think about what you would
+                  naturally say in English.
+                </p>
+
+                <button
+                  onClick={() => setHasStarted(true)}
+                  className="
+                    mt-6 px-6! py-3! rounded-2xl
+                    bg-gradient-to-r from-indigo-500 to-purple-600
+                    text-white font-semibold
+                    hover:scale-105
+                    transition-all
+                  "
+                >
+                  🚀 Let's Try
+                </button>
+              </div>
+            </div>
+          )}
+          {step === 0 && hasStarted && (
+            <div
+              className="
+                  bg-gradient-to-br
+                  from-indigo-500/10
+                  to-purple-500/10
+                  border border-white/10
+                  rounded-3xl
+                  p-6
+                  text-center
+                  backdrop-blur-xl
+                "
+            >
+              <h2 className="text-xl font-bold mb-2">🧠 What would you say?</h2>
               {/* INSTRUCTION */}
               <div>
-                <h2 className="text-xl font-bold mb-2">
-                  🧠 What would you say?
-                </h2>
                 <p className="text-sm text-white/70 bg-white/5 p-3 rounded-xl">
                   Speak naturally based on the situation above.
                 </p>
@@ -383,7 +433,20 @@ export default function SentenceUI({
 
       {/* ================= STEP 1: NATURAL EXPRESSIONS ================= */}
       {step === 1 && (
-        <section className="space-y-4">
+        <section
+          className="
+                  bg-gradient-to-br
+                  from-indigo-500/10
+                  to-purple-500/10
+                  border border-white/10
+                  rounded-3xl
+                  px-6
+                  pb-6
+                  text-center
+                  backdrop-blur-xl
+                  space-y-4
+                "
+        >
           <div>
             {finalTranscript && (
               <div className="flex justify-center text-center">
@@ -424,16 +487,56 @@ export default function SentenceUI({
               ))}
             </div>
 
-            <button onClick={nextStep} className="btn mt-4">
-              Try in Conversation →
-            </button>
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={nextStep}
+                className="
+                px-5!
+                py-3!
+                w-full
+                mx-auto
+                rounded-2xl
+                bg-white/5!
+                border
+                border-white/10
+                backdrop-blur-md
+                text-white
+                font-medium
+                shadow-lg
+                hover:bg-white/10!
+                hover:border-purple-400/30!
+                transition-all
+                duration-200
+                flex
+                items-center
+                justify-center
+                gap-2
+              "
+              >
+                <span>Try in Conversation</span>
+                <span>→</span>
+              </button>
+            </div>
           </div>
         </section>
       )}
 
       {/* ================= STEP 2: Try It in Conversation ================= */}
       {step === 2 && (
-        <section className="space-y-4">
+        <section
+          className="
+                  bg-gradient-to-br
+                  from-indigo-500/10
+                  to-purple-500/10
+                  border border-white/10
+                  rounded-3xl
+                  px-6
+                  py-8
+                  
+                  backdrop-blur-xl
+                  space-y-4
+                "
+        >
           {/* SYSTEM BUBBLE */}
           <h2 className="text-xl font-bold">🔁 Try It in Conversation</h2>
 
@@ -638,6 +741,7 @@ export default function SentenceUI({
               await completeLesson();
               setMode("idle");
               setStep(0);
+              setHasStarted(false);
             }}
           >
             ✅ Next Sentence →

@@ -1622,11 +1622,14 @@ def get_user_cost_summary():
         for r in rows
     ]
 
-def get_random_uncompleted_lesson(user_id):
+def get_random_uncompleted_lesson(
+    user_id,
+    function_type=None
+):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    query = """
         SELECT 
             sl.id,
             sl.context,
@@ -1643,12 +1646,27 @@ def get_random_uncompleted_lesson(user_id):
         LEFT JOIN user_lesson_progress ulp
             ON sl.id = ulp.lesson_id
             AND ulp.user_id = %s
-        WHERE 
-            ulp.is_completed IS NULL
-            OR ulp.is_completed = FALSE
+        WHERE
+            (
+                ulp.is_completed IS NULL
+                OR ulp.is_completed = FALSE
+            )
+    """
+
+    params = [user_id]
+
+    if function_type:
+        query += """
+            AND sl.function_type = %s
+        """
+        params.append(function_type)
+
+    query += """
         ORDER BY RANDOM()
         LIMIT 1
-    """, (user_id,))
+    """
+
+    cursor.execute(query, tuple(params))
 
     row = cursor.fetchone()
     conn.close()

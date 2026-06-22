@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { linkBackend } from "../config";
 
-export default function useSentenceLesson(userId) {
+export default function useSentenceLesson(userId, sentenceType) {
   const [lesson, setLesson] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -13,7 +13,7 @@ export default function useSentenceLesson(userId) {
 
     try {
       const res = await fetch(
-        `${linkBackend}/sentence-lessons/completed-lessons/${userId}`,
+        `${linkBackend}/sentence-lessons/next/${userId}?function_type=${sentenceType}`,
       );
 
       const json = await res.json();
@@ -44,6 +44,7 @@ export default function useSentenceLesson(userId) {
 
       if (json.success) {
         setLesson(json.data);
+        console.log("📦  Lessons Response:", lesson);
       } else {
         setLesson(null);
       }

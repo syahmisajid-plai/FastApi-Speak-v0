@@ -136,6 +136,8 @@ Feature tambahan:
 
   const [expanded, setExpanded] = useState(false);
 
+  const [openMenu, setOpenMenu] = useState(false);
+
   // ================== Set Mode ==================
   const [mode, setMode] = useState("freeTalk");
   const modeRef = useRef(mode);
@@ -164,6 +166,7 @@ Feature tambahan:
     setPendingMode(null);
     setModeLearn("idle");
     setModeScenario("idle");
+    setOpenMenu(false);
   };
 
   useEffect(() => {
@@ -812,6 +815,8 @@ Feature tambahan:
             setAutoCorrection={setAutoCorrection}
             supportSTTWeb={supportSTTWeb}
             setSupportSTTWeb={setSupportSTTWeb}
+            openMenu={openMenu}
+            setOpenMenu={setOpenMenu}
           />
           <OverlayFeedback message={overlayFavoritTranslated} />
           {/* VOCAB LIST */}
