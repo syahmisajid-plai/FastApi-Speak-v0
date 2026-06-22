@@ -747,20 +747,23 @@ export default function useVocabEngine(userIdRef) {
     const correct = vocabRef.current?.meaning;
 
     if (answer === correct) {
-      setShowDice(true);
+      // setShowDice(true);
 
-      const vocabId = vocabRef.current?.id;
-      const userId = userIdRef?.current;
+      // const vocabId = vocabRef.current?.id;
+      // const userId = userIdRef?.current;
 
-      setCompletedMap((prev) => ({
-        ...prev,
-        [vocabId]: "known",
-      }));
+      // setCompletedMap((prev) => ({
+      //   ...prev,
+      //   [vocabId]: "known",
+      // }));
 
-      markKnown(userId, vocabId);
-      await updateChapterProgress(currentChapter?.id);
+      // markKnown(userId, vocabId);
+      // await updateChapterProgress(currentChapter?.id);
 
-      next();
+      setExampleIndex(2); // contoh ke-3
+      setAttempt(0);
+      setFeedback("");
+      setPhase("guidedPractice");
     } else {
       setPhase("showMeaning");
     }

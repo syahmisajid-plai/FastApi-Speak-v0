@@ -135,7 +135,22 @@ export default function VocabUI({
   // console.log("started =", started);
   // console.log("vocab =", vocab);
 
+  const isLastExample =
+    phase === "guidedPractice" && exampleIndex === examples.length - 1;
+
   const FORCE_CHAPTER_COMPLETE = true;
+
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const handlePlay = async () => {
+    setIsPlaying(true);
+
+    await playSentence(example);
+
+    setTimeout(() => {
+      setIsPlaying(false);
+    }, 500);
+  };
 
   return (
     <section className="mx-4 transition-all duration-500">
@@ -445,9 +460,16 @@ export default function VocabUI({
                         <div className="flex flex-col items-center gap-6 animate-pop">
                           {/* HEADER */}
                           <h3 className="font-semibold text-center text-lg text-white/90">
-                            {phase === "guidedPractice"
-                              ? "📖 Ucapkan Kalimat Ini"
-                              : "✍️ Buat Kalimat Sendiri"}
+                            {phase === "guidedPractice" &&
+                              !isLastExample &&
+                              "📖 Ucapkan Kalimat Ini"}
+
+                            {phase === "guidedPractice" &&
+                              isLastExample &&
+                              "💬 Ucapkan dalam Bahasa Inggris"}
+
+                            {phase !== "guidedPractice" &&
+                              "✍️ Buat Kalimat Sendiri"}
                           </h3>
 
                           {/* TARGET CARD */}
@@ -455,23 +477,55 @@ export default function VocabUI({
                             {phase === "guidedPractice" ? (
                               <div className="space-y-2">
                                 {/* English */}
-                                <p className="text-sm text-indigo-200 leading-relaxed">
-                                  {example}
-                                </p>
-
-                                {/* Indonesian */}
-                                {translation && (
-                                  <p className="text-xs text-white/50 italic">
-                                    {translation}
+                                {(!isLastExample ||
+                                  feedback === "❌ Try again") && (
+                                  <p className="text-sm text-indigo-200 leading-relaxed">
+                                    {example}
                                   </p>
                                 )}
 
-                                <button
-                                  onClick={() => playSentence(example)}
-                                  className="text-xs px-3! py-1! rounded-full bg-white/10! hover:bg-white/20 mt-2"
-                                >
-                                  🔊 Play Sentence
-                                </button>
+                                {/* Indonesian */}
+                                {translation &&
+                                  (isLastExample &&
+                                  feedback !== "❌ Try again" ? (
+                                    <p className="text-lg text-indigo-200 leading-relaxed">
+                                      {translation}
+                                    </p>
+                                  ) : (
+                                    <p className="text-xs text-white/50 italic">
+                                      {translation}
+                                    </p>
+                                  ))}
+
+                                {(!isLastExample ||
+                                  feedback === "❌ Try again") && (
+                                  <button
+                                    onClick={handlePlay}
+                                    disabled={isPlaying}
+                                    className="
+                                      text-xs
+                                      px-3!
+                                      py-1!
+                                      rounded-full
+                                      bg-gradient-to-r
+                                      from-emerald-500!
+                                      to-green-500!
+                                      hover:from-emerald-400!
+                                      hover:to-green-400!
+                                      active:scale-95
+                                      shadow-lg
+                                      shadow-emerald-500/25
+                                      transition-all
+                                      duration-200
+                                      mt-2
+                                      disabled:opacity-70
+                                    "
+                                  >
+                                    {isPlaying
+                                      ? "🔄 Loading..."
+                                      : "🔊 Play Sentence"}
+                                  </button>
+                                )}
                               </div>
                             ) : (
                               <p className="text-xl font-bold text-indigo-300">
