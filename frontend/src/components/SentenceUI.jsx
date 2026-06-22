@@ -13,6 +13,9 @@ export default function SentenceUI({
 }) {
   const [step, setStep] = useState(0);
 
+  // console.log("====== lesson =======", lesson);
+  const function_type = lesson?.function_type;
+
   const [mode, setMode] = useState("idle");
   // idle | recording | review
 
@@ -202,7 +205,7 @@ export default function SentenceUI({
   return (
     <div
       className={`p-6 max-w-xl mx-auto space-y-10 ${
-        step === 3 ? "mt-28" : "mt-32"
+        step === 0 || step === 1 ? "mt-20" : step === 3 ? "mt-28" : "mt-32"
       } text-white`}
     >
       {/* ================= STEP 0: SPEAKING ================= */}
@@ -226,6 +229,24 @@ export default function SentenceUI({
                 shadow-[0_0_30px_rgba(99,102,241,0.15)]
               "
             >
+              {function_type && (
+                <div className="flex items-center gap-2">
+                  <span
+                    className="
+                      inline-flex items-center
+                      px-3 py-1
+                      rounded-full
+                      text-xs font-medium
+                      bg-purple-500/20
+                      border border-purple-400/30
+                      text-purple-200
+                    "
+                  >
+                    🎯 Function: {function_type}
+                  </span>
+                </div>
+              )}
+
               <p>{context}</p>
 
               {/* toggle chip */}
@@ -342,70 +363,86 @@ export default function SentenceUI({
 
               {/* MIC BUTTON */}
 
-              <div className="flex flex-col items-center gap-3 mt-8">
-                <button
-                  onClick={handleMicClick}
-                  className={`
-                  relative w-24 h-24 rounded-full flex items-center justify-center text-3xl
-                  transition-all duration-300
+              {/* RECORDING UI */}
+              {mode !== "review" && (
+                <div className="flex flex-col items-center gap-3 mt-8">
+                  <button
+                    onClick={handleMicClick}
+                    className="
+                      relative w-24 h-24 rounded-full
+                      flex items-center justify-center
+                      text-base!
+                      transition-all duration-300
+                      border border-white/10
+                      bg-white/5 hover:bg-white/10
+                      text-white
+                      active:scale-95
+                    "
+                  >
+                    <span
+                      className={`
+                        absolute inset-0 rounded-full border
+                        ${
+                          mode === "recording"
+                            ? "border-indigo-400/60 animate-ping"
+                            : "border-white/10"
+                        }
+                      `}
+                    />
 
-                  /* base */
-                  border border-white/10
+                    <span
+                      className={`
+                        absolute inset-[-6px] rounded-full border
+                        ${mode === "recording" ? "border-indigo-400/30" : "border-white/5"}
+                      `}
+                    />
 
-                  /* idle */
-                  bg-white/5 hover:bg-white/10 text-white
+                    <span className="relative z-10">
+                      {mode === "idle" && "🎤"}
+                      {mode === "recording" && "⏹"}
+                    </span>
+                  </button>
 
-                  /* animation */
-                  active:scale-95
-                `}
-                >
-                  {/* 🔥 OUTER RING EFFECT */}
-                  <span
-                    className={`
-                absolute inset-0 rounded-full border
-
-                ${
-                  mode === "recording"
-                    ? "border-indigo-400/60 animate-ping"
-                    : mode === "review"
-                      ? "border-yellow-400/40"
-                      : "border-white/10"
-                }
-              `}
-                  />
-
-                  {/* 🔥 SECOND RING (lebih halus, static glow) */}
-                  <span
-                    className={`
-                absolute inset-[-6px] rounded-full border
-
-                ${
-                  mode === "recording"
-                    ? "border-indigo-400/30"
-                    : mode === "review"
-                      ? "border-yellow-400/20"
-                      : "border-white/5"
-                }
-              `}
-                  />
-
-                  {/* ICON */}
-                  <span className="relative z-10">
-                    {mode === "idle" && "🎤"}
-                    {mode === "recording" && "⏹"}
-                    {mode === "review" && "🔁"}
-                  </span>
-                </button>
-
-                {/* LABEL */}
-                <p className="text-xs text-white/50">
-                  {mode === "recording"
-                    ? "Listening... tap to stop"
-                    : mode === "review"
-                      ? "Try again or submit"
+                  <p className="text-xs text-white/50">
+                    {mode === "recording"
+                      ? "Listening... tap to stop"
                       : "Tap to start speaking"}
-                </p>
-              </div>
+                  </p>
+                </div>
+              )}
+
+              {mode === "review" && (
+                <div className="mt-6 flex justify-center gap-3">
+                  <button
+                    onClick={handleMicClick}
+                    className="
+                      px-5! py-3! rounded-2xl
+                      border border-white/10
+                      bg-white/5! hover:bg-white/10!
+                      text-white
+                      transition-all
+                    "
+                  >
+                    🔁 Try Again
+                  </button>
+
+                  <button
+                    onClick={handleSubmit}
+                    className="
+                      px-5! py-3! rounded-2xl
+                      bg-gradient-to-r
+                      from-indigo-500
+                      to-purple-600
+                      text-white
+                      font-medium
+                      hover:scale-105
+                      transition-all
+                    "
+                  >
+                    ✅ Submit
+                  </button>
+                </div>
+              )}
 
               {/* LIVE / FINAL TRANSCRIPT */}
               {(liveTranscript || finalTranscript) && (
@@ -415,15 +452,6 @@ export default function SentenceUI({
                   <p className="text-sm italic text-white/80">
                     "{mode === "review" ? finalTranscript : liveTranscript}"
                   </p>
-                </div>
-              )}
-
-              {/* SUBMIT BUTTON (ONLY IN REVIEW) */}
-              {mode === "review" && (
-                <div className="flex justify-center mt-4">
-                  <button onClick={handleSubmit} className="btn-small">
-                    ✅ Submit Answer
-                  </button>
                 </div>
               )}
             </div>

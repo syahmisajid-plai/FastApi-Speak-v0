@@ -22,6 +22,7 @@ export default function LearnUI({
 
   // const startSession = vocabProps.startSession;
 
+  // ======== Vocab ========
   const chapterList = vocabProps.chapterList;
   const goToJourney = vocabProps.goToJourney;
 
@@ -30,16 +31,14 @@ export default function LearnUI({
 
   const chapterProgressMap = vocabProps.chapterProgressMap;
 
+  // ======== Sentence ========
+  const sentenceType = sentenceProps.sentenceType;
+  const setSentenceType = sentenceProps.setSentenceType;
+
   const [localSentenceStage, setLocalSentenceStage] = useState("choice");
-  const [localSentenceType, setLocalSentenceType] = useState(null);
-
   const sentenceStage = sentenceProps?.sentenceStage ?? localSentenceStage;
-
   const setSentenceStage =
     sentenceProps?.setSentenceStage ?? setLocalSentenceStage;
-
-  const setSentenceType =
-    sentenceProps?.setSentenceType ?? setLocalSentenceType;
 
   // const [showVocab, setShowVocab] = useState(false);
   // const [showSentence, setShowSentence] = useState(false);

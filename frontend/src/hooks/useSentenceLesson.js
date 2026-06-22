@@ -5,6 +5,8 @@ export default function useSentenceLesson(userId, sentenceType) {
   const [lesson, setLesson] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // console.log("sentenceType ====== ", sentenceType);
+
   // 🔥 CHANGED: now full objects, not IDs
   const [completedLessons, setCompletedLessons] = useState([]);
 
@@ -13,7 +15,7 @@ export default function useSentenceLesson(userId, sentenceType) {
 
     try {
       const res = await fetch(
-        `${linkBackend}/sentence-lessons/next/${userId}?function_type=${sentenceType}`,
+        `${linkBackend}/sentence-lessons/completed-lessons/${userId}`,
       );
 
       const json = await res.json();
@@ -38,13 +40,15 @@ export default function useSentenceLesson(userId, sentenceType) {
     try {
       setLoading(true);
 
-      const res = await fetch(`${linkBackend}/sentence-lessons/next/${userId}`);
+      const res = await fetch(
+        `${linkBackend}/sentence-lessons/next/${userId}?function_type=${sentenceType}`,
+      );
 
       const json = await res.json();
 
       if (json.success) {
         setLesson(json.data);
-        console.log("📦  Lessons Response:", lesson);
+        // console.log("📦  Lessons Response:", lesson);
       } else {
         setLesson(null);
       }
@@ -54,7 +58,7 @@ export default function useSentenceLesson(userId, sentenceType) {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, sentenceType]);
 
   const completeLesson = useCallback(async () => {
     if (!userId || !lesson) return;

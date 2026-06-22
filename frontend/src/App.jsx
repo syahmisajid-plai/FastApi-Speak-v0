@@ -128,6 +128,8 @@ Feature tambahan:
 
   const [supportSTTWeb, setSupportSTTWeb] = useState(true);
 
+  const [sentenceType, setSentenceType] = useState(null);
+
   // ================== Tambahkan state ==================
   const [pendingMode, setPendingMode] = useState(null);
   const [showModeConfirm, setShowModeConfirm] = useState(false);
@@ -278,7 +280,7 @@ Feature tambahan:
     completedLessons,
     refetch,
     completeLesson,
-  } = useSentenceLesson(userId);
+  } = useSentenceLesson(userId, sentenceType);
 
   // ================== Lock Daily ==================
   const [timeAllowed, setTimeAllowed] = useState(false);
@@ -1060,6 +1062,9 @@ Feature tambahan:
                 loading: loadingSentence,
                 refetch: refetch,
                 completeLesson: completeLesson,
+
+                sentenceType: sentenceType,
+                setSentenceType: setSentenceType,
 
                 // 🔥 Recording
                 startRecording: startRecording,
