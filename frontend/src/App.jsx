@@ -266,6 +266,9 @@ Feature tambahan:
     startVerifyMeaning,
     verifyMeaningAnswer,
     continuePractice,
+
+    isSkipped,
+    setIsSkipped,
   } = useVocabEngine(userIdRef);
 
   // showVocab List
@@ -1056,6 +1059,9 @@ Feature tambahan:
                 startVerifyMeaning: startVerifyMeaning,
                 verifyMeaningAnswer: verifyMeaningAnswer,
                 continuePractice: continuePractice,
+
+                isSkipped: isSkipped,
+                setIsSkipped: setIsSkipped,
               }}
               sentenceProps={{
                 lesson: lesson,

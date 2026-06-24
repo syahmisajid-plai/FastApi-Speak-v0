@@ -28,6 +28,8 @@ export default function useVocabEngine(userIdRef) {
 
   const [chapterProgressMap, setChapterProgressMap] = useState({});
 
+  const [isSkipped, setIsSkipped] = useState(false);
+
   const totalChapterVocab = apiVocab.length;
   const completedChapterVocab = useMemo(() => {
     return apiVocab.filter((v) => completedMap[v.id]).length;
@@ -487,10 +489,14 @@ export default function useVocabEngine(userIdRef) {
     const vocabId = vocabRef.current?.id;
     const userId = userIdRef?.current;
 
-    if (vocabId) {
+    if (!vocabId) return;
+
+    if (isSkipped) {
+      markKnown(userId, vocabId);
+    } else {
       markCompleted(userId, vocabId);
     }
-  }, [phase]);
+  }, [phase, isSkipped]);
 
   // ==========================
   // NORMALIZE
@@ -672,6 +678,13 @@ export default function useVocabEngine(userIdRef) {
       });
 
       const data = await res.json().catch(() => null);
+
+      setCompletedMap((prev) => ({
+        ...prev,
+        [vocabId]: "known",
+      }));
+
+      await updateChapterProgress(currentChapter?.id);
     } catch (err) {
       console.log("❌ mark known error:", err);
     }
@@ -826,5 +839,8 @@ export default function useVocabEngine(userIdRef) {
     startVerifyMeaning,
     verifyMeaningAnswer,
     continuePractice,
+
+    isSkipped,
+    setIsSkipped,
   };
 }
