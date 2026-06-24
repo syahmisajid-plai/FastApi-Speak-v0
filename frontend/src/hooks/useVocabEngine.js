@@ -34,6 +34,7 @@ export default function useVocabEngine(userIdRef) {
   }, [apiVocab, completedMap]);
   const remainingChapterVocab = totalChapterVocab - completedChapterVocab;
 
+  //
   // =========================
   // SHUFFLE DATA
   // =========================
