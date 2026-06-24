@@ -1021,7 +1021,7 @@ Feature tambahan:
                 next: next,
                 setPhase: setPhase,
                 progress: progress,
-                showDice: showDice,
+
                 startSession: startSession,
                 vocabStage: vocabStage,
                 setVocabStage: setVocabStage,
@@ -1033,6 +1033,7 @@ Feature tambahan:
                 goNextChapter: goNextChapter,
                 resetVocab: resetVocab,
                 GoBackJourney: GoBackJourney,
+                showDice: showDice,
                 setShowDice: setShowDice,
 
                 chapterProgressMap: chapterProgressMap,

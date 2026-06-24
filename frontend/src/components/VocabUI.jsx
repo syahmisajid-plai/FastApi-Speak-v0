@@ -12,7 +12,7 @@ export default function VocabUI({
   next,
   setPhase,
   progress,
-  showDice,
+
   startRecording,
   stopRecording,
   isRecording,
@@ -35,6 +35,7 @@ export default function VocabUI({
 
   setVocabStage,
 
+  showDice,
   setShowDice,
 
   meaningOptions,
@@ -145,16 +146,30 @@ export default function VocabUI({
 
   const FORCE_CHAPTER_COMPLETE = true;
 
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlayingSentence, setIsPlayingSentence] = useState(false);
 
-  const handlePlay = async () => {
-    setIsPlaying(true);
+  const handlePlaySentence = async () => {
+    if (isPlayingSentence) return;
 
-    await playSentence(example);
+    try {
+      setIsPlayingSentence(true);
+      await playSentence(example);
+    } finally {
+      setIsPlayingSentence(false);
+    }
+  };
 
-    setTimeout(() => {
-      setIsPlaying(false);
-    }, 500);
+  const [isPlayingWord, setIsPlayingWord] = useState(false);
+
+  const handlePlayWord = async (text) => {
+    if (isPlayingWord) return;
+
+    try {
+      setIsPlayingWord(true);
+      await playWord(text);
+    } finally {
+      setIsPlayingWord(false);
+    }
   };
 
   return (
@@ -191,24 +206,25 @@ export default function VocabUI({
         {/* ================= AFTER START ================= */}
         {started && !chapterCompleted && vocab && (
           <div className="relative">
-            <button
-              onClick={() => setVocabStage("journey")}
-              className="
-                absolute -top-1 -left-4 z-20
-                flex items-center gap-2
-                px-2! py-1!
-                rounded-xl
-                bg-white/2!
-                hover:bg-white/10!
-                border border-white/10
-                text-white/70 hover:text-white
-                backdrop-blur-md
-                transition-all duration-200
-              "
-            >
-              <span className="text-sm">←</span>
-              {/* <span className="text-xs">Journey</span> */}
-            </button>
+            {!showDice && (
+              <button
+                onClick={() => setVocabStage("journey")}
+                className="
+                  absolute -top-1 -left-4 z-20
+                  flex items-center gap-2
+                  px-2! py-1!
+                  rounded-xl
+                  bg-white/2!
+                  hover:bg-white/10!
+                  border border-white/10
+                  text-white/70 hover:text-white
+                  backdrop-blur-md
+                  transition-all duration-200
+                "
+              >
+                <span className="text-sm">←</span>
+              </button>
+            )}
             <div className="flex justify-center items-start">
               <div className="w-full max-w-md text-white px-4 space-y-6 animate-fade-in">
                 {/* CONGRATS NEXT UNIT */}
@@ -290,10 +306,26 @@ export default function VocabUI({
                                 </h3>
 
                                 <button
-                                  onClick={() => playWord(vocab.word)}
-                                  className="text-xs px-3 py-1 rounded-full bg-white/10 hover:bg-white/20"
+                                  onClick={() => handlePlayWord(vocab.word)}
+                                  disabled={isPlayingWord}
+                                  className="
+                                    text-xs!
+                                    px-3!
+                                    py-1!
+                                    rounded-full
+                                    bg-emerald-500/20!
+                                    hover:bg-emerald-500/30!
+                                    border border-emerald-500/20
+                                    text-emerald-300
+                                    active:scale-95
+                                    transition-all
+                                    duration-200
+                                    disabled:opacity-70
+                                  "
                                 >
-                                  🔊 Play
+                                  {isPlayingWord
+                                    ? "🔄 Loading..."
+                                    : "🔊 Play Word"}
                                 </button>
                               </div>
 
@@ -530,8 +562,8 @@ export default function VocabUI({
                                   {(!isLastExample ||
                                     feedback === "❌ Try again") && (
                                     <button
-                                      onClick={handlePlay}
-                                      disabled={isPlaying}
+                                      onClick={handlePlaySentence}
+                                      disabled={isPlayingSentence}
                                       className="
                                       text-xs
                                       px-3!
@@ -548,7 +580,7 @@ export default function VocabUI({
                                       disabled:opacity-70
                                     "
                                     >
-                                      {isPlaying
+                                      {isPlayingSentence
                                         ? "🔄 Loading..."
                                         : "🔊 Play Sentence"}
                                     </button>

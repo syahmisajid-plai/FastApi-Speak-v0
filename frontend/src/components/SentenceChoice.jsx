@@ -45,12 +45,36 @@ const sentenceTypes = [
   },
 ];
 
-export default function SentenceChoice({ onSelect }) {
+export default function SentenceChoice({
+  onSelect,
+  setModeLearn,
+  setSentenceStage,
+}) {
   const [loading, setLoading] = useState(null);
 
   return (
     <div className="relative w-full max-w-md mx-auto min-h-[400px] text-white px-6 py-8 mt-24">
       {/* HEADER */}
+      <button
+        onClick={() => {
+          setModeLearn("idle");
+          setSentenceStage("idle");
+        }}
+        className="
+                  absolute top-2 left-6 z-20
+                  flex items-center gap-2
+                  px-2! py-1!
+                  rounded-xl
+                  bg-white/5!
+                  hover:bg-white/10!
+                  border border-white/10
+                  text-white/70 hover:text-white
+                  backdrop-blur-md
+                  transition-all duration-200
+                "
+      >
+        <span className="text-md">←</span>
+      </button>
       <div className="text-center mb-8">
         <h2 className="text-xl font-semibold">Sentence Training</h2>
         <p className="text-white/40 text-sm mt-1">

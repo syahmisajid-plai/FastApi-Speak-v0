@@ -35,7 +35,7 @@ export default function LearnUI({
   const sentenceType = sentenceProps.sentenceType;
   const setSentenceType = sentenceProps.setSentenceType;
 
-  const [localSentenceStage, setLocalSentenceStage] = useState("choice");
+  const [localSentenceStage, setLocalSentenceStage] = useState("idle");
   const sentenceStage = sentenceProps?.sentenceStage ?? localSentenceStage;
   const setSentenceStage =
     sentenceProps?.setSentenceStage ?? setLocalSentenceStage;
@@ -43,6 +43,8 @@ export default function LearnUI({
   // const [showVocab, setShowVocab] = useState(false);
   // const [showSentence, setShowSentence] = useState(false);
   // idle | vocab | sentence
+
+  // console.log("sentenceStage == ", sentenceStage);
 
   return (
     <section
@@ -144,7 +146,10 @@ export default function LearnUI({
 
               {/* SENTENCE */}
               <button
-                onClick={() => setModeLearn("sentence")}
+                onClick={() => {
+                  setModeLearn("sentence");
+                  setSentenceStage("choice");
+                }}
                 className="bg-gradient-to-br from-indigo-500/10 to-white/5 
                 rounded-xl p-4 text-center 
                 hover:scale-[1.02] transition border border-indigo-500/20
@@ -178,6 +183,8 @@ export default function LearnUI({
               chapterStats={chapterStats}
               openChapterModal={openChapterModal}
               chapterProgressMap={chapterProgressMap}
+              setModeLearn={setModeLearn}
+              setVocabStage={setVocabStage}
             />
           )}
 
@@ -198,6 +205,8 @@ export default function LearnUI({
         {/* CHOICE */}
         {modeLearn === "sentence" && sentenceStage === "choice" && (
           <SentenceChoice
+            setModeLearn={setModeLearn}
+            setSentenceStage={setSentenceStage}
             onSelect={(type) => {
               setSentenceType(type);
               setSentenceStage("session");

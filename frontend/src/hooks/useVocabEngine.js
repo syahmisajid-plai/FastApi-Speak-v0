@@ -810,7 +810,7 @@ export default function useVocabEngine(userIdRef) {
     handleSpeech,
     next,
     setPhase,
-    showDice,
+
     vocabStage,
     setVocabStage,
     startSession,
@@ -819,6 +819,7 @@ export default function useVocabEngine(userIdRef) {
     // skipbutton,
     resetVocab,
     GoBackJourney,
+    showDice,
     setShowDice,
 
     chapterStats, // 👈 tambahkan ini

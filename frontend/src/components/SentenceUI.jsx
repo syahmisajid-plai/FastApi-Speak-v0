@@ -477,7 +477,7 @@ export default function SentenceUI({
         >
           <div>
             {finalTranscript && (
-              <div className="flex justify-center text-center">
+              <div className="flex justify-center text-center mt-4">
                 <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-2 space-y-2 backdrop-blur-md shadow-lg">
                   {/* LABEL */}
                   <p className="text-xs text-white/50 tracking-wide uppercase">
@@ -617,62 +617,90 @@ export default function SentenceUI({
           {/* ================= CHAT STYLE ================= */}
           <div className="space-y-4">
             {/* MIC BUTTON */}
-            <div className="flex flex-col items-center gap-3 mt-4">
-              <button
-                onClick={handleMicClick}
-                className={`
-                  relative w-24 h-24 rounded-full flex items-center justify-center text-3xl
-                  transition-all duration-300
-                  border border-white/10
-                  bg-white/5 hover:bg-white/10 text-white
-                  active:scale-95
-                `}
-              >
-                {/* OUTER RING */}
-                <span
-                  className={`
-              absolute inset-0 rounded-full border
-              ${
-                mode === "recording"
-                  ? "border-indigo-400/60 animate-ping"
-                  : mode === "review"
-                    ? "border-yellow-400/40"
-                    : "border-white/10"
-              }
-            `}
-                />
+            {mode !== "review" && (
+              <div className="flex flex-col items-center gap-3 mt-4">
+                <button
+                  onClick={handleMicClick}
+                  className="
+          relative w-24 h-24 rounded-full
+          flex items-center justify-center
+          text-base!
+          transition-all duration-300
+          border border-white/10
+          bg-white/5 hover:bg-white/10
+          text-white
+          active:scale-95
+        "
+                >
+                  {/* OUTER RING */}
+                  <span
+                    className={`
+            absolute inset-0 rounded-full border
+            ${
+              mode === "recording"
+                ? "border-indigo-400/60 animate-ping"
+                : "border-white/10"
+            }
+          `}
+                  />
 
-                {/* SECOND RING */}
-                <span
-                  className={`
-              absolute inset-[-6px] rounded-full border
-              ${
-                mode === "recording"
-                  ? "border-indigo-400/30"
-                  : mode === "review"
-                    ? "border-yellow-400/20"
-                    : "border-white/5"
-              }
-            `}
-                />
+                  {/* SECOND RING */}
+                  <span
+                    className={`
+            absolute inset-[-6px] rounded-full border
+            ${mode === "recording" ? "border-indigo-400/30" : "border-white/5"}
+          `}
+                  />
 
-                {/* ICON */}
-                <span className="relative z-10">
-                  {mode === "idle" && "🎤"}
-                  {mode === "recording" && "⏹"}
-                  {mode === "review" && "🔁"}
-                </span>
-              </button>
+                  {/* ICON */}
+                  <span className="relative z-10">
+                    {mode === "idle" && "🎤"}
+                    {mode === "recording" && "⏹"}
+                  </span>
+                </button>
 
-              {/* LABEL */}
-              <p className="text-xs text-white/50">
-                {mode === "recording"
-                  ? "Listening... tap to stop"
-                  : mode === "review"
-                    ? "Try again or submit"
+                {/* LABEL */}
+                <p className="text-xs text-white/50">
+                  {mode === "recording"
+                    ? "Listening... tap to stop"
                     : "Tap to start speaking"}
-              </p>
-            </div>
+                </p>
+              </div>
+            )}
+
+            {/* REVIEW BUTTONS */}
+            {mode === "review" && (
+              <div className="mt-6 flex justify-center gap-3">
+                <button
+                  onClick={handleMicClick}
+                  className="
+          px-5! py-3! rounded-2xl
+          border border-white/10
+          bg-white/5! hover:bg-white/10!
+          text-white
+          transition-all
+        "
+                >
+                  🔁 Try Again
+                </button>
+
+                <button
+                  onClick={nextStep}
+                  className="
+          px-5! py-3! rounded-2xl
+          bg-gradient-to-r
+          from-indigo-500
+          to-purple-600
+          text-white
+          font-medium
+          hover:scale-105
+          transition-all
+        "
+                >
+                  ✅ Next →
+                </button>
+              </div>
+            )}
           </div>
 
           {/* feedback */}
@@ -688,26 +716,6 @@ export default function SentenceUI({
               `}
             >
               {feedback.message}
-            </div>
-          )}
-
-          {/* NEXT BUTTON */}
-          {step === 2 && mode === "review" && (
-            <div className="flex justify-center mt-6">
-              <button
-                onClick={nextStep}
-                className="
-                  px-5! py-2.5! rounded-xl
-                  bg-gradient-to-r from-green-500 to-emerald-600
-                  text-white font-medium text-sm
-                  shadow-lg shadow-green-900/20
-                  hover:scale-105 hover:shadow-green-900/40
-                  active:scale-95
-                  transition-all duration-200
-                "
-              >
-                See The Summary →
-              </button>
             </div>
           )}
         </section>

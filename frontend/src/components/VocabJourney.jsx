@@ -148,6 +148,9 @@ export default function IslandMapJourney({
   chapterStats,
   openChapterModal,
   chapterProgressMap,
+
+  setModeLearn,
+  setVocabStage,
 }) {
   // const [chapterStats, setChapterStats] = useState({
   //   total: 6,
@@ -239,6 +242,27 @@ export default function IslandMapJourney({
   return (
     <div className="bg-gradient-to-br from-indigo-500/10 via-transparent to-sky-500/5 text-white">
       {/* HEADER */}
+      <button
+        onClick={() => {
+          setModeLearn("idle");
+          setVocabStage("idle");
+        }}
+        className="
+                  absolute top-2 left-2 z-20
+                  flex items-center gap-2
+                  px-2! py-1!
+                  rounded-xl
+                  bg-white/5!
+                  hover:bg-white/10!
+                  border border-white/10
+                  text-white/70 hover:text-white
+                  backdrop-blur-md
+                  transition-all duration-200
+                "
+      >
+        <span className="text-md">←</span>
+      </button>
+
       <div className="text-center pt-8 pb-4">
         <h2 className="text-xl font-semibold">Learning Path</h2>
         <p className="text-white/40 text-sm mt-1">
