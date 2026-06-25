@@ -216,7 +216,11 @@ export default function LearnUI({
 
         {/* SESSION */}
         {modeLearn === "sentence" && sentenceStage === "session" && (
-          <SentenceUI {...sentenceProps} />
+          <SentenceUI
+            {...sentenceProps}
+            sentenceStage={sentenceStage}
+            setModeLearn={setModeLearn}
+          />
         )}
       </div>
       <div className="mt-24"></div>

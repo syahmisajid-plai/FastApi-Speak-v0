@@ -7,6 +7,9 @@ export default function SentenceUI({
   refetch,
   completeLesson,
 
+  setModeLearn,
+  sentenceStage,
+
   startRecording,
   stopRecording,
   liveTranscript,
@@ -229,23 +232,44 @@ export default function SentenceUI({
                 shadow-[0_0_30px_rgba(99,102,241,0.15)]
               "
             >
-              {function_type && (
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between">
+                {function_type && (
                   <span
                     className="
-                      inline-flex items-center
-                      px-3 py-1
-                      rounded-full
-                      text-xs font-medium
-                      bg-purple-500/20
-                      border border-purple-400/30
-                      text-purple-200
-                    "
+        inline-flex items-center
+        px-3 py-1
+        rounded-full
+        text-xs font-medium
+        bg-purple-500/20
+        border border-purple-400/30
+        text-purple-200
+      "
                   >
                     🎯 Function: {function_type}
                   </span>
-                </div>
-              )}
+                )}
+
+                <button
+                  onClick={() => {
+                    setModeLearn("idle");
+                    sentenceStage("idle");
+                  }}
+                  className="
+      inline-flex items-center
+      px-3! py-1!
+      rounded-full
+      text-xs font-medium
+      bg-white/5!
+      border border-white/10
+      text-white/70
+      hover:text-white
+      hover:bg-white/10!
+      transition-all
+    "
+                >
+                  ← Back
+                </button>
+              </div>
 
               <p>{context}</p>
 
@@ -566,7 +590,30 @@ export default function SentenceUI({
                 "
         >
           {/* SYSTEM BUBBLE */}
-          <h2 className="text-xl font-bold">🔁 Try It in Conversation</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold">🔁 Try It in Conversation</h2>
+
+            <button
+              onClick={() => {
+                setModeLearn("idle");
+                sentenceStage("idle");
+              }}
+              className="
+      inline-flex items-center gap-1
+      px-3!py-1!
+      rounded-full
+      text-xs font-medium
+      bg-white/5!
+      border border-white/10
+      text-white/80
+      hover:text-white
+      hover:bg-white/10!
+      transition-all
+    "
+            >
+              ← Back
+            </button>
+          </div>
 
           <div className="flex justify-start">
             <div
