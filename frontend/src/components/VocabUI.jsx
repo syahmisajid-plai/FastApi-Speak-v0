@@ -1,5 +1,5 @@
 // components/VocabUI.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import useAudioVocab from "../hooks/useAudioVocab";
 
 export default function VocabUI({
@@ -51,6 +51,42 @@ export default function VocabUI({
 
   const [started, setStarted] = useState(false);
 
+  // console.log("example:", examples);
+
+  const [showStarters, setShowStarters] = useState(false);
+  const [currentStarter, setCurrentStarter] = useState("");
+
+  const createStarter = (sentence) => {
+    if (!sentence) return "";
+
+    const escapedWord = vocab.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    return sentence.replace(new RegExp(`\\b${escapedWord}\\b`, "gi"), "_____");
+  };
+
+  const getRandomStarter = (current = "") => {
+    if (!examples?.length) return "";
+
+    const starters = examples.map((e) => createStarter(e.en)).filter(Boolean);
+
+    if (starters.length === 0) return "";
+
+    if (starters.length === 1) return starters[0];
+
+    let next;
+
+    do {
+      next = starters[Math.floor(Math.random() * starters.length)];
+    } while (next === current);
+
+    return next;
+  };
+
+  useEffect(() => {
+    setCurrentStarter(getRandomStarter());
+    setShowStarters(false);
+  }, [vocab?.id]);
+
   useEffect(() => {
     if (vocab) {
       const timer = setTimeout(() => {
@@ -63,6 +99,14 @@ export default function VocabUI({
 
   // AUDIO
   const { playWord, playSentence, loading } = useAudioVocab(user_id);
+
+  const [hasClickedReplay, setHasClickedReplay] = useState(false);
+
+  useEffect(() => {
+    if (feedback === "❌ Try again") {
+      setHasClickedReplay(false);
+    }
+  }, [feedback]);
 
   // useEffect(() => {
   //   if (!started || !vocab) return;
@@ -562,34 +606,74 @@ export default function VocabUI({
                                   {(!isLastExample ||
                                     feedback === "❌ Try again") && (
                                     <button
-                                      onClick={handlePlaySentence}
+                                      onClick={() => {
+                                        setHasClickedReplay(true);
+                                        handlePlaySentence();
+                                      }}
                                       disabled={isPlayingSentence}
-                                      className="
-                                      text-xs
-                                      px-3!
-                                      py-1!
-                                      rounded-full
-                                      bg-emerald-500/20!
-                                      hover:bg-emerald-500/30!
-                                      border border-emerald-500/20!
-                                      text-emerald-300
-                                      active:scale-95
-                                      transition-all
-                                      duration-200
-                                      mt-2
-                                      disabled:opacity-70
-                                    "
+                                      className={`
+                                        text-xs!
+                                        px-3!
+                                        py-1!
+                                        rounded-full
+                                        border
+                                        active:scale-95
+                                        transition-all
+                                        duration-200
+                                        mt-2
+                                        disabled:opacity-70
+                                       ${
+                                         feedback === "❌ Try again" &&
+                                         !hasClickedReplay
+                                           ? "bg-emerald-500/20! hover:bg-emerald-500/30! border-emerald-400 text-emerald-200 animate-pulse"
+                                           : "bg-emerald-500/20! hover:bg-emerald-500/30! border-emerald-500/20 text-emerald-300"
+                                       }
+                                      `}
                                     >
                                       {isPlayingSentence
                                         ? "🔄 Loading..."
-                                        : "🔊 Play Sentence"}
+                                        : feedback === "❌ Try again"
+                                          ? "🔊 Try Listening The Sentence"
+                                          : "🔊 Play Sentence"}
                                     </button>
                                   )}
                                 </div>
                               ) : (
-                                <p className="text-xl font-bold text-indigo-300">
-                                  {vocab.word}
-                                </p>
+                                <div className="space-y-3">
+                                  <p className="text-3xl font-bold text-indigo-300">
+                                    {vocab.word}
+                                  </p>
+
+                                  {!showStarters ? (
+                                    <button
+                                      onClick={() => setShowStarters(true)}
+                                      className="text-sm text-indigo-300 hover:text-indigo-200 transition"
+                                    >
+                                      💡 Need an idea?
+                                    </button>
+                                  ) : (
+                                    <div className="rounded-xl border border-indigo-400/20 bg-indigo-500/10 p-3">
+                                      <p className="text-[11px] uppercase tracking-widest text-indigo-300 mb-2">
+                                        Sentence Starter
+                                      </p>
+
+                                      <p className="text-white/80">
+                                        {currentStarter}
+                                      </p>
+
+                                      <button
+                                        onClick={() =>
+                                          setCurrentStarter(
+                                            getRandomStarter(currentStarter),
+                                          )
+                                        }
+                                        className="mt-3 text-xs text-indigo-300 hover:text-indigo-200"
+                                      >
+                                        🎲 Another idea
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </div>
 

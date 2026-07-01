@@ -27,7 +27,7 @@ export default function SentenceUI({
   // loading minimal 2 detik
   const [showLoading, setShowLoading] = useState(true);
 
-  const [showID, setShowID] = useState(true);
+  const [showID, setShowID] = useState(false);
 
   const [hasStarted, setHasStarted] = useState(false);
 
@@ -826,6 +826,23 @@ export default function SentenceUI({
               setStep(0);
               setHasStarted(false);
             }}
+            className="
+              inline-flex
+              items-center
+              gap-2
+              px-5!
+              py-2.5!
+              rounded-xl
+              bg-blue-600!
+              hover:bg-blue-700
+              text-white
+              font-semibold
+              transition-all
+              duration-200
+              active:scale-95
+              shadow
+              hover:shadow-lg
+            "
           >
             ✅ Next Sentence →
           </button>
