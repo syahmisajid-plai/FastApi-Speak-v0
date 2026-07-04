@@ -415,14 +415,14 @@ export default function Header({
                   <div
                     key={i}
                     className={`
-            min-w-[140px] px-2 py-1 rounded-lg text-[10px]
-            border transition flex items-center gap-1
-            ${
-              item.done
-                ? "bg-green-500/10 border-green-400/30 text-green-300"
-                : "bg-white/5 border-white/10 text-white/60"
-            }
-          `}
+                      min-w-[140px] px-2 py-1 rounded-lg text-[10px]
+                      border transition flex items-center gap-1
+                      ${
+                        item.done
+                          ? "bg-green-500/10 border-green-400/30 text-green-300"
+                          : "bg-white/5 border-white/10 text-white/60"
+                      }
+                    `}
                   >
                     <span className="text-xs">{item.done ? "✔" : "⬜"}</span>
                     <span className="truncate">{item.text}</span>

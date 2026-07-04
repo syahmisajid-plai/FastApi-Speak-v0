@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import choiceSoundFile from "../assets/sound/universfield-game-level-complete-143022.mp3";
+
 const sentenceTypes = [
   {
     id: "opinion",
@@ -52,6 +54,8 @@ export default function SentenceChoice({
 }) {
   const [loading, setLoading] = useState(null);
 
+  const choiceSound = new Audio(choiceSoundFile);
+
   return (
     <div className="relative w-full max-w-md mx-auto min-h-[400px] text-white px-6 py-8 mt-24">
       {/* HEADER */}
@@ -88,6 +92,9 @@ export default function SentenceChoice({
           <button
             key={type.id}
             onClick={async () => {
+              choiceSound.currentTime = 0;
+              await choiceSound.play().catch(() => {});
+
               if (loading) return;
               setLoading(type.id);
 

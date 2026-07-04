@@ -402,7 +402,7 @@ export default function RoleplayToggleSwipe({
           )}
         </div>
       </section>
-      
+
       {/* MODAL */}
       {isOpen && started && (
         <div className="fixed inset-0 z-52 h-full place-items-center p-4">
