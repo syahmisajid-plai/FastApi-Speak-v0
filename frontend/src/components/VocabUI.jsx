@@ -2,6 +2,10 @@
 import { useEffect, useState, useMemo } from "react";
 import useAudioVocab from "../hooks/useAudioVocab";
 
+import next_vocab from "../assets/sound/universfield-game-level-complete-143022.mp3";
+import next_vocab1 from "../assets/sound/universfield-level-passed-143039.mp3";
+import next_vocab2 from "../assets/sound/universfield-level-up-191997.mp3";
+
 export default function VocabUI({
   vocab,
   example,
@@ -46,9 +50,15 @@ export default function VocabUI({
 
   isSkipped,
   setIsSkipped,
+
+  setStartingJourney,
+  showNextButton,
+  goToNextExample,
 }) {
   // vocab = false;
-
+  // console.log(showNextButton);
+  // console.log(goToNextExample);
+  // console.log(typeof goToNextExample);
   const [started, setStarted] = useState(false);
 
   // console.log("example:", examples);
@@ -128,7 +138,10 @@ export default function VocabUI({
   //   }
   // }, [phase, vocab, started]);
 
-  const canSpeak = phase === "guidedPractice" || phase === "makeSentence";
+  const canSpeak =
+    phase === "showMeaning" ||
+    phase === "guidedPractice" ||
+    phase === "makeSentence";
 
   const phaseLabel = {
     wordIntro: "Learn",
@@ -252,7 +265,10 @@ export default function VocabUI({
           <div className="relative">
             {!showDice && (
               <button
-                onClick={() => setVocabStage("journey")}
+                onClick={() => {
+                  setVocabStage("journey");
+                  setStartingJourney(false);
+                }}
                 className="
                   absolute -top-1 -left-4 z-20
                   flex items-center gap-2
@@ -517,6 +533,27 @@ export default function VocabUI({
                               {vocab.word}
                             </h3>
 
+                            <button
+                              onClick={() => handlePlayWord(vocab.word)}
+                              disabled={isPlayingWord}
+                              className="
+                                    text-xs!
+                                    px-3!
+                                    py-1!
+                                    rounded-full
+                                    bg-emerald-500/20!
+                                    hover:bg-emerald-500/30!
+                                    border border-emerald-500/20
+                                    text-emerald-300
+                                    active:scale-95
+                                    transition-all
+                                    duration-200
+                                    disabled:opacity-70
+                                  "
+                            >
+                              {isPlayingWord ? "🔄 Loading..." : "🔊 Play Word"}
+                            </button>
+
                             <p className="text-lg text-white/80 italic">
                               {vocab.meaning}
                             </p>
@@ -542,7 +579,7 @@ export default function VocabUI({
                               </span>
                             </div>
 
-                            <button
+                            {/* <button
                               onClick={() => {
                                 continuePractice();
 
@@ -556,7 +593,62 @@ export default function VocabUI({
                             "
                             >
                               Continue →
-                            </button>
+                            </button> */}
+
+                            {/* MIC BUTTON */}
+                            <div className="flex flex-col items-center gap-2">
+                              <button
+                                onClick={() =>
+                                  isRecording
+                                    ? stopRecording()
+                                    : startRecording()
+                                }
+                                disabled={!canSpeak}
+                                className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl 
+                              transition-all duration-300 shadow-lg border border-white/10
+                              ${
+                                isRecording
+                                  ? "bg-indigo-500/30! text-indigo-300 scale-110 animate-pulse"
+                                  : "bg-white/5! text-white/80 hover:bg-white/10 hover:scale-105"
+                              } ${!canSpeak ? "opacity-30" : ""}`}
+                              >
+                                {isRecording ? "⏹" : "🎤"}
+                              </button>
+
+                              <p className="text-xs text-white/50 text-center">
+                                {isRecording
+                                  ? "Mendengarkan..."
+                                  : "Tap untuk mulai berbicara"}
+                              </p>
+                            </div>
+
+                            {/* TRANSCRIPT */}
+                            {liveTranscript && (
+                              <div className="text-center">
+                                <p className="text-sm text-white/60">
+                                  Kamu berkata:
+                                </p>
+                                <p className="text-sm text-white/80 italic">
+                                  "{liveTranscript}"
+                                </p>
+                              </div>
+                            )}
+
+                            {/* FEEDBACK */}
+                            {feedback && (
+                              <div
+                                className={`text-sm font-medium text-center px-3 py-1 rounded-full
+                              ${
+                                feedback.includes("Benar") ||
+                                feedback.includes("Bagus") ||
+                                feedback.includes("Lanjut")
+                                  ? "bg-green-500/10 text-green-400"
+                                  : "bg-blue-500/10 text-blue-400"
+                              }`}
+                              >
+                                {feedback}
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -584,7 +676,9 @@ export default function VocabUI({
                                 <div className="space-y-2">
                                   {/* English */}
                                   {(!isLastExample ||
-                                    feedback === "❌ Try again") && (
+                                    feedback === "❌ Try again" ||
+                                    feedback ===
+                                      "❌ You can keep trying or skip.") && (
                                     <p className="text-sm text-indigo-200 leading-relaxed">
                                       {example}
                                     </p>
@@ -593,7 +687,9 @@ export default function VocabUI({
                                   {/* Indonesian */}
                                   {translation &&
                                     (isLastExample &&
-                                    feedback !== "❌ Try again" ? (
+                                    feedback !== "❌ Try again" &&
+                                    feedback !==
+                                      "❌ You can keep trying or skip." ? (
                                       <p className="text-lg text-indigo-200 leading-relaxed">
                                         {translation}
                                       </p>
@@ -604,7 +700,9 @@ export default function VocabUI({
                                     ))}
 
                                   {(!isLastExample ||
-                                    feedback === "❌ Try again") && (
+                                    feedback === "❌ Try again" ||
+                                    feedback ===
+                                      "❌ You can keep trying or skip.") && (
                                     <button
                                       onClick={() => {
                                         setHasClickedReplay(true);
@@ -623,7 +721,9 @@ export default function VocabUI({
                                         mt-2
                                         disabled:opacity-70
                                        ${
-                                         feedback === "❌ Try again" &&
+                                         (feedback === "❌ Try again" ||
+                                           feedback ===
+                                             "You can keep trying or skip") &&
                                          !hasClickedReplay
                                            ? "bg-emerald-500/20! hover:bg-emerald-500/30! border-emerald-400 text-emerald-200 animate-pulse"
                                            : "bg-emerald-500/20! hover:bg-emerald-500/30! border-emerald-500/20 text-emerald-300"
@@ -632,7 +732,9 @@ export default function VocabUI({
                                     >
                                       {isPlayingSentence
                                         ? "🔄 Loading..."
-                                        : feedback === "❌ Try again"
+                                        : feedback === "❌ Try again" ||
+                                            feedback ===
+                                              "You can keep trying or skip"
                                           ? "🔊 Try Listening The Sentence"
                                           : "🔊 Play Sentence"}
                                     </button>
@@ -720,16 +822,36 @@ export default function VocabUI({
                             {feedback && (
                               <div
                                 className={`text-sm font-medium text-center px-3 py-1 rounded-full
-                            ${
-                              feedback.includes("Benar") ||
-                              feedback.includes("Bagus") ||
-                              feedback.includes("Lanjut")
-                                ? "bg-green-500/10 text-green-400"
-                                : "bg-blue-500/10 text-blue-400"
-                            }`}
+                              ${
+                                feedback.includes("Benar") ||
+                                feedback.includes("Bagus") ||
+                                feedback.includes("Lanjut")
+                                  ? "bg-green-500/10 text-green-400"
+                                  : "bg-blue-500/10 text-blue-400"
+                              }`}
                               >
                                 {feedback}
                               </div>
+                            )}
+
+                            {/* NEXT BUTTON */}
+                            {showNextButton && (
+                              <button
+                                onClick={goToNextExample}
+                                className="
+                                  px-5! py-2!
+                                  rounded-xl
+                                  bg-indigo-500!
+                                  hover:bg-indigo-600!
+                                  text-white
+                                  font-medium
+                                  transition-all
+                                  duration-200
+                                  active:scale-95
+                                "
+                              >
+                                Next Example →
+                              </button>
                             )}
                           </div>
                         )}
@@ -752,6 +874,10 @@ export default function VocabUI({
 
                             <Button
                               onClick={() => {
+                                const next_vocabSound = new Audio(next_vocab);
+                                next_vocabSound.currentTime = 0;
+                                next_vocabSound.play();
+
                                 setShowDice(true);
                                 next();
                               }}
@@ -780,7 +906,10 @@ export default function VocabUI({
             </p>
 
             <button
-              onClick={resetVocab}
+              onClick={() => {
+                resetVocab();
+                setVocabStage("journey");
+              }}
               className="px-4! py-2! rounded-xl bg-white/10! hover:bg-white/20!"
             >
               Back to Journey

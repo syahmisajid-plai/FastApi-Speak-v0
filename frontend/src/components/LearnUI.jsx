@@ -12,6 +12,7 @@ export default function LearnUI({
   setModeLearn,
 }) {
   const [started, setStarted] = useState(false);
+  const [startingJourney, setStartingJourney] = useState(false);
 
   const phase = vocabProps.phase;
   // console.log("LearnUI phase:", phase);
@@ -30,10 +31,13 @@ export default function LearnUI({
   const openChapterModal = vocabProps.openChapterModal;
 
   const chapterProgressMap = vocabProps.chapterProgressMap;
+  const loadingVocab = vocabProps.loading;
+  const showNextButton = vocabProps.showNextButton;
 
   // ======== Sentence ========
   const sentenceType = sentenceProps.sentenceType;
   const setSentenceType = sentenceProps.setSentenceType;
+  const loadingSentence = sentenceProps.loading;
 
   const [localSentenceStage, setLocalSentenceStage] = useState("idle");
   const sentenceStage = sentenceProps?.sentenceStage ?? localSentenceStage;
@@ -49,7 +53,9 @@ export default function LearnUI({
   return (
     <section
       className={`mx-4 transition-all duration-500 ${
-        phase === "verifyMeaning" || vocabStage === "journey"
+        phase === "verifyMeaning" ||
+        vocabStage === "journey" ||
+        showNextButton === true
           ? "mt-8 md:mt-0 md:mb-96"
           : phase === "guidedPractice" || phase === "makeSentence"
             ? "mt-16 md:mt-4"
@@ -95,13 +101,39 @@ export default function LearnUI({
 
             <button
               onClick={() => setStarted(true)}
-              className="mt-5 w-full py-2.5! rounded-xl 
-              bg-gradient-to-r from-indigo-500 to-indigo-600 
-              text-white text-sm font-medium 
-              active:scale-[0.98] transition-all duration-200
-              shadow-md shadow-indigo-900/40"
+              disabled={loadingVocab || loadingSentence}
+              className="mt-5 w-full py-2.5! rounded-xl
+                bg-gradient-to-r from-indigo-500 to-indigo-600
+                text-white text-sm! font-medium
+                flex items-center justify-center gap-2
+                disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Start Practice
+              {loadingVocab || loadingSentence ? (
+                <>
+                  <svg
+                    className="h-4 w-4 animate-spin"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeOpacity="0.25"
+                    />
+                    <path
+                      d="M22 12a10 10 0 0 1-10 10"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                    />
+                  </svg>
+                  Preparing your practice...
+                </>
+              ) : (
+                "Start Practice"
+              )}
             </button>
           </div>
 
@@ -178,8 +210,10 @@ export default function LearnUI({
             <VocabJourney
               chapters={chapterList}
               onStart={(chapterId) => {
+                setStartingJourney(true);
                 goToJourney(chapterId);
               }}
+              startingJourney={startingJourney}
               chapterStats={chapterStats}
               openChapterModal={openChapterModal}
               chapterProgressMap={chapterProgressMap}
@@ -189,7 +223,7 @@ export default function LearnUI({
           )}
 
           {modeLearn === "vocab" && vocabStage === "session" && (
-            <VocabUI {...vocabProps} />
+            <VocabUI {...vocabProps} setStartingJourney={setStartingJourney} />
           )}
         </div>
       </div>

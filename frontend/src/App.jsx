@@ -269,6 +269,10 @@ Feature tambahan:
 
     isSkipped,
     setIsSkipped,
+
+    loading: loadingVocab,
+    showNextButton,
+    goToNextExample,
   } = useVocabEngine(userIdRef);
 
   // showVocab List
@@ -1063,6 +1067,9 @@ Feature tambahan:
 
                 isSkipped: isSkipped,
                 setIsSkipped: setIsSkipped,
+                loading: loadingVocab,
+                showNextButton: showNextButton,
+                goToNextExample: goToNextExample,
               }}
               sentenceProps={{
                 lesson: lesson,

@@ -1,5 +1,5 @@
 // components/VocabJourney.jsx
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
 
 const mapPoints = [
@@ -148,7 +148,7 @@ export default function IslandMapJourney({
   chapterStats,
   openChapterModal,
   chapterProgressMap,
-
+  startingJourney,
   setModeLearn,
   setVocabStage,
 }) {
@@ -166,9 +166,15 @@ export default function IslandMapJourney({
   //   ],
   // });
 
+  useEffect(() => {
+    console.log("startingJourney changed:", startingJourney);
+  }, ["startingJourney changed:", startingJourney]);
+
   const [selected, setSelected] = useState(null);
 
   const [loadingChapter, setLoadingChapter] = useState(null);
+
+  // const [startingChapter, setStartingChapter] = useState(false);
 
   const [startIndex, setStartIndex] = useState(0);
   const PAGE_SIZE = 6;
@@ -561,15 +567,45 @@ export default function IslandMapJourney({
 
                     <button
                       onClick={() => onStart?.(selected.id)}
-                      className="
-                        flex-1 py-2! rounded-xl
-                        bg-indigo-500!
-                        hover:bg-indigo-400
-                        font-medium
-                        transition
-                      "
+                      disabled={startingJourney}
+                      className={`
+    flex-1 py-2! rounded-xl
+    font-medium
+    transition-all duration-200
+
+    ${
+      startingJourney
+        ? "bg-indigo-400! cursor-not-allowed opacity-80"
+        : "bg-indigo-500! hover:bg-indigo-400"
+    }
+  `}
                     >
-                      Continue
+                      {startingJourney ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <svg
+                            className="w-4 h-4 animate-spin"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <circle
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              strokeOpacity="0.25"
+                            />
+                            <path
+                              d="M22 12a10 10 0 0 1-10 10"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                            />
+                          </svg>
+                          Starting...
+                        </span>
+                      ) : (
+                        "Continue"
+                      )}
                     </button>
                   </>
                 ) : (

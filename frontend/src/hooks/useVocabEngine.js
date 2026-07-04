@@ -2,6 +2,11 @@
 import { useRef, useEffect, useState, useMemo } from "react";
 import { linkBackend } from "../config";
 
+import correctAnswer from "../assets/sound/u_ntlsbh1e81-jawab-soal-519748.mp3";
+import correctAnswer1 from "../assets/sound/freesound_community-rightanswer-95219.mp3";
+import correctAnswer2 from "../assets/sound/delon_boomkin-notification-correct-answer-447601.mp3";
+import wrongAnswer from "../assets/sound/universfield-error-notification-05-199276.mp3";
+import wrongAnswer1 from "../assets/sound/universfield-error-notification-010-206498.mp3";
 // =========================
 // ENGINE
 // =========================
@@ -29,6 +34,7 @@ export default function useVocabEngine(userIdRef) {
   const [chapterProgressMap, setChapterProgressMap] = useState({});
 
   const [isSkipped, setIsSkipped] = useState(false);
+  const [showNextExample, setShowNextExample] = useState(false);
 
   const totalChapterVocab = apiVocab.length;
   const completedChapterVocab = useMemo(() => {
@@ -64,6 +70,10 @@ export default function useVocabEngine(userIdRef) {
 
   const [showDice, setShowDice] = useState(false);
   const [exampleIndex, setExampleIndex] = useState(0);
+
+  const [loading, setLoading] = useState(false);
+
+  const [showNextButton, setShowNextButton] = useState(false);
 
   // =========================
   // CURRENT VOCAB
@@ -129,6 +139,8 @@ export default function useVocabEngine(userIdRef) {
   // =========================
   useEffect(() => {
     const fetchAllVocab = async () => {
+      setLoading(true);
+
       try {
         const res = await fetch(`${linkBackend}/vocab/all`);
         const json = await res.json();
@@ -138,6 +150,8 @@ export default function useVocabEngine(userIdRef) {
         }
       } catch (err) {
         console.log("❌ failed fetch all vocab:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -507,6 +521,24 @@ export default function useVocabEngine(userIdRef) {
       .replace(/[^\w\s]/g, "")
       .trim();
 
+  const goToNextExample = () => {
+    const currentExampleIndex = exampleIndexRef.current;
+    const currentExamples = examplesRef.current;
+
+    const nextIndex = currentExampleIndex + 1;
+
+    setAttempt(0);
+    setShowNextButton(false);
+
+    if (nextIndex < currentExamples.length) {
+      setExampleIndex(nextIndex);
+    } else {
+      setExampleIndex(0);
+      setPhase("makeSentence");
+      setFeedback("🎯 Move to sentence");
+    }
+  };
+
   // =========================
   // SPEECH HANDLER
   // =========================
@@ -528,39 +560,82 @@ export default function useVocabEngine(userIdRef) {
       user === target || user.includes(target) || target.includes(user);
 
     // =========================
+    // Show Meaning Phase
+    // =========================
+    if (currentPhase === "showMeaning") {
+      const target = normalize(currentVocab.word);
+
+      const isCorrect =
+        user === target || user.includes(target) || target.includes(user);
+
+      if (isCorrect) {
+        correctSound.currentTime = 0;
+        correctSound.play();
+
+        setAttempt(0);
+        setFeedback("✅ Correct!");
+
+        // mulai latihan contoh dari contoh pertama
+        setExampleIndex(0);
+
+        setTimeout(() => {
+          setFeedback("");
+          setPhase("guidedPractice");
+        }, 500);
+      } else {
+        wrongSound.currentTime = 0;
+        wrongSound.play();
+
+        if (currentAttempt === 0) {
+          setAttempt(1);
+          setFeedback("❌ Try again");
+        } else {
+          setAttempt(2);
+          setFeedback("❌ You can keep trying.");
+        }
+      }
+
+      return;
+    }
+
+    // =========================
     // GUIDED PRACTICE
     // =========================
+
     if (currentPhase === "guidedPractice") {
       if (isCorrect) {
-        const nextIndex = currentExampleIndex + 1;
+        // 🔊 Sound benar
+        correctSound.currentTime = 0;
+        correctSound.play();
+
+        setShowNextButton(false);
 
         setFeedback("✅ Correct!");
         setAttempt(0);
 
-        if (nextIndex < currentExamples.length) {
-          setExampleIndex(nextIndex);
-        } else {
-          setExampleIndex(0);
-          setPhase("makeSentence");
-          setFeedback("🎯 All examples done!");
-        }
+        goToNextExample();
       } else {
+        // 🔊 Sound salah
+        wrongSound.currentTime = 0;
+        wrongSound.play();
         if (currentAttempt === 0) {
           setFeedback("❌ Try again");
           setAttempt(1);
         } else {
-          const nextIndex = currentExampleIndex + 1;
+          // const nextIndex = currentExampleIndex + 1;
 
-          setAttempt(0);
+          setAttempt(2);
+          setFeedback("❌ You can keep trying or skip.");
+          setShowNextButton(true);
 
-          if (nextIndex < currentExamples.length) {
-            setExampleIndex(nextIndex);
-            setFeedback("➡️ Next example");
-          } else {
-            setExampleIndex(0);
-            setPhase("makeSentence");
-            setFeedback("🎯 Move to sentence");
-          }
+          // if (nextIndex < currentExamples.length) {
+          //   setExampleIndex(nextIndex);
+          //   setFeedback("➡️ Next example");
+          // } else {
+          //   setExampleIndex(0);
+          //   setPhase("makeSentence");
+          //   setFeedback("🎯 Move to sentence");
+          // }
         }
       }
     }
@@ -572,6 +647,9 @@ export default function useVocabEngine(userIdRef) {
       const containsWord = user.includes(currentVocab.word.toLowerCase());
 
       setFeedback(containsWord ? "🔥 Good!" : "👍 Good!");
+      // 🔊 Sound benar
+      correctSound.currentTime = 0;
+      correctSound.play();
 
       setPhase("completed");
     }
@@ -757,28 +835,27 @@ export default function useVocabEngine(userIdRef) {
     setPhase("verifyMeaning");
   };
 
+  // Buat audio sekali saja (di luar function)
+  const correctSound = new Audio(correctAnswer2);
+  const wrongSound = new Audio(wrongAnswer);
+
   const verifyMeaningAnswer = async (answer) => {
     const correct = vocabRef.current?.meaning;
 
     if (answer === correct) {
-      // setShowDice(true);
-
-      // const vocabId = vocabRef.current?.id;
-      // const userId = userIdRef?.current;
-
-      // setCompletedMap((prev) => ({
-      //   ...prev,
-      //   [vocabId]: "known",
-      // }));
-
-      // markKnown(userId, vocabId);
-      // await updateChapterProgress(currentChapter?.id);
+      // Putar suara benar
+      correctSound.currentTime = 0;
+      correctSound.play();
 
       setExampleIndex(2); // contoh ke-3
       setAttempt(0);
       setFeedback("");
       setPhase("guidedPractice");
     } else {
+      // Putar suara salah
+      wrongSound.currentTime = 0;
+      wrongSound.play();
+
       setPhase("showMeaning");
     }
   };
@@ -843,5 +920,9 @@ export default function useVocabEngine(userIdRef) {
 
     isSkipped,
     setIsSkipped,
+    loading,
+
+    showNextButton,
+    goToNextExample,
   };
 }
