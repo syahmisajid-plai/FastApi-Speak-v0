@@ -57,7 +57,9 @@ export default function LearnUI({
         vocabStage === "journey" ||
         showNextButton === true
           ? "mt-8 md:mt-0 md:mb-96"
-          : phase === "guidedPractice" || phase === "makeSentence"
+          : phase === "guidedPractice" ||
+              phase === "makeSentence" ||
+              phase === "showMeaning"
             ? "mt-16 md:mt-4"
             : "mt-36 md:mt-12"
       } ${modeLearn === "sentence" ? "min-h-128" : ""}`}

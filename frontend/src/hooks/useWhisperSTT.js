@@ -47,7 +47,11 @@ export default function useWhisperSTT({
 
   // ================= NORMALIZE =================
   const normalizeText = (text) =>
-    text.toLowerCase().replace(/[.,!?]/g, "").replace(/\s+/g, " ").trim();
+    text
+      .toLowerCase()
+      .replace(/[.,!?]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
 
   // ================= VAD =================
   const startVAD = (stream) => {
@@ -109,8 +113,7 @@ export default function useWhisperSTT({
 
       if (!text) return;
 
-      fullTranscriptRef.current =
-        `${fullTranscriptRef.current} ${text}`.trim();
+      fullTranscriptRef.current = `${fullTranscriptRef.current} ${text}`.trim();
 
       setLiveTranscript(fullTranscriptRef.current);
       setCurrentTranscript(text);
@@ -132,10 +135,7 @@ export default function useWhisperSTT({
       return;
     }
 
-    console.log(
-      "DEBUG stopRequestedRef:",
-      stopRequestedRef.current
-    );
+    console.log("DEBUG stopRequestedRef:", stopRequestedRef.current);
 
     if (isProcessingRef.current) {
       console.log("⚠️ Already processing skip");
@@ -152,26 +152,30 @@ export default function useWhisperSTT({
 
     chunksRef.current = [];
 
-    await sendToBackend(blob);
+    const isTinyBlob = blob.size < 500;
+
+    if (isTinyBlob) {
+      console.log("🚫 Tiny blob, skip upload only");
+    } else {
+      await sendToBackend(blob);
+    }
 
     isProcessingRef.current = false;
 
     // ================= USER MENEKAN STOP =================
 
     if (stopRequestedRef.current) {
-      const finalText = normalizeText(
-        fullTranscriptRef.current
-      );
+      const finalText = normalizeText(fullTranscriptRef.current);
 
       if (finalText) {
         console.log("📤 FINAL WHISPER:", finalText);
         onFinalResult?.(finalText);
       }
 
-        // 🧹 reset transcript setelah send
-        setLiveTranscript("");
-        setCurrentTranscript("");
-        fullTranscriptRef.current = "";
+      // 🧹 reset transcript setelah send
+      setLiveTranscript("");
+      setCurrentTranscript("");
+      fullTranscriptRef.current = "";
 
       stopRequestedRef.current = false;
 
@@ -195,23 +199,21 @@ export default function useWhisperSTT({
 
   // ================= RECORDER =================
   const createRecorder = (stream) => {
-    const mimeType = MediaRecorder.isTypeSupported(
-        "audio/webm;codecs=opus"
-    )
-        ? "audio/webm;codecs=opus"
-        : undefined;
+    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ? "audio/webm;codecs=opus"
+      : undefined;
 
     const recorder = new MediaRecorder(
-        stream,
-        mimeType ? { mimeType } : undefined
+      stream,
+      mimeType ? { mimeType } : undefined,
     );
 
     recorderRef.current = recorder;
 
     recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
+      if (e.data.size > 0) {
         chunksRef.current.push(e.data);
-        }
+      }
     };
 
     // 🔥 IMPORTANT: NO REFERENCE TO OLD RECORDER
@@ -232,44 +234,42 @@ export default function useWhisperSTT({
   };
 
   // ================= START =================
-    const startRecording = async () => {
+  const startRecording = async () => {
     console.log("=== WHISPER START ===");
 
     stopRequestedRef.current = false;
 
-    console.log(
-      "RESET stopRequested = FALSE"
-    );
+    console.log("RESET stopRequested = FALSE");
 
     if (isRecordingRef.current) return;
 
     try {
-        // shouldSendOnEndRef.current = true;   // 🔥 FIX UTAMA
-        ignoreFlushRef.current = false;      // 🔥 FIX UTAMA
+      // shouldSendOnEndRef.current = true;   // 🔥 FIX UTAMA
+      ignoreFlushRef.current = false; // 🔥 FIX UTAMA
 
-        const stream = await navigator.mediaDevices.getUserMedia({
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
-        });
+      });
 
-        streamRef.current = stream;
-        chunksRef.current = [];
+      streamRef.current = stream;
+      chunksRef.current = [];
 
-        fullTranscriptRef.current = "";
+      fullTranscriptRef.current = "";
 
-        createRecorder(stream);
-        startVAD(stream);
+      createRecorder(stream);
+      startVAD(stream);
 
-        isRecordingRef.current = true;
-        setIsRecording?.(true);
+      isRecordingRef.current = true;
+      setIsRecording?.(true);
 
-        console.log("🚀 WHISPER STARTED OK");
+      console.log("🚀 WHISPER STARTED OK");
     } catch (err) {
-        console.error(err);
+      console.error(err);
     }
-    };
+  };
 
   // ================= STOP =================
-    const stopRecording = () => {
+  const stopRecording = () => {
     console.log("=== WHISPER STOP ===");
 
     console.log("SET stopRequested = TRUE");
@@ -278,27 +278,27 @@ export default function useWhisperSTT({
     const rec = recorderRef.current;
 
     try {
-        if (rec?.state === "recording") {
+      if (rec?.state === "recording") {
         console.log("⏹ requestData + stop");
 
         rec.requestData(); // 🔥 WAJIB
         rec.stop();
-        }
+      }
     } catch (err) {
-        console.error(err);
+      console.error(err);
     }
 
     isRecordingRef.current = false;
     setIsRecording?.(false);
 
     setTimeout(() => {
-        streamRef.current?.getTracks().forEach((t) => t.stop());
-        streamRef.current = null;
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
     }, 300);
-    };
+  };
 
   // ================= CANCEL =================
-    const cancelRecording = () => {
+  const cancelRecording = () => {
     console.log("=== WHISPER CANCEL RECORDING ===");
     console.log("❌ CANCEL");
 
@@ -312,7 +312,7 @@ export default function useWhisperSTT({
     setCurrentTranscript("");
 
     fullTranscriptRef.current = "";
-    
+
     setIsCanceled(true);
     // shouldSendOnEndRef.current = false;
 
@@ -320,10 +320,10 @@ export default function useWhisperSTT({
     onResetIdle?.();
 
     console.log("❌ WHISPER CANCEL DONE");
-    };
+  };
 
   // ================= PAUSE =================
-    const pauseRecording = () => {
+  const pauseRecording = () => {
     console.log("=== WHISPER PAUSE ===");
 
     wasRecordingBeforeLupaKataRef.current = isRecordingRef.current;
@@ -337,15 +337,15 @@ export default function useWhisperSTT({
     setIsPaused(true);
 
     console.log("⏸ WHISPER PAUSED");
-    };
+  };
 
   // ================= RESUME =================
-    const resumeRecording = () => {
+  const resumeRecording = () => {
     console.log("=== WHISPER RESUME ===");
 
     if (!streamRef.current) {
-        console.log("❌ No stream available for resume");
-        return;
+      console.log("❌ No stream available for resume");
+      return;
     }
 
     ignoreFlushRef.current = false;
@@ -357,7 +357,7 @@ export default function useWhisperSTT({
     isRecordingRef.current = true;
 
     console.log("🚀 WHISPER RESUMED");
-    };
+  };
 
   // ================= LUPA KATA EFFECT =================
   useEffect(() => {

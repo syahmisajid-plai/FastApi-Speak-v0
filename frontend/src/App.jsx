@@ -143,7 +143,7 @@ Feature tambahan:
   // ================== Set Mode ==================
   const [mode, setMode] = useState("freeTalk");
   const modeRef = useRef(mode);
-  // freeTalk | dailyStory | roleplay | vocab
+  // freeTalk | scenarios | learn
 
   const [modeLearn, setModeLearn] = useState("idle");
 
@@ -273,6 +273,9 @@ Feature tambahan:
     loading: loadingVocab,
     showNextButton,
     goToNextExample,
+
+    skipToGuidedPractice,
+    showMeaningNextButton,
   } = useVocabEngine(userIdRef);
 
   // showVocab List
@@ -1070,6 +1073,10 @@ Feature tambahan:
                 loading: loadingVocab,
                 showNextButton: showNextButton,
                 goToNextExample: goToNextExample,
+
+                skipToGuidedPractice: skipToGuidedPractice,
+                showMeaningNextButton: showMeaningNextButton,
+                isTranscribing: isTranscribing,
               }}
               sentenceProps={{
                 lesson: lesson,

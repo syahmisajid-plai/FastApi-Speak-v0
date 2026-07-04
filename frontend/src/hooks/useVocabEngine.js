@@ -74,6 +74,7 @@ export default function useVocabEngine(userIdRef) {
   const [loading, setLoading] = useState(false);
 
   const [showNextButton, setShowNextButton] = useState(false);
+  const [showMeaningNextButton, setShowMeaningNextButton] = useState(false);
 
   // =========================
   // CURRENT VOCAB
@@ -513,6 +514,49 @@ export default function useVocabEngine(userIdRef) {
   }, [phase, isSkipped]);
 
   // ==========================
+  // Number
+  // ==========================
+  const numberMap = {
+    1: "one",
+    2: "two",
+    3: "three",
+    4: "four",
+    5: "five",
+    6: "six",
+    7: "seven",
+    8: "eight",
+    9: "nine",
+    10: "ten",
+    11: "eleven",
+    12: "twelve",
+    13: "thirteen",
+    14: "fourteen",
+    15: "fifteen",
+    16: "sixteen",
+    17: "seventeen",
+    18: "eighteen",
+    19: "nineteen",
+    20: "twenty",
+  };
+
+  // ==========================
+  // NORMALIZE NUMBER
+  // ==========================
+  const normalizeNumber = (text) => {
+    let t = text?.toLowerCase();
+
+    Object.entries(numberMap).forEach(([digit, word]) => {
+      const digitRegex = new RegExp(`(^|\\s)${digit}(?=\\s|$)`, "g");
+      const wordRegex = new RegExp(`(^|\\s)${word}(?=\\s|$)`, "g");
+
+      t = t.replace(digitRegex, ` ${word} `);
+      t = t.replace(wordRegex, ` ${word} `);
+    });
+
+    return t.trim().replace(/\s+/g, " ");
+  };
+
+  // ==========================
   // NORMALIZE
   // ==========================
   const normalize = (text) =>
@@ -539,6 +583,15 @@ export default function useVocabEngine(userIdRef) {
     }
   };
 
+  const skipToGuidedPractice = () => {
+    setAttempt(0);
+    setShowMeaningNextButton(false);
+    setFeedback("");
+
+    setExampleIndex(0);
+    setPhase("guidedPractice");
+  };
+
   // =========================
   // SPEECH HANDLER
   // =========================
@@ -549,15 +602,16 @@ export default function useVocabEngine(userIdRef) {
     const currentExampleIndex = exampleIndexRef.current;
     const currentAttempt = attemptRef.current;
 
+    // console.log("🎤 TEXT handleSpeech:", text);
     if (!currentVocab) return;
 
     if (!currentExamples[currentExampleIndex]) return;
 
-    const user = normalize(text);
-    const target = normalize(currentExamples[currentExampleIndex]?.en);
+    const rawUser = normalize(text);
+    const rawTarget = normalize(currentExamples[currentExampleIndex]?.en);
 
-    const isCorrect =
-      user === target || user.includes(target) || target.includes(user);
+    const user = normalizeNumber(rawUser);
+    const target = normalizeNumber(rawTarget);
 
     // =========================
     // Show Meaning Phase
@@ -573,6 +627,7 @@ export default function useVocabEngine(userIdRef) {
         correctSound.play();
 
         setAttempt(0);
+        setShowMeaningNextButton(false);
         setFeedback("✅ Correct!");
 
         // mulai latihan contoh dari contoh pertama
@@ -591,6 +646,7 @@ export default function useVocabEngine(userIdRef) {
           setFeedback("❌ Try again");
         } else {
           setAttempt(2);
+          setShowMeaningNextButton(true);
           setFeedback("❌ You can keep trying.");
         }
       }
@@ -603,6 +659,9 @@ export default function useVocabEngine(userIdRef) {
     // =========================
 
     if (currentPhase === "guidedPractice") {
+      const isCorrect =
+        user === target || user.includes(target) || target.includes(user);
+
       if (isCorrect) {
         // 🔊 Sound benar
         correctSound.currentTime = 0;
@@ -924,5 +983,8 @@ export default function useVocabEngine(userIdRef) {
 
     showNextButton,
     goToNextExample,
+
+    skipToGuidedPractice,
+    showMeaningNextButton,
   };
 }

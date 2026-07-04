@@ -54,6 +54,10 @@ export default function VocabUI({
   setStartingJourney,
   showNextButton,
   goToNextExample,
+
+  skipToGuidedPractice,
+  showMeaningNextButton,
+  isTranscribing,
 }) {
   // vocab = false;
   // console.log(showNextButton);
@@ -61,10 +65,22 @@ export default function VocabUI({
   // console.log(typeof goToNextExample);
   const [started, setStarted] = useState(false);
 
-  // console.log("example:", examples);
+  // console.log("isTranscribing:", isTranscribing);
+  // console.log("showMeaningNextButton:", showMeaningNextButton);
 
   const [showStarters, setShowStarters] = useState(false);
   const [currentStarter, setCurrentStarter] = useState("");
+
+  // Auto Stop Recording when isTranscribing is done
+  useEffect(() => {
+    if (isRecording && !isTranscribing && liveTranscript.trim()) {
+      const timer = setTimeout(() => {
+        stopRecording();
+      }, 500); // 1 detik delay
+
+      return () => clearTimeout(timer);
+    }
+  }, [isTranscribing]);
 
   const createStarter = (sentence) => {
     if (!sentence) return "";
@@ -528,15 +544,17 @@ export default function VocabUI({
                         )}
 
                         {phase === "showMeaning" && (
-                          <div className="text-center space-y-5 animate-pop">
-                            <h3 className="text-4xl font-extrabold text-indigo-300">
-                              {vocab.word}
-                            </h3>
+                          <div className="text-center animate-pop">
+                            {/* WORD */}
+                            <div className="space-y-2">
+                              <h3 className="text-4xl font-extrabold text-indigo-300">
+                                {vocab.word}
+                              </h3>
 
-                            <button
-                              onClick={() => handlePlayWord(vocab.word)}
-                              disabled={isPlayingWord}
-                              className="
+                              <button
+                                onClick={() => handlePlayWord(vocab.word)}
+                                disabled={isPlayingWord}
+                                className="
                                     text-xs!
                                     px-3!
                                     py-1!
@@ -550,15 +568,22 @@ export default function VocabUI({
                                     duration-200
                                     disabled:opacity-70
                                   "
-                            >
-                              {isPlayingWord ? "🔄 Loading..." : "🔊 Play Word"}
-                            </button>
+                              >
+                                {isPlayingWord
+                                  ? "🔄 Loading..."
+                                  : "🔊 Play Word"}
+                              </button>
+                            </div>
 
-                            <p className="text-lg text-white/80 italic">
-                              {vocab.meaning}
-                            </p>
+                            {/* MEANING */}
+                            <div className="mt-5">
+                              <p className="text-lg text-white/80 italic">
+                                {vocab.meaning}
+                              </p>
+                            </div>
 
-                            <div className="flex justify-center gap-2 pt-2">
+                            {/* TAG */}
+                            <div className="flex justify-center gap-2 mt-4">
                               <span
                                 className="
                               px-3 py-1 text-xs rounded-full
@@ -596,7 +621,7 @@ export default function VocabUI({
                             </button> */}
 
                             {/* MIC BUTTON */}
-                            <div className="flex flex-col items-center gap-2">
+                            <div className="flex flex-col items-center gap-2 mt-8">
                               <button
                                 onClick={() =>
                                   isRecording
@@ -604,15 +629,27 @@ export default function VocabUI({
                                     : startRecording()
                                 }
                                 disabled={!canSpeak}
-                                className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl 
-                              transition-all duration-300 shadow-lg border border-white/10
-                              ${
-                                isRecording
-                                  ? "bg-indigo-500/30! text-indigo-300 scale-110 animate-pulse"
-                                  : "bg-white/5! text-white/80 hover:bg-white/10 hover:scale-105"
-                              } ${!canSpeak ? "opacity-30" : ""}`}
+                                className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl
+                                  transition-all duration-300 shadow-lg border border-white/10
+                                  ${
+                                    isRecording
+                                      ? isTranscribing
+                                        ? "bg-orange-500/30! text-orange-300 scale-110"
+                                        : "bg-indigo-500/30! text-indigo-300 scale-110 animate-pulse"
+                                      : "bg-white/5! text-white/80 hover:bg-white/10 hover:scale-105"
+                                  }
+                                  ${!canSpeak ? "opacity-30" : ""}
+                                `}
                               >
-                                {isRecording ? "⏹" : "🎤"}
+                                {isRecording ? (
+                                  isTranscribing ? (
+                                    <div className="w-7 h-7 border-4 border-orange-300 border-t-transparent rounded-full animate-spin" />
+                                  ) : (
+                                    "⏹"
+                                  )
+                                ) : (
+                                  "🎤"
+                                )}
                               </button>
 
                               <p className="text-xs text-white/50 text-center">
@@ -624,7 +661,7 @@ export default function VocabUI({
 
                             {/* TRANSCRIPT */}
                             {liveTranscript && (
-                              <div className="text-center">
+                              <div className="text-center mt-4">
                                 <p className="text-sm text-white/60">
                                   Kamu berkata:
                                 </p>
@@ -637,7 +674,7 @@ export default function VocabUI({
                             {/* FEEDBACK */}
                             {feedback && (
                               <div
-                                className={`text-sm font-medium text-center px-3 py-1 rounded-full
+                                className={`text-sm font-medium text-center px-3 py-1 rounded-full mt-3
                               ${
                                 feedback.includes("Benar") ||
                                 feedback.includes("Bagus") ||
@@ -647,6 +684,27 @@ export default function VocabUI({
                               }`}
                               >
                                 {feedback}
+                              </div>
+                            )}
+
+                            {/* NEXT BUTTON */}
+                            {showMeaningNextButton && (
+                              <div className="mt-5 flex justify-center animate-fadeIn">
+                                <button
+                                  onClick={skipToGuidedPractice}
+                                  className="
+                                    px-5! py-2!
+                                    rounded-xl
+                                    bg-indigo-500!
+                                    hover:bg-indigo-600
+                                    text-white
+                                    transition-all
+                                    duration-200
+                                    active:scale-95
+                                  "
+                                >
+                                  Next →
+                                </button>
                               </div>
                             )}
                           </div>
@@ -788,20 +846,34 @@ export default function VocabUI({
                                     : startRecording()
                                 }
                                 disabled={!canSpeak}
-                                className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl 
-                              transition-all duration-300 shadow-lg border border-white/10
-                              ${
-                                isRecording
-                                  ? "bg-indigo-500/30! text-indigo-300 scale-110 animate-pulse"
-                                  : "bg-white/5! text-white/80 hover:bg-white/10 hover:scale-105"
-                              } ${!canSpeak ? "opacity-30" : ""}`}
+                                className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl
+                                  transition-all duration-300 shadow-lg border border-white/10
+                                  ${
+                                    isRecording
+                                      ? isTranscribing
+                                        ? "bg-orange-500/30! text-orange-300 scale-110"
+                                        : "bg-indigo-500/30! text-indigo-300 scale-110 animate-pulse"
+                                      : "bg-white/5! text-white/80 hover:bg-white/10 hover:scale-105"
+                                  }
+                                  ${!canSpeak ? "opacity-30" : ""}
+                                `}
                               >
-                                {isRecording ? "⏹" : "🎤"}
+                                {isRecording ? (
+                                  isTranscribing ? (
+                                    <div className="w-7 h-7 border-4 border-orange-300 border-t-transparent rounded-full animate-spin" />
+                                  ) : (
+                                    "⏹"
+                                  )
+                                ) : (
+                                  "🎤"
+                                )}
                               </button>
 
                               <p className="text-xs text-white/50 text-center">
                                 {isRecording
-                                  ? "Mendengarkan..."
+                                  ? isTranscribing
+                                    ? "Memproses ucapan..."
+                                    : "Mendengarkan..."
                                   : "Tap untuk mulai berbicara"}
                               </p>
                             </div>
