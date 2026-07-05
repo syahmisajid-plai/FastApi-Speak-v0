@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 import choiceSoundFile from "../assets/sound/universfield-game-level-complete-143022.mp3";
 
@@ -104,8 +104,10 @@ export default function SentenceChoice({
           <button
             key={type.id}
             onClick={async () => {
-              choiceSound.currentTime = 0;
-              await choiceSound.play().catch(() => {});
+              if (choiceSound.current) {
+                choiceSound.current.currentTime = 0;
+                await choiceSound.current.play().catch(() => {});
+              }
 
               if (loading) return;
               setLoading(type.id);

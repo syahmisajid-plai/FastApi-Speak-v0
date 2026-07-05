@@ -1,5 +1,5 @@
 // components/VocabUI.jsx
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import useAudioVocab from "../hooks/useAudioVocab";
 
 import next_vocab from "../assets/sound/universfield-game-level-complete-143022.mp3";
@@ -70,6 +70,20 @@ export default function VocabUI({
 
   const [showStarters, setShowStarters] = useState(false);
   const [currentStarter, setCurrentStarter] = useState("");
+
+  const nextVocabAudio = useRef(null);
+
+  useEffect(() => {
+    nextVocabAudio.current = new Audio(next_vocab);
+
+    return () => {
+      if (nextVocabAudio.current) {
+        nextVocabAudio.current.pause();
+        nextVocabAudio.current.src = "";
+        nextVocabAudio.current.load();
+      }
+    };
+  }, []);
 
   // Auto Stop Recording when isTranscribing is done
   useEffect(() => {
@@ -946,9 +960,10 @@ export default function VocabUI({
 
                             <Button
                               onClick={() => {
-                                const next_vocabSound = new Audio(next_vocab);
-                                next_vocabSound.currentTime = 0;
-                                next_vocabSound.play();
+                                if (nextVocabAudio.current) {
+                                  nextVocabAudio.current.currentTime = 0;
+                                  nextVocabAudio.current.play().catch(() => {});
+                                }
 
                                 setShowDice(true);
                                 next();

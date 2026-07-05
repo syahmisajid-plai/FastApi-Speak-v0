@@ -623,8 +623,10 @@ export default function useVocabEngine(userIdRef) {
         user === target || user.includes(target) || target.includes(user);
 
       if (isCorrect) {
-        correctSound.currentTime = 0;
-        correctSound.play();
+        if (correctSound.current) {
+          correctSound.current.currentTime = 0;
+          correctSound.current.play().catch(() => {});
+        }
 
         setAttempt(0);
         setShowMeaningNextButton(false);
@@ -638,8 +640,10 @@ export default function useVocabEngine(userIdRef) {
           setPhase("guidedPractice");
         }, 500);
       } else {
-        wrongSound.currentTime = 0;
-        wrongSound.play();
+        if (wrongSound.current) {
+          wrongSound.current.currentTime = 0;
+          wrongSound.current.play().catch(() => {});
+        }
 
         if (currentAttempt === 0) {
           setAttempt(1);
@@ -664,8 +668,10 @@ export default function useVocabEngine(userIdRef) {
 
       if (isCorrect) {
         // 🔊 Sound benar
-        correctSound.currentTime = 0;
-        correctSound.play();
+        if (correctSound.current) {
+          correctSound.current.currentTime = 0;
+          correctSound.current.play().catch(() => {});
+        }
 
         setShowNextButton(false);
 
@@ -675,8 +681,10 @@ export default function useVocabEngine(userIdRef) {
         goToNextExample();
       } else {
         // 🔊 Sound salah
-        wrongSound.currentTime = 0;
-        wrongSound.play();
+        if (wrongSound.current) {
+          wrongSound.current.currentTime = 0;
+          wrongSound.current.play().catch(() => {});
+        }
         if (currentAttempt === 0) {
           setFeedback("❌ Try again");
           setAttempt(1);
@@ -707,8 +715,10 @@ export default function useVocabEngine(userIdRef) {
 
       setFeedback(containsWord ? "🔥 Good!" : "👍 Good!");
       // 🔊 Sound benar
-      correctSound.currentTime = 0;
-      correctSound.play();
+      if (correctSound.current) {
+        correctSound.current.currentTime = 0;
+        correctSound.current.play().catch(() => {});
+      }
 
       setPhase("completed");
     }
@@ -917,8 +927,10 @@ export default function useVocabEngine(userIdRef) {
 
     if (answer === correct) {
       // Putar suara benar
-      correctSound.currentTime = 0;
-      correctSound.play();
+      if (correctSound.current) {
+        correctSound.current.currentTime = 0;
+        correctSound.current.play().catch(() => {});
+      }
 
       setExampleIndex(2); // contoh ke-3
       setAttempt(0);
@@ -926,8 +938,10 @@ export default function useVocabEngine(userIdRef) {
       setPhase("guidedPractice");
     } else {
       // Putar suara salah
-      wrongSound.currentTime = 0;
-      wrongSound.play();
+      if (wrongSound.current) {
+        wrongSound.current.currentTime = 0;
+        wrongSound.current.play().catch(() => {});
+      }
 
       setPhase("showMeaning");
     }

@@ -16,7 +16,7 @@ export default function AudioUnlockOverlay({
 
     console.log("2. before unlock");
 
-    // await onUnlock();
+    await onUnlock();
 
     console.log("3. after unlock");
 

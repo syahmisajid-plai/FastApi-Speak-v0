@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 
 // import speakerSound from "../assets/speaker_enable.mp3";
 // import speakerSound from "../assets/intro_welcome.mp3";
@@ -42,8 +42,8 @@ export default function useAudioPermission() {
     }
   }, []);
 
-  console.log("🔑 micReady:", micReady, "micError:", micError);
-  console.log("🔑 speakerReady:", speakerReady, "speakerError:", speakerError);
+  // console.log("🔑 micReady:", micReady, "micError:", micError);
+  // console.log("🔑 speakerReady:", speakerReady, "speakerError:", speakerError);
 
   return {
     micReady,

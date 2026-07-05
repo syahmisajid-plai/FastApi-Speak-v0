@@ -1,5 +1,5 @@
 // import { div } from "framer-motion/m";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import clickAudioFile from "../assets/sound/universfield-level-up-191997.mp3";
 import nextAudioFile from "../assets/sound/freesound_community-button-pressed-38129.mp3";
@@ -302,9 +302,10 @@ export default function SentenceUI({
                 <>
                   <button
                     onClick={() => {
-                      clickAudio.currentTime = 0;
-                      clickAudio.play().catch(() => {});
-
+                      if (clickAudio.current) {
+                        clickAudio.current.currentTime = 0;
+                        clickAudio.current.play().catch(() => {});
+                      }
                       setShowID((prev) => !prev);
                     }}
                     className={`
@@ -380,8 +381,10 @@ export default function SentenceUI({
 
                 <button
                   onClick={() => {
-                    nextAudio.currentTime = 0;
-                    nextAudio.play().catch(() => {});
+                    if (nextAudio.current) {
+                      nextAudio.current.currentTime = 0;
+                      nextAudio.current.play().catch(() => {});
+                    }
 
                     setHasStarted(true);
                   }}
@@ -426,8 +429,10 @@ export default function SentenceUI({
                 <div className="flex flex-col items-center gap-3 mt-8">
                   <button
                     onClick={() => {
-                      openMicAudio.currentTime = 0;
-                      openMicAudio.play().catch(() => {});
+                      if (openMicAudio.current) {
+                        openMicAudio.current.currentTime = 0;
+                        openMicAudio.current.play().catch(() => {});
+                      }
 
                       handleMicClick();
                     }}
@@ -477,8 +482,10 @@ export default function SentenceUI({
                 <div className="mt-6 flex justify-center gap-3">
                   <button
                     onClick={() => {
-                      nextAudio.currentTime = 0;
-                      nextAudio.play().catch(() => {});
+                      if (nextAudio.current) {
+                        nextAudio.current.currentTime = 0;
+                        nextAudio.current.play().catch(() => {});
+                      }
 
                       handleMicClick();
                     }}
@@ -495,8 +502,10 @@ export default function SentenceUI({
 
                   <button
                     onClick={() => {
-                      nextAudio.currentTime = 0;
-                      nextAudio.play().catch(() => {});
+                      if (nextAudio.current) {
+                        nextAudio.current.currentTime = 0;
+                        nextAudio.current.play().catch(() => {});
+                      }
 
                       handleSubmit();
                     }}
@@ -590,8 +599,10 @@ export default function SentenceUI({
             <div className="flex justify-center mt-6">
               <button
                 onClick={() => {
-                  nextAudio.currentTime = 0;
-                  nextAudio.play().catch(() => {});
+                  if (nextAudio.current) {
+                    nextAudio.current.currentTime = 0;
+                    nextAudio.current.play().catch(() => {});
+                  }
 
                   nextStep();
                 }}
@@ -721,8 +732,10 @@ export default function SentenceUI({
               <div className="flex flex-col items-center gap-3 mt-4">
                 <button
                   onClick={() => {
-                    openMicAudio.currentTime = 0;
-                    openMicAudio.play().catch(() => {});
+                    if (openMicAudio.current) {
+                      openMicAudio.current.currentTime = 0;
+                      openMicAudio.current.play().catch(() => {});
+                    }
 
                     handleMicClick();
                   }}
@@ -778,8 +791,10 @@ export default function SentenceUI({
               <div className="mt-6 flex justify-center gap-3">
                 <button
                   onClick={() => {
-                    nextAudio.currentTime = 0;
-                    nextAudio.play().catch(() => {});
+                    if (nextAudio.current) {
+                      nextAudio.current.currentTime = 0;
+                      nextAudio.current.play().catch(() => {});
+                    }
 
                     handleMicClick();
                   }}
@@ -796,8 +811,10 @@ export default function SentenceUI({
 
                 <button
                   onClick={() => {
-                    nextAudio.currentTime = 0;
-                    nextAudio.play().catch(() => {});
+                    if (nextAudio.current) {
+                      nextAudio.current.currentTime = 0;
+                      nextAudio.current.play().catch(() => {});
+                    }
 
                     nextStep();
                   }}
@@ -889,8 +906,10 @@ export default function SentenceUI({
           {/* ================= ACTION ================= */}
           <button
             onClick={async () => {
-              nextAudio.currentTime = 0;
-              nextAudio.play().catch(() => {});
+              if (nextAudio.current) {
+                nextAudio.current.currentTime = 0;
+                nextAudio.current.play().catch(() => {});
+              }
               await completeLesson();
               setMode("idle");
               setStep(0);
