@@ -54,7 +54,19 @@ export default function SentenceChoice({
 }) {
   const [loading, setLoading] = useState(null);
 
-  const choiceSound = new Audio(choiceSoundFile);
+  const choiceSound = useRef(null);
+
+  useEffect(() => {
+    choiceSound.current = new Audio(choiceSoundFile);
+
+    return () => {
+      if (choiceSound.current) {
+        choiceSound.current.pause();
+        choiceSound.current.src = "";
+        choiceSound.current.load();
+      }
+    };
+  }, []);
 
   return (
     <div className="relative w-full max-w-md mx-auto min-h-[400px] text-white px-6 py-8 mt-24">

@@ -7,7 +7,7 @@ export default function AudioUnlockOverlay({
 }) {
   const [opening, setOpening] = useState(false);
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (opening) return;
 
     console.log("1. button clicked");
@@ -16,16 +16,10 @@ export default function AudioUnlockOverlay({
 
     console.log("2. before unlock");
 
-    // Jalankan unlock di background
-    Promise.resolve(onUnlock())
-      .then(() => {
-        console.log("3. after unlock");
-      })
-      .catch((err) => {
-        console.error("Unlock failed:", err);
-      });
+    // await onUnlock();
 
-    // Overlay pasti ditutup setelah animasi
+    console.log("3. after unlock");
+
     setTimeout(() => {
       console.log("4. calling onFinish");
       onFinish();

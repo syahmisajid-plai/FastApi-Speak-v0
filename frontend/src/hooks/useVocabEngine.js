@@ -894,9 +894,23 @@ export default function useVocabEngine(userIdRef) {
     setPhase("verifyMeaning");
   };
 
-  // Buat audio sekali saja (di luar function)
-  const correctSound = new Audio(correctAnswer2);
-  const wrongSound = new Audio(wrongAnswer);
+  const correctSound = useRef(null);
+  const wrongSound = useRef(null);
+
+  useEffect(() => {
+    correctSound.current = new Audio(correctAnswer2);
+    wrongSound.current = new Audio(wrongAnswer);
+
+    return () => {
+      [correctSound, wrongSound].forEach((ref) => {
+        if (ref.current) {
+          ref.current.pause();
+          ref.current.src = "";
+          ref.current.load();
+        }
+      });
+    };
+  }, []);
 
   const verifyMeaningAnswer = async (answer) => {
     const correct = vocabRef.current?.meaning;
