@@ -58,7 +58,7 @@ export default function RoleplayModalCard({
     <div>
       {/* MODAL */}
       {isOpen && started && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[50] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="w-[280px] h-[380px] rounded-xl p-3">
             {/* STEP 1 — category SELECTION */}
             {step === "category" && (

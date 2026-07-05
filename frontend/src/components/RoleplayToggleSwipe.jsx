@@ -99,7 +99,7 @@ export default function RoleplayToggleSwipe({
   const [mission, setMission] = useState(null);
   // const [activeChecklist, setActiveChecklist] = useState(null);
 
-  const [isMissionOpen, setIsMissionOpen] = useState(true);
+  const [isMissionOpen, setIsMissionOpen] = useState(false);
   const [activeScenario, setActiveScenario] = useState(null);
 
   useEffect(() => {
