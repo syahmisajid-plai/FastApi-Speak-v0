@@ -150,6 +150,8 @@ Feature tambahan:
     console.log("🧠 modeRef updated:", mode);
   }, [mode]);
 
+  console.log("🔑 showOverlay: ", showOverlay);
+
   const [modeLearn, setModeLearn] = useState("idle");
 
   const [modeScenario, setModeScenario] = useState("idle");

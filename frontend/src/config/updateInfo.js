@@ -1,5 +1,5 @@
 export const updateInfo = {
-  version: "1.0.7",
+  version: "1.0.8",
   features: [
     { icon: "⚡", text: "Faster", color: "emerald" },
     { icon: "🛠", text: "Bug Fixes", color: "gray" },
