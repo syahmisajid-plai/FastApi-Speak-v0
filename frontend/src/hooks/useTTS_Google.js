@@ -2,7 +2,7 @@
 import { useRef, useState } from "react";
 import { linkBackend } from "../config";
 
-export default function useTTS_Google(userIdRef, mode) {
+export default function useTTS_Google(userIdRef, modeRef) {
   const audioCache = useRef(new Map());
   const currentAudioRef = useRef(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -11,7 +11,7 @@ export default function useTTS_Google(userIdRef, mode) {
 
   const audioUnlockedRef = useRef(false);
 
-    // 🔓 Unlock audio for iOS / mobile browsers
+  // 🔓 Unlock audio for iOS / mobile browsers
   const unlockAudio = async () => {
     if (audioUnlockedRef.current) {
       console.log("🔓 Audio already unlocked");
@@ -91,12 +91,12 @@ export default function useTTS_Google(userIdRef, mode) {
         const payload = {
           text,
           user_id: userIdRef.current,
-          mode: mode,
+          mode: modeRef.current,
         };
 
         console.log("📤 TTS PAYLOAD:", payload);
         console.log("📤 user_id type:", userIdRef.current);
-        console.log("📤 mode:", mode);
+        console.log("📤 mode:", modeRef.current);
 
         const res = await fetch(`${linkBackend}/tts-stream`, {
           method: "POST",

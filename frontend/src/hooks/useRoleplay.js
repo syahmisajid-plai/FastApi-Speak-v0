@@ -10,6 +10,7 @@ export default function useRoleplay({
   setChatHistory,
   checklistProgress,
   userId,
+  activeChecklist,
 }) {
   const [selectedScenario, setSelectedScenario] = useState(null);
 
@@ -39,6 +40,18 @@ export default function useRoleplay({
         stepKey: nextStep.step_key,
       });
     }
+  };
+
+  // Checklist progress
+  const maxTurn = selectedScenario?.target_turn ?? 0;
+  const currentTurn = chatHistory.filter((msg) => msg.sender === "You").length;
+  const handleChecklistFinished = (progress) => {
+    handleRoleplayCompleted("Checklist completed", progress);
+  };
+  const handleChecklistUpdate = (updatedChecklist, currentStep) => {
+    // console.log("📍 CURRENT STEP:", currentStep);
+
+    pushNextStepToChat(updatedChecklist);
   };
 
   const resetContextState = () => {
@@ -271,6 +284,8 @@ export default function useRoleplay({
     }
   };
 
+  const totalDone = activeChecklist?.filter((x) => x.done).length ?? 0;
+
   return {
     // state
     selectedScenario,
@@ -293,5 +308,10 @@ export default function useRoleplay({
 
     // 🔥 ini yang penting
     activeContext,
+
+    handleChecklistFinished,
+    handleChecklistUpdate,
+
+    totalDone,
   };
 }

@@ -145,6 +145,11 @@ Feature tambahan:
   const modeRef = useRef(mode);
   // freeTalk | scenarios | learn
 
+  useEffect(() => {
+    modeRef.current = mode;
+    console.log("🧠 modeRef updated:", mode);
+  }, [mode]);
+
   const [modeLearn, setModeLearn] = useState("idle");
 
   const [modeScenario, setModeScenario] = useState("idle");
@@ -444,7 +449,7 @@ Feature tambahan:
   // ================== HOOKS ==================
   const { speakText, isSpeaking, forceStop, unlockAudio } = useTTS_Google(
     userIdRef,
-    mode,
+    modeRef,
   ); // 🗣️ Text-to-Speech
 
   // ================== RolePlay ==================
@@ -467,28 +472,36 @@ Feature tambahan:
     pushNextStepToChat,
     activeContext,
     sendInitialMessage,
+
+    handleChecklistFinished,
+    handleChecklistUpdate,
+
+    totalDone,
   } = useRoleplay({
     sessionIdRef,
     scenarioRef,
     chatHistory,
     setChatHistory,
     userId,
+    activeChecklist,
     // checklistProgress,
   });
+
+  const totalChecklist = activeChecklist?.length ?? 0;
 
   const maxTurn = selectedScenario?.target_turn ?? 0;
 
   const currentTurn = chatHistory.filter((msg) => msg.sender === "You").length;
 
-  const handleChecklistFinished = (progress) => {
-    handleRoleplayCompleted("Checklist completed", progress);
-  };
+  // const handleChecklistFinished = (progress) => {
+  //   handleRoleplayCompleted("Checklist completed", progress);
+  // };
 
-  const handleChecklistUpdate = (updatedChecklist, currentStep) => {
-    console.log("📍 CURRENT STEP:", currentStep);
+  // const handleChecklistUpdate = (updatedChecklist, currentStep) => {
+  //   console.log("📍 CURRENT STEP:", currentStep);
 
-    pushNextStepToChat(updatedChecklist);
-  };
+  //   pushNextStepToChat(updatedChecklist);
+  // };
 
   useEffect(() => {
     if (activeContext) {
@@ -497,11 +510,6 @@ Feature tambahan:
   }, [activeContext]);
 
   // console.log("======================= userId =======================", userId);
-
-  useEffect(() => {
-    modeRef.current = mode;
-    console.log("🧠 modeRef updated:", mode);
-  }, [mode]);
 
   useEffect(() => {
     modeScenarioRef.current = modeScenario;
@@ -829,6 +837,7 @@ Feature tambahan:
             setSupportSTTWeb={setSupportSTTWeb}
             openMenu={openMenu}
             setOpenMenu={setOpenMenu}
+            totalDone={totalDone}
           />
           <OverlayFeedback message={overlayFavoritTranslated} />
           {/* VOCAB LIST */}

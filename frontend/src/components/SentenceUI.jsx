@@ -20,9 +20,25 @@ export default function SentenceUI({
 }) {
   const [step, setStep] = useState(0);
 
-  const clickAudio = new Audio(clickAudioFile);
-  const nextAudio = new Audio(nextAudioFile);
-  const openMicAudio = new Audio(openMicFile);
+  const clickAudio = useRef(null);
+  const nextAudio = useRef(null);
+  const openMicAudio = useRef(null);
+
+  useEffect(() => {
+    clickAudio.current = new Audio(clickAudioFile);
+    nextAudio.current = new Audio(nextAudioFile);
+    openMicAudio.current = new Audio(openMicFile);
+
+    return () => {
+      [clickAudio, nextAudio, openMicAudio].forEach((ref) => {
+        if (ref.current) {
+          ref.current.pause();
+          ref.current.src = "";
+          ref.current.load();
+        }
+      });
+    };
+  }, []);
 
   // console.log("====== lesson =======", lesson);
   const function_type = lesson?.function_type;

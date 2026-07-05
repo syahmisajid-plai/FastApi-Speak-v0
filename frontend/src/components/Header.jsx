@@ -31,6 +31,7 @@ export default function Header({
 
   openMenu,
   setOpenMenu,
+  totalDone,
 }) {
   const [showSummaryDaily, setShowSummaryDaily] = useState(false);
 
@@ -411,23 +412,36 @@ export default function Header({
 
               {/* CHECKLIST ITEMS */}
               <div className="flex gap-2 overflow-x-auto pb-1">
-                {activeChecklist.map((item, i) => (
-                  <div
-                    key={i}
-                    className={`
-                      min-w-[140px] px-2 py-1 rounded-lg text-[10px]
-                      border transition flex items-center gap-1
-                      ${
-                        item.done
-                          ? "bg-green-500/10 border-green-400/30 text-green-300"
-                          : "bg-white/5 border-white/10 text-white/60"
-                      }
-                    `}
-                  >
-                    <span className="text-xs">{item.done ? "✔" : "⬜"}</span>
-                    <span className="truncate">{item.text}</span>
-                  </div>
-                ))}
+                {activeChecklist.map((item, i) => {
+                  const isCurrent = i === totalDone;
+
+                  return (
+                    <div
+                      key={i}
+                      className={`
+        min-w-[140px] px-2 py-1 rounded-lg text-[10px]
+        border transition flex items-center gap-1
+        ${
+          item.done
+            ? "bg-green-500/10 border-green-400/30 text-green-300"
+            : isCurrent
+              ? "bg-yellow-500/20 border-yellow-400 text-yellow-200"
+              : "bg-white/5 border-white/10 text-white/60"
+        }
+      `}
+                    >
+                      <span className="text-xs">{item.done ? "✔" : "⬜"}</span>
+
+                      <span
+                        className={`truncate ${
+                          isCurrent ? "font-semibold" : ""
+                        }`}
+                      >
+                        {item.text}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

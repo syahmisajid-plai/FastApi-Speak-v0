@@ -19,6 +19,7 @@ export default function useConversationEngine({
 
   autoCorrectionRef,
 }) {
+  // console.log("🧭 mode:", modeRef.current);
   const sendTextToBackend = async (text) => {
     console.log(
       "📤 sendTextToBackend autoCorrectionRef:",
@@ -32,7 +33,7 @@ export default function useConversationEngine({
     console.log("🎭 scenarioId:", scenarioRef.current?.id ?? 0);
     console.log("🧭 mode:", modeRef.current);
     console.log("🧭 modeScenario:", modeScenarioRef.current);
-    
+
     const currentUserId = userIdRef.current;
 
     await unlockAudio();
@@ -126,11 +127,7 @@ export default function useConversationEngine({
               };
             }
 
-            if (
-              !alternativeAttached &&
-              c.sender === "You" &&
-              !c.alternative
-            ) {
+            if (!alternativeAttached && c.sender === "You" && !c.alternative) {
               alternativeAttached = true;
 
               return {
@@ -146,7 +143,7 @@ export default function useConversationEngine({
         const ttsMessage = autoCorrectionRef.current
           ? finalText
           : cleanAIText(finalText);
-  
+
         await speakText(ttsMessage);
 
         // ⭐ hanya roleplay yang punya completion
