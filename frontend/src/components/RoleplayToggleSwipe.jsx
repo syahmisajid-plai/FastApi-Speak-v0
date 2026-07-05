@@ -1,3 +1,5 @@
+// RoleplayToggleSwipe.jsx
+
 // ================== REACT CORE ==================
 import { useEffect, useState, useRef } from "react";
 import bgTree from "../assets/bg_tree.jpg";

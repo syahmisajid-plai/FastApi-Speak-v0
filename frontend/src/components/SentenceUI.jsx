@@ -1,6 +1,10 @@
 // import { div } from "framer-motion/m";
 import { useState, useEffect } from "react";
 
+import clickAudioFile from "../assets/sound/universfield-level-up-191997.mp3";
+import nextAudioFile from "../assets/sound/freesound_community-button-pressed-38129.mp3";
+import openMicFile from "../assets/sound/universfield-level-up-191997.mp3";
+
 export default function SentenceUI({
   lesson,
   loading,
@@ -15,6 +19,10 @@ export default function SentenceUI({
   liveTranscript,
 }) {
   const [step, setStep] = useState(0);
+
+  const clickAudio = new Audio(clickAudioFile);
+  const nextAudio = new Audio(nextAudioFile);
+  const openMicAudio = new Audio(openMicFile);
 
   // console.log("====== lesson =======", lesson);
   const function_type = lesson?.function_type;
@@ -277,7 +285,12 @@ export default function SentenceUI({
               {context_id && (
                 <>
                   <button
-                    onClick={() => setShowID((prev) => !prev)}
+                    onClick={() => {
+                      clickAudio.currentTime = 0;
+                      clickAudio.play().catch(() => {});
+
+                      setShowID((prev) => !prev);
+                    }}
                     className={`
                       text-xs px-3! py-1! rounded-full border transition-all duration-200
                       flex items-center gap-1 shadow-sm
@@ -350,7 +363,12 @@ export default function SentenceUI({
                 </p>
 
                 <button
-                  onClick={() => setHasStarted(true)}
+                  onClick={() => {
+                    nextAudio.currentTime = 0;
+                    nextAudio.play().catch(() => {});
+
+                    setHasStarted(true);
+                  }}
                   className="
                     mt-6 px-6! py-3! rounded-2xl
                     bg-gradient-to-r from-indigo-500 to-purple-600
@@ -391,7 +409,12 @@ export default function SentenceUI({
               {mode !== "review" && (
                 <div className="flex flex-col items-center gap-3 mt-8">
                   <button
-                    onClick={handleMicClick}
+                    onClick={() => {
+                      openMicAudio.currentTime = 0;
+                      openMicAudio.play().catch(() => {});
+
+                      handleMicClick();
+                    }}
                     className="
                       relative w-24 h-24 rounded-full
                       flex items-center justify-center
@@ -426,7 +449,6 @@ export default function SentenceUI({
                       {mode === "recording" && "⏹"}
                     </span>
                   </button>
-
                   <p className="text-xs text-white/50">
                     {mode === "recording"
                       ? "Listening... tap to stop"
@@ -438,7 +460,12 @@ export default function SentenceUI({
               {mode === "review" && (
                 <div className="mt-6 flex justify-center gap-3">
                   <button
-                    onClick={handleMicClick}
+                    onClick={() => {
+                      nextAudio.currentTime = 0;
+                      nextAudio.play().catch(() => {});
+
+                      handleMicClick();
+                    }}
                     className="
                       px-5! py-3! rounded-2xl
                       border border-white/10
@@ -451,7 +478,12 @@ export default function SentenceUI({
                   </button>
 
                   <button
-                    onClick={handleSubmit}
+                    onClick={() => {
+                      nextAudio.currentTime = 0;
+                      nextAudio.play().catch(() => {});
+
+                      handleSubmit();
+                    }}
                     className="
                       px-5! py-3! rounded-2xl
                       bg-gradient-to-r
@@ -541,7 +573,12 @@ export default function SentenceUI({
 
             <div className="flex justify-center mt-6">
               <button
-                onClick={nextStep}
+                onClick={() => {
+                  nextAudio.currentTime = 0;
+                  nextAudio.play().catch(() => {});
+
+                  nextStep();
+                }}
                 className="
                 px-5!
                 py-3!
@@ -599,17 +636,17 @@ export default function SentenceUI({
                 sentenceStage("idle");
               }}
               className="
-      inline-flex items-center gap-1
-      px-3!py-1!
-      rounded-full
-      text-xs font-medium
-      bg-white/5!
-      border border-white/10
-      text-white/80
-      hover:text-white
-      hover:bg-white/10!
-      transition-all
-    "
+                inline-flex items-center gap-1
+                px-3!py-1!
+                rounded-full
+                text-xs font-medium
+                bg-white/5!
+                border border-white/10
+                text-white/80
+                hover:text-white
+                hover:bg-white/10!
+                transition-all
+              "
             >
               ← Back
             </button>
@@ -667,7 +704,12 @@ export default function SentenceUI({
             {mode !== "review" && (
               <div className="flex flex-col items-center gap-3 mt-4">
                 <button
-                  onClick={handleMicClick}
+                  onClick={() => {
+                    openMicAudio.currentTime = 0;
+                    openMicAudio.play().catch(() => {});
+
+                    handleMicClick();
+                  }}
                   className="
           relative w-24 h-24 rounded-full
           flex items-center justify-center
@@ -719,20 +761,30 @@ export default function SentenceUI({
             {mode === "review" && (
               <div className="mt-6 flex justify-center gap-3">
                 <button
-                  onClick={handleMicClick}
+                  onClick={() => {
+                    nextAudio.currentTime = 0;
+                    nextAudio.play().catch(() => {});
+
+                    handleMicClick();
+                  }}
                   className="
-          px-5! py-3! rounded-2xl
-          border border-white/10
-          bg-white/5! hover:bg-white/10!
-          text-white
-          transition-all
-        "
+                    px-5! py-3! rounded-2xl
+                    border border-white/10
+                    bg-white/5! hover:bg-white/10!
+                    text-white
+                    transition-all
+                  "
                 >
                   🔁 Try Again
                 </button>
 
                 <button
-                  onClick={nextStep}
+                  onClick={() => {
+                    nextAudio.currentTime = 0;
+                    nextAudio.play().catch(() => {});
+
+                    nextStep();
+                  }}
                   className="
           px-5! py-3! rounded-2xl
           bg-gradient-to-r
@@ -821,6 +873,8 @@ export default function SentenceUI({
           {/* ================= ACTION ================= */}
           <button
             onClick={async () => {
+              nextAudio.currentTime = 0;
+              nextAudio.play().catch(() => {});
               await completeLesson();
               setMode("idle");
               setStep(0);
