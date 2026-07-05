@@ -652,7 +652,7 @@ Feature tambahan:
   };
 
   // ================== BACKEND ==================
-  useBackendPing(); // 🔗 Check backend connection
+  const isBackendConnected = useBackendPing(); // 🔗 Check backend connection
 
   // ===== clearAllHistory =====
   const { clearAllHistory } = useHistoryManager({
@@ -1311,6 +1311,7 @@ Feature tambahan:
         <AudioUnlockOverlay
           onUnlock={handleUnlock}
           onFinish={() => setShowOverlay(false)}
+          isBackendConnected={isBackendConnected}
         />
       )}
 

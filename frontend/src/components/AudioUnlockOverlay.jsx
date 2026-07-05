@@ -1,17 +1,21 @@
 import { useState } from "react";
 
-export default function AudioUnlockOverlay({ onUnlock, onFinish }) {
+export default function AudioUnlockOverlay({
+  onUnlock,
+  onFinish,
+  isBackendConnected,
+}) {
   const [opening, setOpening] = useState(false);
 
   const handleClick = async () => {
-    if (opening) return;
+    if (opening || isBackendConnected !== true) return;
 
     setOpening(true);
-    await onUnlock(); // mic + speaker
-    // tunggu animasi
+    await onUnlock();
+
     setTimeout(() => {
-      onFinish(); // baru buka layar utama
-    }, 700); // harus sama dengan duration animasi
+      onFinish();
+    }, 700);
   };
 
   return (
@@ -36,9 +40,14 @@ export default function AudioUnlockOverlay({ onUnlock, onFinish }) {
       <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10 pointer-events-auto">
         <button
           onClick={handleClick}
-          className={`w-28 h-28 rounded-full bg-red-500 flex items-center justify-center text-5xl
-            transition-all duration-500
-            ${opening ? "scale-75 opacity-0" : "animate-pulse"}
+          disabled={isBackendConnected !== true}
+          className={`w-28 h-28 rounded-full flex items-center justify-center text-5xl transition-all duration-500
+            ${
+              isBackendConnected === true
+                ? "bg-red-500 animate-pulse"
+                : "bg-gray-600 cursor-not-allowed opacity-60"
+            }
+            ${opening ? "scale-75 opacity-0" : ""}
           `}
         >
           🎤
@@ -46,7 +55,13 @@ export default function AudioUnlockOverlay({ onUnlock, onFinish }) {
 
         {!opening && (
           <p className="mt-6 text-sm opacity-80">
-            Tap to enable microphone & speaker
+            {isBackendConnected === null && "Connecting to backend..."}
+
+            {isBackendConnected === false &&
+              "Backend unavailable. Please wait..."}
+
+            {isBackendConnected === true &&
+              "Tap to enable microphone & speaker"}
           </p>
         )}
       </div>
