@@ -150,7 +150,7 @@ Feature tambahan:
     console.log("🧠 modeRef updated:", mode);
   }, [mode]);
 
-  console.log("🔑 showOverlay: ", showOverlay);
+  // console.log("🔑 showOverlay: ", showOverlay);
 
   const [modeLearn, setModeLearn] = useState("idle");
 
@@ -1312,7 +1312,10 @@ Feature tambahan:
       {showOverlay && (
         <AudioUnlockOverlay
           onUnlock={handleUnlock}
-          onFinish={() => setShowOverlay(false)}
+          onFinish={() => {
+            console.log("5. setShowOverlay(false)");
+            setShowOverlay(false);
+          }}
           isBackendConnected={isBackendConnected}
         />
       )}

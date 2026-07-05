@@ -10,12 +10,20 @@ export default function AudioUnlockOverlay({
   const handleClick = async () => {
     if (opening) return;
 
+    console.log("1. button clicked");
+
     setOpening(true);
-    await onUnlock(); // mic + speaker
-    // tunggu animasi
+
+    console.log("2. before unlock");
+
+    await onUnlock();
+
+    console.log("3. after unlock");
+
     setTimeout(() => {
-      onFinish(); // baru buka layar utama
-    }, 700); // harus sama dengan duration animasi
+      console.log("4. calling onFinish");
+      onFinish();
+    }, 700);
   };
 
   return (
