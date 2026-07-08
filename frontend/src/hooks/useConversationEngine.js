@@ -82,11 +82,14 @@ export default function useConversationEngine({
         const mode = modeRef.current?.toLowerCase();
 
         const isFreetalk = mode === "freetalk";
-        const isDailyStory = mode === "dailystory";
+        // const isFreetalk =
+        //   mode === "freetalk" || modeScenarioRef.current === "roleplay";
+        const isDailyStory = modeScenarioRef.current === "dailystory";
 
         console.log("🧭 MODE RAW:", modeRef.current);
         console.log("🧭 MODE NORMALIZED:", mode);
         console.log("📖 isDailyStory:", isDailyStory);
+        // console.log("🗣️ isFreetalk:", isFreetalk);
 
         let alternative = null;
 
