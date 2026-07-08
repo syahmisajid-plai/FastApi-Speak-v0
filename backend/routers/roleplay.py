@@ -258,9 +258,11 @@ async def stream_answer(req: StreamRequest):
     ]
 
     # -----------------------------
-    # STREAM RESPONSE (Roleplay)
+    # STREAM RESPONSE
     # -----------------------------
+
     async def event_stream():
+
         full_text = ""
 
         response = llm.stream(messages)
@@ -277,20 +279,7 @@ async def stream_answer(req: StreamRequest):
 
         if is_final_turn:
             complete_roleplay(session_key)
-
-            # ✅ kirim meta event mirip freetalk
-            alternative = extract_alternative(full_text)
-            clean_text = re.sub(r"You could say\s*:?\s*.*", "", full_text, flags=re.I).strip()
-
-            meta = {
-                "completed": True,
-                "alternative": alternative,
-                "text": clean_text,
-                "scenario_id": req.scenario_id,
-                "turn": next_turn
-            }
-
-            yield f"event: meta\ndata: {json.dumps(meta)}\n\n"
+            yield "data: __ROLEPLAY_END__\n\n"
 
         # -----------------------------
         # SAVE KE DB

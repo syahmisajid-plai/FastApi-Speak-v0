@@ -60,8 +60,6 @@ export async function streamChat({
     }),
   });
 
-  console.log("CONTENT TYPE:", res.headers.get("content-type"));
-
   // ⭐ detect non-stream response
   const contentType = res.headers.get("content-type");
 
