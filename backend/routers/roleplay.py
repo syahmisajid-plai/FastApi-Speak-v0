@@ -269,6 +269,7 @@ async def stream_answer(req: StreamRequest):
 
         for chunk in response:
             token = chunk.content or ""
+            print("ROLEPLAY TOKEN:", repr(token))
             full_text += token
             yield f"data: {token}\n\n"
 

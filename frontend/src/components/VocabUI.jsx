@@ -71,6 +71,8 @@ export default function VocabUI({
   const [showStarters, setShowStarters] = useState(false);
   const [currentStarter, setCurrentStarter] = useState("");
 
+  const [isLoadingNext, setIsLoadingNext] = useState(false);
+
   const nextVocabAudio = useRef(null);
 
   useEffect(() => {
@@ -959,17 +961,27 @@ export default function VocabUI({
                             )}
 
                             <Button
+                              disabled={isLoadingNext}
                               onClick={() => {
                                 if (nextVocabAudio.current) {
                                   nextVocabAudio.current.currentTime = 0;
                                   nextVocabAudio.current.play().catch(() => {});
                                 }
 
+                                setIsLoadingNext(true);
+
+                                setTimeout(() => {
+                                  next();
+                                  setIsLoadingNext(false);
+                                }, 100);
+
                                 setShowDice(true);
                                 next();
                               }}
                             >
-                              Kata Berikutnya →
+                              {isLoadingNext
+                                ? "Loading..."
+                                : "Kata Berikutnya →"}
                             </Button>
                           </div>
                         )}
