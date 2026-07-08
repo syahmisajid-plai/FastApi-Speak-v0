@@ -14,6 +14,7 @@ export default function ChatBubble({
 }) {
   const [translated, setTranslated] = useState(null);
   // const { speakText } = useTTS_Google(userIdRef, mode );
+  // console.log(chat);
   const { translate } = useTranslate();
 
   const speak = (text) =>

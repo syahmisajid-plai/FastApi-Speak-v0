@@ -261,7 +261,7 @@ async def stream_answer(req: StreamRequest):
     # STREAM RESPONSE
     # -----------------------------
 
-    async def event_stream():
+    def event_stream():
 
         full_text = ""
 
