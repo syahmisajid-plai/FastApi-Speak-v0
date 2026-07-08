@@ -48,15 +48,10 @@ export default function ChatSection({
       rewards.forEach((text, index) => {
         const id = Date.now() + index;
 
-        setFloatingRewards((prev) => [
-          ...prev,
-          { id, text },
-        ]);
+        setFloatingRewards((prev) => [...prev, { id, text }]);
 
         setTimeout(() => {
-          setFloatingRewards((prev) =>
-            prev.filter((r) => r.id !== id)
-          );
+          setFloatingRewards((prev) => prev.filter((r) => r.id !== id));
         }, 1800);
       });
     }
@@ -64,7 +59,6 @@ export default function ChatSection({
 
   return (
     <section className="relative rounded-xl p-4 shadow flex flex-col space-y-2 max-h-max overflow-y-auto">
-
       {/* ✨ FLOATING REWARDS */}
       <div className="absolute bottom-16 right-1/4 flex flex-col gap-2 z-50 pointer-events-none">
         {floatingRewards.map((reward) => (
@@ -134,7 +128,6 @@ export default function ChatSection({
         <div className="flex justify-end">
           <div className="max-w-[75%] p-3 rounded-lg bg-yellow-100 text-gray-900 italic">
             🎤 {liveTranscript}
-
             {isTranscribing && (
               <span className="ml-1 inline-flex">
                 <span className="animate-pulse">...</span>

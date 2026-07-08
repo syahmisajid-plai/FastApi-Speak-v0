@@ -3,15 +3,21 @@ import { useState } from "react";
 // import useTTS_Google from "../hooks/useTTS_Google";
 import useTranslate from "../hooks/useTranslate";
 
-import { cleanAIText,normalizeTTS } from "../utils/textUtils";
+import { cleanAIText, normalizeTTS } from "../utils/textUtils";
 
-export default function ChatBubble({ chat, toggleFavorite, autoCorrectionRef, speakText, mode }) {
+export default function ChatBubble({
+  chat,
+  toggleFavorite,
+  autoCorrectionRef,
+  speakText,
+  mode,
+}) {
   const [translated, setTranslated] = useState(null);
   // const { speakText } = useTTS_Google(userIdRef, mode );
   const { translate } = useTranslate();
 
   const speak = (text) =>
-  speakText(autoCorrectionRef.current ? text : cleanAIText(text));
+    speakText(autoCorrectionRef.current ? text : cleanAIText(text));
 
   /* =====================
   HELPER / LUPA KATA
@@ -80,17 +86,21 @@ export default function ChatBubble({ chat, toggleFavorite, autoCorrectionRef, sp
       >
         <div className="whitespace-pre-line">{chat.message}</div>
 
-        {chat.sender === "You" && autoCorrectionRef.current && chat.alternative && (
-          <div className="mt-2 text-xs bg-white/20 rounded p-2 border border-white/30">
-            <div className="text-green-200 font-medium">
-              {chat.alternative ? (
-                <>✨ {chat.alternative}</>
-              ) : (
-                <span className="opacity-70 animate-pulse">✨ Thinking...</span>
-              )}
+        {chat.sender === "You" &&
+          autoCorrectionRef.current &&
+          chat.alternative && (
+            <div className="mt-2 text-xs bg-white/20 rounded p-2 border border-white/30">
+              <div className="text-green-200 font-medium">
+                {chat.alternative ? (
+                  <>✨ {chat.alternative}</>
+                ) : (
+                  <span className="opacity-70 animate-pulse">
+                    ✨ Thinking...
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Tombol hanya untuk AI */}
         {chat.sender === "AI" && (

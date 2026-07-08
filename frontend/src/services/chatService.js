@@ -35,7 +35,6 @@ export async function streamChat({
     }
   }
 
-  
   console.log("📤 Full API URL:", `${linkBackend}${endpoint}`);
 
   const fullUrl = `${linkBackend}${endpoint}`;
@@ -60,6 +59,8 @@ export async function streamChat({
       scenario_id: scenarioId,
     }),
   });
+
+  console.log("CONTENT TYPE:", res.headers.get("content-type"));
 
   // ⭐ detect non-stream response
   const contentType = res.headers.get("content-type");
