@@ -52,11 +52,15 @@ export default function RoleplayModalCard({
     { id: 6, name: "Health", image: health },
   ];
 
+  // console.log("isOpen: ", isOpen);
+  // console.log("started: ", started);
+
   if (!isOpen || !started) return null;
 
   return createPortal(
     <div>
       {/* MODAL */}
+
       {isOpen && started && (
         <div className="fixed inset-0 z-[53] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="w-[280px] h-[380px] rounded-xl p-3">

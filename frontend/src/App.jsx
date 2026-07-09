@@ -948,7 +948,13 @@ Feature tambahan:
           {/* SUMMARY CARD */}
           {showSummary && summaryData && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-              <RoleplaySummaryCard data={summaryData} onClose={closeSummary} />
+              <RoleplaySummaryCard
+                setModeScenario={setModeScenario}
+                setRoleplayModalOpen={setRoleplayModalOpen}
+                setRolePlayStarted={setRolePlayStarted}
+                data={summaryData}
+                onClose={closeSummary}
+              />
             </div>
           )}
           {showContext && activeContext && (

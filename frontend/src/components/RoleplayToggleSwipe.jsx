@@ -31,6 +31,8 @@ import { linkBackend } from "../config";
 import useChecklistRoleplay from "../hooks/useChecklistRoleplay";
 import RoleplayModalCard from "./RoleplayModalCard";
 
+import RoleplayHintModal from "./RoleplayHintModal";
+
 export default function RoleplayToggleSwipe({
   started,
   setStarted,
@@ -58,7 +60,9 @@ export default function RoleplayToggleSwipe({
   // ];
 
   // console.log("📍 currentTurn", currentTurn);
-
+  // useEffect(() => {
+  //   console.log("📋 Active Checklist:", activeChecklist);
+  // }, [activeChecklist]);
   // Checklist Selesai
   const { updateProgress, currentStep, progress, finished, resetFinished } =
     useChecklistRoleplay({
@@ -70,6 +74,7 @@ export default function RoleplayToggleSwipe({
     });
 
   // console.log("📍 progress", progress);
+  // console.log("📍 started", started);
 
   useEffect(() => {
     if (!lastUserMessage || !activeChecklist) return;
@@ -99,8 +104,10 @@ export default function RoleplayToggleSwipe({
   const [mission, setMission] = useState(null);
   // const [activeChecklist, setActiveChecklist] = useState(null);
 
-  const [isMissionOpen, setIsMissionOpen] = useState(false);
+  const [isMissionOpen, setIsMissionOpen] = useState(true);
   const [activeScenario, setActiveScenario] = useState(null);
+
+  const [selectedChecklist, setSelectedChecklist] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -299,34 +306,58 @@ export default function RoleplayToggleSwipe({
 
                       {/* CHECKLIST */}
                       <ul className="flex flex-col gap-1.5 text-xs">
-                        {activeChecklist.map((item, i) => (
-                          <li
-                            key={i}
-                            className={`
-                              flex items-center gap-2 rounded-md px-2 py-1 transition
-                              ${item.done ? "opacity-60" : "opacity-100"}
-                              ${
-                                i === progress.totalDone
-                                  ? "bg-yellow-400/20 border border-yellow-400"
-                                  : ""
-                              }
-      `}
-                          >
-                            <span className="text-sm">
-                              {item.done ? "✔" : "⬜"}
-                            </span>
-
-                            <span
-                              className={`leading-snug ${
-                                i === progress.totalDone
-                                  ? "text-yellow-300 font-semibold"
-                                  : "text-white/90"
-                              }`}
+                        {activeChecklist.map((item, i) => {
+                          const isCurrent = i === progress.totalDone;
+                          const isCompleted = item.done;
+                          const isLocked = i > progress.totalDone;
+                          return (
+                            <li
+                              key={i}
+                              onClick={() => {
+                                if (!isLocked) {
+                                  setSelectedChecklist(item);
+                                }
+                              }}
+                              className={`
+                                relative
+                                overflow-hidden
+                                flex items-center gap-2 rounded-md px-2 py-1 transition-all
+                                ${isLocked ? "cursor-not-allowed" : "cursor-pointer hover:bg-white/10"}
+                                ${isCompleted ? "opacity-60" : ""}
+                                ${isCurrent ? "bg-yellow-400/20 border-2 border-yellow-400" : ""}
+                              `}
                             >
-                              {item.text}
-                            </span>
-                          </li>
-                        ))}
+                              {/* CURRENT PULSE */}
+                              {isCurrent && (
+                                <span className="absolute inset-0 rounded-md border-2 border-yellow-300 animate-soft-ping pointer-events-none" />
+                              )}
+
+                              {/* CONTENT */}
+                              <span className="relative text-sm">
+                                {item.done ? "✔" : "⬜"}
+                              </span>
+
+                              <span
+                                className={`leading-snug ${
+                                  isCurrent
+                                    ? "text-yellow-300 font-semibold"
+                                    : "text-white/90"
+                                }`}
+                              >
+                                {item.text}
+                              </span>
+
+                              {/* LOCK OVERLAY */}
+                              {isLocked && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-black/20 via-black/50 to-black/20">
+                                  <div className="rounded-full bg-yellow-400/15 p-3 ring-2 ring-yellow-300/40">
+                                    🔒
+                                  </div>
+                                </div>
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
                     </>
                   )}
@@ -348,6 +379,11 @@ export default function RoleplayToggleSwipe({
         onChecklistUpdate={onChecklistUpdate}
         sendInitialMessage={sendInitialMessage}
         setActiveScenario={setActiveScenario}
+      />
+
+      <RoleplayHintModal
+        selectedChecklist={selectedChecklist}
+        onClose={() => setSelectedChecklist(null)}
       />
     </>
   );

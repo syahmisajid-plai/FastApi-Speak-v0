@@ -5,6 +5,8 @@ import CompletedLessonsModal from "./CompletedLessonsModal";
 
 import UsageDashboard from "./UsageDashboard";
 
+import RoleplayHintModal from "./RoleplayHintModal";
+
 export default function Header({
   mode,
   isScrolled,
@@ -42,6 +44,9 @@ export default function Header({
   const [page, setPage] = useState(0);
 
   const [showCostDashboard, setShowCostDashboard] = useState(false);
+
+  const [selectedRoleplayChecklist, setSelectedRoleplayChecklist] =
+    useState(null);
 
   // =========================
   // FETCH STREAK ONLY FOR DAILY MODE
@@ -414,31 +419,56 @@ export default function Header({
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {activeChecklist.map((item, i) => {
                   const isCurrent = i === totalDone;
+                  const isCompleted = item.done;
+                  const isLocked = i > totalDone;
 
                   return (
                     <div
                       key={i}
+                      onClick={() => {
+                        if (!isLocked) {
+                          setSelectedRoleplayChecklist(item);
+                        }
+                      }}
                       className={`
-        min-w-[140px] px-2 py-1 rounded-lg text-[10px]
-        border transition flex items-center gap-1
-        ${
-          item.done
-            ? "bg-green-500/10 border-green-400/30 text-green-300"
-            : isCurrent
-              ? "bg-yellow-500/20 border-yellow-400 text-yellow-200"
-              : "bg-white/5 border-white/10 text-white/60"
-        }
-      `}
+                        relative
+                        overflow-hidden
+                        min-w-[140px] px-2 py-1 rounded-lg text-[10px]
+                        border transition flex items-center gap-1
+                        ${
+                          isCompleted
+                            ? "bg-green-500/10 border-green-400/30 text-green-300"
+                            : isCurrent
+                              ? "bg-yellow-500/20 border-yellow-400 text-yellow-200"
+                              : isLocked
+                                ? "bg-white/5 border-white/10 text-white/40"
+                                : "bg-white/5 border-white/10 text-white/60"
+                        }
+                      `}
                     >
-                      <span className="text-xs">{item.done ? "✔" : "⬜"}</span>
+                      {/* Pulse pada checklist aktif */}
+                      {isCurrent && (
+                        <span className="absolute inset-0 rounded-lg border border-yellow-300 animate-soft-ping pointer-events-none" />
+                      )}
+
+                      <span className="relative z-10 text-xs">
+                        {isCompleted ? "✔" : "⬜"}
+                      </span>
 
                       <span
-                        className={`truncate ${
+                        className={`relative z-10 truncate ${
                           isCurrent ? "font-semibold" : ""
                         }`}
                       >
                         {item.text}
                       </span>
+
+                      {/* Lock Overlay */}
+                      {isLocked && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px] z-20 rounded-md">
+                          <span className="text-sm drop-shadow-lg">🔒</span>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -498,6 +528,11 @@ export default function Header({
           </div>
         </div>
       )}
+
+      <RoleplayHintModal
+        selectedChecklist={selectedRoleplayChecklist}
+        onClose={() => setSelectedRoleplayChecklist(null)}
+      />
     </>
   );
 }
