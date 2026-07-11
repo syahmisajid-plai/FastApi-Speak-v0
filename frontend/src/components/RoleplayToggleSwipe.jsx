@@ -64,17 +64,24 @@ export default function RoleplayToggleSwipe({
   //   console.log("📋 Active Checklist:", activeChecklist);
   // }, [activeChecklist]);
   // Checklist Selesai
-  const { updateProgress, currentStep, progress, finished, resetFinished } =
-    useChecklistRoleplay({
-      activeChecklist,
-      setActiveChecklist,
-      currentTurn,
-      maxTurn,
-      onChecklistUpdate,
-    });
+  const {
+    updateProgress,
+    attemptCount,
+    currentStep,
+    progress,
+    finished,
+    resetFinished,
+  } = useChecklistRoleplay({
+    activeChecklist,
+    setActiveChecklist,
+    currentTurn,
+    maxTurn,
+    onChecklistUpdate,
+  });
 
   // console.log("📍 progress", progress);
   // console.log("📍 started", started);
+  // console.log("attemptCount: ", attemptCount);
 
   useEffect(() => {
     if (!lastUserMessage || !activeChecklist) return;
@@ -310,11 +317,13 @@ export default function RoleplayToggleSwipe({
                           const isCurrent = i === progress.totalDone;
                           const isCompleted = item.done;
                           const isLocked = i > progress.totalDone;
+
+                          const showHint = isCurrent && attemptCount >= 2;
                           return (
                             <li
                               key={i}
                               onClick={() => {
-                                if (!isLocked) {
+                                if (!isLocked && showHint) {
                                   setSelectedChecklist(item);
                                 }
                               }}
@@ -328,7 +337,7 @@ export default function RoleplayToggleSwipe({
                               `}
                             >
                               {/* CURRENT PULSE */}
-                              {isCurrent && (
+                              {showHint && (
                                 <span className="absolute inset-0 rounded-md border-2 border-yellow-300 animate-soft-ping pointer-events-none" />
                               )}
 
@@ -345,6 +354,12 @@ export default function RoleplayToggleSwipe({
                                 }`}
                               >
                                 {item.text}
+
+                                {showHint && (
+                                  <div className="mt-1 text-xs text-sky-300">
+                                    💡 Hint: {item.keywords.join(", ")}
+                                  </div>
+                                )}
                               </span>
 
                               {/* LOCK OVERLAY */}

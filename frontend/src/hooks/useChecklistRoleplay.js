@@ -11,6 +11,7 @@ export default function useChecklistRoleplay({
   onChecklistUpdate,
 }) {
   const [hasFinished, setHasFinished] = useState(false);
+  const [attemptCount, setAttemptCount] = useState(0);
 
   const getCurrentStep = (checklist) => {
     return checklist.find((item) => !item.done);
@@ -20,6 +21,7 @@ export default function useChecklistRoleplay({
     if (!input) return;
 
     const text = input.toLowerCase();
+    setAttemptCount((prev) => prev + 1);
 
     setActiveChecklist((prev) => {
       if (!prev) return prev;
@@ -42,6 +44,7 @@ export default function useChecklistRoleplay({
 
         if (matched) {
           changed = true;
+          setAttemptCount(0);
           updated[i] = {
             ...item,
             done: true,
@@ -79,6 +82,7 @@ export default function useChecklistRoleplay({
 
   return {
     updateProgress,
+    attemptCount,
 
     currentStep: getCurrentStep(activeChecklist ?? []),
 
