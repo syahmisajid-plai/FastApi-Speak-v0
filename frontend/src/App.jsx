@@ -60,6 +60,8 @@ import useTranslationHistory from "./hooks/useTranslationHistory";
 import useSentenceLesson from "./hooks/useSentenceLesson";
 import { useCheckUpdate } from "./hooks/useCheckUpdate";
 
+import useChecklistRoleplay from "./hooks/useChecklistRoleplay";
+
 // ================== AUDIO ==================
 import useTTS_Google from "./hooks/useTTS_Google";
 import useMicMonitor from "./utils/useMicMonitor";
@@ -331,6 +333,14 @@ Feature tambahan:
   // ================== CHAT STATE ==================
   const [chatHistory, setChatHistory] = useState([]);
 
+  const lastMessage = chatHistory.at(-1);
+
+  const isWaitingForAI = lastMessage?.sender === "You";
+  // console.log("aiMessageCount :", aiMessageCount);
+  // console.log("userMessageCount :", userMessageCount);
+
+  // console.log("isWaitingForAI :", isWaitingForAI);
+
   // ================== Set IsScrolled ==================
   useEffect(() => {
     const handleScroll = () => {
@@ -487,6 +497,7 @@ Feature tambahan:
     userId,
     activeChecklist,
     // checklistProgress,
+    isWaitingForAI,
   });
 
   const totalChecklist = activeChecklist?.length ?? 0;
@@ -494,6 +505,22 @@ Feature tambahan:
   const maxTurn = selectedScenario?.target_turn ?? 0;
 
   const currentTurn = chatHistory.filter((msg) => msg.sender === "You").length;
+
+  // ================== Checklist RolePlay ==================
+  const {
+    updateProgress: updateRoleplayProgress,
+    attemptCount: roleplayAttemptCount,
+    currentStep: roleplayCurrentStep,
+    progress: roleplayProgress,
+    finished: roleplayChecklistFinished,
+    resetFinished: resetRoleplayChecklistFinished,
+  } = useChecklistRoleplay({
+    activeChecklist,
+    setActiveChecklist,
+    currentTurn,
+    maxTurn,
+    handleChecklistUpdate,
+  });
 
   // const handleChecklistFinished = (progress) => {
   //   handleRoleplayCompleted("Checklist completed", progress);
@@ -840,6 +867,7 @@ Feature tambahan:
             openMenu={openMenu}
             setOpenMenu={setOpenMenu}
             totalDone={totalDone}
+            roleplayAttemptCount={roleplayAttemptCount}
           />
           <OverlayFeedback message={overlayFavoritTranslated} />
           {/* VOCAB LIST */}
@@ -954,6 +982,7 @@ Feature tambahan:
                 setRolePlayStarted={setRolePlayStarted}
                 data={summaryData}
                 onClose={closeSummary}
+                isWaitingForAI={isWaitingForAI}
               />
             </div>
           )}
@@ -1003,6 +1032,15 @@ Feature tambahan:
                 activeContext,
                 showContext,
                 setShowContext,
+
+                updateProgress: updateRoleplayProgress,
+                attemptCount: roleplayAttemptCount,
+                currentStep: roleplayCurrentStep,
+                progress: roleplayProgress,
+                finished: roleplayChecklistFinished,
+                resetFinished: resetRoleplayChecklistFinished,
+
+                isWaitingForAI,
               }}
               dailyStoryProps={{
                 progressData,
@@ -1271,6 +1309,7 @@ Feature tambahan:
                 isLupaKataActive: lupaKata.isLupaKataActive,
                 lupaKataResult: lupaKata.lupaKataResult,
                 isDailyLocked,
+                isWaitingForAI,
               }}
             />
           )}

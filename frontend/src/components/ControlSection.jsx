@@ -18,6 +18,7 @@ export default function ControlSection({
   forceStop, // ✅ TAMBAHKAN
   isDailyLocked,
   unlockAudio,
+  isWaitingForAI,
 }) {
   const [showHint, setShowHint] = useState(true);
 
@@ -101,7 +102,7 @@ export default function ControlSection({
                   <div
                     className="w-full h-full flex items-center justify-center"
                     onClick={
-                      !isLupaKataActive && !isDailyLocked
+                      !isLupaKataActive && !isDailyLocked && !isWaitingForAI
                         ? async () => {
                             await unlockAudio(); // 🔥 WAJIB di user gesture pertama
 
@@ -115,9 +116,8 @@ export default function ControlSection({
                           }
                         : undefined
                     }
-
                     onTouchStart={
-                      !isLupaKataActive && !isDailyLocked
+                      !isLupaKataActive && !isDailyLocked && !isWaitingForAI
                         ? async () => {
                             await unlockAudio(); // 🔥 penting untuk iPhone
                           }
@@ -136,14 +136,20 @@ export default function ControlSection({
                       <div
                         className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-lg
                       ${
-                        isLupaKataActive || isDailyLocked
+                        isLupaKataActive || isDailyLocked || isWaitingForAI
                           ? "bg-gray-500 text-gray-300"
                           : isSpeaking
                             ? "bg-orange-500 text-white"
                             : "bg-red-600 text-white hover:scale-105 transition"
                       }`}
                       >
-                        {isLupaKataActive ? "🔒" : isSpeaking ? "⏹" : "🎙️"}
+                        {isWaitingForAI
+                          ? "🤖"
+                          : isLupaKataActive
+                            ? "🔒"
+                            : isSpeaking
+                              ? "⏹"
+                              : "🎙️"}
                       </div>
                     </div>
                   </div>

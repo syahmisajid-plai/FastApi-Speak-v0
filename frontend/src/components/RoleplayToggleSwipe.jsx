@@ -28,7 +28,7 @@ import "swiper/css/effect-cards";
 
 import { linkBackend } from "../config";
 
-import useChecklistRoleplay from "../hooks/useChecklistRoleplay";
+// import useChecklistRoleplay from "../hooks/useChecklistRoleplay";
 import RoleplayModalCard from "./RoleplayModalCard";
 
 import RoleplayHintModal from "./RoleplayHintModal";
@@ -49,6 +49,14 @@ export default function RoleplayToggleSwipe({
   activeChecklist,
   setActiveChecklist,
 
+  updateProgress,
+  attemptCount,
+  currentStep,
+  progress,
+  finished,
+  resetFinished,
+
+  isWaitingForAI,
   // mission,
   // setMission,
 }) {
@@ -64,20 +72,20 @@ export default function RoleplayToggleSwipe({
   //   console.log("📋 Active Checklist:", activeChecklist);
   // }, [activeChecklist]);
   // Checklist Selesai
-  const {
-    updateProgress,
-    attemptCount,
-    currentStep,
-    progress,
-    finished,
-    resetFinished,
-  } = useChecklistRoleplay({
-    activeChecklist,
-    setActiveChecklist,
-    currentTurn,
-    maxTurn,
-    onChecklistUpdate,
-  });
+  // const {
+  //   updateProgress,
+  //   attemptCount,
+  //   currentStep,
+  //   progress,
+  //   finished,
+  //   resetFinished,
+  // } = useChecklistRoleplay({
+  //   activeChecklist,
+  //   setActiveChecklist,
+  //   currentTurn,
+  //   maxTurn,
+  //   onChecklistUpdate,
+  // });
 
   // console.log("📍 progress", progress);
   // console.log("📍 started", started);
@@ -356,10 +364,15 @@ export default function RoleplayToggleSwipe({
                                 {item.text}
 
                                 {showHint && (
+                                  <span className="ml-auto flex items-center gap-1 text-[9px] text-sky-300/90 animate-pulse">
+                                    👁 <span>Tap</span>
+                                  </span>
+                                )}
+                                {/* {showHint && (
                                   <div className="mt-1 text-xs text-sky-300">
                                     💡 Hint: {item.keywords.join(", ")}
                                   </div>
-                                )}
+                                )} */}
                               </span>
 
                               {/* LOCK OVERLAY */}

@@ -19,6 +19,8 @@ export default function ChatSection({
 }) {
   const [floatingRewards, setFloatingRewards] = useState([]);
 
+  // console.log("chatHistory: ", chatHistory);
+
   // 🔊 pakai ref supaya tidak recreate tiap render
   const audioRef = useRef(null);
 

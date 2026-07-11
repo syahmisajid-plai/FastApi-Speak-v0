@@ -34,6 +34,8 @@ export default function Header({
   openMenu,
   setOpenMenu,
   totalDone,
+
+  roleplayAttemptCount,
 }) {
   const [showSummaryDaily, setShowSummaryDaily] = useState(false);
 
@@ -422,11 +424,13 @@ export default function Header({
                   const isCompleted = item.done;
                   const isLocked = i > totalDone;
 
+                  const showHint = isCurrent && roleplayAttemptCount >= 2;
+
                   return (
                     <div
                       key={i}
                       onClick={() => {
-                        if (!isLocked) {
+                        if (!isLocked && showHint) {
                           setSelectedRoleplayChecklist(item);
                         }
                       }}
@@ -447,7 +451,7 @@ export default function Header({
                       `}
                     >
                       {/* Pulse pada checklist aktif */}
-                      {isCurrent && (
+                      {showHint && (
                         <span className="absolute inset-0 rounded-lg border border-yellow-300 animate-soft-ping pointer-events-none" />
                       )}
 
@@ -462,6 +466,12 @@ export default function Header({
                       >
                         {item.text}
                       </span>
+
+                      {showHint && (
+                        <span className="ml-auto flex items-center gap-1 text-[9px] text-sky-300/90 animate-pulse">
+                          👁 <span>Tap</span>
+                        </span>
+                      )}
 
                       {/* Lock Overlay */}
                       {isLocked && (

@@ -11,6 +11,8 @@ export default function useRoleplay({
   checklistProgress,
   userId,
   activeChecklist,
+
+  isWaitingForAI,
 }) {
   const [selectedScenario, setSelectedScenario] = useState(null);
 
@@ -234,6 +236,8 @@ export default function useRoleplay({
   // =========================
   // COMPLETED (dipanggil dari ConversationEngine)
   // =========================
+  const pendingResetRef = useRef(false);
+
   const handleRoleplayCompleted = async (finalText, progressFromChild) => {
     const totalTurns = chatHistoryRef.current.filter(
       (c) => c.sender === "You",
@@ -256,16 +260,39 @@ export default function useRoleplay({
 
     const scenarioId = scenarioRef.current?.id;
 
+    pendingResetRef.current = true;
+    // if (isWaitingForAI) return;
     // 🔥 RESET
-    resetContextState();
+    // resetContextState();
 
-    setSelectedScenario(null);
-    setChatHistory([]);
+    // setSelectedScenario(null);
+    // setChatHistory([]);
 
-    if (scenarioId) {
-      await clearRoleplay(scenarioId);
-    }
+    // if (scenarioId) {
+    //   await clearRoleplay(scenarioId);
+    // }
   };
+
+  useEffect(() => {
+    if (isWaitingForAI) return;
+    if (!pendingResetRef.current) return;
+
+    const timeout = setTimeout(async () => {
+      resetContextState();
+
+      setSelectedScenario(null);
+      setChatHistory([]);
+
+      const scenarioId = scenarioRef.current?.id;
+      if (scenarioId) {
+        await clearRoleplay(scenarioId);
+      }
+
+      pendingResetRef.current = false;
+    }, 500); // 0.5 detik
+
+    return () => clearTimeout(timeout);
+  }, [isWaitingForAI]);
 
   // =========================
   // CLOSE SUMMARY

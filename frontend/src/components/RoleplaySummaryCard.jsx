@@ -1,3 +1,4 @@
+// components/RoleplaySummaryCard.jsx
 import { useState } from "react";
 
 export default function RoleplaySummaryCard({
@@ -6,6 +7,7 @@ export default function RoleplaySummaryCard({
   setRolePlayStarted,
   data,
   onClose,
+  isWaitingForAI,
 }) {
   const [showDetails, setShowDetails] = useState(false);
 
@@ -155,16 +157,23 @@ export default function RoleplaySummaryCard({
       {/* Footer Action */}
       <div className="mt-5 pt-4 border-t border-white/10 flex justify-center">
         <button
+          disabled={isWaitingForAI}
           onClick={() => {
+            if (isWaitingForAI) return;
+
             setModeScenario("idle");
             setRoleplayModalOpen(false);
             setRolePlayStarted(false);
             onClose();
           }}
-          className="px-5 py-2 rounded-lg bg-white/10 text-white border border-white/20 
-             hover:bg-white/20 transition backdrop-blur-md"
+          className={`px-5! py-2! rounded-lg border backdrop-blur-md transition
+            ${
+              isWaitingForAI
+                ? "bg-white/5! text-white/40 border-white/10 cursor-not-allowed"
+                : "bg-white/10! text-white border-white/20 hover:bg-white/20"
+            }`}
         >
-          Close
+          {isWaitingForAI ? "Waiting for AI response..." : "Close"}
         </button>
       </div>
     </div>
