@@ -232,6 +232,19 @@ Feature tambahan:
   const audioDailyStartRef = useRef(null);
   const audioFreetalkStartRef = useRef(null);
 
+  // ================== USER PROGRESS ==================
+  const {
+    level,
+    xp,
+    title_level,
+    loading: progressLoading,
+    error: progressError,
+    fetchUserProgress,
+    updateUserProgress,
+  } = useUserProgress({
+    userIdRef,
+  });
+
   // ================== Vocab ==================
   const {
     vocab,
@@ -287,7 +300,7 @@ Feature tambahan:
 
     skipToGuidedPractice,
     showMeaningNextButton,
-  } = useVocabEngine(userIdRef);
+  } = useVocabEngine(userIdRef, updateUserProgress);
 
   // showVocab List
   useEffect(() => {
@@ -705,19 +718,14 @@ Feature tambahan:
     fetchStreak();
   }, [sessionId]); // ✅ Update saat sessionId berubah
 
-  // ================== USER PROGRESS ==================
-  const {
-    progress,
-    level,
-    xp,
-    title_level,
-    loading: progressLoading,
-    error: progressError,
-    fetchUserProgress,
-    updateUserProgress,
-  } = useUserProgress({
-    userIdRef,
-  });
+  useEffect(() => {
+    if (userIdRef.current) {
+      fetchUserProgress(userIdRef.current);
+    }
+  }, [userIdRef.current]);
+  // console.log("level :", level);
+  // console.log("xp :", xp);
+  // console.log("title_level :", title_level);
 
   // ================== 1️⃣ LUPA KATA ==================
   const lupaKata = useLupaKata({
@@ -1158,6 +1166,8 @@ Feature tambahan:
                 skipToGuidedPractice: skipToGuidedPractice,
                 showMeaningNextButton: showMeaningNextButton,
                 isTranscribing: isTranscribing,
+
+                updateUserProgress: updateUserProgress,
               }}
               sentenceProps={{
                 lesson: lesson,

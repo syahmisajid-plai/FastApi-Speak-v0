@@ -1,3 +1,4 @@
+// components/Header.jsx
 import { useState, useEffect } from "react";
 import DailySummaryViewer from "./DailySummaryViewer";
 import TranslationHistoryModal from "./TranslationHistoryModal";
@@ -6,6 +7,13 @@ import CompletedLessonsModal from "./CompletedLessonsModal";
 import UsageDashboard from "./UsageDashboard";
 
 import RoleplayHintModal from "./RoleplayHintModal";
+
+import {
+  getRequiredXP,
+  getTitleName,
+  calculateProgress,
+  isPromotionReady,
+} from "../utils/progressionSystem";
 
 export default function Header({
   mode,
@@ -94,9 +102,14 @@ export default function Header({
 
   let unlockNext = true;
 
-  const currentXP = 2700;
-  const requiredXP = 2200;
-  const promotionReady = currentXP >= requiredXP;
+  const requiredXP = getRequiredXP(level);
+  const promotionReady = isPromotionReady(xp, level);
+  const progress = calculateProgress(xp, level);
+  const titleName = getTitleName(title_level);
+
+  // const currentXP = 2700;
+  // const requiredXP = 2200;
+  // const promotionReady = xp >= requiredXP;
 
   return (
     <>
@@ -126,7 +139,7 @@ export default function Header({
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-cyan-400"
                     style={{
-                      width: `${(xp / requiredXP) * 100}%`,
+                      width: `${progress}%`,
                     }}
                   />
                 </div>
@@ -324,11 +337,11 @@ export default function Header({
 
                         <div className="mt-2 flex items-center gap-2">
                           <span className="px-2 py-0.5 rounded-full bg-indigo-500/15 text-[10px] text-indigo-300 font-semibold">
-                            🏅 Lv.12
+                            Level {level}
                           </span>
 
                           <span className="text-[11px] text-gray-300">
-                            Conversation Starter
+                            {titleName}
                           </span>
                         </div>
 
@@ -337,13 +350,13 @@ export default function Header({
                           <div
                             className="h-full bg-gradient-to-r from-indigo-400 to-cyan-400"
                             style={{
-                              width: `${Math.min((currentXP / requiredXP) * 100, 100)}%`,
+                              width: `${progress}%`,
                             }}
                           />
                         </div>
 
                         <div className="flex justify-between mt-1 text-[10px] text-gray-400">
-                          <span>{currentXP} XP</span>
+                          <span>{xp} XP</span>
                           <span>{requiredXP} XP</span>
                         </div>
 
@@ -368,7 +381,7 @@ export default function Header({
                           </button>
                         ) : (
                           <div className="mt-3 text-center text-[11px] text-gray-400">
-                            {requiredXP - currentXP} XP to Promotion
+                            {requiredXP - xp} XP to Promotion
                           </div>
                         )}
                       </div>

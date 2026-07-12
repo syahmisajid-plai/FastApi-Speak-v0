@@ -14,9 +14,7 @@ router = APIRouter(prefix="/progress", tags=["progress"])
 # -----------------------------
 class UpdateProgressRequest(BaseModel):
     user_id: str
-    level: int
-    xp: int
-    title_level: int
+    xp_gain: int
 
 
 # -----------------------------

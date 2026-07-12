@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { linkBackend } from "../config";
 
-export const useUserProgress = ({ userIdRef }) => {
+export default function useUserProgress(userIdRef) {
+  //   console.log("userIdRef :", userIdRef);
   const [progress, setProgress] = useState({
     level: 1,
     xp: 0,
@@ -34,6 +35,8 @@ export const useUserProgress = ({ userIdRef }) => {
 
       const result = await res.json();
 
+      console.log("PROGRESS RESPONSE:", result);
+
       const userProgress = {
         level: result.progress?.level ?? 1,
         xp: result.progress?.xp ?? 0,
@@ -59,8 +62,14 @@ export const useUserProgress = ({ userIdRef }) => {
     setLoading(true);
     setError(null);
 
+    console.log("🔥 UPDATE USER XP");
+    console.log({
+      user_id,
+      xp_gain,
+    });
+
     try {
-      const res = await fetch(`${linkBackend}/progress`, {
+      const res = await fetch(`${linkBackend}/progress/`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -98,7 +107,7 @@ export const useUserProgress = ({ userIdRef }) => {
 
   return {
     // object progress
-    progress,
+    // progress,
 
     // shortcut
     level: progress.level,
@@ -113,4 +122,4 @@ export const useUserProgress = ({ userIdRef }) => {
     fetchUserProgress,
     updateUserProgress,
   };
-};
+}

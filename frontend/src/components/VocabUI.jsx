@@ -58,6 +58,8 @@ export default function VocabUI({
   skipToGuidedPractice,
   showMeaningNextButton,
   isTranscribing,
+
+  updateUserProgress,
 }) {
   // vocab = false;
   // console.log(showNextButton);

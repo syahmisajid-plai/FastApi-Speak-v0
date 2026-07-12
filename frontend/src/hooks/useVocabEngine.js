@@ -10,7 +10,7 @@ import wrongAnswer1 from "../assets/sound/universfield-error-notification-010-20
 // =========================
 // ENGINE
 // =========================
-export default function useVocabEngine(userIdRef) {
+export default function useVocabEngine(userIdRef, updateUserProgress) {
   //   const data = apiVocab?.length ? apiVocab : defaultVocab;
 
   const [vocabStage, setVocabStage] = useState("idle");
@@ -476,6 +476,12 @@ export default function useVocabEngine(userIdRef) {
         }),
       });
 
+      // tambah XP
+      await updateUserProgress({
+        user_id: userIdRef.current,
+        xp_gain: 10,
+      });
+
       const data = await res.json().catch(() => null);
 
       setCompletedMap((prev) => ({
@@ -822,6 +828,11 @@ export default function useVocabEngine(userIdRef) {
           user_id: userId,
           vocab_id: vocabId,
         }),
+      });
+
+      await updateUserProgress({
+        user_id: userId,
+        xp_gain: 5,
       });
 
       const data = await res.json().catch(() => null);
