@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { linkBackend } from "../config";
 
-export default function useUserProgress(userIdRef) {
+export default function useUserProgress({ userIdRef, onXpGain }) {
   //   console.log("userIdRef :", userIdRef);
   const [progress, setProgress] = useState({
     level: 1,
@@ -62,19 +62,12 @@ export default function useUserProgress(userIdRef) {
     setLoading(true);
     setError(null);
 
-    console.log("🔥 UPDATE USER XP");
-    console.log({
-      user_id,
-      xp_gain,
-    });
-
     try {
       const res = await fetch(`${linkBackend}/progress/`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-
         body: JSON.stringify({
           user_id,
           xp_gain,
@@ -95,10 +88,14 @@ export default function useUserProgress(userIdRef) {
         });
       }
 
+      // trigger popup
+      if (xp_gain > 0) {
+        onXpGain?.(xp_gain);
+      }
+
       return result;
     } catch (err) {
-      setError(err.message || "Failed to add user XP");
-
+      setError(err.message);
       return null;
     } finally {
       setLoading(false);

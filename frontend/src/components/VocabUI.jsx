@@ -472,7 +472,7 @@ export default function VocabUI({
                               {/* MAIN CTA */}
                               <button
                                 onClick={() => {
-                                  setIsSkipped(true);
+                                  setIsSkipped(false);
                                   startPractice();
                                 }}
                                 className="

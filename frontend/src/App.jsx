@@ -35,6 +35,8 @@ import UpdateBanner from "./components/UpdateBanner";
 import GamesUI from "./components/GamesUI";
 import PWADebug from "./components/PWADebug";
 
+import XpRewardPopup from "./components/XpRewardPopup";
+
 // ================== STYLES ==================
 import "./App.css";
 
@@ -133,6 +135,8 @@ Feature tambahan:
   const [supportSTTWeb, setSupportSTTWeb] = useState(true);
 
   const [sentenceType, setSentenceType] = useState(null);
+
+  const [xpReward, setXpReward] = useState(null);
 
   // ================== Tambahkan state ==================
   const [pendingMode, setPendingMode] = useState(null);
@@ -243,6 +247,12 @@ Feature tambahan:
     updateUserProgress,
   } = useUserProgress({
     userIdRef,
+    onXpGain: (amount) => {
+      setXpReward({
+        amount,
+        message: "Great Progress!",
+      });
+    },
   });
 
   // ================== Vocab ==================
@@ -847,6 +857,11 @@ Feature tambahan:
   // =
   return (
     <>
+      <XpRewardPopup
+        xp={xpReward?.amount}
+        message={xpReward?.message}
+        onClose={() => setXpReward(null)}
+      />
       {/* 🔥 MAIN APP — SELALU RENDER */}
       <div
         className={`min-h-screen lg:w-full flex justify-center p-4
