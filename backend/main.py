@@ -28,6 +28,7 @@ from routers import (
     smartcall,
     version,
     whisper,
+    progress_routes,
 )
 
 
@@ -154,6 +155,8 @@ app.include_router(sentence_lesson.router)
 app.include_router(smartcall.router)
 app.include_router(version.router)
 app.include_router(whisper.router)
+app.include_router(progress_routes.router)
+
 
 # Set path ke service account GCP
 # Ambil JSON dari env

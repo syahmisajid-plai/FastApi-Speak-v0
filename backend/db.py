@@ -458,6 +458,20 @@ def init_db():
     );
     """)
 
+    # -----------------------------
+    # USER PROGRESS
+    # -----------------------------
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_progress (
+            user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+            level INTEGER NOT NULL DEFAULT 1 CHECK (level >= 1),
+            xp INTEGER NOT NULL DEFAULT 0 CHECK (xp >= 0),
+            title_level INTEGER NOT NULL DEFAULT 1 CHECK (title_level >= 1),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -1892,6 +1906,105 @@ def update_user_chapter_progress(user_id: str, chapter_id: int):
             "total": total,
             "status": status
         }
+
+    finally:
+        conn.close()
+
+
+def get_user_progress(user_id: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT
+                level,
+                xp,
+                title_level
+            FROM user_progress
+            WHERE user_id = %s;
+        """, (user_id,))
+
+        row = cursor.fetchone()
+
+        if not row:
+            return None
+
+        return {
+            "level": row[0],
+            "xp": row[1],
+            "title_level": row[2]
+        }
+
+    finally:
+        conn.close()
+        
+def add_user_xp(
+    user_id: str,
+    xp_gain: int
+):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+
+        # Ambil progress sekarang
+        cursor.execute("""
+            SELECT xp
+            FROM user_progress
+            WHERE user_id = %s;
+        """, (
+            user_id,
+        ))
+
+        current = cursor.fetchone()
+
+        if not current:
+            raise Exception("User progress not found")
+
+
+        current_xp = current[0]
+
+
+        # Tambahkan XP
+        new_xp = current_xp + xp_gain
+
+
+        # Hitung level
+        new_level = max(1, (new_xp // 100) + 1)
+
+
+        # Hitung title level sementara
+        new_title_level = max(1, (new_xp // 500) + 1)
+
+
+
+        # Update database
+        cursor.execute("""
+            UPDATE user_progress
+            SET
+                xp = %s,
+                level = %s,
+                title_level = %s,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = %s;
+        """, (
+            new_xp,
+            new_level,
+            new_title_level,
+            user_id
+        ))
+
+
+        conn.commit()
+
+
+        return {
+            "xp": new_xp,
+            "level": new_level,
+            "title_level": new_title_level
+        }
+
 
     finally:
         conn.close()

@@ -36,6 +36,10 @@ export default function Header({
   totalDone,
 
   roleplayAttemptCount,
+
+  level,
+  xp,
+  title_level,
 }) {
   const [showSummaryDaily, setShowSummaryDaily] = useState(false);
 
@@ -103,13 +107,12 @@ export default function Header({
         {/* HEADER ROW */}
         <div className="flex items-center justify-between">
           {/* LEFT */}
-          {/* LEFT */}
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold text-white">SpeakEasy</h2>
 
               <span className="px-2 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-400/20 text-[10px] font-semibold text-indigo-300">
-                🏅 Lv.12
+                🏅 Lv.{level}
               </span>
             </div>
 
@@ -123,13 +126,13 @@ export default function Header({
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-cyan-400"
                     style={{
-                      width: `${(currentXP / requiredXP) * 100}%`,
+                      width: `${(xp / requiredXP) * 100}%`,
                     }}
                   />
                 </div>
 
                 <span className="text-[10px] text-gray-400">
-                  {currentXP} / {requiredXP} XP
+                  {xp} / {requiredXP} XP
                 </span>
               </div>
             )}

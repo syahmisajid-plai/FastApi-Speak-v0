@@ -62,6 +62,7 @@ import useSentenceLesson from "./hooks/useSentenceLesson";
 import { useCheckUpdate } from "./hooks/useCheckUpdate";
 
 import useChecklistRoleplay from "./hooks/useChecklistRoleplay";
+import useUserProgress from "./hooks/useUserProgress";
 
 // ================== AUDIO ==================
 import useTTS_Google from "./hooks/useTTS_Google";
@@ -704,6 +705,20 @@ Feature tambahan:
     fetchStreak();
   }, [sessionId]); // ✅ Update saat sessionId berubah
 
+  // ================== USER PROGRESS ==================
+  const {
+    progress,
+    level,
+    xp,
+    title_level,
+    loading: progressLoading,
+    error: progressError,
+    fetchUserProgress,
+    updateUserProgress,
+  } = useUserProgress({
+    userIdRef,
+  });
+
   // ================== 1️⃣ LUPA KATA ==================
   const lupaKata = useLupaKata({
     setChatHistory, // update riwayat chat langsung
@@ -873,6 +888,9 @@ Feature tambahan:
             setOpenMenu={setOpenMenu}
             totalDone={totalDone}
             roleplayAttemptCount={roleplayAttemptCount}
+            level={level}
+            xp={xp}
+            title_level={title_level}
           />
           <OverlayFeedback message={overlayFavoritTranslated} />
           {/* VOCAB LIST */}
