@@ -21,7 +21,7 @@ export default function ControlSection({
   isWaitingForAI,
 }) {
   const [showHint, setShowHint] = useState(true);
-
+  // console.log("isRecording : ", isRecording);
   return (
     <>
       {/* FLOATING SUGGEST BUTTON */}

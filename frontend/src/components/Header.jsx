@@ -90,6 +90,10 @@ export default function Header({
 
   let unlockNext = true;
 
+  const currentXP = 2700;
+  const requiredXP = 2200;
+  const promotionReady = currentXP >= requiredXP;
+
   return (
     <>
       <header
@@ -99,9 +103,36 @@ export default function Header({
         {/* HEADER ROW */}
         <div className="flex items-center justify-between">
           {/* LEFT */}
+          {/* LEFT */}
           <div>
-            <h2 className="text-lg font-semibold text-white">SpeakEasy</h2>
-            <p className="text-xs text-gray-300">Practice your speaking</p>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-white">SpeakEasy</h2>
+
+              <span className="px-2 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-400/20 text-[10px] font-semibold text-indigo-300">
+                🏅 Lv.12
+              </span>
+            </div>
+
+            {promotionReady ? (
+              <div className="mt-0.5 text-[11px] font-medium text-amber-300">
+                ✨ Promotion Ready
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-cyan-400"
+                    style={{
+                      width: `${(currentXP / requiredXP) * 100}%`,
+                    }}
+                  />
+                </div>
+
+                <span className="text-[10px] text-gray-400">
+                  {currentXP} / {requiredXP} XP
+                </span>
+              </div>
+            )}
           </div>
 
           {/* RIGHT */}
@@ -198,7 +229,7 @@ export default function Header({
               </div>
             )}
 
-            {/* AUTO CORRECTION TOGGLE */}
+            {/* AUTO CORRECTION TOGGLE
             {(mode === "freeTalk" || mode === "scenarios") && (
               <button
                 onClick={() => setAutoCorrection((prev) => !prev)}
@@ -217,7 +248,6 @@ export default function Header({
               >
                 <span className="text-[11px] font-medium">✍️ Correction</span>
 
-                {/* SWITCH */}
                 <div
                   className={`
                       w-9 h-5 rounded-full relative transition
@@ -233,7 +263,7 @@ export default function Header({
                   />
                 </div>
               </button>
-            )}
+            )} */}
 
             {/* COST MONITORING DASHBOARD */}
             {user?.id === "21121b45-6987-432c-a2cd-fda17eabbd2b" &&
@@ -284,13 +314,60 @@ export default function Header({
                                     animate-fadeIn"
                     >
                       {/* User Info */}
-                      <div className="px-4 py-3 border-b border-white/10">
-                        <div className="text-sm font-medium text-white truncate">
+                      <div className="px-4 py-4 border-b border-white/10">
+                        <div className="text-sm font-semibold text-white truncate">
                           {user.username}
                         </div>
-                        <div className="text-xs text-gray-400">
-                          Account settings
+
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded-full bg-indigo-500/15 text-[10px] text-indigo-300 font-semibold">
+                            🏅 Lv.12
+                          </span>
+
+                          <span className="text-[11px] text-gray-300">
+                            Conversation Starter
+                          </span>
                         </div>
+
+                        {/* XP Progress */}
+                        <div className="mt-3 w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-indigo-400 to-cyan-400"
+                            style={{
+                              width: `${Math.min((currentXP / requiredXP) * 100, 100)}%`,
+                            }}
+                          />
+                        </div>
+
+                        <div className="flex justify-between mt-1 text-[10px] text-gray-400">
+                          <span>{currentXP} XP</span>
+                          <span>{requiredXP} XP</span>
+                        </div>
+
+                        {/* Promotion */}
+                        {promotionReady ? (
+                          <button
+                            className="
+                              mt-3
+                              w-full
+                              rounded-xl
+                              bg-amber-500/10!
+                              border border-amber-400/20
+                              py-2!
+                              text-xs
+                              font-medium
+                              text-amber-300
+                              hover:bg-amber-500/15
+                              transition
+                            "
+                          >
+                            ✨ Promotion Ready
+                          </button>
+                        ) : (
+                          <div className="mt-3 text-center text-[11px] text-gray-400">
+                            {requiredXP - currentXP} XP to Promotion
+                          </div>
+                        )}
                       </div>
 
                       {/* Menu Items */}
@@ -304,6 +381,28 @@ export default function Header({
                           <span>🕘</span>
                           <span>Translation History</span>
                         </button>
+
+                        {/* Auto Correction */}
+                        {(mode === "freeTalk" || mode === "scenarios") && (
+                          <div className="px-4 py-3 border-t border-white/10">
+                            <div className="text-[11px] text-gray-400 mb-2 uppercase tracking-wide">
+                              Correction
+                            </div>
+
+                            <label className="flex items-center justify-between text-sm text-white cursor-pointer">
+                              <span>✍️ Auto Correction</span>
+
+                              <input
+                                type="checkbox"
+                                checked={autoCorrection}
+                                onChange={() =>
+                                  setAutoCorrection((prev) => !prev)
+                                }
+                                className="accent-white cursor-pointer scale-90"
+                              />
+                            </label>
+                          </div>
+                        )}
 
                         {/* STT Toggle */}
                         <div className="px-4 py-3 border-t border-white/10">

@@ -1,4 +1,8 @@
 // hooks/useConversationEngine.js
+
+// ================== REACT CORE ==================
+import { useEffect, useState, useRef } from "react";
+
 import { streamChat } from "../services/chatService";
 import { cleanAIText } from "../utils/textUtils";
 
@@ -18,7 +22,22 @@ export default function useConversationEngine({
   onPhaseCompleted, // ⭐ NEW
 
   autoCorrectionRef,
+
+  roleplayChecklistFinished,
 }) {
+  const streamStartModeRef = useRef(null);
+
+  const roleplayChecklistFinishedLockedRef = useRef(false);
+  useEffect(() => {
+    if (roleplayChecklistFinished) {
+      roleplayChecklistFinishedLockedRef.current = true;
+    }
+  }, [roleplayChecklistFinished]);
+
+  // console.log(
+  //   "roleplayChecklistFinishedLockedRef: ",
+  //   roleplayChecklistFinishedLockedRef,
+  // );
   // console.log("🧭 mode:", modeRef.current);
   const sendTextToBackend = async (text) => {
     console.log(
@@ -56,6 +75,12 @@ export default function useConversationEngine({
       // STREAMING TOKEN
       // =========================
       onStreamUpdate: (aiText) => {
+        // to prevent switching active sound modes
+        if (!streamStartModeRef.current) {
+          streamStartModeRef.current = modeRef.current?.toLowerCase();
+
+          console.log("💾 Stream dimulai, mode:", streamStartModeRef.current);
+        }
         setChatHistory((prev) => {
           const withoutTemp = prev.filter((c) => c.sender !== "AI-temp");
 
@@ -79,7 +104,19 @@ export default function useConversationEngine({
       // FINAL ANSWER
       // =========================
       onStreamEnd: async (finalText, meta) => {
+        console.log(
+          "roleplayChecklistFinished OnStreamEnd :",
+          roleplayChecklistFinished,
+        );
+        if (roleplayChecklistFinishedLockedRef.current) return;
+
         const mode = modeRef.current?.toLowerCase();
+
+        const startMode = streamStartModeRef.current;
+        const currentMode = modeRef.current?.toLowerCase();
+
+        // console.log("🎤 startMode :", startMode);
+        // console.log("🎤 currentMode:", currentMode);
 
         const isFreetalk = mode === "freetalk";
         // const isFreetalk =
@@ -147,17 +184,28 @@ export default function useConversationEngine({
           ? finalText
           : cleanAIText(finalText);
 
+        // cek lagi sebelum speak
+        if (startMode !== currentMode) {
+          console.log("⛔ Mode berubah, TTS dibatalkan");
+          streamStartModeRef.current = null;
+          return;
+        }
+
+        console.log("✅ Mode masih sama, speakText dijalankan");
         await speakText(ttsMessage);
 
         // ⭐ hanya roleplay yang punya completion
         if (meta?.completed && scenarioRef.current?.id > 0) {
           onRoleplayCompleted?.(finalText);
         }
+
+        // roleplayChecklistFinishedLockedRef.current = false;
       },
     });
   };
 
   return {
     sendTextToBackend,
+    roleplayChecklistFinishedLockedRef,
   };
 }

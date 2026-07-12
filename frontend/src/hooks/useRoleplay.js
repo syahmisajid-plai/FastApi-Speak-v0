@@ -260,7 +260,7 @@ export default function useRoleplay({
 
     const scenarioId = scenarioRef.current?.id;
 
-    pendingResetRef.current = true;
+    // pendingResetRef.current = true;
     // if (isWaitingForAI) return;
     // 🔥 RESET
     // resetContextState();
@@ -273,26 +273,26 @@ export default function useRoleplay({
     // }
   };
 
-  useEffect(() => {
-    if (isWaitingForAI) return;
-    if (!pendingResetRef.current) return;
+  // useEffect(() => {
+  //   if (isWaitingForAI) return;
+  //   if (!pendingResetRef.current) return;
 
-    const timeout = setTimeout(async () => {
-      resetContextState();
+  //   const timeout = setTimeout(async () => {
+  //     resetContextState();
 
-      setSelectedScenario(null);
-      setChatHistory([]);
+  //     setSelectedScenario(null);
+  //     setChatHistory([]);
 
-      const scenarioId = scenarioRef.current?.id;
-      if (scenarioId) {
-        await clearRoleplay(scenarioId);
-      }
+  //     const scenarioId = scenarioRef.current?.id;
+  //     if (scenarioId) {
+  //       await clearRoleplay(scenarioId);
+  //     }
 
-      pendingResetRef.current = false;
-    }, 500); // 0.5 detik
+  //     pendingResetRef.current = false;
+  //   }, 500); // 0.5 detik
 
-    return () => clearTimeout(timeout);
-  }, [isWaitingForAI]);
+  //   return () => clearTimeout(timeout);
+  // }, [isWaitingForAI]);
 
   // =========================
   // CLOSE SUMMARY

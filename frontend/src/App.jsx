@@ -11,6 +11,7 @@ import RoleplaySummaryCard from "./components/RoleplaySummaryCard";
 // import DailyStoryIndicator from "./components/DailyStoryIndicator";
 import Testcard_swipe from "./components/testcard_swipe";
 import ModeSelector from "./components/ModeSelector";
+import ModeConfirmModal from "./components/ModeConfirmModal";
 import ContextRenderer from "./components/ContextRenderer";
 import DailySummaryViewer from "./components/DailySummaryViewer";
 import FreeTalkUI from "./components/FreeTalkUI";
@@ -522,6 +523,7 @@ Feature tambahan:
     handleChecklistUpdate,
   });
 
+  // console.log("roleplayChecklistFinished:", roleplayChecklistFinished);
   // const handleChecklistFinished = (progress) => {
   //   handleRoleplayCompleted("Checklist completed", progress);
   // };
@@ -563,30 +565,33 @@ Feature tambahan:
   }, [autoCorrectionRef]);
 
   // ================== SEND TEXT TO BACKEND ==================
-  const { sendTextToBackend } = useConversationEngine({
-    sessionIdRef,
-    userIdRef,
-    scenarioRef,
-    modeRef,
-    modeScenarioRef,
-    setChatHistory,
-    speakText,
-    unlockAudio,
+  const { sendTextToBackend, roleplayChecklistFinishedLockedRef } =
+    useConversationEngine({
+      sessionIdRef,
+      userIdRef,
+      scenarioRef,
+      modeRef,
+      modeScenarioRef,
+      setChatHistory,
+      speakText,
+      unlockAudio,
 
-    // grammarResult: result, // 🔥 TAMBAHKAN INI
+      // grammarResult: result, // 🔥 TAMBAHKAN INI
 
-    onRoleplayCompleted: handleRoleplayCompleted, // ✅ FIX
+      onRoleplayCompleted: handleRoleplayCompleted, // ✅ FIX
 
-    // ⭐ TAMBAHKAN INI
-    onPhaseCompleted: (phase) => {
-      console.log("🌅 DAILY PHASE READY:", phase);
+      // ⭐ TAMBAHKAN INI
+      onPhaseCompleted: (phase) => {
+        console.log("🌅 DAILY PHASE READY:", phase);
 
-      setCurrentStoryPhase(phase);
-      setReadyToContinue(true);
-    },
+        setCurrentStoryPhase(phase);
+        setReadyToContinue(true);
+      },
 
-    autoCorrectionRef,
-  });
+      autoCorrectionRef,
+
+      roleplayChecklistFinished: roleplayChecklistFinished,
+    });
 
   // ================== Chat User Terakhir kali (untuk checklist roleplay) ==================
   const lastUserMessage = chatHistory
@@ -983,6 +988,9 @@ Feature tambahan:
                 data={summaryData}
                 onClose={closeSummary}
                 isWaitingForAI={isWaitingForAI}
+                roleplayChecklistFinishedLockedRef={
+                  roleplayChecklistFinishedLockedRef
+                }
               />
             </div>
           )}
@@ -1178,89 +1186,27 @@ Feature tambahan:
             user_id={userId}
             mode={mode}
             setMode={handleModeChange}
+            isRecording={isRecording}
+            isLupaKataActive={lupaKata.isLupaKataActive}
+            isWaitingForAI={isWaitingForAI}
+            isSpeaking={isSpeaking}
+            forceStop={forceStop}
           />
-          {showModeConfirm && (
-            <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-              <div
-                className="
-              bg-white/10 
-              backdrop-blur-xl 
-              border border-white/20
-              text-white 
-              rounded-2xl 
-              p-6 
-              w-[320px] 
-              text-center 
-              space-y-5 
-              shadow-2xl
-            "
-              >
-                {/* ICON */}
-                <div className="text-4xl">⚠️</div>
+          <ModeConfirmModal
+            open={showModeConfirm}
+            onCancel={() => {
+              setShowModeConfirm(false);
+              setPendingMode(null);
+            }}
+            onContinue={() => {
+              if (isSpeaking) forceStop();
 
-                {/* TITLE */}
-                <h2 className="text-lg font-semibold">Change Mode?</h2>
-
-                {/* DESCRIPTION */}
-                <p className="text-sm text-white/70 leading-relaxed">
-                  Your current chat will be cleared when switching modes.
-                  <br />
-                  Do you want to continue?
-                </p>
-
-                {/* BUTTONS */}
-                <div className="flex gap-3 pt-2">
-                  {/* CANCEL */}
-                  <button
-                    className="
-                      flex-1
-                      py-2.5!
-                      rounded-xl
-                      bg-white/10!
-                      hover:bg-white/20
-                      text-white/80
-                      font-medium
-                      transition-all
-                      active:scale-95
-                    "
-                    onClick={() => {
-                      setShowModeConfirm(false);
-                      setPendingMode(null);
-                    }}
-                  >
-                    Cancel
-                  </button>
-
-                  {/* CONFIRM */}
-                  <button
-                    className="
-                      flex-1
-                      py-2.5!
-                      rounded-xl
-                      bg-gradient-to-r
-                      from-red-500
-                      to-rose-500
-                      hover:from-red-600
-                      hover:to-rose-600
-                      text-white
-                      font-semibold
-                      shadow-lg
-                      transition-all
-                      active:scale-95
-                    "
-                    onClick={() => {
-                      setMode(pendingMode);
-                      setChatHistory([]);
-                      setPendingMode(null);
-                      setShowModeConfirm(false);
-                    }}
-                  >
-                    Continue
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+              setMode(pendingMode);
+              setChatHistory([]);
+              setPendingMode(null);
+              setShowModeConfirm(false);
+            }}
+          />
           {(mode === "freeTalk" || mode === "scenarios") && (
             <ChatSection
               lupaKata={lupaKata}

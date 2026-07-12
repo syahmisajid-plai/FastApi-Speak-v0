@@ -8,6 +8,7 @@ export default function RoleplaySummaryCard({
   data,
   onClose,
   isWaitingForAI,
+  roleplayChecklistFinishedLockedRef,
 }) {
   const [showDetails, setShowDetails] = useState(false);
 
@@ -164,6 +165,7 @@ export default function RoleplaySummaryCard({
             setModeScenario("idle");
             setRoleplayModalOpen(false);
             setRolePlayStarted(false);
+            roleplayChecklistFinishedLockedRef.current = false;
             onClose();
           }}
           className={`px-5! py-2! rounded-lg border backdrop-blur-md transition

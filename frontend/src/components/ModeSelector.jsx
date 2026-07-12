@@ -4,12 +4,17 @@ export default function ModeSelector({
   user_id,
   mode,
   setMode,
-  micActive,
-  lupaKataActive,
+
+  isRecording,
+  isLupaKataActive,
+  isWaitingForAI,
+
+  isSpeaking,
+  forceStop,
 }) {
   // const isTestUser = user_id === "21121b45-6987-432c-a2cd-fda17eabbd2b";
   const isTestUser = user_id === "xxxx";
-
+  // console.log("isSpeaking : ", isSpeaking);
   const baseModes = [
     { key: "learn", icon: "🧠", label: "Learn", color: "indigo" },
     { key: "scenarios", icon: "🎭", label: "Scenarios", color: "purple" },
@@ -43,7 +48,7 @@ export default function ModeSelector({
 
   const handleModeChange = (m) => {
     if (mode === m.key) return;
-    if (micActive || lupaKataActive) return;
+    if (isRecording || isLupaKataActive || isWaitingForAI) return;
 
     setMode(m.key);
   };

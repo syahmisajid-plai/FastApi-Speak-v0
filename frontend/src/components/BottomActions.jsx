@@ -1,7 +1,7 @@
 import RecordingSection from "./RecordingSection";
 import SuggestionSection from "./SuggestionSection";
 import ControlSection from "./ControlSection";
-import LupaKataOverlay from "./LupaKataOverlay"; // ← WAJIB
+import LupaKataOverlay from "./LupaKataOverlay";
 
 export default function BottomActions({
   isRecording,
