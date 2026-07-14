@@ -250,10 +250,15 @@ Feature tambahan:
   } = useUserProgress({
     userIdRef,
     onXpGain: (amount) => {
-      setXpReward({
+      const reward = {
+        key: Date.now(),
         amount,
         message: "Great Progress!",
-      });
+      };
+
+      // console.log("🎁 SET XP REWARD ==========================:", reward);
+
+      setXpReward(reward);
     },
   });
 
@@ -326,7 +331,7 @@ Feature tambahan:
     completedLessons,
     refetch,
     completeLesson,
-  } = useSentenceLesson(userId, sentenceType);
+  } = useSentenceLesson(userId, sentenceType, updateUserProgress);
 
   // ================== Lock Daily ==================
   const [timeAllowed, setTimeAllowed] = useState(false);
@@ -617,6 +622,8 @@ Feature tambahan:
       autoCorrectionRef,
 
       roleplayChecklistFinished: roleplayChecklistFinished,
+
+      updateUserProgress,
     });
 
   // ================== Chat User Terakhir kali (untuk checklist roleplay) ==================
@@ -857,8 +864,9 @@ Feature tambahan:
   // const activePhase = getNextPhase(currentStoryPhase);
   // ========== DUMMY ==========
   const [debugKey, setDebugKey] = useState(0);
+
   const dummyUser = {
-    onboarding_completed: false,
+    onboarding_completed: true,
   };
 
   useEffect(() => {
@@ -883,7 +891,7 @@ Feature tambahan:
       </button> */}
 
       <XpRewardPopup
-        // key={debugKey}
+        key={xpReward?.key}
         xp={xpReward?.amount}
         message={xpReward?.message}
         onClose={() => setXpReward(null)}

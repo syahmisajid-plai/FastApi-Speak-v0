@@ -1,7 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { linkBackend } from "../config";
 
-export default function useSentenceLesson(userId, sentenceType) {
+export default function useSentenceLesson(
+  userId,
+  sentenceType,
+  updateUserProgress,
+) {
   const [lesson, setLesson] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -76,6 +80,12 @@ export default function useSentenceLesson(userId, sentenceType) {
       });
 
       console.log("✅ Lesson completed:", lesson.id);
+
+      // Tambah XP
+      await updateUserProgress({
+        user_id: userId,
+        xp_gain: 15,
+      });
 
       // 🔥 refresh both
       await fetchCompletedLessons();

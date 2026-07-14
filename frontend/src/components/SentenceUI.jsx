@@ -55,6 +55,8 @@ export default function SentenceUI({
 
   const [hasStarted, setHasStarted] = useState(false);
 
+  const [isCompleting, setIsCompleting] = useState(false);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowLoading(false);
@@ -905,35 +907,70 @@ export default function SentenceUI({
 
           {/* ================= ACTION ================= */}
           <button
+            disabled={isCompleting}
             onClick={async () => {
-              if (nextAudio.current) {
-                nextAudio.current.currentTime = 0;
-                nextAudio.current.play().catch(() => {});
+              setIsCompleting(true);
+
+              try {
+                if (nextAudio.current) {
+                  nextAudio.current.currentTime = 0;
+                  nextAudio.current.play().catch(() => {});
+                }
+
+                await completeLesson();
+
+                setMode("idle");
+                setStep(0);
+                setHasStarted(false);
+              } finally {
+                setIsCompleting(false);
               }
-              await completeLesson();
-              setMode("idle");
-              setStep(0);
-              setHasStarted(false);
             }}
-            className="
-              inline-flex
-              items-center
-              gap-2
-              px-5!
-              py-2.5!
-              rounded-xl
-              bg-blue-600!
-              hover:bg-blue-700
-              text-white
-              font-semibold
-              transition-all
-              duration-200
-              active:scale-95
-              shadow
-              hover:shadow-lg
-            "
+            className={`
+    inline-flex
+    items-center
+    gap-2
+    px-5!
+    py-2.5!
+    rounded-xl
+    text-white
+    font-semibold
+    transition-all
+    duration-200
+    shadow
+    ${
+      isCompleting
+        ? "bg-blue-400 cursor-not-allowed"
+        : "bg-blue-600! hover:bg-blue-700 active:scale-95 hover:shadow-lg"
+    }
+  `}
           >
-            ✅ Next Sentence →
+            {isCompleting ? (
+              <>
+                <svg
+                  className="w-4 h-4 animate-spin"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  />
+                </svg>
+                Saving...
+              </>
+            ) : (
+              <>✅ Next Sentence →</>
+            )}
           </button>
         </section>
       )}

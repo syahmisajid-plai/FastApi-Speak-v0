@@ -24,6 +24,8 @@ export default function useConversationEngine({
   autoCorrectionRef,
 
   roleplayChecklistFinished,
+
+  updateUserProgress,
 }) {
   const streamStartModeRef = useRef(null);
 
@@ -189,6 +191,15 @@ export default function useConversationEngine({
           console.log("⛔ Mode berubah, TTS dibatalkan");
           streamStartModeRef.current = null;
           return;
+        }
+
+        // Tambah XP hanya untuk Free Talk
+        if (modeRef.current?.toLowerCase() === "freetalk") {
+          await updateUserProgress({
+            user_id: userIdRef.current,
+            xp_gain: 5,
+            mode: "freetalk",
+          });
         }
 
         console.log("✅ Mode masih sama, speakText dijalankan");

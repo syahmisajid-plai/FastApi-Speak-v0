@@ -467,6 +467,10 @@ def init_db():
             level INTEGER NOT NULL DEFAULT 1 CHECK (level >= 1),
             xp INTEGER NOT NULL DEFAULT 0 CHECK (xp >= 0),
             title_level INTEGER NOT NULL DEFAULT 1 CHECK (title_level >= 1),
+
+            freetalk_xp_today INTEGER NOT NULL DEFAULT 0 CHECK (freetalk_xp_today >= 0),
+            freetalk_xp_date DATE NOT NULL DEFAULT CURRENT_DATE,
+
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -956,8 +960,8 @@ import json
 
 #     cursor.execute(
 #         """
-#         SELECT message, session_id 
-#         FROM message_store 
+#         SELECT message, session_id
+#         FROM message_store
 #         WHERE session_id LIKE %s
 #         ORDER BY id ASC
 #         """,
@@ -1082,8 +1086,8 @@ def save_summary(user_id, story_date, summaries):
 
 #     cursor.execute(
 #         """
-#         SELECT message, session_id 
-#         FROM message_store 
+#         SELECT message, session_id
+#         FROM message_store
 #         WHERE session_id LIKE %s
 #         ORDER BY id ASC
 #         """,
@@ -1938,73 +1942,95 @@ def get_user_progress(user_id: str):
 
     finally:
         conn.close()
-        
-def add_user_xp(
-    user_id: str,
-    xp_gain: int
-):
+
+
+def add_user_xp(user_id: str, xp_gain: int, mode: str = None):
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
 
         # Ambil progress sekarang
-        cursor.execute("""
-            SELECT xp
+        cursor.execute(
+            """
+            SELECT 
+                xp,
+                freetalk_xp_today,
+                freetalk_xp_date
             FROM user_progress
             WHERE user_id = %s;
-        """, (
-            user_id,
-        ))
+        """,
+            (user_id,),
+        )
 
         current = cursor.fetchone()
 
         if not current:
             raise Exception("User progress not found")
 
-
         current_xp = current[0]
+        freetalk_xp_today = current[1]
+        freetalk_xp_date = current[2]
 
+        # ============================
+        # RESET FREETALK HARIAN
+        # ============================
+        cursor.execute("SELECT CURRENT_DATE;")
+        today = cursor.fetchone()[0]
 
-        # Tambahkan XP
-        new_xp = current_xp + xp_gain
+        if freetalk_xp_date != today:
+            freetalk_xp_today = 0
 
+        # ============================
+        # CEK LIMIT FREETALK
+        # ============================
+        actual_xp = xp_gain
+
+        if mode == "freetalk":
+
+            remaining = 50 - freetalk_xp_today
+
+            actual_xp = max(0, min(xp_gain, remaining))
+
+        # Tambahkan XP total
+        new_xp = current_xp + actual_xp
+
+        # Update counter FreeTalk
+        new_freetalk_xp_today = freetalk_xp_today
+
+        if mode == "freetalk":
+            new_freetalk_xp_today += actual_xp
 
         # Hitung level
         new_level = max(1, (new_xp // 100) + 1)
 
-
-        # Hitung title level sementara
+        # Hitung title level
         new_title_level = max(1, (new_xp // 500) + 1)
 
-
-
         # Update database
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE user_progress
             SET
                 xp = %s,
                 level = %s,
                 title_level = %s,
+                freetalk_xp_today = %s,
+                freetalk_xp_date = %s,
                 updated_at = CURRENT_TIMESTAMP
             WHERE user_id = %s;
-        """, (
-            new_xp,
-            new_level,
-            new_title_level,
-            user_id
-        ))
-
+        """,
+            (new_xp, new_level, new_title_level, new_freetalk_xp_today, today, user_id),
+        )
 
         conn.commit()
-
 
         return {
             "xp": new_xp,
             "level": new_level,
-            "title_level": new_title_level
+            "title_level": new_title_level,
+            "xp_gain": actual_xp,
         }
-
 
     finally:
         conn.close()

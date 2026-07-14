@@ -74,7 +74,7 @@ export default function useUserProgress({ userIdRef, onXpGain }) {
   // =============================
   // ADD USER XP
   // =============================
-  const updateUserProgress = async ({ user_id, xp_gain }) => {
+  const updateUserProgress = async ({ user_id, xp_gain, mode = null }) => {
     setLoading(true);
     setError(null);
 
@@ -87,6 +87,7 @@ export default function useUserProgress({ userIdRef, onXpGain }) {
         body: JSON.stringify({
           user_id,
           xp_gain,
+          mode,
         }),
       });
 
@@ -104,15 +105,16 @@ export default function useUserProgress({ userIdRef, onXpGain }) {
         });
       }
 
-      if (correctSound.current) {
-        correctSound.current.currentTime = 0;
-        correctSound.current.play().catch(() => {});
-        console.log("play =====");
-      }
+      // gunakan XP yang benar-benar diberikan backend
+      const actualXp = result.progress?.xp_gain ?? 0;
 
-      // trigger popup
-      if (xp_gain > 0) {
-        onXpGain?.(xp_gain);
+      if (actualXp > 0) {
+        if (correctSound.current) {
+          correctSound.current.currentTime = 0;
+          correctSound.current.play().catch(() => {});
+        }
+
+        onXpGain?.(actualXp);
       }
 
       return result;

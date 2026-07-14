@@ -15,6 +15,7 @@ router = APIRouter(prefix="/progress", tags=["progress"])
 class UpdateProgressRequest(BaseModel):
     user_id: str
     xp_gain: int
+    mode: str | None = None
 
 
 # -----------------------------
@@ -32,17 +33,11 @@ def get_progress(user_id: str):
 
     if not progress:
         print("❌ Progress not found")
-        raise HTTPException(
-            status_code=404,
-            detail="User progress not found"
-        )
+        raise HTTPException(status_code=404, detail="User progress not found")
 
     print("✅ Progress loaded")
 
-    return {
-        "success": True,
-        "progress": progress
-    }
+    return {"success": True, "progress": progress}
 
 
 # -----------------------------
@@ -51,22 +46,16 @@ def get_progress(user_id: str):
 @router.put("/")
 def update_progress(payload: UpdateProgressRequest):
 
-    print("\n📈 [ADD USER XP]")
+    print("\n📈 [UPDATE USER XP]")
     print("➡️ User ID:", payload.user_id)
     print("➡️ XP Gain:", payload.xp_gain)
-
+    print("➡️ Mode:", payload.mode)
 
     progress = add_user_xp(
-        user_id=payload.user_id,
-        xp_gain=payload.xp_gain
+        user_id=payload.user_id, xp_gain=payload.xp_gain, mode=payload.mode
     )
 
-
-    print("✅ XP Added")
+    print("✅ Progress Updated")
     print("➡️ New Progress:", progress)
 
-
-    return {
-        "success": True,
-        "progress": progress
-    }
+    return {"success": True, "progress": progress}
