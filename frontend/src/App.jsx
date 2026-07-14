@@ -239,6 +239,8 @@ Feature tambahan:
   const audioFreetalkStartRef = useRef(null);
 
   // ================== USER PROGRESS ==================
+  const [showDailyLimitPopup, setShowDailyLimitPopup] = useState(false);
+
   const {
     level,
     xp,
@@ -249,16 +251,17 @@ Feature tambahan:
     updateUserProgress,
   } = useUserProgress({
     userIdRef,
+
     onXpGain: (amount) => {
-      const reward = {
+      setXpReward({
         key: Date.now(),
         amount,
         message: "Great Progress!",
-      };
+      });
+    },
 
-      // console.log("🎁 SET XP REWARD ==========================:", reward);
-
-      setXpReward(reward);
+    onDailyLimitReached: () => {
+      setShowDailyLimitPopup(true);
     },
   });
 

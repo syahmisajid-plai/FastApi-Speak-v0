@@ -5,7 +5,11 @@ import { linkBackend } from "../config";
 
 import correctAnswer2 from "../assets/sound/delon_boomkin-notification-correct-answer-447601.mp3";
 
-export default function useUserProgress({ userIdRef, onXpGain }) {
+export default function useUserProgress({
+  userIdRef,
+  onXpGain,
+  onDailyLimitReached,
+}) {
   //   console.log("userIdRef :", userIdRef);
   const [progress, setProgress] = useState({
     level: 1,
@@ -51,7 +55,7 @@ export default function useUserProgress({ userIdRef, onXpGain }) {
 
       const result = await res.json();
 
-      console.log("PROGRESS RESPONSE:", result);
+      console.log("PROGRESS RESPONSE: ======", result);
 
       const userProgress = {
         level: result.progress?.level ?? 1,
@@ -108,6 +112,9 @@ export default function useUserProgress({ userIdRef, onXpGain }) {
       // gunakan XP yang benar-benar diberikan backend
       const actualXp = result.progress?.xp_gain ?? 0;
 
+      // apakah limit sudah tercapai
+      const dailyLimitReached = result.progress?.daily_limit_reached ?? false;
+
       if (actualXp > 0) {
         if (correctSound.current) {
           correctSound.current.currentTime = 0;
@@ -117,7 +124,15 @@ export default function useUserProgress({ userIdRef, onXpGain }) {
         onXpGain?.(actualXp);
       }
 
-      return result;
+      // hanya tampilkan popup limit jika benar-benar tidak dapat XP
+      if (dailyLimitReached && actualXp === 0) {
+        onDailyLimitReached?.();
+      }
+
+      return {
+        ...result,
+        dailyLimitReached,
+      };
     } catch (err) {
       setError(err.message);
       return null;
