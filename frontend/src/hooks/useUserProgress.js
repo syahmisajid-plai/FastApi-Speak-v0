@@ -101,6 +101,8 @@ export default function useUserProgress({
 
       const result = await res.json();
 
+      console.log("==============UPDATE PROGRESS RESULT:", result);
+
       if (result.progress) {
         setProgress({
           level: result.progress.level ?? 1,
@@ -115,18 +117,17 @@ export default function useUserProgress({
       // apakah limit sudah tercapai
       const dailyLimitReached = result.progress?.daily_limit_reached ?? false;
 
-      if (actualXp > 0) {
+      console.log("dailyLimitReached:", dailyLimitReached);
+
+      if (dailyLimitReached) {
+        onDailyLimitReached?.();
+      } else if (actualXp > 0) {
         if (correctSound.current) {
           correctSound.current.currentTime = 0;
           correctSound.current.play().catch(() => {});
         }
 
         onXpGain?.(actualXp);
-      }
-
-      // hanya tampilkan popup limit jika benar-benar tidak dapat XP
-      if (dailyLimitReached && actualXp === 0) {
-        onDailyLimitReached?.();
       }
 
       return {

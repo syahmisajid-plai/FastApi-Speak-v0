@@ -1,14 +1,11 @@
 // components/XpRewardPopup.jsx
 import { useEffect, useState, useMemo, useRef } from "react";
 
-export default function XpRewardPopup({
-  xp,
-  message = "Great Progress!",
-  onClose,
-}) {
+export default function XpRewardPopup({ type = "xp", xp, message, onClose }) {
   const [phase, setPhase] = useState("start");
   // start -> center -> end
   const [fly, setFly] = useState(false);
+  const isInfo = type === "info";
   useEffect(() => {
     if (!xp) return;
 
@@ -32,7 +29,7 @@ export default function XpRewardPopup({
   }, [xp]);
 
   useEffect(() => {
-    if (!xp) return;
+    if (xp == null && !message) return;
 
     setPhase("start");
 
@@ -56,7 +53,7 @@ export default function XpRewardPopup({
     };
   }, [xp]);
 
-  if (!xp) return null;
+  if (xp == null && !message) return null;
 
   return (
     <div
@@ -122,15 +119,25 @@ export default function XpRewardPopup({
       shadow-[0_0_12px_rgba(251,191,36,.35)]
     "
         >
-          XP
+          {isInfo ? "🏆" : "XP"}
         </div>
 
         <div>
-          <div className="text-base font-bold leading-none text-gray-900">
-            +{xp}
-          </div>
+          {!isInfo && (
+            <div className="text-base font-bold leading-none text-gray-900">
+              +{xp}
+            </div>
+          )}
 
-          <div className="mt-0.5 text-[11px] text-gray-500">{message}</div>
+          <div
+            className={
+              isInfo
+                ? "text-sm font-semibold text-gray-900"
+                : "mt-0.5 text-[11px] text-gray-500"
+            }
+          >
+            {message}
+          </div>
         </div>
       </div>
     </div>

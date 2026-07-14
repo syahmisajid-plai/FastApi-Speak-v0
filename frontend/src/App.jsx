@@ -255,13 +255,23 @@ Feature tambahan:
     onXpGain: (amount) => {
       setXpReward({
         key: Date.now(),
+        type: "xp",
         amount,
         message: "Great Progress!",
       });
     },
 
+    // onDailyLimitReached: () => {
+    //   console.log("🔥 SHOW POPUP");
+    //   setShowDailyLimitPopup(true);
+    // },
+
     onDailyLimitReached: () => {
-      setShowDailyLimitPopup(true);
+      setXpReward({
+        key: Date.now(),
+        type: "info",
+        message: "Daily FreeTalk XP limit reached!",
+      });
     },
   });
 
@@ -895,6 +905,7 @@ Feature tambahan:
 
       <XpRewardPopup
         key={xpReward?.key}
+        type={xpReward?.type}
         xp={xpReward?.amount}
         message={xpReward?.message}
         onClose={() => setXpReward(null)}
