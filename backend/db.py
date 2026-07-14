@@ -2030,6 +2030,13 @@ def add_user_xp(user_id: str, xp_gain: int, mode: str = None):
             "level": new_level,
             "title_level": new_title_level,
             "xp_gain": actual_xp,
+
+            # informasi FreeTalk
+            "freetalk_xp_today": new_freetalk_xp_today,
+            "daily_limit_reached": (
+                mode == "freetalk"
+                and new_freetalk_xp_today >= 50
+            ),
         }
 
     finally:
