@@ -1,57 +1,136 @@
 // components/XpRewardPopup.jsx
-
-import { useEffect } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 
 export default function XpRewardPopup({
   xp,
   message = "Great Progress!",
   onClose,
 }) {
+  const [phase, setPhase] = useState("start");
+  // start -> center -> end
+  const [fly, setFly] = useState(false);
   useEffect(() => {
     if (!xp) return;
 
-    const timer = setTimeout(() => {
-      onClose?.();
-    }, 1500);
+    // Reset posisi awal setiap popup muncul
+    setFly(false);
 
-    return () => clearTimeout(timer);
-  }, [xp, onClose]);
+    // Setelah sebentar, mulai terbang
+    const flyTimer = setTimeout(() => {
+      setFly(true);
+    }, 2100);
+
+    // Hilangkan popup
+    const closeTimer = setTimeout(() => {
+      onClose?.();
+    }, 4200);
+
+    return () => {
+      clearTimeout(flyTimer);
+      clearTimeout(closeTimer);
+    };
+  }, [xp]);
+
+  useEffect(() => {
+    if (!xp) return;
+
+    setPhase("start");
+
+    // 0 ms
+    requestAnimationFrame(() => {
+      setPhase("center");
+    });
+
+    // setelah diam
+    const t1 = setTimeout(() => {
+      setPhase("end");
+    }, 1800);
+
+    const t2 = setTimeout(() => {
+      onClose?.();
+    }, 2600);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [xp]);
 
   if (!xp) return null;
 
   return (
     <div
-      className="
-        fixed
-        top-24
-        left-1/2
-        -translate-x-1/2
-        z-[999]
-        animate-bounce
-      "
+      className={`
+      fixed
+      top-24
+      left-1/2
+      z-[999]
+      pointer-events-none
+      transition-all
+      duration-700
+      ease-out
+
+      ${
+        phase === "start"
+          ? "-translate-x-[70px] -translate-y-4 scale-90 opacity-0"
+          : phase === "center"
+            ? "-translate-x-1/2 scale-100 opacity-100"
+            : "-translate-x-[170px] -translate-y-16 scale-25 opacity-0"
+      }
+    `}
     >
       <div
         className="
-          flex
-          items-center
-          gap-3
-          px-5
-          py-3
-          rounded-2xl
-          bg-gradient-to-r
-          from-yellow-400
-          to-orange-400
-          text-white
-          shadow-xl
-          font-bold
-        "
+    flex
+    items-center
+    gap-3
+
+    px-4
+    py-2.5
+
+    rounded-2xl
+    bg-white/95
+    backdrop-blur-xl
+
+    border
+    border-yellow-100
+
+    shadow-[0_10px_24px_rgba(0,0,0,0.10)]
+  "
       >
-        <span className="text-2xl">✨</span>
+        {/* Badge */}
+        <div
+          className="
+      relative
+      w-9
+      h-9
+
+      rounded-full
+
+      flex
+      items-center
+      justify-center
+
+      bg-gradient-to-br
+      from-yellow-300
+      to-amber-500
+
+      text-white
+      text-sm
+      font-bold
+
+      shadow-[0_0_12px_rgba(251,191,36,.35)]
+    "
+        >
+          XP
+        </div>
 
         <div>
-          <div className="text-lg">+{xp} XP</div>
+          <div className="text-base font-bold leading-none text-gray-900">
+            +{xp}
+          </div>
 
-          <div className="text-xs opacity-90">{message}</div>
+          <div className="mt-0.5 text-[11px] text-gray-500">{message}</div>
         </div>
       </div>
     </div>

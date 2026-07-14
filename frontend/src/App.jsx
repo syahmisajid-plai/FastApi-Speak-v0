@@ -1,3 +1,4 @@
+// App.jsx
 // ================== REACT CORE ==================
 import { useEffect, useState, useRef } from "react";
 
@@ -36,6 +37,7 @@ import GamesUI from "./components/GamesUI";
 import PWADebug from "./components/PWADebug";
 
 import XpRewardPopup from "./components/XpRewardPopup";
+import Onboarding from "./components/Onboarding";
 
 // ================== STYLES ==================
 import "./App.css";
@@ -853,11 +855,35 @@ Feature tambahan:
   };
 
   // const activePhase = getNextPhase(currentStoryPhase);
+  // ========== DUMMY ==========
+  const [debugKey, setDebugKey] = useState(0);
+  const dummyUser = {
+    onboarding_completed: false,
+  };
 
+  useEffect(() => {
+    if (dummyUser && !dummyUser.onboarding_completed) {
+      setMode("onBoarding");
+    }
+  }, [dummyUser]);
   // =
   return (
     <>
+      {/* <button
+        onClick={() => {
+          setDebugKey((k) => k + 1);
+          setXpReward({
+            amount: 25,
+            message: "Debug XP",
+          });
+        }}
+        className="fixed top-45 right-5 z-[9999] bg-red-500 text-white px-4 py-2 rounded"
+      >
+        Show XP
+      </button> */}
+
       <XpRewardPopup
+        // key={debugKey}
         xp={xpReward?.amount}
         message={xpReward?.message}
         onClose={() => setXpReward(null)}
@@ -888,33 +914,35 @@ Feature tambahan:
           onClick={resetIdle}
           onWheel={resetIdle}
         >
-          <Header
-            streak={streak}
-            mode={mode}
-            modeLearn={modeLearn}
-            modeScenario={modeScenario}
-            isScrolled={isScrolled}
-            dailyStory={dailyStory}
-            user={user}
-            onLogout={handleLogout}
-            streakDaily={streakDaily}
-            fetchStreakDaily={fetchStreakDaily}
-            activeChecklist={activeChecklist}
-            onOpenVocab={() => setShowVocab(true)}
-            completedCountVocab={completedCountVocab}
-            completedLessons={completedLessons}
-            autoCorrection={autoCorrection}
-            setAutoCorrection={setAutoCorrection}
-            supportSTTWeb={supportSTTWeb}
-            setSupportSTTWeb={setSupportSTTWeb}
-            openMenu={openMenu}
-            setOpenMenu={setOpenMenu}
-            totalDone={totalDone}
-            roleplayAttemptCount={roleplayAttemptCount}
-            level={level}
-            xp={xp}
-            title_level={title_level}
-          />
+          {mode !== "onBoarding" && (
+            <Header
+              streak={streak}
+              mode={mode}
+              modeLearn={modeLearn}
+              modeScenario={modeScenario}
+              isScrolled={isScrolled}
+              dailyStory={dailyStory}
+              user={user}
+              onLogout={handleLogout}
+              streakDaily={streakDaily}
+              fetchStreakDaily={fetchStreakDaily}
+              activeChecklist={activeChecklist}
+              onOpenVocab={() => setShowVocab(true)}
+              completedCountVocab={completedCountVocab}
+              completedLessons={completedLessons}
+              autoCorrection={autoCorrection}
+              setAutoCorrection={setAutoCorrection}
+              supportSTTWeb={supportSTTWeb}
+              setSupportSTTWeb={setSupportSTTWeb}
+              openMenu={openMenu}
+              setOpenMenu={setOpenMenu}
+              totalDone={totalDone}
+              roleplayAttemptCount={roleplayAttemptCount}
+              level={level}
+              xp={xp}
+              title_level={title_level}
+            />
+          )}
           <OverlayFeedback message={overlayFavoritTranslated} />
           {/* VOCAB LIST */}
           {showVocab && (
@@ -969,6 +997,9 @@ Feature tambahan:
               }}
             />
           )}
+
+          {/* 🔥 Not Yet Onboarding */}
+          {mode === "onBoarding" && <Onboarding />}
           {/* ================== DEBUG: Open Diary Daily Story ================== */}
           {/* <div className="w-full flex justify-center mb-2">
             <button
@@ -1225,16 +1256,19 @@ Feature tambahan:
           {/* {mode === "games" && <ComingSoonMultiplayerGames />} */}
 
           {/* {mode === "vocab" && <LearnUI />} */}
-          <ModeSelector
-            user_id={userId}
-            mode={mode}
-            setMode={handleModeChange}
-            isRecording={isRecording}
-            isLupaKataActive={lupaKata.isLupaKataActive}
-            isWaitingForAI={isWaitingForAI}
-            isSpeaking={isSpeaking}
-            forceStop={forceStop}
-          />
+          {mode !== "onBoarding" && (
+            <ModeSelector
+              user_id={userId}
+              mode={mode}
+              setMode={handleModeChange}
+              isRecording={isRecording}
+              isLupaKataActive={lupaKata.isLupaKataActive}
+              isWaitingForAI={isWaitingForAI}
+              isSpeaking={isSpeaking}
+              forceStop={forceStop}
+            />
+          )}
+
           <ModeConfirmModal
             open={showModeConfirm}
             onCancel={() => {

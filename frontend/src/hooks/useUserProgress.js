@@ -1,7 +1,9 @@
 // hooks/useUserProgress.js
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { linkBackend } from "../config";
+
+import correctAnswer2 from "../assets/sound/delon_boomkin-notification-correct-answer-447601.mp3";
 
 export default function useUserProgress({ userIdRef, onXpGain }) {
   //   console.log("userIdRef :", userIdRef);
@@ -13,6 +15,20 @@ export default function useUserProgress({ userIdRef, onXpGain }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const correctSound = useRef(null);
+
+  useEffect(() => {
+    correctSound.current = new Audio(correctAnswer2);
+
+    return () => {
+      if (correctSound.current) {
+        correctSound.current.pause();
+        correctSound.current.src = "";
+        correctSound.current.load();
+      }
+    };
+  }, []);
 
   // =============================
   // GET USER PROGRESS
@@ -86,6 +102,12 @@ export default function useUserProgress({ userIdRef, onXpGain }) {
           xp: result.progress.xp ?? 0,
           title_level: result.progress.title_level ?? 1,
         });
+      }
+
+      if (correctSound.current) {
+        correctSound.current.currentTime = 0;
+        correctSound.current.play().catch(() => {});
+        console.log("play =====");
       }
 
       // trigger popup
