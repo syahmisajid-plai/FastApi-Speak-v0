@@ -8,7 +8,7 @@ export default function Onboarding() {
 
   const next = () => setStep((s) => Math.min(s + 1, 10));
   const back = () => setStep((s) => Math.max(s - 1, 1));
-
+  //  Console.log
   const {
     permissionGranted,
     audioDetected,
