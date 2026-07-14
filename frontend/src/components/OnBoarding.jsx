@@ -8,7 +8,7 @@ export default function Onboarding() {
 
   const next = () => setStep((s) => Math.min(s + 1, 10));
   const back = () => setStep((s) => Math.max(s - 1, 1));
-  //  Console.log
+
   const {
     permissionGranted,
     audioDetected,
@@ -39,437 +39,449 @@ export default function Onboarding() {
     setIsPlaying,
   } = useSpeakerCheck();
 
-  return (
-    <div className="min-h-screenflex items-center justify-center p-6">
-      <audio
-        ref={audioRef}
-        src="/src/assets/sound/freetalk_start.mp3"
-        preload="auto"
-        onPlay={() => setIsPlaying(true)}
-        onEnded={() => setIsPlaying(false)}
-      />
-      ;
-      <div className="w-full max-w-xl">
-        {/* Progress */}
-        <div className="mb-6">
-          <div className="flex justify-between text-sm text-gray-400 mb-2">
-            <span>Step {step} / 10</span>
-            <span>{Math.round((step / 10) * 100)}%</span>
-          </div>
+  return null;
+  // return (
+  //   <>
+  //     <div className="min-h-screenflex items-center justify-center p-6">
+  //       <audio
+  //         ref={audioRef}
+  //         src="/src/assets/sound/freetalk_start.mp3"
+  //         preload="auto"
+  //         onPlay={() => setIsPlaying(true)}
+  //         onEnded={() => setIsPlaying(false)}
+  //       />
+  //       ;
+  //       <div className="w-full max-w-xl">
 
-          <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-indigo-500 transition-all duration-300"
-              style={{ width: `${step * 10}%` }}
-            />
-          </div>
-        </div>
+  //         <div className="mb-6">
+  //           <div className="flex justify-between text-sm text-gray-400 mb-2">
+  //             <span>Step {step} / 10</span>
+  //             <span>{Math.round((step / 10) * 100)}%</span>
+  //           </div>
 
-        {/* Card */}
-        <div className="rounded-3xl bg-slate-900 border border-slate-800 p-8 shadow-2xl mt-24">
-          {step === 1 && (
-            <>
-              <div className="text-6xl mb-4">👋</div>
+  //           <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+  //             <div
+  //               className="h-full bg-indigo-500 transition-all duration-300"
+  //               style={{ width: `${step * 10}%` }}
+  //             />
+  //           </div>
+  //         </div>
 
-              <h2 className="text-3xl font-bold text-white">
-                Welcome to SpeakUp!
-              </h2>
+  //         {/* Card */}
+  //         <div className="rounded-3xl bg-slate-900 border border-slate-800 p-8 shadow-2xl mt-24">
+  //           {step === 1 && (
+  //             <>
+  //               <div className="text-6xl mb-4">👋</div>
 
-              <p className="text-gray-400 mt-3">
-                Let's get everything ready. It only takes about 1 minute.
-              </p>
+  //               <h2 className="text-3xl font-bold text-white">
+  //                 Welcome to SpeakUp!
+  //               </h2>
 
-              <button
-                onClick={next}
-                className="mt-8 w-full rounded-xl bg-indigo-600!! py-3!! text-white font-semibold hover:bg-indigo-500!"
-              >
-                Get Started
-              </button>
-            </>
-          )}
+  //               <p className="text-gray-400 mt-3">
+  //                 Let's get everything ready. It only takes about 1 minute.
+  //               </p>
 
-          {step === 2 && (
-            <>
-              <div className="text-5xl mb-4">✍️</div>
+  //               <button
+  //                 onClick={next}
+  //                 className="mt-8 w-full rounded-xl bg-indigo-600!! py-3!! text-white font-semibold hover:bg-indigo-500!"
+  //               >
+  //                 Get Started
+  //               </button>
+  //             </>
+  //           )}
 
-              <h2 className="text-2xl text-white font-bold">
-                Tell Us About You
-              </h2>
+  //           {step === 2 && (
+  //             <>
+  //               <div className="text-5xl mb-4">✍️</div>
 
-              <p className="text-gray-400 mt-2">What should we call you?</p>
+  //               <h2 className="text-2xl text-white font-bold">
+  //                 Tell Us About You
+  //               </h2>
 
-              <input
-                className="mt-6 w-full rounded-xl bg-slate-800 border border-slate-700 p-3 text-white"
-                placeholder="Nickname"
-              />
+  //               <p className="text-gray-400 mt-2">What should we call you?</p>
 
-              <p className="mt-3 text-sm text-gray-500">
-                This name will be used when your AI tutor talks to you.
-              </p>
+  //               <input
+  //                 className="mt-6 w-full rounded-xl bg-slate-800 border border-slate-700 p-3 text-white"
+  //                 placeholder="Nickname"
+  //               />
 
-              <button
-                onClick={next}
-                className="mt-8 w-full rounded-xl bg-indigo-600!! py-3!! text-white"
-              >
-                Continue
-              </button>
-            </>
-          )}
+  //               <p className="mt-3 text-sm text-gray-500">
+  //                 This name will be used when your AI tutor talks to you.
+  //               </p>
 
-          {step === 3 && (
-            <>
-              <div className="text-5xl mb-4">🎤</div>
+  //               <button
+  //                 onClick={next}
+  //                 className="mt-8 w-full rounded-xl bg-indigo-600!! py-3!! text-white"
+  //               >
+  //                 Continue
+  //               </button>
+  //             </>
+  //           )}
 
-              <h2 className="text-2xl font-bold text-white">
-                Microphone Check
-              </h2>
+  //           {step === 3 && (
+  //             <>
+  //               <div className="text-5xl mb-4">🎤</div>
 
-              <p className="mt-2 text-gray-400">
-                We'll verify that your microphone is connected and can detect
-                your voice.
-              </p>
+  //               <h2 className="text-2xl font-bold text-white">
+  //                 Microphone Check
+  //               </h2>
 
-              <div className="mt-8 rounded-xl bg-slate-800 p-5 space-y-3">
-                <div
-                  className={
-                    permissionGranted ? "text-green-400" : "text-gray-400"
-                  }
-                >
-                  {permissionGranted
-                    ? "✅ Microphone permission granted"
-                    : "⏳ Permission not granted"}
-                </div>
+  //               <p className="mt-2 text-gray-400">
+  //                 We'll verify that your microphone is connected and can detect
+  //                 your voice.
+  //               </p>
 
-                <div
-                  className={audioDetected ? "text-green-400" : "text-gray-400"}
-                >
-                  {audioDetected
-                    ? "✅ Voice detected"
-                    : "⏳ Waiting for your voice"}
-                </div>
-              </div>
+  //               <div className="mt-8 rounded-xl bg-slate-800 p-5 space-y-3">
+  //                 <div
+  //                   className={
+  //                     permissionGranted ? "text-green-400" : "text-gray-400"
+  //                   }
+  //                 >
+  //                   {permissionGranted
+  //                     ? "✅ Microphone permission granted"
+  //                     : "⏳ Permission not granted"}
+  //                 </div>
 
-              {!audioDetected ? (
-                <button
-                  onClick={checkMicrophone}
-                  className="mt-8 w-full rounded-xl bg-indigo-600 py-3 text-white"
-                >
-                  Check Microphone
-                </button>
-              ) : (
-                <button
-                  onClick={next}
-                  className="mt-8 w-full rounded-xl bg-green-600 py-3 text-white"
-                >
-                  Continue
-                </button>
-              )}
-            </>
-          )}
+  //                 <div
+  //                   className={
+  //                     audioDetected ? "text-green-400" : "text-gray-400"
+  //                   }
+  //                 >
+  //                   {audioDetected
+  //                     ? "✅ Voice detected"
+  //                     : "⏳ Waiting for your voice"}
+  //                 </div>
+  //               </div>
 
-          {step === 4 && (
-            <>
-              <div className="text-5xl mb-4">🗣️</div>
+  //               {!audioDetected ? (
+  //                 <button
+  //                   onClick={checkMicrophone}
+  //                   className="mt-8 w-full rounded-xl bg-indigo-600 py-3 text-white"
+  //                 >
+  //                   Check Microphone
+  //                 </button>
+  //               ) : (
+  //                 <button
+  //                   onClick={next}
+  //                   className="mt-8 w-full rounded-xl bg-green-600 py-3 text-white"
+  //                 >
+  //                   Continue
+  //                 </button>
+  //               )}
+  //             </>
+  //           )}
 
-              <h2 className="text-2xl font-bold text-white">
-                Speech Recognition Check
-              </h2>
+  //           {step === 4 && (
+  //             <>
+  //               <div className="text-5xl mb-4">🗣️</div>
 
-              <p className="mt-2 text-gray-400">
-                Read the sentence below to test both speech recognition engines.
-              </p>
+  //               <h2 className="text-2xl font-bold text-white">
+  //                 Speech Recognition Check
+  //               </h2>
 
-              {/* Sentence */}
-              <div className="mt-6 rounded-xl bg-slate-800 p-5">
-                <p className="text-gray-400">Please say:</p>
+  //               <p className="mt-2 text-gray-400">
+  //                 Read the sentence below to test both speech recognition
+  //                 engines.
+  //               </p>
 
-                <h3 className="text-2xl text-white font-semibold mt-2">
-                  "Hello, how are you?"
-                </h3>
-              </div>
+  //               {/* Sentence */}
+  //               <div className="mt-6 rounded-xl bg-slate-800 p-5">
+  //                 <p className="text-gray-400">Please say:</p>
 
-              {/* Google */}
-              <div className="mt-6 rounded-xl border border-slate-700 bg-slate-800 p-5">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-white font-semibold">
-                    Google Speech Recognition
-                  </h3>
+  //                 <h3 className="text-2xl text-white font-semibold mt-2">
+  //                   "Hello, how are you?"
+  //                 </h3>
+  //               </div>
 
-                  <span
-                    className={
-                      googlePassed
-                        ? "text-green-400"
-                        : googleRunning
-                          ? "text-yellow-400"
-                          : "text-gray-400"
-                    }
-                  >
-                    {googlePassed
-                      ? "Passed"
-                      : googleRunning
-                        ? "Listening..."
-                        : "Not Checked"}
-                  </span>
-                </div>
+  //               {/* Google */}
+  //               <div className="mt-6 rounded-xl border border-slate-700 bg-slate-800 p-5">
+  //                 <div className="flex justify-between items-center mb-3">
+  //                   <h3 className="text-white font-semibold">
+  //                     Google Speech Recognition
+  //                   </h3>
 
-                <div className="rounded-lg bg-slate-900 p-3 min-h-16 text-gray-300">
-                  {googleTranscript || "No transcript yet."}
-                </div>
+  //                   <span
+  //                     className={
+  //                       googlePassed
+  //                         ? "text-green-400"
+  //                         : googleRunning
+  //                           ? "text-yellow-400"
+  //                           : "text-gray-400"
+  //                     }
+  //                   >
+  //                     {googlePassed
+  //                       ? "Passed"
+  //                       : googleRunning
+  //                         ? "Listening..."
+  //                         : "Not Checked"}
+  //                   </span>
+  //                 </div>
 
-                {!googleRunning && !googlePassed && (
-                  <button
-                    onClick={startGoogleCheck}
-                    className="mt-4 w-full rounded-xl bg-indigo-600 py-3 text-white"
-                  >
-                    Test Google Speech
-                  </button>
-                )}
+  //                 <div className="rounded-lg bg-slate-900 p-3 min-h-16 text-gray-300">
+  //                   {googleTranscript || "No transcript yet."}
+  //                 </div>
 
-                {googleRunning && (
-                  <button
-                    onClick={stopGoogleCheck}
-                    className="mt-4 w-full rounded-xl bg-red-600 py-3 text-white"
-                  >
-                    Stop Recording
-                  </button>
-                )}
-              </div>
+  //                 {!googleRunning && !googlePassed && (
+  //                   <button
+  //                     onClick={startGoogleCheck}
+  //                     className="mt-4 w-full rounded-xl bg-indigo-600 py-3 text-white"
+  //                   >
+  //                     Test Google Speech
+  //                   </button>
+  //                 )}
 
-              {/* Whisper */}
-              <div className="mt-5 rounded-xl border border-slate-700 bg-slate-800 p-5">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-white font-semibold">Whisper STT</h3>
+  //                 {googleRunning && (
+  //                   <button
+  //                     onClick={stopGoogleCheck}
+  //                     className="mt-4 w-full rounded-xl bg-red-600 py-3 text-white"
+  //                   >
+  //                     Stop Recording
+  //                   </button>
+  //                 )}
+  //               </div>
 
-                  <span
-                    className={
-                      whisperPassed
-                        ? "text-green-400"
-                        : whisperRunning
-                          ? "text-yellow-400"
-                          : "text-gray-400"
-                    }
-                  >
-                    {whisperPassed
-                      ? "Passed"
-                      : whisperRunning
-                        ? "Recording..."
-                        : "Not Checked"}
-                  </span>
-                </div>
+  //               {/* Whisper */}
+  //               <div className="mt-5 rounded-xl border border-slate-700 bg-slate-800 p-5">
+  //                 <div className="flex justify-between items-center mb-3">
+  //                   <h3 className="text-white font-semibold">Whisper STT</h3>
 
-                <div className="rounded-lg bg-slate-900 p-3 min-h-16 text-gray-300">
-                  {whisperTranscript || "No transcript yet."}
-                </div>
+  //                   <span
+  //                     className={
+  //                       whisperPassed
+  //                         ? "text-green-400"
+  //                         : whisperRunning
+  //                           ? "text-yellow-400"
+  //                           : "text-gray-400"
+  //                     }
+  //                   >
+  //                     {whisperPassed
+  //                       ? "Passed"
+  //                       : whisperRunning
+  //                         ? "Recording..."
+  //                         : "Not Checked"}
+  //                   </span>
+  //                 </div>
 
-                {!whisperRunning && !whisperPassed && (
-                  <button
-                    onClick={startWhisperCheck}
-                    className="mt-4 w-full rounded-xl bg-violet-600 py-3 text-white"
-                  >
-                    Test Whisper
-                  </button>
-                )}
+  //                 <div className="rounded-lg bg-slate-900 p-3 min-h-16 text-gray-300">
+  //                   {whisperTranscript || "No transcript yet."}
+  //                 </div>
 
-                {whisperRunning && (
-                  <button
-                    onClick={stopWhisperCheck}
-                    className="mt-4 w-full rounded-xl bg-red-600 py-3 text-white"
-                  >
-                    Stop Recording
-                  </button>
-                )}
-              </div>
+  //                 {!whisperRunning && !whisperPassed && (
+  //                   <button
+  //                     onClick={startWhisperCheck}
+  //                     className="mt-4 w-full rounded-xl bg-violet-600 py-3 text-white"
+  //                   >
+  //                     Test Whisper
+  //                   </button>
+  //                 )}
 
-              {/* Continue */}
-              {googlePassed && whisperPassed && (
-                <button
-                  onClick={next}
-                  className="mt-8 w-full rounded-xl bg-green-600 py-3 text-white font-semibold"
-                >
-                  Continue
-                </button>
-              )}
-            </>
-          )}
+  //                 {whisperRunning && (
+  //                   <button
+  //                     onClick={stopWhisperCheck}
+  //                     className="mt-4 w-full rounded-xl bg-red-600 py-3 text-white"
+  //                   >
+  //                     Stop Recording
+  //                   </button>
+  //                 )}
+  //               </div>
 
-          {step === 5 && (
-            <>
-              <div className="mt-6 rounded-xl bg-slate-800 p-5">
-                <div
-                  className={isPlaying ? "text-yellow-400" : "text-gray-400"}
-                >
-                  {isPlaying ? "🔊 Playing sample..." : "Ready"}
-                </div>
-              </div>
+  //               {/* Continue */}
+  //               {googlePassed && whisperPassed && (
+  //                 <button
+  //                   onClick={next}
+  //                   className="mt-8 w-full rounded-xl bg-green-600 py-3 text-white font-semibold"
+  //                 >
+  //                   Continue
+  //                 </button>
+  //               )}
+  //             </>
+  //           )}
 
-              <button
-                onClick={playSample}
-                className="mt-6 w-full rounded-xl bg-indigo-600 py-3 text-white"
-              >
-                🔁 Play Sample
-              </button>
+  //           {step === 5 && (
+  //             <>
+  //               <div className="mt-6 rounded-xl bg-slate-800 p-5">
+  //                 <div
+  //                   className={isPlaying ? "text-yellow-400" : "text-gray-400"}
+  //                 >
+  //                   {isPlaying ? "🔊 Playing sample..." : "Ready"}
+  //                 </div>
+  //               </div>
 
-              <button
-                onClick={confirmHeard}
-                className="mt-4 w-full rounded-xl bg-green-600 py-3 text-white"
-              >
-                ✅ I Heard the Sound
-              </button>
+  //               <button
+  //                 onClick={playSample}
+  //                 className="mt-6 w-full rounded-xl bg-indigo-600 py-3 text-white"
+  //               >
+  //                 🔁 Play Sample
+  //               </button>
 
-              {speakerPassed && (
-                <button
-                  onClick={next}
-                  className="mt-4 w-full rounded-xl bg-emerald-600 py-3 text-white"
-                >
-                  Continue
-                </button>
-              )}
-            </>
-          )}
+  //               <button
+  //                 onClick={confirmHeard}
+  //                 className="mt-4 w-full rounded-xl bg-green-600 py-3 text-white"
+  //               >
+  //                 ✅ I Heard the Sound
+  //               </button>
 
-          {step === 6 && (
-            <>
-              <div className="text-5xl mb-4">📖</div>
+  //               {speakerPassed && (
+  //                 <button
+  //                   onClick={next}
+  //                   className="mt-4 w-full rounded-xl bg-emerald-600 py-3 text-white"
+  //                 >
+  //                   Continue
+  //                 </button>
+  //               )}
+  //             </>
+  //           )}
 
-              <h2 className="text-2xl text-white font-bold">Meet SpeakUp</h2>
+  //           {step === 6 && (
+  //             <>
+  //               <div className="text-5xl mb-4">📖</div>
 
-              <div className="mt-6 space-y-4">
-                <div className="rounded-xl bg-slate-800 p-4">
-                  <h3>📚 Learn Vocabulary</h3>
-                  <p className="text-gray-400">Master useful English words.</p>
-                </div>
+  //               <h2 className="text-2xl text-white font-bold">Meet SpeakUp</h2>
 
-                <div className="rounded-xl bg-slate-800 p-4">
-                  <h3>🗣️ Practice Speaking</h3>
-                  <p className="text-gray-400">Improve pronunciation.</p>
-                </div>
+  //               <div className="mt-6 space-y-4">
+  //                 <div className="rounded-xl bg-slate-800 p-4">
+  //                   <h3>📚 Learn Vocabulary</h3>
+  //                   <p className="text-gray-400">
+  //                     Master useful English words.
+  //                   </p>
+  //                 </div>
 
-                <div className="rounded-xl bg-slate-800 p-4">
-                  <h3>🤖 Talk with AI</h3>
-                  <p className="text-gray-400">
-                    Practice natural conversations.
-                  </p>
-                </div>
-              </div>
+  //                 <div className="rounded-xl bg-slate-800 p-4">
+  //                   <h3>🗣️ Practice Speaking</h3>
+  //                   <p className="text-gray-400">Improve pronunciation.</p>
+  //                 </div>
 
-              <button
-                onClick={next}
-                className="flex-1 rounded-xl bg-green-600 py-3! text-white"
-              >
-                ✅ Yes
-              </button>
-            </>
-          )}
+  //                 <div className="rounded-xl bg-slate-800 p-4">
+  //                   <h3>🤖 Talk with AI</h3>
+  //                   <p className="text-gray-400">
+  //                     Practice natural conversations.
+  //                   </p>
+  //                 </div>
+  //               </div>
 
-          {step === 7 && (
-            <>
-              <div className="text-5xl mb-4">🎯</div>
+  //               <button
+  //                 onClick={next}
+  //                 className="flex-1 rounded-xl bg-green-600 py-3! text-white"
+  //               >
+  //                 ✅ Yes
+  //               </button>
+  //             </>
+  //           )}
 
-              <h2 className="text-2xl text-white font-bold">
-                What's Your Goal?
-              </h2>
+  //           {step === 7 && (
+  //             <>
+  //               <div className="text-5xl mb-4">🎯</div>
 
-              <div className="mt-6 space-y-3">
-                {[
-                  "Daily Conversation",
-                  "Travel",
-                  "Business",
-                  "IELTS",
-                  "TOEFL",
-                  "Just for Fun",
-                ].map((item) => (
-                  <label
-                    key={item}
-                    className="flex items-center gap-3 rounded-xl bg-slate-800 p-4 cursor-pointer"
-                  >
-                    <input type="radio" name="goal" />
-                    {item}
-                  </label>
-                ))}
-              </div>
-              <button
-                onClick={next}
-                className="flex-1 rounded-xl bg-green-600 py-3! text-white"
-              >
-                ✅ Yes
-              </button>
-            </>
-          )}
+  //               <h2 className="text-2xl text-white font-bold">
+  //                 What's Your Goal?
+  //               </h2>
 
-          {step === 8 && (
-            <>
-              <div className="text-5xl mb-4">📊</div>
+  //               <div className="mt-6 space-y-3">
+  //                 {[
+  //                   "Daily Conversation",
+  //                   "Travel",
+  //                   "Business",
+  //                   "IELTS",
+  //                   "TOEFL",
+  //                   "Just for Fun",
+  //                 ].map((item) => (
+  //                   <label
+  //                     key={item}
+  //                     className="flex items-center gap-3 rounded-xl bg-slate-800 p-4 cursor-pointer"
+  //                   >
+  //                     <input type="radio" name="goal" />
+  //                     {item}
+  //                   </label>
+  //                 ))}
+  //               </div>
+  //               <button
+  //                 onClick={next}
+  //                 className="flex-1 rounded-xl bg-green-600 py-3! text-white"
+  //               >
+  //                 ✅ Yes
+  //               </button>
+  //             </>
+  //           )}
 
-              <h2 className="text-2xl text-white font-bold">Placement Test</h2>
+  //           {step === 8 && (
+  //             <>
+  //               <div className="text-5xl mb-4">📊</div>
 
-              <p className="mt-3 text-gray-400">Estimated time: 1 minute</p>
+  //               <h2 className="text-2xl text-white font-bold">
+  //                 Placement Test
+  //               </h2>
 
-              <div className="mt-8 flex gap-4">
-                <button
-                  onClick={next}
-                  className="flex-1 bg-indigo-600! rounded-xl py-3! text-white"
-                >
-                  Start Test
-                </button>
+  //               <p className="mt-3 text-gray-400">Estimated time: 1 minute</p>
 
-                <button className="flex-1 bg-slate-700! rounded-xl py-3! text-white">
-                  Skip
-                </button>
-              </div>
-            </>
-          )}
+  //               <div className="mt-8 flex gap-4">
+  //                 <button
+  //                   onClick={next}
+  //                   className="flex-1 bg-indigo-600! rounded-xl py-3! text-white"
+  //                 >
+  //                   Start Test
+  //                 </button>
 
-          {step === 9 && (
-            <>
-              <div className="text-5xl mb-4">🔥</div>
+  //                 <button className="flex-1 bg-slate-700! rounded-xl py-3! text-white">
+  //                   Skip
+  //                 </button>
+  //               </div>
+  //             </>
+  //           )}
 
-              <h2 className="text-2xl text-white font-bold">Daily Goal</h2>
+  //           {step === 9 && (
+  //             <>
+  //               <div className="text-5xl mb-4">🔥</div>
 
-              <div className="mt-6 grid grid-cols-2 gap-4">
-                {[5, 10, 20, 30].map((m) => (
-                  <button
-                    onClick={next}
-                    key={m}
-                    className="rounded-xl bg-slate-800! p-5! text-white hover:bg-indigo-600!"
-                  >
-                    {m} min
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
+  //               <h2 className="text-2xl text-white font-bold">Daily Goal</h2>
 
-          {step === 10 && (
-            <>
-              <div className="text-6xl mb-4">🎮</div>
+  //               <div className="mt-6 grid grid-cols-2 gap-4">
+  //                 {[5, 10, 20, 30].map((m) => (
+  //                   <button
+  //                     onClick={next}
+  //                     key={m}
+  //                     className="rounded-xl bg-slate-800! p-5! text-white hover:bg-indigo-600!"
+  //                   >
+  //                     {m} min
+  //                   </button>
+  //                 ))}
+  //               </div>
+  //             </>
+  //           )}
 
-              <h2 className="text-3xl text-white font-bold">Welcome Mission</h2>
+  //           {step === 10 && (
+  //             <>
+  //               <div className="text-6xl mb-4">🎮</div>
 
-              <div className="mt-8 rounded-xl bg-slate-800 p-5">
-                <h3 className="font-bold text-white">🎤 Say Hello</h3>
+  //               <h2 className="text-3xl text-white font-bold">
+  //                 Welcome Mission
+  //               </h2>
 
-                <p className="text-yellow-400 mt-2">Reward: +10 XP</p>
-              </div>
+  //               <div className="mt-8 rounded-xl bg-slate-800 p-5">
+  //                 <h3 className="font-bold text-white">🎤 Say Hello</h3>
 
-              <button
-                onClick={next}
-                className="mt-8 w-full rounded-xl bg-yellow-500! py-3! font-bold"
-              >
-                Start Mission
-              </button>
-            </>
-          )}
-        </div>
+  //                 <p className="text-yellow-400 mt-2">Reward: +10 XP</p>
+  //               </div>
 
-        {step > 1 && (
-          <button
-            onClick={back}
-            className="mt-4 text-gray-400 hover:text-white"
-          >
-            ← Back
-          </button>
-        )}
-      </div>
-    </div>
-  );
+  //               <button
+  //                 onClick={next}
+  //                 className="mt-8 w-full rounded-xl bg-yellow-500! py-3! font-bold"
+  //               >
+  //                 Start Mission
+  //               </button>
+  //             </>
+  //           )}
+  //         </div>
+
+  //         {step > 1 && (
+  //           <button
+  //             onClick={back}
+  //             className="mt-4 text-gray-400 hover:text-white"
+  //           >
+  //             ← Back
+  //           </button>
+  //         )}
+  //       </div>
+  //     </div>
+  //   </>
+  // );
 }
