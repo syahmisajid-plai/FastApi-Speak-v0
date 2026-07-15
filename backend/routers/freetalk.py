@@ -27,11 +27,12 @@ class FreeTalkRequest(BaseModel):
 
 
 def extract_alternative(text: str):
-    match = re.search(r"You could say\s*:?\s*\"?\s*(.*?)\s*\"?$", text, re.S | re.I)
+    match = re.search(r'You could say\s*:?\s*"\s*(.*?)\s*"', text, re.I | re.S)
+
     if not match:
         return None
 
-    return match.group(1).split(".")[0].strip()
+    return match.group(1).strip()
 
 
 USE_STREAMING = True
