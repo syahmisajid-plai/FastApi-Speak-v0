@@ -4,19 +4,27 @@ from faster_whisper import WhisperModel
 import tempfile
 import os
 
+from utils.system_monitor import log_mem
+
 router = APIRouter()
 
+# ============================
+# Startup Monitoring
+# ============================
+log_mem("Python Start")
+
 # Load model sekali saat aplikasi startup
-model = WhisperModel(
-    "small",
-    device="cpu",
-    compute_type="int8"
-)
+model = WhisperModel("small", device="cpu", compute_type="int8")
+
+log_mem("Whisper Loaded")
+
 
 @router.post("/transcribe")
 async def transcribe(file: UploadFile = File(...)):
     print("filename:", file.filename)
     print("content_type:", file.content_type)
+
+    log_mem("Before Transcribe")
 
     # simpan file sementara
     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
@@ -25,13 +33,12 @@ async def transcribe(file: UploadFile = File(...)):
 
     try:
         segments, info = model.transcribe(
-            temp_path,
-            language="en",
-            beam_size=1,
-            vad_filter=True
+            temp_path, language="en", beam_size=1, vad_filter=True
         )
 
         text = " ".join(segment.text for segment in segments)
+
+        log_mem("After Transcribe")
 
         print(
             f"Detected language '{info.language}' "
