@@ -15,13 +15,13 @@ import time
 import re
 
 from utils.monitoring_cost import calculate_all_costs
-
+from utils.system_monitor import log_mem  # <-- tambah
 
 router = APIRouter(prefix="/free-talk", tags=["Free Talk"])
 
 
 class FreeTalkRequest(BaseModel):
-    user_id:str
+    user_id: str
     session_id: str
     input: str
 
@@ -33,14 +33,21 @@ def extract_alternative(text: str):
 
     return match.group(1).split(".")[0].strip()
 
-USE_STREAMING = True  # 🔴 matikan dulu streaming
+
+USE_STREAMING = True
+
 
 # LLM
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7, streaming=USE_STREAMING)
 
+# monitoring startup
+log_mem("ChatOpenAI Loaded")
+
 
 @router.post("/stream_answer")
 def free_talk(req: FreeTalkRequest):
+
+    log_mem("Before FreeTalk")
 
     start_time = time.time()
 
@@ -51,49 +58,68 @@ def free_talk(req: FreeTalkRequest):
     # =============================
     rows = get_messages(session_key)
 
+    log_mem("After Get Messages")
+
     history_messages = []
+
     for role, content in rows:
         if role == "user":
             history_messages.append(HumanMessage(content=content))
         elif role == "assistant":
             history_messages.append(AIMessage(content=content))
 
+    log_mem("After Build History Messages")
+
     # =============================
     # 2. Susun messages
     # =============================
+
     messages = [
         SystemMessage(content=FREE_TALK_PROMPT),
         *history_messages,
         HumanMessage(content=req.input),
     ]
 
+    log_mem("After Build LLM Messages")
+
     # =============================
-    # 3. STREAMING GENERATOR 🔥
+    # 3. STREAMING GENERATOR
     # =============================
+
     def event_generator():
+
         full_text = ""
 
         try:
-            # 🔥 STREAM TOKEN
+
+            log_mem("Before LLM Stream")
+
             for chunk in llm.stream(messages):
+
                 token = chunk.content or ""
+
                 full_text += token
 
                 yield f"data: {token}\n\n"
-            
+
+            log_mem("After LLM Stream")
+
             alternative = extract_alternative(full_text)
 
-            clean_text = re.sub(r"You could say\s*:?\s*.*", "", full_text, flags=re.I).strip()
+            clean_text = re.sub(
+                r"You could say\s*:?\s*.*", "", full_text, flags=re.I
+            ).strip()
 
             # =============================
             # 4. SETELAH SELESAI
             # =============================
 
-            # ✅ save DB
             save_message(session_key, req.user_id, "freetalk", "user", req.input)
+
             save_message(session_key, req.user_id, "freetalk", "assistant", full_text)
 
-            # ✅ cost tracking
+            log_mem("After Save Messages")
+
             duration_ms = int((time.time() - start_time) * 1000)
 
             costs = calculate_all_costs(
@@ -101,7 +127,7 @@ def free_talk(req: FreeTalkRequest):
                 history_messages=history_messages,
                 user_input=req.input,
                 llm_output=full_text,
-                tts_characters=0
+                tts_characters=0,
             )
 
             log_data = {
@@ -123,19 +149,18 @@ def free_talk(req: FreeTalkRequest):
 
             insert_api_log(log_data)
 
-            # =============================
-            # 5. OPTIONAL: KIRIM META
-            # =============================
-            meta = {
-                "done": True,
-                "alternative": alternative,
-                "text": clean_text
-            }
+            log_mem("After Insert API Log")
+
+            meta = {"done": True, "alternative": alternative, "text": clean_text}
 
             yield f"event: meta\ndata: {json.dumps(meta)}\n\n"
-            
+
         except Exception as e:
+
             print("❌ STREAM ERROR:", e)
+
+            log_mem("Stream Error")
+
             yield f"data: Sorry, something went wrong.\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
