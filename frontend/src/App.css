@@ -165,6 +165,56 @@ button {
 .animate-soft-ping {
   animation: softPing 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
+
+@keyframes typing {
+  0% {
+    opacity: 0.2;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.2;
+  }
+}
+
+.dot {
+  animation: typing 1.4s infinite;
+}
+
+@keyframes walkAI {
+  0% {
+    transform: translateX(0) translateY(0) scaleX(-1);
+  }
+
+  20% {
+    transform: translateX(15px) translateY(-2px) scaleX(-1);
+  }
+
+  45% {
+    transform: translateX(35px) translateY(0) scaleX(-1);
+  }
+
+  50% {
+    transform: translateX(35px) translateY(0) scaleX(1);
+  }
+
+  70% {
+    transform: translateX(15px) translateY(-2px) scaleX(1);
+  }
+
+  95% {
+    transform: translateX(0) translateY(0) scaleX(1);
+  }
+
+  100% {
+    transform: translateX(0) translateY(0) scaleX(-1);
+  }
+}
+
+.animate-walk-ai {
+  animation: walkAI 4s ease-in-out infinite;
+}
 /* 
 #root {
   max-width: 1280px;

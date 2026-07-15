@@ -690,33 +690,39 @@ Feature tambahan:
   }, [mode, sessionId, dailyStarted, isDailyLocked]);
 
   // ================== Sapaan Freetalk ==================
+
   useEffect(() => {
     if (mode !== "freeTalk") return;
     if (!freeTalkStarted) return;
 
-    setChatHistory((prev) => {
-      // 🔥 GUARD: cegah duplicate greeting
-      const alreadyExists = prev.some(
-        (msg) =>
-          msg.sender === "AI" &&
-          msg.message.includes("I’m here if you feel like talking"),
-      );
+    const timer = setTimeout(() => {
+      setChatHistory((prev) => {
+        // 🔥 GUARD: cegah duplicate greeting
+        const alreadyExists = prev.some(
+          (msg) =>
+            msg.sender === "AI" &&
+            msg.message.includes("I’m here if you feel like talking"),
+        );
 
-      if (alreadyExists) return prev;
+        if (alreadyExists) return prev;
 
-      return [
-        ...prev,
-        {
-          type: "chat",
-          sender: "AI",
-          message:
-            "Hey 👋 I’m here if you feel like talking 😊 Anything you want to chat about?",
-        },
-      ];
-    });
+        return [
+          ...prev,
+          {
+            type: "chat",
+            sender: "AI",
+            message:
+              "Hey 👋 I’m here if you feel like talking 😊 Anything you want to chat about?",
+          },
+        ];
+      });
 
-    // 🎵 Mainkan audio
-    audioFreetalkStartRef.current?.play().catch(console.error);
+      // 🎵 Mainkan audio setelah 0.5 detik
+      audioFreetalkStartRef.current?.play().catch(console.error);
+    }, 500);
+
+    // cleanup jika component berubah sebelum 0.5 detik selesai
+    return () => clearTimeout(timer);
   }, [mode, freeTalkStarted]);
 
   // ================== SUGGESTIONS ==================
@@ -1107,6 +1113,9 @@ Feature tambahan:
             <FreeTalkUI
               started={freeTalkStarted}
               setStarted={setFreeTalkStarted}
+              isRecording={isRecording}
+              isSpeaking={isSpeaking}
+              islupaKata={lupaKata.isLupaKataActive}
             />
           )}
           {/* {mode === "scenarios" && <ComingSoonScenarios />} */}
@@ -1307,20 +1316,22 @@ Feature tambahan:
             }}
           />
           {(mode === "freeTalk" || mode === "scenarios") && (
-            <ChatSection
-              lupaKata={lupaKata}
-              chatHistory={chatHistory}
-              liveTranscript={liveTranscript}
-              bottomRef={bottomRef}
-              disabled={allDailyComplete}
-              mode={mode}
-              data={data}
-              toggleFavorite={handleToggleFavorite}
-              autoCorrectionRef={autoCorrectionRef}
-              speakText={speakText}
-              isTranscribing={isTranscribing}
-              isRecording={isRecording}
-            />
+            <div className={mode === "freeTalk" ? "mt-20" : ""}>
+              <ChatSection
+                lupaKata={lupaKata}
+                chatHistory={chatHistory}
+                liveTranscript={liveTranscript}
+                bottomRef={bottomRef}
+                disabled={allDailyComplete}
+                mode={mode}
+                data={data}
+                toggleFavorite={handleToggleFavorite}
+                autoCorrectionRef={autoCorrectionRef}
+                speakText={speakText}
+                isTranscribing={isTranscribing}
+                isRecording={isRecording}
+              />
+            </div>
           )}
           {((mode === "freeTalk" && freeTalkStarted) ||
             (modeScenario === "dailyStory" && dailyStarted) ||
