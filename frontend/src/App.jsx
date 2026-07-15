@@ -37,7 +37,7 @@ import GamesUI from "./components/GamesUI";
 import PWADebug from "./components/PWADebug";
 
 import XpRewardPopup from "./components/XpRewardPopup";
-import Onboarding from "./components/Onboarding";
+import OnBoarding from "./components/OnBoarding";
 
 // ================== STYLES ==================
 import "./App.css";
