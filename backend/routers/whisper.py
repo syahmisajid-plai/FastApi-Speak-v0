@@ -14,7 +14,7 @@ router = APIRouter()
 log_mem("Python Start")
 
 # Load model sekali saat aplikasi startup
-# model = WhisperModel("small", device="cpu", compute_type="int8")
+# model = WhisperModel("base", device="cpu", compute_type="int8")
 
 model = None
 

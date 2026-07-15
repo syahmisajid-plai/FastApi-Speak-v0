@@ -21,19 +21,22 @@ export default function useTTS_Google(userIdRef, modeRef) {
     try {
       console.log("🔓 Unlocking audio...");
 
-      const silentAudio = new Audio();
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
 
-      // tiny silent wav
-      silentAudio.src =
-        "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEA";
+      const ctx = new AudioContext();
 
-      silentAudio.playsInline = true;
-      silentAudio.muted = true;
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
 
-      await silentAudio.play();
+      gain.gain.value = 0; // silent
 
-      silentAudio.pause();
-      silentAudio.currentTime = 0;
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
+
+      oscillator.start(0);
+      oscillator.stop(0.01);
+
+      await ctx.resume();
 
       audioUnlockedRef.current = true;
 
