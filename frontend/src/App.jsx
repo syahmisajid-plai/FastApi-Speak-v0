@@ -609,35 +609,38 @@ Feature tambahan:
   }, [autoCorrectionRef]);
 
   // ================== SEND TEXT TO BACKEND ==================
-  const { sendTextToBackend, roleplayChecklistFinishedLockedRef } =
-    useConversationEngine({
-      sessionIdRef,
-      userIdRef,
-      scenarioRef,
-      modeRef,
-      modeScenarioRef,
-      setChatHistory,
-      speakText,
-      unlockAudio,
+  const {
+    sendTextToBackend,
+    sendStuckPrompt,
+    roleplayChecklistFinishedLockedRef,
+  } = useConversationEngine({
+    sessionIdRef,
+    userIdRef,
+    scenarioRef,
+    modeRef,
+    modeScenarioRef,
+    setChatHistory,
+    speakText,
+    unlockAudio,
 
-      // grammarResult: result, // 🔥 TAMBAHKAN INI
+    // grammarResult: result, // 🔥 TAMBAHKAN INI
 
-      onRoleplayCompleted: handleRoleplayCompleted, // ✅ FIX
+    onRoleplayCompleted: handleRoleplayCompleted, // ✅ FIX
 
-      // ⭐ TAMBAHKAN INI
-      onPhaseCompleted: (phase) => {
-        console.log("🌅 DAILY PHASE READY:", phase);
+    // ⭐ TAMBAHKAN INI
+    onPhaseCompleted: (phase) => {
+      console.log("🌅 DAILY PHASE READY:", phase);
 
-        setCurrentStoryPhase(phase);
-        setReadyToContinue(true);
-      },
+      setCurrentStoryPhase(phase);
+      setReadyToContinue(true);
+    },
 
-      autoCorrectionRef,
+    autoCorrectionRef,
 
-      roleplayChecklistFinished: roleplayChecklistFinished,
+    roleplayChecklistFinished: roleplayChecklistFinished,
 
-      updateUserProgress,
-    });
+    updateUserProgress,
+  });
 
   // ================== Chat User Terakhir kali (untuk checklist roleplay) ==================
   const lastUserMessage = chatHistory
@@ -1109,15 +1112,21 @@ Feature tambahan:
             </div>
           )}
           {/* 🔥 MODE */}
-          {mode === "freeTalk" && (
-            <FreeTalkUI
-              started={freeTalkStarted}
-              setStarted={setFreeTalkStarted}
-              isRecording={isRecording}
-              isSpeaking={isSpeaking}
-              islupaKata={lupaKata.isLupaKataActive}
-            />
-          )}
+          <FreeTalkUI
+            started={freeTalkStarted}
+            setStarted={setFreeTalkStarted}
+            isRecording={isRecording}
+            isSpeaking={isSpeaking}
+            islupaKata={lupaKata.isLupaKataActive}
+            sendStuckPrompt={sendStuckPrompt}
+            openLupaKata={() =>
+              lupaKata.toggleLupaKata(
+                isRecording,
+                speech.pauseRecording,
+                speech.resumeRecording,
+              )
+            }
+          />
           {/* {mode === "scenarios" && <ComingSoonScenarios />} */}
           {mode === "scenarios" && (
             <ScenariosUI

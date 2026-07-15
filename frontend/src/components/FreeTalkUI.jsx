@@ -6,7 +6,11 @@ export default function FreeTalkUI({
   isRecording,
   isSpeaking,
   islupaKata,
+  sendStuckPrompt,
+
+  openLupaKata,
 }) {
+  const [showStuckMenu, setShowStuckMenu] = useState(false);
   const [idleSuggest, setIdleSuggest] = useState(false);
 
   useEffect(() => {
@@ -20,20 +24,18 @@ export default function FreeTalkUI({
 
     const timer = setTimeout(() => {
       setIdleSuggest(true);
-    }, 7000);
+    }, 10000);
 
     return () => clearTimeout(timer);
   }, [started, isRecording, isSpeaking, islupaKata]);
 
   const rexMessage = islupaKata
     ? "Need a hint? 🤔"
-    : idleSuggest
-      ? "Stuck? Try 🔄 Lupa Kata"
-      : isSpeaking
-        ? "My turn! 🗣️"
-        : isRecording
-          ? "I'm listening 👂"
-          : "Ready to talk ✨";
+    : isSpeaking
+      ? "My turn! 🗣️"
+      : isRecording
+        ? "I'm listening 👂"
+        : "Ready to talk ✨";
   return (
     // <section
     //   className={`mx-4 transition-all duration-500 ${
@@ -43,9 +45,9 @@ export default function FreeTalkUI({
     <section
       className={`
       fixed
-      z-50
-left-8
-right-8
+      z-55
+      left-8
+      right-8
       md:left-1/2
       md:-translate-x-1/2
       md:w-[420px]
@@ -81,30 +83,50 @@ right-8
           {/* ICON */}
           <div
             className={`relative flex items-center justify-center shrink-0 transition-all duration-500
-  ${
-    started
-      ? "w-10 h-10 rounded-xl bg-white/10 text-base"
-      : "w-14 h-14 rounded-2xl bg-white/10 text-2xl mb-4"
-  }`}
+            ${
+              started
+                ? "w-10 h-10 rounded-xl bg-white/10 text-base"
+                : "w-14 h-14 rounded-2xl bg-white/10 text-2xl mb-4"
+            }`}
           >
             {started && (
               <div
-                className="
-      absolute
-      -top-5
-      -right-17
-      bg-white
-      text-black
-      text-[9px]
-      px-2
-      py-1
-      rounded-xl
-      shadow-lg
-      whitespace-nowrap
-      animate-bounce
-    "
+                className={`
+                  absolute
+                    ${
+                      showStuckMenu
+                        ? "-top-5 -right-20"
+                        : idleSuggest
+                          ? "-top-5 -right-20"
+                          : "-top-5 -right-17"
+                    }
+                  bg-white
+                  text-black
+                  text-[9px]
+                  rounded-xl
+                  shadow-lg
+                  overflow-hidden
+                  transition-all duration-200
+                  ${!showStuckMenu ? "animate-bounce" : ""}
+                  p-1
+                `}
               >
-                💬 {rexMessage}
+                {idleSuggest ? (
+                  <button
+                    onClick={() => setShowStuckMenu(true)}
+                    className="
+                      cursor-pointer
+                      font-medium
+                      hover:bg-black/5
+                      transition
+                      whitespace-nowrap
+                    "
+                  >
+                    💡 Stuck? Click Here ✨
+                  </button>
+                ) : (
+                  <>💬 {rexMessage}</>
+                )}
               </div>
             )}
 
@@ -181,6 +203,162 @@ right-8
           </button>
         )}
       </div>
+
+      {showStuckMenu && (
+        <div
+          className="
+            fixed inset-0 z-55
+            bg-black/60 backdrop-blur-md
+            flex items-center justify-center
+            p-6
+            animate-in fade-in duration-200
+          "
+          onClick={() => setShowStuckMenu(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="
+              w-full max-w-md
+              rounded-3xl
+              bg-white
+              shadow-2xl
+              border border-slate-200
+              overflow-hidden
+              animate-in zoom-in-95 duration-200
+            "
+          >
+            {/* Header */}
+            <div className="px-6 pt-6 pb-4 text-center border-b border-slate-100">
+              <div
+                className="
+                  w-14 h-14
+                  mx-auto
+                  rounded-2xl
+                  bg-indigo-100
+                  flex items-center justify-center
+                  text-3xl
+                "
+              >
+                🤖
+              </div>
+
+              <h2 className="mt-4 text-xl font-bold text-slate-900">
+                Need a little help?
+              </h2>
+
+              <p className="mt-2 text-sm text-slate-500">
+                Choose how you'd like me to help continue the conversation.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="p-4 space-y-3">
+              <button
+                onClick={() => {
+                  setShowStuckMenu(false);
+                  sendStuckPrompt();
+                }}
+                className="
+                  w-full
+                  rounded-2xl
+                  border border-slate-200
+                  p-4
+                  text-left
+                  transition
+                  hover:border-indigo-300
+                  hover:bg-indigo-50
+                  active:scale-[0.98]
+                  flex items-start gap-4
+                "
+              >
+                <div
+                  className="
+                    w-11 h-11
+                    rounded-xl
+                    bg-yellow-100
+                    flex items-center justify-center
+                    text-xl
+                    shrink-0
+                  "
+                >
+                  💡
+                </div>
+
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    Give me an idea
+                  </p>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Surprise me with a fun fact or an interesting topic.
+                  </p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowStuckMenu(false);
+                  openLupaKata();
+                }}
+                className="
+                  w-full
+                  rounded-2xl
+                  border border-slate-200
+                  p-4!
+                  text-left
+                  transition
+                  hover:border-indigo-300
+                  hover:bg-indigo-50
+                  active:scale-[0.98]
+                  flex items-start gap-4
+                "
+              >
+                <div
+                  className="
+                    w-11 h-11
+                    rounded-xl
+                    bg-blue-100
+                    flex items-center justify-center
+                    text-xl
+                    shrink-0
+                  "
+                >
+                  🇬🇧
+                </div>
+
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    I forgot a word
+                  </p>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Ask how to say a word or phrase in English.
+                  </p>
+                </div>
+              </button>
+            </div>
+
+            {/* Footer */}
+            <div className="px-4 pb-4">
+              <button
+                onClick={() => setShowStuckMenu(false)}
+                className="
+                  w-full
+                  rounded-xl
+                  py-3!
+                  text-sm
+                  font-medium
+                  text-slate-500
+                  hover:bg-slate-100!
+                  transition
+                "
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

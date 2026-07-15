@@ -215,8 +215,15 @@ export default function useConversationEngine({
     });
   };
 
+  const sendStuckPrompt = () => {
+    sendTextToBackend(
+      "I'm stuck. Please give me an interesting topic to talk about or tell me a surprising fun fact.",
+    );
+  };
+
   return {
     sendTextToBackend,
+    sendStuckPrompt,
     roleplayChecklistFinishedLockedRef,
   };
 }
