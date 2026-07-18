@@ -894,7 +894,7 @@ Feature tambahan:
   const [debugKey, setDebugKey] = useState(0);
 
   const dummyUser = {
-    onboarding_completed: true,
+    onboarding_completed: false,
   };
 
   useEffect(() => {
@@ -1038,7 +1038,7 @@ Feature tambahan:
           )}
 
           {/* 🔥 Not Yet Onboarding */}
-          {mode === "onBoarding" && <Onboarding />}
+          {mode === "onBoarding" && <OnBoarding />}
           {/* ================== DEBUG: Open Diary Daily Story ================== */}
           {/* <div className="w-full flex justify-center mb-2">
             <button
