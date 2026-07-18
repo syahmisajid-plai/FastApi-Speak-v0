@@ -20,7 +20,6 @@ model = WhisperModel("base", device="cpu", compute_type="int8")
 
 log_mem("Whisper Loaded")
 
-
 @router.post("/transcribe")
 async def transcribe(file: UploadFile = File(...)):
     print("filename:", file.filename)
