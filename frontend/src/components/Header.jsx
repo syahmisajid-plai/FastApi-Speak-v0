@@ -51,7 +51,12 @@ export default function Header({
   level,
   xp,
   title_level,
-  updateUserAvatar,
+
+  handleSaveAvatar,
+  showAvatarModal,
+  setShowAvatarModal,
+  selectedAvatar,
+  setSelectedAvatar,
 }) {
   const [showSummaryDaily, setShowSummaryDaily] = useState(false);
 
@@ -66,8 +71,6 @@ export default function Header({
   const [selectedRoleplayChecklist, setSelectedRoleplayChecklist] =
     useState(null);
 
-  const [showAvatarModal, setShowAvatarModal] = useState(false);
-  const [selectedAvatar, setSelectedAvatar] = useState(user.avatar_id ?? 0);
   // =========================
   // FETCH STREAK ONLY FOR DAILY MODE
   // =========================
@@ -116,22 +119,6 @@ export default function Header({
   // const currentXP = 2700;
   // const requiredXP = 2200;
   // const promotionReady = xp >= requiredXP;
-
-  const handleSaveAvatar = async () => {
-    const updatedUser = await updateUserAvatar({
-      user_id: user.id,
-      avatar_id: selectedAvatar,
-    });
-
-    if (!updatedUser) return;
-
-    setUser((prev) => ({
-      ...prev,
-      avatar_id: updatedUser.avatar_id,
-    }));
-
-    setShowAvatarModal(false);
-  };
 
   return (
     <>

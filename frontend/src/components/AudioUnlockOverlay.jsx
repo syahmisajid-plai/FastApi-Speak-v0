@@ -4,11 +4,12 @@ export default function AudioUnlockOverlay({
   onUnlock,
   onFinish,
   isBackendConnected,
+  user,
 }) {
   const [opening, setOpening] = useState(false);
 
   const handleClick = async () => {
-    if (opening) return;
+    if (opening || !user) return;
 
     console.log("1. button clicked");
 
@@ -48,6 +49,7 @@ export default function AudioUnlockOverlay({
       <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10 pointer-events-auto">
         <button
           onClick={handleClick}
+          disabled={!user || opening}
           className={`w-28 h-28 rounded-full bg-red-500 flex items-center justify-center text-5xl
             transition-all duration-500
             ${opening ? "scale-75 opacity-0" : "animate-pulse"}

@@ -476,6 +476,90 @@ def init_db():
         )
     """)
 
+    # -----------------------------
+    # USER PROFILE
+    # -----------------------------
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_profile (
+            user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+
+            mother_tongue VARCHAR(100),
+
+            english_usage_frequency VARCHAR(30),
+
+            speaking_confidence SMALLINT
+                CHECK (speaking_confidence BETWEEN 1 AND 5),
+
+            speaking_anxiety SMALLINT
+                CHECK (speaking_anxiety BETWEEN 1 AND 5),
+
+            learning_goal VARCHAR(50),
+
+            daily_goal_minutes SMALLINT
+                CHECK (daily_goal_minutes IN (5, 10, 20, 30)),
+
+            onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE,
+
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # -----------------------------
+    # USER DEVICE
+    # -----------------------------
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_device (
+            id SERIAL PRIMARY KEY,
+
+            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
+            device_name VARCHAR(150),
+            browser VARCHAR(100),
+            operating_system VARCHAR(100),
+
+            microphone_ok BOOLEAN NOT NULL DEFAULT FALSE,
+            speaker_ok BOOLEAN NOT NULL DEFAULT FALSE,
+            browser_stt_ok BOOLEAN NOT NULL DEFAULT FALSE,
+            whisper_ok BOOLEAN NOT NULL DEFAULT FALSE,
+
+            checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # -----------------------------
+    # PLACEMENT TEST
+    # -----------------------------
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS placement_test (
+            id SERIAL PRIMARY KEY,
+
+            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
+            vocabulary_score DECIMAL(5,2)
+                CHECK (vocabulary_score BETWEEN 0 AND 100),
+
+            speaking_score DECIMAL(5,2)
+                CHECK (speaking_score BETWEEN 0 AND 100),
+
+            grammar_score DECIMAL(5,2)
+                CHECK (grammar_score BETWEEN 0 AND 100),
+
+            pronunciation_score DECIMAL(5,2)
+                CHECK (pronunciation_score BETWEEN 0 AND 100),
+
+            fluency_score DECIMAL(5,2)
+                CHECK (fluency_score BETWEEN 0 AND 100),
+
+            estimated_cefr VARCHAR(5)
+                CHECK (estimated_cefr IN ('A1','A2','B1','B2','C1','C2')),
+
+            assessment_type VARCHAR(20) DEFAULT 'initial',
+
+            taken_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     conn.commit()
     conn.close()
 

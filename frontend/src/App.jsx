@@ -142,6 +142,9 @@ Feature tambahan:
 
   const [xpReward, setXpReward] = useState(null);
 
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState(9);
+
   // ================== Tambahkan state ==================
   const [pendingMode, setPendingMode] = useState(null);
   const [showModeConfirm, setShowModeConfirm] = useState(false);
@@ -161,6 +164,8 @@ Feature tambahan:
     modeRef.current = mode;
     console.log("🧠 modeRef updated:", mode);
   }, [mode]);
+
+  // console.log("user", user);
 
   // console.log("🔑 showOverlay: ", showOverlay);
 
@@ -280,6 +285,28 @@ Feature tambahan:
 
   // ================== User (Avatar) ==================
   const { updateUserAvatar } = useUser();
+
+  useEffect(() => {
+    if (user) {
+      setSelectedAvatar(user.avatar_id ?? 0);
+    }
+  }, [user]);
+
+  const handleSaveAvatar = async () => {
+    const updatedUser = await updateUserAvatar({
+      user_id: user.id,
+      avatar_id: selectedAvatar,
+    });
+
+    if (!updatedUser) return;
+
+    saveUser(updatedUser);
+
+    setUser(updatedUser);
+    setSessionId(updatedUser.username);
+
+    setShowAvatarModal(false);
+  };
 
   // ================== Vocab ==================
   const {
@@ -979,9 +1006,14 @@ Feature tambahan:
               level={level}
               xp={xp}
               title_level={title_level}
-              updateUserAvatar={updateUserAvatar}
+              handleSaveAvatar={handleSaveAvatar}
+              showAvatarModal={showAvatarModal}
+              setShowAvatarModal={setShowAvatarModal}
+              selectedAvatar={selectedAvatar}
+              setSelectedAvatar={setSelectedAvatar}
             />
           )}
+
           <OverlayFeedback message={overlayFavoritTranslated} />
           {/* VOCAB LIST */}
           {showVocab && (
@@ -1038,7 +1070,15 @@ Feature tambahan:
           )}
 
           {/* 🔥 Not Yet Onboarding */}
-          {mode === "onBoarding" && <OnBoarding />}
+          {mode === "onBoarding" && (
+            <OnBoarding
+              handleSaveAvatar={handleSaveAvatar}
+              showAvatarModal={showAvatarModal}
+              setShowAvatarModal={setShowAvatarModal}
+              selectedAvatar={selectedAvatar}
+              setSelectedAvatar={setSelectedAvatar}
+            />
+          )}
           {/* ================== DEBUG: Open Diary Daily Story ================== */}
           {/* <div className="w-full flex justify-center mb-2">
             <button
@@ -1438,6 +1478,7 @@ Feature tambahan:
             setShowOverlay(false);
           }}
           isBackendConnected={isBackendConnected}
+          user={user}
         />
       )}
 
