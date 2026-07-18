@@ -206,6 +206,8 @@ Feature tambahan:
     }
   }, []);
 
+  // console.log("user", user);
+
   const handleLogout = () => {
     logout();
     resetAppState(true);
@@ -1112,21 +1114,23 @@ Feature tambahan:
             </div>
           )}
           {/* 🔥 MODE */}
-          <FreeTalkUI
-            started={freeTalkStarted}
-            setStarted={setFreeTalkStarted}
-            isRecording={isRecording}
-            isSpeaking={isSpeaking}
-            islupaKata={lupaKata.isLupaKataActive}
-            sendStuckPrompt={sendStuckPrompt}
-            openLupaKata={() =>
-              lupaKata.toggleLupaKata(
-                isRecording,
-                speech.pauseRecording,
-                speech.resumeRecording,
-              )
-            }
-          />
+          {mode === "freeTalk" && (
+            <FreeTalkUI
+              started={freeTalkStarted}
+              setStarted={setFreeTalkStarted}
+              isRecording={isRecording}
+              isSpeaking={isSpeaking}
+              islupaKata={lupaKata.isLupaKataActive}
+              sendStuckPrompt={sendStuckPrompt}
+              openLupaKata={() =>
+                lupaKata.toggleLupaKata(
+                  isRecording,
+                  speech.pauseRecording,
+                  speech.resumeRecording,
+                )
+              }
+            />
+          )}
           {/* {mode === "scenarios" && <ComingSoonScenarios />} */}
           {mode === "scenarios" && (
             <ScenariosUI

@@ -158,7 +158,7 @@ def init_db():
 
                 username VARCHAR(100),
                 full_name VARCHAR(255),
-                avatar_url TEXT,
+                avatar_id INTEGER DEFAULT 1,
 
                 language_level VARCHAR(50),
 
@@ -1234,6 +1234,7 @@ def get_user_for_login(username_or_email: str):
             "email": user[1],
             "username": user[2],
             "password_hash": user[3],
+            "avatar_id": user[4],
         }
 
     return user

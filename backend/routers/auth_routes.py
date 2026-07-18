@@ -67,6 +67,7 @@ def login(payload: LoginRequest):
         "user": {
             "id": user["id"],
             "username": user["username"],
-            "email": user["email"]
+            "email": user["email"],
+            "avatar_id":user["avatar_id"],
         }
     }

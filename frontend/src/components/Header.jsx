@@ -114,7 +114,7 @@ export default function Header({
   return (
     <>
       <header
-        className={`sticky top-0 z-50 flex flex-col gap-2 px-4 py-3 
+        className={`sticky top-0 z-52 flex flex-col gap-2 px-4 py-3 
         border-b border-white/10 backdrop-blur-md ${bgStyle}`}
       >
         {/* HEADER ROW */}
