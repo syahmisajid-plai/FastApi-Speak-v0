@@ -182,29 +182,177 @@ button {
   animation: typing 1.4s infinite;
 }
 
+/* =========================================
+   1. SWAY
+   Hewan lucu (🐶🐱🦊🐨🐵🐺🐧)
+========================================= */
+
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+.animate-sway {
+  display: inline-block;
+  transform-origin: bottom center;
+  animation: sway 2.8s ease-in-out infinite;
+}
+
+/* =========================================
+   2. BOUNCE
+   Karakter aktif (🐰🐸🐹🎃)
+========================================= */
+
+@keyframes bounce-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  30% {
+    transform: translateY(-5px);
+  }
+
+  60% {
+    transform: translateY(-2px);
+  }
+}
+
+.animate-bounce {
+  display: inline-block;
+  animation: bounce-soft 2s ease-in-out infinite;
+}
+
+/* =========================================
+   3. FLOAT
+   Fantasi (👻👽🧙🌸🪐🦄)
+========================================= */
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-float {
+  display: inline-block;
+  animation: float 3s ease-in-out infinite;
+}
+
+/* =========================================
+   4. PULSE
+   Robot / Hewan besar (🤖🦁🐼)
+========================================= */
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+.animate-pulse-avatar {
+  display: inline-block;
+  animation: pulse-soft 2.5s ease-in-out infinite;
+}
+
+/* =========================================
+   5. SHINE
+   Benda (💎⭐)
+========================================= */
+
+@keyframes shine {
+  0%,
+  100% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
+
+  50% {
+    filter: brightness(1.5);
+    transform: scale(1.08);
+  }
+}
+
+.animate-shine {
+  display: inline-block;
+  animation: shine 2.2s ease-in-out infinite;
+}
+
+/* =========================================
+   6. REX WALK
+   Khusus 🦖
+========================================= */
+
 @keyframes walkAI {
+  0% {
+    transform: translateX(0) scaleX(-1);
+  }
+
+  50% {
+    transform: translateX(120px) scaleX(-1);
+  }
+
+  51% {
+    transform: translateX(120px) scaleX(1);
+  }
+
+  100% {
+    transform: translateX(0) scaleX(1);
+  }
+}
+
+.animate-walk-ai {
+  display: inline-block;
+  animation: walkAI 20s ease-in-out infinite;
+}
+
+/* 🚶‍♂️✨ Jalan + melayang */
+@keyframes walkAIFloat {
   0% {
     transform: translateX(0) translateY(0) scaleX(-1);
   }
 
-  20% {
-    transform: translateX(15px) translateY(-2px) scaleX(-1);
+  15% {
+    transform: translateX(30px) translateY(-8px) scaleX(-1);
+  }
+
+  30% {
+    transform: translateX(60px) translateY(0) scaleX(-1);
   }
 
   45% {
-    transform: translateX(35px) translateY(0) scaleX(-1);
+    transform: translateX(100px) translateY(-4px) scaleX(-1);
   }
 
   50% {
-    transform: translateX(35px) translateY(0) scaleX(1);
+    transform: translateX(100px) translateY(0) scaleX(1);
   }
 
-  70% {
-    transform: translateX(15px) translateY(-2px) scaleX(1);
+  65% {
+    transform: translateX(60px) translateY(-4px) scaleX(1);
+  }
+
+  80% {
+    transform: translateX(30px) translateY(0) scaleX(1);
   }
 
   95% {
-    transform: translateX(0) translateY(0) scaleX(1);
+    transform: translateX(0) translateY(-4px) scaleX(1);
   }
 
   100% {
@@ -212,8 +360,9 @@ button {
   }
 }
 
-.animate-walk-ai {
-  animation: walkAI 4s ease-in-out infinite;
+.animate-walk-float {
+  display: inline-block;
+  animation: walkAIFloat 10s ease-in-out infinite;
 }
 /* 
 #root {

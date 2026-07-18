@@ -87,7 +87,7 @@ export default function SentenceUI({
           <div className="animate-bounce text-6xl mb-5">🎧</div>
 
           <h2 className="text-2xl font-semibold animate-pulse text-center">
-            Preparing your speaking lesson...
+            Preparing your expressions lesson...
           </h2>
 
           <p className="text-gray-300 mt-3 text-sm text-center">

@@ -1336,7 +1336,7 @@ Feature tambahan:
             }}
           />
           {(mode === "freeTalk" || mode === "scenarios") && (
-            <div className={mode === "freeTalk" ? "mt-20" : ""}>
+            <div className={mode === "freeTalk" ? "mt-21" : ""}>
               <ChatSection
                 lupaKata={lupaKata}
                 chatHistory={chatHistory}

@@ -18,8 +18,11 @@ export default function FreeTalkUI({
   const [idleSuggest, setIdleSuggest] = useState(false);
 
   // console.log("App user =", user);
-  const userAvatar =
-    AVATARS.find((a) => a.id === user?.avatar_id)?.avatar ?? "🎃";
+  const avatarData =
+    AVATARS.find((a) => a.id === user?.avatar_id) ?? AVATARS[16];
+
+  const userAvatar = avatarData.avatar;
+  const userAvatarAnimate = avatarData.animate;
 
   // console.log("user.avatar_id", user.avatar_id);
 
@@ -170,11 +173,27 @@ export default function FreeTalkUI({
             >
               {started ? (
                 <div className="flex items-center gap-2">
-                  <div className="w-14 overflow-hidden">
-                    <span className="inline-block animate-walk-ai">🦖</span>
-                  </div>
+                  {!islupaKata && !isSpeaking && !isRecording ? (
+                    <>
+                      {/* <span
+                        className={`text-lg ${userAvatarAnimate}`}
+                        style={{ animationDelay: "0s" }}
+                      >
+                        {userAvatar}
+                      </span>
 
-                  <p className="text-xs text-white/60">Ready to talk</p>
+                      <span
+                        className={`text-lg ${userAvatarAnimate}`}
+                        style={{ animationDelay: "0.5s" }}
+                      >
+                        {userAvatar}
+                      </span> */}
+
+                      <div>Let's Talk ✨</div>
+                    </>
+                  ) : (
+                    <p className="text-xs text-white/70">{rexMessage}</p>
+                  )}
                 </div>
               ) : (
                 <p className="text-xs text-white/60 mt-1">

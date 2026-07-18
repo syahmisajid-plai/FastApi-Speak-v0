@@ -92,9 +92,9 @@ export default function SentenceChoice({
         <span className="text-md">←</span>
       </button>
       <div className="text-center mb-8">
-        <h2 className="text-xl font-semibold">Sentence Training</h2>
+        <h2 className="text-xl font-semibold">Expressions Training</h2>
         <p className="text-white/40 text-sm mt-1">
-          Choose the type of sentence you want to practice
+          Choose the type of Expressions you want to practice
         </p>
       </div>
 

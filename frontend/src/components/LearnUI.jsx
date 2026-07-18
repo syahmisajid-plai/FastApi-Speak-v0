@@ -169,7 +169,8 @@ export default function LearnUI({
                   setModeLearn("vocab");
                   setVocabStage("journey");
                 }}
-                className="bg-white/5 rounded-xl p-4 text-center 
+                className="bg-gradient-to-br from-indigo-500/10 to-white/5
+                rounded-xl p-4! text-center 
                 hover:bg-white/10 transition border border-white/10
                 active:scale-[0.98]"
               >
@@ -184,14 +185,16 @@ export default function LearnUI({
                   setModeLearn("sentence");
                   setSentenceStage("choice");
                 }}
-                className="bg-gradient-to-br from-indigo-500/10 to-white/5 
-                rounded-xl p-4 text-center 
+                className=" bg-gradient-to-br from-white/5 to-indigo-900/10
+                rounded-xl p-4! text-center 
                 hover:scale-[1.02] transition border border-indigo-500/20
                 active:scale-[0.98]"
               >
                 <div className="text-2xl mb-2">💬</div>
-                <p className="text-sm font-medium">Sentence</p>
-                <p className="text-[10px] text-white/50 mt-1">Learn Sentence</p>
+                <p className="text-sm font-medium">Expressions</p>
+                <p className="text-[10px] text-white/50 mt-1">
+                  Learn Expressions
+                </p>
               </button>
             </div>
           </div>
