@@ -1129,6 +1129,7 @@ Feature tambahan:
                   speech.resumeRecording,
                 )
               }
+              user={user}
             />
           )}
           {/* {mode === "scenarios" && <ComingSoonScenarios />} */}

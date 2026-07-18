@@ -9,6 +9,8 @@ export default function FreeTalkUI({
   sendStuckPrompt,
 
   openLupaKata,
+
+  user,
 }) {
   const [showStuckMenu, setShowStuckMenu] = useState(false);
   const [idleSuggest, setIdleSuggest] = useState(false);
@@ -38,11 +40,12 @@ export default function FreeTalkUI({
     { id: 21, avatar: "⭐" },
   ];
 
-  const userAvatar = 1;
+  // const userAvatar = 1;
 
-  // const userAvatar = avatars.find((a) => a.id === user.avatar)?.avatar ?? "🎃";
+  // const userAvatar =
+  //   avatars.find((a) => a.id === user.avatar_id)?.avatar ?? "🎃";
 
-  // console.log("userAvatar", userAvatar);
+  // console.log("user.avatar_id", user.avatar_id);
 
   useEffect(() => {
     if (!started) return;

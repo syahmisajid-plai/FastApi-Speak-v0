@@ -1215,7 +1215,8 @@ def get_user_for_login(username_or_email: str):
             id,
             email,
             username,
-            password_hash
+            password_hash,
+            avatar_id
         FROM users
         WHERE email = %s OR username = %s
         LIMIT 1;
