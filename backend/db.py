@@ -2043,3 +2043,46 @@ def add_user_xp(user_id: str, xp_gain: int, mode: str = None):
 
     finally:
         conn.close()
+
+
+def update_user_avatar(user_id: str, avatar_id: int):
+
+    conn = get_db_connection()
+
+    if DATABASE_URL:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+    else:
+        cursor = conn.cursor()
+
+    query = """
+        UPDATE users
+        SET
+            avatar_id = %s,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = %s
+        RETURNING
+            id,
+            username,
+            email,
+            avatar_id;
+    """
+
+    cursor.execute(query, (avatar_id, user_id))
+
+    user = cursor.fetchone()
+
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    # Normalisasi SQLite
+    if user and not isinstance(user, dict):
+        user = {
+            "id": user[0],
+            "username": user[1],
+            "email": user[2],
+            "avatar_id": user[3],
+        }
+
+    return user

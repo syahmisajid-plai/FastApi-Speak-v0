@@ -29,6 +29,7 @@ from routers import (
     version,
     whisper,
     progress_routes,
+    user,
 )
 
 
@@ -156,6 +157,8 @@ app.include_router(smartcall.router)
 app.include_router(version.router)
 app.include_router(whisper.router)
 app.include_router(progress_routes.router)
+app.include_router(user.router)
+
 
 
 # Set path ke service account GCP

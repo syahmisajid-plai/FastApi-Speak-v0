@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 
+import { AVATARS } from "../utils/avatars";
+
 export default function FreeTalkUI({
   started,
   setStarted,
@@ -15,35 +17,9 @@ export default function FreeTalkUI({
   const [showStuckMenu, setShowStuckMenu] = useState(false);
   const [idleSuggest, setIdleSuggest] = useState(false);
 
-  const avatars = [
-    { id: 0, avatar: "🐱" },
-    { id: 1, avatar: "🐶" },
-    { id: 2, avatar: "🐰" },
-    { id: 3, avatar: "🦊" },
-    { id: 4, avatar: "🐼" },
-    { id: 5, avatar: "🐨" },
-    { id: 6, avatar: "🦁" },
-    { id: 7, avatar: "🐸" },
-    { id: 8, avatar: "🐵" },
-    { id: 9, avatar: "🐧" },
-    { id: 10, avatar: "🦄" },
-    { id: 11, avatar: "🐹" },
-    { id: 12, avatar: "🐺" },
-    { id: 13, avatar: "🤖" },
-    { id: 14, avatar: "👻" },
-    { id: 15, avatar: "👽" },
-    { id: 16, avatar: "🎃" },
-    { id: 17, avatar: "🧙" },
-    { id: 18, avatar: "🌸" },
-    { id: 19, avatar: "🪐" },
-    { id: 20, avatar: "💎" },
-    { id: 21, avatar: "⭐" },
-  ];
-
-  // const userAvatar = 1;
-
-  // const userAvatar =
-  //   avatars.find((a) => a.id === user.avatar_id)?.avatar ?? "🎃";
+  // console.log("App user =", user);
+  const userAvatar =
+    AVATARS.find((a) => a.id === user?.avatar_id)?.avatar ?? "🎃";
 
   // console.log("user.avatar_id", user.avatar_id);
 

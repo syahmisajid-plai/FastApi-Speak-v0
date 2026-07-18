@@ -68,6 +68,8 @@ import { useCheckUpdate } from "./hooks/useCheckUpdate";
 import useChecklistRoleplay from "./hooks/useChecklistRoleplay";
 import useUserProgress from "./hooks/useUserProgress";
 
+import useUser from "./hooks/useUser";
+
 // ================== AUDIO ==================
 import useTTS_Google from "./hooks/useTTS_Google";
 import useMicMonitor from "./utils/useMicMonitor";
@@ -262,7 +264,6 @@ Feature tambahan:
         message: "Great Progress!",
       });
     },
-
     // onDailyLimitReached: () => {
     //   console.log("🔥 SHOW POPUP");
     //   setShowDailyLimitPopup(true);
@@ -276,6 +277,9 @@ Feature tambahan:
       });
     },
   });
+
+  // ================== User (Avatar) ==================
+  const { updateUserAvatar } = useUser();
 
   // ================== Vocab ==================
   const {
@@ -947,7 +951,7 @@ Feature tambahan:
           onClick={resetIdle}
           onWheel={resetIdle}
         >
-          {mode !== "onBoarding" && (
+          {mode !== "onBoarding" && user && (
             <Header
               streak={streak}
               mode={mode}
@@ -956,6 +960,7 @@ Feature tambahan:
               isScrolled={isScrolled}
               dailyStory={dailyStory}
               user={user}
+              setUser={setUser}
               onLogout={handleLogout}
               streakDaily={streakDaily}
               fetchStreakDaily={fetchStreakDaily}
@@ -974,6 +979,7 @@ Feature tambahan:
               level={level}
               xp={xp}
               title_level={title_level}
+              updateUserAvatar={updateUserAvatar}
             />
           )}
           <OverlayFeedback message={overlayFavoritTranslated} />
@@ -1114,7 +1120,7 @@ Feature tambahan:
             </div>
           )}
           {/* 🔥 MODE */}
-          {mode === "freeTalk" && (
+          {mode === "freeTalk" && user && (
             <FreeTalkUI
               started={freeTalkStarted}
               setStarted={setFreeTalkStarted}

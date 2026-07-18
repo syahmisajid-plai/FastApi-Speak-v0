@@ -1,8 +1,8 @@
 // src/utils/avatars.js
 
-const avatars = [
-  { id: 0, avatar: "🐱" },
-  { id: 1, avatar: "🐶" },
+export const AVATARS = [
+  { id: 0, avatar: "🐶" },
+  { id: 1, avatar: "🐱" },
   { id: 2, avatar: "🐰" },
   { id: 3, avatar: "🦊" },
   { id: 4, avatar: "🐼" },
@@ -24,5 +24,3 @@ const avatars = [
   { id: 20, avatar: "💎" },
   { id: 21, avatar: "⭐" },
 ];
-
-export default avatars;
