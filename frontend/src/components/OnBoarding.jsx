@@ -1,10 +1,12 @@
 // components/OnBoarding.jsx
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import useSTTCheck from "../hooks/useSTTCheck";
 import useSpeakerCheck from "../hooks/useSpeakerCheck";
 
 import AvatarModal from "./AvatarModal";
 import { AVATARS } from "../utils/avatars";
+
+import useOnboarding from "../hooks/useOnboarding";
 
 export default function Onboarding({
   handleSaveAvatar,
@@ -13,12 +15,70 @@ export default function Onboarding({
   selectedAvatar,
   setSelectedAvatar,
 }) {
-  const [step, setStep] = useState(1);
-  const [motherTongue, setMotherTongue] = useState(false);
-  const [englishUsage, setEnglishUsage] = useState("");
+  const [step, setStep] = useState(9);
 
   const next = () => setStep((s) => Math.min(s + 1, 10));
   const back = () => setStep((s) => Math.max(s - 1, 1));
+
+  const [voiceCheckStage, setVoiceCheckStage] = useState("microphone");
+  // microphone | speaker
+
+  const [STTStep, setSTTStep] = useState(0);
+  const [selfConfidence, setSelfConfidence] = useState("");
+  const [speakingAnxiety, setSpeakingAnxiety] = useState("");
+
+  const [confidenceStep, setConfidenceStep] = useState(0);
+
+  const [goalStep, setGoalStep] = useState(0);
+  const [learningGoal, setLearningGoal] = useState("");
+
+  const {
+    motherTongue,
+    setMotherTongue,
+    englishUsage,
+    setEnglishUsage,
+
+    deviceType,
+    browserName,
+    operatingSystem,
+
+    micAvailable,
+    micPermissionGranted,
+    micPermissionDenied,
+
+    mediaRecorderSupported,
+    webAudioSupported,
+
+    speechRecognitionSupported,
+    speechSynthesisSupported,
+
+    systemReady,
+    runSystemCheck,
+
+    isRecording,
+    audioURL,
+
+    micLevel,
+    micDetected,
+    maxMicLevel,
+
+    startRecording,
+    stopRecording,
+    recordAgain,
+    languages,
+
+    speakerConfirmed,
+    setSpeakerConfirmed,
+    voiceConfirmed,
+    setVoiceConfirmed,
+    voiceTestPassed,
+    setVoiceTestPassed,
+
+    VOICE_THRESHOLD,
+  } = useOnboarding();
+
+  // console.log("micLevel :", micLevel);
+  // console.log("micDetected :", micDetected);
 
   const {
     permissionGranted,
@@ -39,6 +99,9 @@ export default function Onboarding({
 
     startWhisperCheck,
     stopWhisperCheck,
+
+    micLevel: micLevelWhisper,
+    micDetected: micDetectedWhisper,
   } = useSTTCheck();
 
   const {
@@ -53,22 +116,10 @@ export default function Onboarding({
   const currentAvatar =
     AVATARS.find((a) => a.id === selectedAvatar)?.avatar ?? "🙂";
 
-  const languages = [
-    { code: "id", flag: "🇮🇩", label: "Bahasa Indonesia" },
-    { code: "jv", flag: "🇮🇩", label: "Bahasa Jawa" },
-    { code: "su", flag: "🇮🇩", label: "Bahasa Sunda" },
-    { code: "mad", flag: "🇮🇩", label: "Bahasa Madura" },
-    { code: "min", flag: "🇮🇩", label: "Bahasa Minangkabau" },
-    { code: "bug", flag: "🇮🇩", label: "Bahasa Bugis" },
-    { code: "ban", flag: "🇮🇩", label: "Bahasa Banjar" },
-    { code: "ace", flag: "🇮🇩", label: "Bahasa Aceh" },
-    { code: "bal", flag: "🇮🇩", label: "Bahasa Bali" },
-    { code: "sas", flag: "🇮🇩", label: "Bahasa Sasak" },
-    { code: "day", flag: "🇮🇩", label: "Bahasa Dayak" },
-    { code: "btk", flag: "🇮🇩", label: "Bahasa Batak" },
-    { code: "pap", flag: "🇮🇩", label: "Bahasa Papua" },
-    { code: "other", flag: "🌍", label: "Other" },
-  ];
+  const renderStatus = (value) => {
+    if (value === null) return "⏳";
+    return value ? "✅" : "❌";
+  };
 
   // return null;
   return (
@@ -98,7 +149,18 @@ export default function Onboarding({
           </div>
 
           {/* Card */}
-          <div className="rounded-3xl bg-slate-900 border border-slate-800 p-8 shadow-2xl mt-20">
+          <div
+            className={`rounded-3xl bg-slate-900 border border-slate-800 p-8 shadow-2xl ${
+              step === 4 ||
+              step === 5 ||
+              step === 6 ||
+              step === 7 ||
+              step === 8 ||
+              step === 9
+                ? "mt-12"
+                : "mt-20"
+            }`}
+          >
             {step === 1 && (
               <div className="flex flex-col items-center text-center">
                 {/* Welcome Icon */}
@@ -299,7 +361,7 @@ export default function Onboarding({
 
                 {/* Title */}
                 <h2 className="text-3xl font-bold tracking-tight text-white">
-                  What's your native language?
+                  Which language do you speak most often?
                 </h2>
 
                 {/* Subtitle */}
@@ -309,7 +371,7 @@ export default function Onboarding({
                 </p>
 
                 {/* Languages */}
-                <div className="mt-8 w-full max-h-80 space-y-3 overflow-y-auto pr-1">
+                <div className="mt-8 w-full max-h-40 space-y-3 overflow-y-auto pr-1">
                   {languages.map((lang) => (
                     <button
                       key={lang.code}
@@ -377,7 +439,7 @@ export default function Onboarding({
                 </h2>
 
                 {/* Subtitle */}
-                <p className="mt-4 max-w-sm text-sm leading-7 text-white/70">
+                <p className="mt-4 max-w-sm text-sm text-white/70">
                   This helps us personalize your lessons and conversation
                   difficulty.
                 </p>
@@ -472,265 +534,763 @@ export default function Onboarding({
               <div className="flex flex-col items-center text-center">
                 {/* Icon */}
                 <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-indigo-500/15 ring-1 ring-indigo-400/20 backdrop-blur">
-                  <span className="text-5xl">🎤</span>
+                  <span className="text-5xl">🖥️</span>
                 </div>
 
                 {/* Title */}
                 <h2 className="text-3xl font-bold tracking-tight text-white">
-                  Let's Check Your Device
+                  Automatic System Check
                 </h2>
 
                 {/* Subtitle */}
                 <p className="mt-4 max-w-sm text-sm leading-7 text-white/70">
-                  We'll automatically check your microphone, speaker, and speech
-                  recognition to make sure everything is ready.
+                  We'll automatically verify your device and browser
+                  capabilities before you start speaking.
                 </p>
 
                 {/* Checklist */}
                 <div className="mt-8 w-full space-y-4">
-                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
-                    <span className="text-white">🎤 Microphone</span>
+                  {/* Device */}
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <h3 className="mb-4 text-left text-sm font-semibold text-white/80">
+                      🖥 Device
+                    </h3>
 
-                    <span>{permissionGranted ? "✅" : "⏳"}</span>
+                    <div className="space-y-3 text-left">
+                      <div className="flex justify-between">
+                        <span className="text-white/70">Device Type</span>
+                        <span className="text-emerald-500">
+                          {deviceType || "⏳"}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-white/70">Browser</span>
+                        <span className="text-emerald-500">
+                          {browserName || "⏳"}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-white/70">Operating System</span>
+                        <span className="text-emerald-500">
+                          {operatingSystem || "⏳"}
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
-                    <span className="text-white">🔊 Speaker</span>
+                  {/* Audio */}
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <h3 className="mb-4 text-left text-sm font-semibold text-white/80">
+                      🎤 Audio Support
+                    </h3>
 
-                    <span>{speakerPassed ? "✅" : "⏳"}</span>
+                    <div className="space-y-3 text-left">
+                      <div className="flex justify-between">
+                        <span className="text-white/70">
+                          Microphone Available
+                        </span>
+                        <span>{renderStatus(micAvailable)}</span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-white/70">
+                          Microphone Permission
+                        </span>
+                        <span>{renderStatus(micPermissionGranted)}</span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-white/70">MediaRecorder API</span>
+                        <span>{renderStatus(mediaRecorderSupported)}</span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-white/70">Web Audio API</span>
+                        <span>{renderStatus(webAudioSupported)}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
-                    <span className="text-white">🗣 Speech Recognition</span>
+                  {/* Speech */}
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <h3 className="mb-4 text-left text-sm font-semibold text-white/80">
+                      🗣 Speech Support
+                    </h3>
 
-                    <span>{googlePassed || whisperPassed ? "✅" : "⏳"}</span>
+                    <div className="space-y-3 text-left">
+                      <div className="flex justify-between">
+                        <span className="text-white/70">
+                          Speech Recognition API
+                        </span>
+                        <span>{renderStatus(speechRecognitionSupported)}</span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-white/70">Speech Synthesis</span>
+                        <span>{renderStatus(speechSynthesisSupported)}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Detect Button */}
                 <button
-                  onClick={async () => {
-                    await checkMicrophone();
-                  }}
-                  className="mt-8 w-full rounded-2xl bg-indigo-600 py-3.5 font-semibold text-white transition hover:bg-indigo-500"
+                  onClick={runSystemCheck}
+                  className="mt-8 w-full rounded-2xl bg-indigo-600! py-3.5! font-semibold text-white transition hover:bg-indigo-500"
                 >
-                  Start Device Check
+                  Run Automatic Check
                 </button>
 
-                {/* Continue */}
                 <button
                   onClick={next}
-                  disabled={
-                    !(
-                      permissionGranted &&
-                      speakerPassed &&
-                      (googlePassed || whisperPassed)
-                    )
-                  }
-                  className={`
-                    mt-4
-                    w-full
-                    rounded-2xl
-                    py-3.5!
-                    font-semibold
-                    transition-all
-                    ${
-                      permissionGranted &&
-                      speakerPassed &&
-                      (googlePassed || whisperPassed)
-                        ? "bg-emerald-600! text-white hover:bg-emerald-500"
-                        : "cursor-not-allowed bg-slate-700 text-slate-400"
-                    }
-                  `}
+                  disabled={!systemReady}
+                  className={`mt-4 w-full rounded-2xl py-3.5! font-semibold transition ${
+                    systemReady
+                      ? "bg-emerald-600! text-white hover:bg-emerald-500!"
+                      : "cursor-not-allowed bg-slate-700! text-slate-400"
+                  }`}
                 >
                   Continue →
                 </button>
               </div>
             )}
 
-            {false && (
-              <>
-                {step === 7 && (
+            {step === 7 && (
+              <div className="flex flex-col items-center text-center">
+                {/* Icon */}
+                <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-indigo-500/15 ring-1 ring-indigo-400/20 backdrop-blur">
+                  <span className="text-5xl">🎙️</span>
+                </div>
+
+                {/* Title */}
+                <h2 className="text-3xl font-bold tracking-tight text-white">
+                  Voice Test
+                </h2>
+
+                {!audioURL && (
                   <>
-                    <div className="text-5xl mb-4">🎤</div>
-
-                    <h2 className="text-2xl font-bold text-white">
-                      Microphone Check
-                    </h2>
-
-                    <p className="mt-2 text-gray-400">
-                      We'll verify that your microphone is connected and can
-                      detect your voice.
+                    {/* Subtitle */}
+                    <p className="mt-4 max-w-sm text-sm leading-7 text-white/70">
+                      Record and play back your voice to confirm that your
+                      microphone and speaker are working correctly.
                     </p>
 
-                    <div className="mt-8 rounded-xl bg-slate-800 p-5 space-y-3">
-                      <div
-                        className={
-                          permissionGranted ? "text-green-400" : "text-gray-400"
-                        }
-                      >
-                        {permissionGranted
-                          ? "✅ Microphone permission granted"
-                          : "⏳ Permission not granted"}
-                      </div>
+                    {/* Prompt */}
+                    <div className="mt-8 w-full rounded-2xl border border-indigo-500/20 bg-indigo-500/10 p-5">
+                      <p className="text-sm text-white/70">Please say:</p>
 
-                      <div
-                        className={
-                          audioDetected ? "text-green-400" : "text-gray-400"
-                        }
-                      >
-                        {audioDetected
-                          ? "✅ Voice detected"
-                          : "⏳ Waiting for your voice"}
-                      </div>
+                      <p className="mt-2 text-xl font-semibold text-white">
+                        "Hello, my name is..."
+                      </p>
                     </div>
-
-                    {!audioDetected ? (
-                      <button
-                        onClick={checkMicrophone}
-                        className="mt-8 w-full rounded-xl bg-indigo-600 py-3 text-white"
-                      >
-                        Check Microphone
-                      </button>
-                    ) : (
-                      <button
-                        onClick={next}
-                        className="mt-8 w-full rounded-xl bg-green-600 py-3 text-white"
-                      >
-                        Continue
-                      </button>
-                    )}
                   </>
                 )}
 
-                {step === 8 && (
+                {/* Recording */}
+                {isRecording && (
+                  <div className="mt-6">
+                    <div className="flex h-12 items-end justify-center gap-1">
+                      {Array.from({ length: 10 }).map((_, i) => {
+                        const height = Math.max(
+                          10,
+                          micLevel * (1.5 + Math.random() * 0.8),
+                        );
+
+                        return (
+                          <div
+                            key={i}
+                            className={`w-2 rounded-full transition-all duration-75 ${
+                              micDetected ? "bg-red-500" : "bg-slate-500"
+                            }`}
+                            style={{
+                              height: `${height}%`,
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+
+                    {/* <p className="mt-3 text-sm text-white/70">
+                      {micDetected
+                        ? "🎤 Voice detected"
+                        : "Waiting for your voice..."}
+                    </p> */}
+                  </div>
+                )}
+
+                {/* Playback & Confirmation */}
+                {audioURL && (
+                  <div className="mt-8 w-full rounded-2xl border border-white/10 bg-white/5 p-5">
+                    {voiceCheckStage === "microphone" && (
+                      <>
+                        {/* Microphone Check */}
+                        <p className="text-sm font-medium text-white">
+                          🎤 Microphone Check
+                        </p>
+
+                        <p className="mt-1 text-sm text-white/60">
+                          Voice input detection
+                        </p>
+
+                        <div
+                          className={`mt-4 rounded-lg p-3 text-center font-semibold ${
+                            maxMicLevel > VOICE_THRESHOLD
+                              ? "bg-emerald-500/20 text-emerald-300"
+                              : "bg-red-500/20 text-red-300"
+                          }`}
+                        >
+                          {maxMicLevel > VOICE_THRESHOLD
+                            ? "✅ Voice detected"
+                            : "❌ No voice detected"}
+                        </div>
+
+                        <div className="mt-4">
+                          <p className="text-sm text-white/70">Voice Level</p>
+
+                          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+                            <div
+                              className="h-full rounded-full bg-indigo-500 transition-all"
+                              style={{
+                                width: `${Math.min(maxMicLevel, 100)}%`,
+                              }}
+                            />
+                          </div>
+
+                          <p className="mt-2 text-center text-sm text-white">
+                            {maxMicLevel.toFixed(1)}
+                          </p>
+                        </div>
+
+                        <p className="mt-3 text-center text-xs text-white/50">
+                          Detection threshold: &gt; {VOICE_THRESHOLD}
+                        </p>
+
+                        <button
+                          disabled={maxMicLevel <= VOICE_THRESHOLD}
+                          onClick={() => setVoiceCheckStage("speaker")}
+                          className={`mt-6 w-full rounded-xl p-3! font-semibold ${
+                            maxMicLevel > VOICE_THRESHOLD
+                              ? "bg-indigo-600! text-white hover:bg-indigo-500"
+                              : "cursor-not-allowed bg-slate-700! text-slate-400"
+                          }`}
+                        >
+                          Continue to Speaker Check →
+                        </button>
+                      </>
+                    )}
+
+                    {voiceCheckStage === "speaker" && (
+                      <>
+                        {/* Speaker Check */}
+                        <p className="text-sm font-medium text-white">
+                          🔊 Speaker Check
+                        </p>
+
+                        <p className="mt-2 text-sm text-white/70">
+                          Play your recording, then answer the question below.
+                        </p>
+
+                        <div className="mt-5">
+                          <audio controls src={audioURL} className="w-full" />
+                        </div>
+
+                        <p className="mt-6 text-sm text-white/70">
+                          Could you hear your recording clearly?
+                        </p>
+
+                        <div className="mt-4 flex gap-3">
+                          <button
+                            onClick={() => {
+                              setSpeakerConfirmed(true);
+                              setVoiceTestPassed(true);
+                            }}
+                            className="flex-1 rounded-xl bg-emerald-600 py-3 font-semibold text-white"
+                          >
+                            👍 Yes
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setSpeakerConfirmed(false);
+                              setVoiceTestPassed(false);
+                            }}
+                            className="flex-1 rounded-xl bg-red-600 py-3 font-semibold text-white"
+                          >
+                            👎 No
+                          </button>
+                        </div>
+
+                        {speakerConfirmed === true && (
+                          <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+                            <div className="flex justify-between text-white">
+                              <span>Speaker</span>
+                              <span>✅ Working</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {speakerConfirmed === false && (
+                          <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
+                            We couldn't confirm your speaker.
+                            <br />
+                            Please check your speaker volume or audio output
+                            device, then play the recording again.
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Buttons */}
+                {!audioURL ? (
+                  <button
+                    onClick={isRecording ? stopRecording : startRecording}
+                    className={`mt-8 w-full rounded-2xl py-3.5! font-semibold text-white transition ${
+                      isRecording
+                        ? "bg-red-600! hover:bg-red-500!"
+                        : "bg-indigo-600! hover:bg-indigo-500!"
+                    }`}
+                  >
+                    {isRecording ? "■ Stop Recording" : "🎙 Start Recording"}
+                  </button>
+                ) : (
                   <>
-                    <div className="text-5xl mb-4">🗣️</div>
+                    <button
+                      onClick={() => {
+                        recordAgain();
+                        setVoiceCheckStage("microphone");
+                      }}
+                      className="mt-8 w-full rounded-2xl bg-slate-700! py-3.5! font-semibold text-white transition hover:bg-slate-600"
+                    >
+                      🔄 Record Again
+                    </button>
 
-                    <h2 className="text-2xl font-bold text-white">
-                      Speech Recognition Check
-                    </h2>
+                    <button
+                      onClick={next}
+                      disabled={!voiceTestPassed}
+                      className={`mt-4 w-full rounded-2xl py-3.5! font-semibold transition ${
+                        voiceTestPassed
+                          ? "bg-emerald-600! text-white hover:bg-emerald-500"
+                          : "cursor-not-allowed bg-slate-700 text-slate-400"
+                      }`}
+                    >
+                      Continue →
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
 
-                    <p className="mt-2 text-gray-400">
-                      Read the sentence below to test both speech recognition
-                      engines.
+            {step === 8 && (
+              <div className="flex flex-col items-center text-center">
+                {/* Icon */}
+                <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-indigo-500/15 ring-1 ring-indigo-400/20 backdrop-blur">
+                  <span className="text-5xl">🗣️</span>
+                </div>
+
+                <h2 className="text-2xl font-bold tracking-tight text-white">
+                  Speech Recognition Check
+                </h2>
+
+                {/* Prompt */}
+                <div className="mt-2 w-full rounded-2xl border border-indigo-500/20 bg-indigo-500/10 p-3">
+                  <p className="text-sm text-white/70">Please say:</p>
+
+                  <p className="mt-1 text-xl font-semibold text-white">
+                    "Hello, my name is..."
+                  </p>
+                </div>
+
+                {/* Step 0 */}
+                {STTStep === 0 && (
+                  <>
+                    <p className="mt-4 max-w-sm text-sm leading-7 text-white/70">
+                      We will test browser and AI speech recognition.
                     </p>
 
-                    {/* Sentence */}
-                    <div className="mt-6 rounded-xl bg-slate-800 p-5">
-                      <p className="text-gray-400">Please say:</p>
+                    <button
+                      onClick={() => setSTTStep(1)}
+                      className="mt-8 w-full rounded-2xl bg-indigo-600! py-3.5! font-semibold text-white hover:bg-indigo-500!"
+                    >
+                      Next →
+                    </button>
+                  </>
+                )}
 
-                      <h3 className="text-2xl text-white font-semibold mt-2">
-                        "Hello, how are you?"
-                      </h3>
+                {/* Google Check */}
+                {STTStep === 1 && (
+                  <div className="mt-8 w-full rounded-2xl border border-white/10 bg-white/5 p-5 text-left">
+                    <h3 className="font-semibold text-white">
+                      🌐 Browser Speech Recognition
+                    </h3>
+
+                    <span
+                      className={`text-sm ${
+                        googlePassed
+                          ? "text-emerald-300"
+                          : googleRunning
+                            ? "text-yellow-300"
+                            : "text-white/50"
+                      }`}
+                    >
+                      {googlePassed
+                        ? "✅ Passed"
+                        : googleRunning
+                          ? "🎙 Listening..."
+                          : "Not Checked"}
+                    </span>
+
+                    <div className="mt-4 min-h-16 rounded-xl bg-black/20 p-4 text-sm text-white/70">
+                      {googleTranscript || "No transcript yet."}
                     </div>
 
-                    {/* Google */}
-                    <div className="mt-6 rounded-xl border border-slate-700 bg-slate-800 p-5">
-                      <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-white font-semibold">
-                          Google Speech Recognition
-                        </h3>
+                    {!googleRunning && !googlePassed && (
+                      <button
+                        onClick={startGoogleCheck}
+                        className="mt-5 w-full rounded-xl bg-indigo-600! py-3! font-semibold text-white"
+                      >
+                        🎙 Start Test
+                      </button>
+                    )}
 
-                        <span
-                          className={
-                            googlePassed
-                              ? "text-green-400"
-                              : googleRunning
-                                ? "text-yellow-400"
-                                : "text-gray-400"
-                          }
-                        >
-                          {googlePassed
-                            ? "Passed"
-                            : googleRunning
-                              ? "Listening..."
-                              : "Not Checked"}
-                        </span>
-                      </div>
+                    {googlePassed && (
+                      <button
+                        onClick={() => setSTTStep(2)}
+                        className="mt-5 w-full rounded-xl bg-emerald-600! py-3! font-semibold text-white"
+                      >
+                        Next →
+                      </button>
+                    )}
+                  </div>
+                )}
 
-                      <div className="rounded-lg bg-slate-900 p-3 min-h-16 text-gray-300">
-                        {googleTranscript || "No transcript yet."}
-                      </div>
+                {/* Whisper Check */}
+                {STTStep === 2 && (
+                  <div className="mt-8 w-full rounded-2xl border border-white/10 bg-white/5 p-5 text-left">
+                    <h3 className="font-semibold text-white">
+                      🤖 Whisper Speech Recognition
+                    </h3>
 
-                      {!googleRunning && !googlePassed && (
-                        <button
-                          onClick={startGoogleCheck}
-                          className="mt-4 w-full rounded-xl bg-indigo-600 py-3 text-white"
-                        >
-                          Test Google Speech
-                        </button>
-                      )}
+                    <span
+                      className={`text-sm ${
+                        whisperPassed
+                          ? "text-emerald-300"
+                          : whisperRunning
+                            ? "text-yellow-300"
+                            : "text-white/50"
+                      }`}
+                    >
+                      {whisperPassed
+                        ? "✅ Passed"
+                        : whisperRunning
+                          ? "🎙 Recording..."
+                          : "Not Checked"}
+                    </span>
 
-                      {googleRunning && (
-                        <button
-                          onClick={stopGoogleCheck}
-                          className="mt-4 w-full rounded-xl bg-red-600 py-3 text-white"
-                        >
-                          Stop Recording
-                        </button>
-                      )}
+                    <div className="mt-4 min-h-16 rounded-xl bg-black/20 p-4 text-sm text-white/70">
+                      {whisperTranscript || "No transcript yet."}
                     </div>
 
-                    {/* Whisper */}
-                    <div className="mt-5 rounded-xl border border-slate-700 bg-slate-800 p-5">
-                      <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-white font-semibold">
-                          Whisper STT
-                        </h3>
+                    {!whisperRunning && !whisperPassed && (
+                      <button
+                        onClick={async () => {
+                          const micReady = await checkMicrophone();
 
-                        <span
-                          className={
-                            whisperPassed
-                              ? "text-green-400"
-                              : whisperRunning
-                                ? "text-yellow-400"
-                                : "text-gray-400"
+                          if (micReady) {
+                            startWhisperCheck();
                           }
-                        >
-                          {whisperPassed
-                            ? "Passed"
-                            : whisperRunning
-                              ? "Recording..."
-                              : "Not Checked"}
-                        </span>
-                      </div>
+                        }}
+                        className="mt-5 w-full rounded-xl bg-violet-600! py-3! font-semibold text-white transition hover:bg-violet-500"
+                      >
+                        🎙 Start Test
+                      </button>
+                    )}
 
-                      <div className="rounded-lg bg-slate-900 p-3 min-h-16 text-gray-300">
-                        {whisperTranscript || "No transcript yet."}
-                      </div>
+                    {whisperRunning && (
+                      <>
+                        {/* Recording Visualizer */}
+                        <div className="mt-6">
+                          <div className="flex h-12 items-end justify-center gap-1">
+                            {Array.from({ length: 10 }).map((_, i) => {
+                              const height = Math.max(
+                                8,
+                                micLevelWhisper * (0.4 + Math.random() * 0.6),
+                              );
 
-                      {!whisperRunning && !whisperPassed && (
-                        <button
-                          onClick={startWhisperCheck}
-                          className="mt-4 w-full rounded-xl bg-violet-600 py-3 text-white"
-                        >
-                          Test Whisper
-                        </button>
-                      )}
+                              return (
+                                <div
+                                  key={i}
+                                  className={`w-2 rounded-full transition-all duration-75 ${
+                                    micDetectedWhisper
+                                      ? "bg-violet-500"
+                                      : "bg-slate-500"
+                                  }`}
+                                  style={{
+                                    height: `${height}%`,
+                                  }}
+                                />
+                              );
+                            })}
+                          </div>
 
-                      {whisperRunning && (
+                          <p className="mt-3 text-center text-sm text-white/70">
+                            {micDetectedWhisper
+                              ? "🎤 Voice detected"
+                              : "Waiting for your voice..."}
+                          </p>
+
+                          <p className="mt-2 text-center text-xs text-amber-300">
+                            Whisper keeps recording until you click{" "}
+                            <span className="font-semibold text-white">
+                              Stop Recording
+                            </span>
+                            .
+                          </p>
+                        </div>
+
                         <button
                           onClick={stopWhisperCheck}
-                          className="mt-4 w-full rounded-xl bg-red-600 py-3 text-white"
+                          className="mt-6 w-full rounded-xl bg-red-600! py-3! font-semibold text-white transition hover:bg-red-500"
                         >
-                          Stop Recording
+                          ■ Stop Recording
                         </button>
-                      )}
-                    </div>
+                      </>
+                    )}
 
-                    {/* Continue */}
-                    {googlePassed && whisperPassed && (
+                    {whisperPassed && (
                       <button
                         onClick={next}
-                        className="mt-8 w-full rounded-xl bg-green-600 py-3 text-white font-semibold"
+                        className="mt-6 w-full rounded-2xl bg-emerald-600! py-3.5! font-semibold text-white"
                       >
-                        Continue
+                        Continue →
                       </button>
                     )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {step === 9 && (
+              <div className="flex flex-col items-center text-center">
+                {/* Icon */}
+                <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-indigo-500/15 ring-1 ring-indigo-400/20 backdrop-blur">
+                  <span className="text-5xl">😊</span>
+                </div>
+
+                {/* Title */}
+                <h2 className="text-3xl font-bold tracking-tight text-white">
+                  Speaking Confidence
+                </h2>
+
+                {/* Intro */}
+                {confidenceStep === 0 && (
+                  <>
+                    <p className="mt-4 max-w-md text-sm leading-7 text-white/70">
+                      Help us personalize your speaking practice.
+                    </p>
+
+                    <button
+                      onClick={() => setConfidenceStep(1)}
+                      className="mt-8 w-full rounded-2xl bg-indigo-600! py-3.5! text-base font-semibold text-white transition-all hover:bg-indigo-500!"
+                    >
+                      Next →
+                    </button>
                   </>
                 )}
 
+                {/* Self Confidence */}
+                {confidenceStep === 1 && (
+                  <div className="mt-8 w-full">
+                    <p className="mb-3 text-left text-sm font-medium text-white">
+                      Self Confidence Level
+                    </p>
+
+                    <div className="space-y-3">
+                      {[
+                        "😟 Very Low",
+                        "😕 Low",
+                        "😐 Moderate",
+                        "🙂 High",
+                        "😄 Very High",
+                      ].map((level) => (
+                        <button
+                          key={level}
+                          onClick={() => setSelfConfidence(level)}
+                          className={`
+                flex w-full items-center justify-between
+                rounded-2xl
+                border
+                px-5!
+                py-4!
+                transition-all
+                ${
+                  selfConfidence === level
+                    ? "border-indigo-500 bg-indigo-500/10!"
+                    : "border-white/10 bg-white/5! hover:bg-white/10!"
+                }
+              `}
+                        >
+                          <span className="text-white">{level}</span>
+
+                          {selfConfidence === level && (
+                            <span className="text-xl text-indigo-400">✓</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+
+                    {selfConfidence && (
+                      <button
+                        onClick={() => setConfidenceStep(2)}
+                        className="mt-8 w-full rounded-2xl bg-indigo-600! py-3.5! text-base font-semibold text-white transition-all hover:bg-indigo-500!"
+                      >
+                        Next →
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Speaking Anxiety */}
+                {confidenceStep === 2 && (
+                  <div className="mt-8 w-full">
+                    <p className="mb-3 text-left text-sm font-medium text-white">
+                      Speaking Anxiety
+                    </p>
+
+                    <div className="space-y-3">
+                      {[
+                        "😌 Very Relaxed",
+                        "🙂 Slightly Nervous",
+                        "😐 Moderately Nervous",
+                        "😟 Very Nervous",
+                        "😰 Extremely Nervous",
+                      ].map((level) => (
+                        <button
+                          key={level}
+                          onClick={() => setSpeakingAnxiety(level)}
+                          className={`
+                flex w-full items-center justify-between
+                rounded-2xl
+                border
+                px-5!
+                py-4!
+                transition-all
+                ${
+                  speakingAnxiety === level
+                    ? "border-indigo-500 bg-indigo-500/10!"
+                    : "border-white/10 bg-white/5! hover:bg-white/10!"
+                }
+              `}
+                        >
+                          <span className="text-white">{level}</span>
+
+                          {speakingAnxiety === level && (
+                            <span className="text-xl text-indigo-400">✓</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+
+                    {speakingAnxiety && (
+                      <button
+                        onClick={next}
+                        className="mt-8 w-full rounded-2xl bg-emerald-600! py-3.5! text-base font-semibold text-white transition-all hover:bg-emerald-500!"
+                      >
+                        Continue →
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {step === 10 && (
+              <div className="flex flex-col items-center text-center">
+                {/* Icon */}
+                <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-indigo-500/15 ring-1 ring-indigo-400/20 backdrop-blur">
+                  <span className="text-5xl">🎯</span>
+                </div>
+
+                {/* Title */}
+                <h2 className="text-3xl font-bold tracking-tight text-white">
+                  Learning Goals
+                </h2>
+
+                {/* Intro */}
+                {goalStep === 0 && (
+                  <>
+                    <p className="mt-4 max-w-md text-sm leading-7 text-white/70">
+                      Tell us your main goal for learning English.
+                    </p>
+
+                    <button
+                      onClick={() => setGoalStep(1)}
+                      className="mt-8 w-full rounded-2xl bg-indigo-600! py-3.5! text-base font-semibold text-white transition-all hover:bg-indigo-500!"
+                    >
+                      Next →
+                    </button>
+                  </>
+                )}
+
+                {/* Goal Selection */}
+                {goalStep === 1 && (
+                  <div className="mt-8 w-full">
+                    <p className="mb-3 text-left text-sm font-medium text-white">
+                      What is your primary goal?
+                    </p>
+
+                    <div className="space-y-3">
+                      {[
+                        "🗣️ Improve Speaking",
+                        "💼 Career & Work",
+                        "🎓 Study Abroad",
+                        "✈️ Travel",
+                        "🤝 Daily Conversation",
+                        "📚 General English",
+                      ].map((goal) => (
+                        <button
+                          key={goal}
+                          onClick={() => setLearningGoal(goal)}
+                          className={`
+                flex w-full items-center justify-between
+                rounded-2xl
+                border
+                px-5!
+                py-4!
+                transition-all
+                ${
+                  learningGoal === goal
+                    ? "border-indigo-500 bg-indigo-500/10!"
+                    : "border-white/10 bg-white/5! hover:bg-white/10!"
+                }
+              `}
+                        >
+                          <span className="text-white">{goal}</span>
+
+                          {learningGoal === goal && (
+                            <span className="text-xl text-indigo-400">✓</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+
+                    {learningGoal && (
+                      <button
+                        onClick={next}
+                        className="mt-8 w-full rounded-2xl bg-emerald-600! py-3.5! text-base font-semibold text-white transition-all hover:bg-emerald-500!"
+                      >
+                        Continue →
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {false && (
+              <>
                 {step === 9 && (
                   <>
                     <div className="mt-6 rounded-xl bg-slate-800 p-5">

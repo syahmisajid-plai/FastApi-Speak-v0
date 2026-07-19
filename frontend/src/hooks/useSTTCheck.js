@@ -5,6 +5,17 @@ import { linkBackend } from "../config";
 
 export default function useSTTCheck() {
   // =====================================================
+  // startMicMonitor
+  // =====================================================
+
+  const [micLevel, setMicLevel] = useState(0);
+  const [micDetected, setMicDetected] = useState(false);
+
+  const analyserRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const animationRef = useRef(null);
+
+  // =====================================================
   // MICROPHONE
   // =====================================================
 
@@ -38,6 +49,51 @@ export default function useSTTCheck() {
   const recorderRef = useRef(null);
 
   const chunksRef = useRef([]);
+
+  const stopTimeoutRef = useRef(null);
+
+  // =====================================================
+  // startMicMonitor
+  // =====================================================
+  const startMicMonitor = (stream) => {
+    const ctx = new AudioContext();
+    const analyser = ctx.createAnalyser();
+
+    analyser.fftSize = 512;
+
+    const source = ctx.createMediaStreamSource(stream);
+    source.connect(analyser);
+
+    const data = new Uint8Array(analyser.frequencyBinCount);
+
+    audioContextRef.current = ctx;
+    analyserRef.current = analyser;
+
+    const update = () => {
+      analyser.getByteFrequencyData(data);
+
+      const rawLevel = data.reduce((a, b) => a + b, 0) / data.length;
+
+      // Perbesar sensitivitas
+      const level = Math.min(rawLevel * 3, 100);
+
+      setMicLevel(level);
+      setMicDetected(level > 10);
+
+      animationRef.current = requestAnimationFrame(update);
+    };
+
+    update();
+  };
+
+  const stopMicMonitor = () => {
+    cancelAnimationFrame(animationRef.current);
+
+    audioContextRef.current?.close();
+
+    setMicLevel(0);
+    setMicDetected(false);
+  };
 
   // =====================================================
   // CHECK MICROPHONE
@@ -187,6 +243,8 @@ export default function useSTTCheck() {
       return;
     }
 
+    startMicMonitor(streamRef.current);
+
     setWhisperTranscript("");
     setWhisperPassed(false);
     setWhisperRunning(true);
@@ -216,6 +274,7 @@ export default function useSTTCheck() {
     };
 
     recorder.onstop = async () => {
+      stopMicMonitor();
       setWhisperRunning(false);
 
       try {
@@ -254,6 +313,11 @@ export default function useSTTCheck() {
     recorder.start();
 
     console.log("🎤 Whisper Recording Started");
+
+    // Auto stop setelah 3 detik
+    stopTimeoutRef.current = setTimeout(() => {
+      stopWhisperCheck();
+    }, 3000);
   };
 
   // =====================================================
@@ -261,6 +325,11 @@ export default function useSTTCheck() {
   // =====================================================
 
   const stopWhisperCheck = () => {
+    if (stopTimeoutRef.current) {
+      clearTimeout(stopTimeoutRef.current);
+      stopTimeoutRef.current = null;
+    }
+
     const recorder = recorderRef.current;
 
     if (!recorder) return;
@@ -280,6 +349,11 @@ export default function useSTTCheck() {
   // =====================================================
 
   const cleanup = () => {
+    if (stopTimeoutRef.current) {
+      clearTimeout(stopTimeoutRef.current);
+      stopTimeoutRef.current = null;
+    }
+
     try {
       recognitionRef.current?.stop();
     } catch {}
@@ -287,6 +361,8 @@ export default function useSTTCheck() {
     try {
       recorderRef.current?.stop();
     } catch {}
+
+    stopMicMonitor();
 
     streamRef.current?.getTracks().forEach((track) => track.stop());
 
@@ -325,5 +401,8 @@ export default function useSTTCheck() {
     stopWhisperCheck,
 
     cleanup,
+
+    micLevel,
+    micDetected,
   };
 }
