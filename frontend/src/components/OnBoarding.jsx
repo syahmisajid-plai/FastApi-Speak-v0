@@ -151,14 +151,7 @@ export default function Onboarding({
           {/* Card */}
           <div
             className={`rounded-3xl bg-slate-900 border border-slate-800 p-8 shadow-2xl ${
-              step === 4 ||
-              step === 5 ||
-              step === 6 ||
-              step === 7 ||
-              step === 8 ||
-              step === 9
-                ? "mt-12"
-                : "mt-20"
+              step === 1 || step === 2 || step === 3 ? "mt-20" : "mt-12"
             }`}
           >
             {step === 1 && (

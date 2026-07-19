@@ -1,4 +1,4 @@
-// useOnBoarding.js
+// useOnboarding.js
 
 import { useEffect, useRef, useState } from "react";
 
