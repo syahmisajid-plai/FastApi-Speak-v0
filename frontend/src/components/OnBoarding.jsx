@@ -7,6 +7,7 @@ import AvatarModal from "./AvatarModal";
 import { AVATARS } from "../utils/avatars";
 
 import useOnboarding from "../hooks/useOnboarding";
+//
 
 export default function Onboarding({
   handleSaveAvatar,
