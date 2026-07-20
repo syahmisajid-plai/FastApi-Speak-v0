@@ -921,7 +921,7 @@ Feature tambahan:
   const [debugKey, setDebugKey] = useState(0);
 
   const dummyUser = {
-    onboarding_completed: false,
+    onboarding_completed: true,
   };
 
   useEffect(() => {
