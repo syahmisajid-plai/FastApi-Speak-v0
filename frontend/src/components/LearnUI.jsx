@@ -5,6 +5,9 @@ import SentenceChoice from "./SentenceChoice";
 
 import VocabJourney from "./VocabJourney";
 
+import ConversationChoice from "./ConversationChoice";
+import ConversationUI from "./ConversationUI";
+
 export default function LearnUI({
   vocabProps,
   sentenceProps,
@@ -43,6 +46,10 @@ export default function LearnUI({
   const sentenceStage = sentenceProps?.sentenceStage ?? localSentenceStage;
   const setSentenceStage =
     sentenceProps?.setSentenceStage ?? setLocalSentenceStage;
+
+  // ======== Conversation ========
+  const [conversationStage, setConversationStage] = useState("idle");
+  // idle || choice || session
 
   // const [showVocab, setShowVocab] = useState(false);
   // const [showSentence, setShowSentence] = useState(false);
@@ -162,39 +169,119 @@ export default function LearnUI({
             </div>
 
             {/* OPTIONS */}
-            <div className="grid grid-cols-2 gap-3">
-              {/* WORDS */}
+            <div className="space-y-3">
+              {/* VOCABULARY */}
               <button
                 onClick={() => {
                   setModeLearn("vocab");
                   setVocabStage("journey");
                 }}
-                className="bg-gradient-to-br from-indigo-500/10 to-white/5
-                rounded-xl p-4! text-center 
-                hover:bg-white/10 transition border border-white/10
-                active:scale-[0.98]"
+                className="group w-full rounded-2xl border border-white/10
+                bg-gradient-to-br from-indigo-500/10 to-white/5
+                p-2! hover:border-indigo-400/40 hover:bg-white/10
+                transition-all duration-300 active:scale-[0.98]"
               >
-                <div className="text-2xl mb-2">🧩</div>
-                <p className="text-sm font-medium">Words</p>
-                <p className="text-[10px] text-white/50 mt-1">Learn vocab</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="w-12 h-12 rounded-xl
+                      bg-indigo-500/20 border border-indigo-400/20
+                      flex items-center justify-center text-2xl"
+                    >
+                      📚
+                    </div>
+
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-white">
+                        Vocabulary
+                      </p>
+
+                      <p className="text-xs text-white/50 mt-1">
+                        Master essential English words
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="text-white/30 text-lg transition-transform group-hover:translate-x-1">
+                    →
+                  </span>
+                </div>
               </button>
 
-              {/* SENTENCE */}
+              {/* EXPRESSIONS */}
               <button
                 onClick={() => {
                   setModeLearn("sentence");
                   setSentenceStage("choice");
                 }}
-                className=" bg-gradient-to-br from-white/5 to-indigo-900/10
-                rounded-xl p-4! text-center 
-                hover:scale-[1.02] transition border border-indigo-500/20
-                active:scale-[0.98]"
+                className="group w-full rounded-2xl border border-white/10
+                          bg-gradient-to-br from-emerald-500/10 to-white/5
+                          p-2! hover:border-emerald-400/40 hover:bg-white/10
+                          transition-all duration-300 active:scale-[0.98]"
               >
-                <div className="text-2xl mb-2">💬</div>
-                <p className="text-sm font-medium">Expressions</p>
-                <p className="text-[10px] text-white/50 mt-1">
-                  Learn Expressions
-                </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="w-12 h-12 rounded-xl
+                        bg-emerald-500/20 border border-emerald-400/20
+                        flex items-center justify-center text-2xl"
+                    >
+                      💬
+                    </div>
+
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-white">
+                        Expressions
+                      </p>
+
+                      <p className="text-xs text-white/50 mt-1">
+                        Learn natural everyday expressions
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="text-white/30 text-lg transition-transform group-hover:translate-x-1">
+                    →
+                  </span>
+                </div>
+              </button>
+
+              {/* CONVERSATIONS */}
+              <button
+                onClick={() => {
+                  setModeLearn("conversation");
+                  setConversationStage("choice");
+                }}
+                className="group w-full rounded-2xl border border-white/10
+                    bg-gradient-to-br from-orange-500/10 to-white/5
+                    p-2! hover:border-orange-400/40 hover:bg-white/10
+                    transition-all duration-300 active:scale-[0.98]"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="w-12 h-12 rounded-xl
+                        bg-orange-500/20 border border-orange-400/20
+                        flex items-center justify-center text-2xl"
+                    >
+                      🎧
+                    </div>
+
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-white">
+                        Conversations
+                      </p>
+
+                      <p className="text-xs text-white/50 mt-1">
+                        Learn through real dialogues
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="text-white/30 text-lg transition-transform group-hover:translate-x-1">
+                    →
+                  </span>
+                </div>
               </button>
             </div>
           </div>
@@ -262,6 +349,36 @@ export default function LearnUI({
           />
         )}
       </div>
+
+      {/* ================= CONVERSATION UI ================= */}
+      <div
+        className={`absolute inset-0 transition-all duration-300 ease-out px-6 ${
+          modeLearn === "conversation"
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-2 pointer-events-none"
+        }`}
+      >
+        {/* CHOICE */}
+        {modeLearn === "conversation" && conversationStage === "choice" && (
+          <ConversationChoice
+            setModeLearn={setModeLearn}
+            setConversationStage={setConversationStage}
+            onSelect={(conversationId) => {
+              // setConversationId(conversationId);
+              setConversationStage("session");
+            }}
+          />
+        )}
+
+        {/* SESSION */}
+        {modeLearn === "conversation" && conversationStage === "session" && (
+          <ConversationUI
+            setModeLearn={setModeLearn}
+            setConversationStage={setConversationStage}
+          />
+        )}
+      </div>
+
       <div className="mt-24"></div>
     </section>
   );
