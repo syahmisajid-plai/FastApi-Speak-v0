@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
-export default function ConversationUI({ setConversationStage }) {
+export default function ConversationUI({
+  conversationProps,
+  setConversationStage,
+}) {
   const [expandedId, setExpandedId] = useState(1);
   const [visibleCount, setVisibleCount] = useState(1);
 
@@ -12,92 +15,21 @@ export default function ConversationUI({ setConversationStage }) {
   //   });
   // }, [visibleCount]);
 
-  const conversation = [
-    {
-      id: 1,
-      speaker: "A",
-      avatar: "🟦",
-      side: "left",
-      text: "Hi, how are you doing?",
-    },
-    {
-      id: 2,
-      speaker: "B",
-      avatar: "🟨",
-      side: "right",
-      text: "I'm fine. How about yourself?",
-    },
-    {
-      id: 3,
-      speaker: "A",
-      avatar: "🟦",
-      side: "left",
-      text: "I'm pretty good. Thanks for asking.",
-    },
-    {
-      id: 4,
-      speaker: "B",
-      avatar: "🟨",
-      side: "right",
-      text: "No problem. So how have you been?",
-    },
-    {
-      id: 5,
-      speaker: "A",
-      avatar: "🟦",
-      side: "left",
-      text: "I've been great. What about you?",
-    },
-    {
-      id: 6,
-      speaker: "B",
-      avatar: "🟨",
-      side: "right",
-      text: "I've been good. I'm in school right now.",
-    },
-    {
-      id: 7,
-      speaker: "A",
-      avatar: "🟦",
-      side: "left",
-      text: "What school do you go to?",
-    },
-    {
-      id: 8,
-      speaker: "B",
-      avatar: "🟨",
-      side: "right",
-      text: "I go to PCC.",
-    },
-    {
-      id: 9,
-      speaker: "A",
-      avatar: "🟦",
-      side: "left",
-      text: "Do you like it there?",
-    },
-    {
-      id: 10,
-      speaker: "B",
-      avatar: "🟨",
-      side: "right",
-      text: "It's okay. It's a really big campus.",
-    },
-    {
-      id: 11,
-      speaker: "A",
-      avatar: "🟦",
-      side: "left",
-      text: "Good luck with school.",
-    },
-    {
-      id: 12,
-      speaker: "B",
-      avatar: "🟨",
-      side: "right",
-      text: "Thank you very much.",
-    },
-  ];
+  const { loading, conversation } = conversationProps;
+
+  if (loading) {
+    return (
+      <div className="text-center text-white mt-32">
+        Loading conversation...
+      </div>
+    );
+  }
+
+  if (!conversation) return null;
+
+  const sentences = conversation.sentences;
+
+  const isRight = item.speaker === "B";
 
   return (
     <section className="max-w-md mx-auto mt-32 text-white rounded-3xl border border-white/10 bg-gradient-to-b from-slate-900/80 to-indigo-900/70 backdrop-blur-xl shadow-xl overflow-hidden">
@@ -112,8 +44,11 @@ export default function ConversationUI({ setConversationStage }) {
           </button>
 
           <div>
-            <h2 className="font-semibold text-lg">Greetings</h2>
-            <p className="text-xs text-white/50">A1 • 2 min • 12 Sentences</p>
+            <h2 className="font-semibold text-lg">{conversation.title}</h2>
+            <p className="text-xs text-white/50">
+              {conversation.cefr_level} • {conversation.estimated_minutes} min •{" "}
+              {conversation.total_sentences} Sentences
+            </p>
           </div>
         </div>
 
@@ -132,17 +67,24 @@ export default function ConversationUI({ setConversationStage }) {
         <div className="mt-6">
           <div className="flex justify-between text-xs text-white/50">
             <span>Conversation Progress</span>
-            <span>1 / 4</span>
+            <span>
+              {visibleCount} / {sentences.length}
+            </span>
           </div>
 
           <div className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden">
-            <div className="h-full w-1/4 bg-indigo-400 rounded-full"></div>
+            <div
+              className="h-full bg-indigo-400 rounded-full"
+              style={{
+                width: `${(visibleCount / sentences.length) * 100}%`,
+              }}
+            />
           </div>
         </div>
 
         {/* Conversation */}
         <div className="mt-8 space-y-4">
-          {conversation.slice(0, visibleCount).map((item) => {
+          {sentences.slice(0, visibleCount).map((item) => {
             const isExpanded = expandedId === item.id;
             const isActive = item.id === visibleCount;
 
@@ -150,7 +92,7 @@ export default function ConversationUI({ setConversationStage }) {
               <div
                 key={item.id}
                 className={`flex ${
-                  item.side === "right" ? "justify-end" : "justify-start"
+                  isRight ? "justify-end" : "justify-start"
                 } animate-in fade-in slide-in-from-bottom-2 duration-500`}
               >
                 <div
@@ -166,24 +108,20 @@ export default function ConversationUI({ setConversationStage }) {
                     {/* Speaker */}
                     <div
                       className={`flex items-center gap-2 ${
-                        item.side === "right" ? "flex-row-reverse" : ""
+                        isRight ? "flex-row-reverse" : ""
                       }`}
                     >
                       <div className={isActive ? "text-xl" : "text-base"}>
-                        {item.avatar}
+                        {item.speaker === "A" ? "🟦" : "🟨"}
                       </div>
 
-                      <div
-                        className={`flex-1 ${
-                          item.side === "right" ? "text-right" : ""
-                        }`}
-                      >
+                      <div className={`flex-1 ${isRight ? "text-right" : ""}`}>
                         <p
                           className={`font-medium ${
                             isActive ? "text-sm" : "text-xs"
                           }`}
                         >
-                          {item.speaker}
+                          {item.speaker_name}
                         </p>
 
                         <p className="text-[11px] text-white/45">
@@ -248,7 +186,7 @@ export default function ConversationUI({ setConversationStage }) {
         <div ref={bottomRef} />
 
         {/* Next */}
-        {visibleCount < conversation.length ? (
+        {visibleCount < sentences.length ? (
           <button
             onClick={() => {
               setVisibleCount((v) => v + 1);

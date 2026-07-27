@@ -11,6 +11,7 @@ import ConversationUI from "./ConversationUI";
 export default function LearnUI({
   vocabProps,
   sentenceProps,
+  conversationProps,
   modeLearn,
   setModeLearn,
 }) {
@@ -48,7 +49,18 @@ export default function LearnUI({
     sentenceProps?.setSentenceStage ?? setLocalSentenceStage;
 
   // ======== Conversation ========
-  const [conversationStage, setConversationStage] = useState("idle");
+  const conversationTopics = conversationProps.topics;
+  const conversation = conversationProps.conversation;
+
+  const loadingConversation = conversationProps.loading;
+  const errorConversation = conversationProps.error;
+
+  const getConversationTopics = conversationProps.getConversationTopics;
+  const getConversation = conversationProps.getConversation;
+
+  const conversationStage = conversationProps.conversationStage;
+  const setConversationStage = conversationProps.setConversationStage;
+
   // idle || choice || session
 
   // const [showVocab, setShowVocab] = useState(false);
@@ -248,14 +260,15 @@ export default function LearnUI({
 
               {/* CONVERSATIONS */}
               <button
-                onClick={() => {
+                onClick={async () => {
+                  await getConversationTopics();
                   setModeLearn("conversation");
                   setConversationStage("choice");
                 }}
                 className="group w-full rounded-2xl border border-white/10
-                    bg-gradient-to-br from-orange-500/10 to-white/5
-                    p-2! hover:border-orange-400/40 hover:bg-white/10
-                    transition-all duration-300 active:scale-[0.98]"
+                bg-gradient-to-br from-orange-500/10 to-white/5
+                p-2! hover:border-orange-400/40! hover:bg-white/10
+                transition-all duration-300 active:scale-[0.98]"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -361,18 +374,16 @@ export default function LearnUI({
         {/* CHOICE */}
         {modeLearn === "conversation" && conversationStage === "choice" && (
           <ConversationChoice
+            conversationProps={conversationProps}
             setModeLearn={setModeLearn}
             setConversationStage={setConversationStage}
-            onSelect={(conversationId) => {
-              // setConversationId(conversationId);
-              setConversationStage("session");
-            }}
           />
         )}
 
         {/* SESSION */}
         {modeLearn === "conversation" && conversationStage === "session" && (
           <ConversationUI
+            conversationProps={conversationProps}
             setModeLearn={setModeLearn}
             setConversationStage={setConversationStage}
           />

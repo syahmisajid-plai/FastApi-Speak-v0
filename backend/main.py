@@ -30,8 +30,8 @@ from routers import (
     whisper,
     progress_routes,
     user,
+    conversation,
 )
-
 
 # OpenAI client
 
@@ -105,17 +105,17 @@ app.add_middleware(
         "https://localhost:5173",
         "http://localhost:4173",
         "https://fast-api-speak-v0.vercel.app",  # frontend production
-        "https://192.168.101.13:5173", # testing local hp Kos Eka Lia
+        "https://192.168.101.13:5173",  # testing local hp Kos Eka Lia
         "https://192.168.1.16:5173",
         "https://192.168.1.45:5173",
         "https://192.168.1.30:5173",
         "https://192.168.1.31:5173",
         "https://192.168.1.4:5173",
-        "https://192.168.110.153:5173", # Kopken
+        "https://192.168.110.153:5173",  # Kopken
         "https://192.168.1.26:5173",
-        "https://172.16.10.178:5173", # testing local hp PLAI
+        "https://172.16.10.178:5173",  # testing local hp PLAI
         "https://172.16.0.134:5173",
-        "https://192.168.10.201:5173", # testing local hp Tomoro
+        "https://192.168.10.201:5173",  # testing local hp Tomoro
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -158,7 +158,7 @@ app.include_router(version.router)
 app.include_router(whisper.router)
 app.include_router(progress_routes.router)
 app.include_router(user.router)
-
+app.include_router(conversation.router)
 
 
 # Set path ke service account GCP

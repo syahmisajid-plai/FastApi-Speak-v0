@@ -70,6 +70,8 @@ import useUserProgress from "./hooks/useUserProgress";
 
 import useUser from "./hooks/useUser";
 
+import useConversation from "./hooks/useConversation";
+
 // ================== AUDIO ==================
 import useTTS_Google from "./hooks/useTTS_Google";
 import useMicMonitor from "./utils/useMicMonitor";
@@ -378,6 +380,25 @@ Feature tambahan:
     refetch,
     completeLesson,
   } = useSentenceLesson(userId, sentenceType, updateUserProgress);
+
+  // ================== Conversation Mode ==================
+  const {
+    loading: loadingConversation,
+    error: errorConversation,
+
+    topics: conversationTopics,
+    conversation,
+
+    getConversationTopics,
+    getConversation,
+
+    conversationStage,
+    setConversationStage,
+  } = useConversation();
+
+  useEffect(() => {
+    getConversationTopics();
+  }, []);
 
   // ================== Lock Daily ==================
   const [timeAllowed, setTimeAllowed] = useState(false);
@@ -1320,6 +1341,19 @@ Feature tambahan:
                 stopRecording: stopRecording,
                 isRecording: isRecording,
                 liveTranscript: liveTranscript,
+              }}
+              conversationProps={{
+                loading: loadingConversation,
+                error: errorConversation,
+
+                topics: conversationTopics,
+                conversation,
+
+                getConversationTopics,
+                getConversation,
+
+                conversationStage,
+                setConversationStage,
               }}
               modeLearn={modeLearn}
               setModeLearn={setModeLearn}
