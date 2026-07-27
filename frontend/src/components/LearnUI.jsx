@@ -352,7 +352,7 @@ export default function LearnUI({
 
       {/* ================= CONVERSATION UI ================= */}
       <div
-        className={`absolute inset-0 transition-all duration-300 ease-out px-6 ${
+        className={`absolute inset-0 overflow-y-auto transition-all duration-300 ease-out px-6 ${
           modeLearn === "conversation"
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-2 pointer-events-none"

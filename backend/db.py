@@ -8,6 +8,7 @@ from psycopg2.extras import Json
 
 
 import time
+
 # from langchain_community.chat_message_histories import SQLChatMessageHistory
 
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -41,9 +42,8 @@ def init_db():
         print("Init for SQLite")
         # SQLite tidak perlu extension ini
         pass
-    
-    cursor.execute(
-        """
+
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS user_streak (
             user_id TEXT PRIMARY KEY,
             current_streak INTEGER,
@@ -51,11 +51,9 @@ def init_db():
             last_activity_date TEXT,
             chat_count INTEGER
         )
-        """
-    )
+        """)
 
-    cursor.execute(
-        """
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS roleplay_sessions (
         session_key TEXT PRIMARY KEY,
         scenario_id INTEGER,
@@ -65,11 +63,9 @@ def init_db():
         status TEXT,
         summary_sent INTEGER
     )
-    """
-    )
+    """)
 
-    cursor.execute(
-        """
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS daily_story_sessions (
             session_key TEXT,
             user_id UUID NOT NULL,
@@ -87,11 +83,9 @@ def init_db():
                 REFERENCES users(id)
                 ON DELETE CASCADE
         )
-        """
-    )
+        """)
 
-    cursor.execute(
-        """
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS scenarios (
             id SERIAL PRIMARY KEY,
             category TEXT,
@@ -103,8 +97,7 @@ def init_db():
             goal TEXT,
             target_turn INTEGER
         )
-    """
-    )
+    """)
 
     # -----------------------------
     # SCENARIO CHECKLIST (UPDATED)
@@ -120,8 +113,7 @@ def init_db():
         )
     """)
 
-    cursor.execute(
-        """
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS scenario_checklist_keywords (
         id SERIAL PRIMARY KEY,
         scenario_id INT NOT NULL,
@@ -129,8 +121,7 @@ def init_db():
         keyword VARCHAR(100) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-    """
-    )
+    """)
 
     # -----------------------------
     # NEW: SCENARIO CONTEXTS
@@ -560,11 +551,98 @@ def init_db():
         )
     """)
 
+    # -----------------------------
+    # CONVERSATION TOPICS
+    # -----------------------------
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS conversation_topics (
+            id SERIAL PRIMARY KEY,
+
+            title VARCHAR(100) NOT NULL,
+
+            description TEXT,
+
+            cefr_level VARCHAR(5) NOT NULL
+                CHECK (cefr_level IN ('A1','A2','B1','B2','C1','C2')),
+
+            estimated_minutes INTEGER NOT NULL DEFAULT 1
+                CHECK (estimated_minutes > 0),
+
+            total_sentences INTEGER NOT NULL DEFAULT 0
+                CHECK (total_sentences >= 0),
+
+            is_active BOOLEAN DEFAULT TRUE,
+
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # -----------------------------
+    # CONVERSATION SENTENCES
+    # -----------------------------
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS conversation_sentences (
+            id SERIAL PRIMARY KEY,
+
+            topic_id INTEGER NOT NULL
+                REFERENCES conversation_topics(id)
+                ON DELETE CASCADE,
+
+            sentence_order INTEGER NOT NULL
+                CHECK (sentence_order > 0),
+
+            speaker VARCHAR(20) NOT NULL,
+
+            speaker_name VARCHAR(50) NOT NULL,
+
+            text TEXT NOT NULL,
+
+            translation TEXT,
+
+            audio_url TEXT,
+
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+            UNIQUE (topic_id, sentence_order)
+        )
+    """)
+
+    # -----------------------------
+    # USER CONVERSATION PROGRESS
+    # -----------------------------
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_conversation_progress (
+            id SERIAL PRIMARY KEY,
+
+            user_id UUID NOT NULL
+                REFERENCES users(id)
+                ON DELETE CASCADE,
+
+            topic_id INTEGER NOT NULL
+                REFERENCES conversation_topics(id)
+                ON DELETE CASCADE,
+
+            last_sentence INTEGER DEFAULT 0
+                CHECK (last_sentence >= 0),
+
+            completed BOOLEAN DEFAULT FALSE,
+
+            best_score DECIMAL(5,2)
+                DEFAULT 0
+                CHECK (best_score BETWEEN 0 AND 100),
+
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+            UNIQUE(user_id, topic_id)
+        )
+    """)
+
     conn.commit()
     conn.close()
 
 
 # {}
+
 
 def get_keywords_by_scenario(scenario_id):
     conn = get_db_connection()  # sesuaikan dengan punyamu
@@ -580,10 +658,7 @@ def get_keywords_by_scenario(scenario_id):
     rows = cur.fetchall()
 
     # mapping ke list of dict
-    result = [
-        {"step_key": row[0], "keyword": row[1]}
-        for row in rows
-    ]
+    result = [{"step_key": row[0], "keyword": row[1]} for row in rows]
 
     cur.close()
     conn.close()
@@ -664,14 +739,14 @@ def get_scenario_checklist(scenario_id):
     conn.close()
 
     return [
-    {
-        "step_key": r[0],
-        "description": r[1],
-        "step_order": r[2],
-        "context_key": r[3],  # 🔥 INI KUNCI
-    }
-    for r in rows
-]
+        {
+            "step_key": r[0],
+            "description": r[1],
+            "step_order": r[2],
+            "context_key": r[3],  # 🔥 INI KUNCI
+        }
+        for r in rows
+    ]
 
 
 def get_scenario(scenario_id):
@@ -713,6 +788,7 @@ def get_scenario(scenario_id):
         "target_turn": row[8],
     }
 
+
 import json
 
 
@@ -749,13 +825,16 @@ def get_contexts_by_scenario(scenario_id):
             except Exception:
                 parsed_data = raw_data  # fallback kalau bukan JSON valid
 
-        results.append({
-            "context_key": context_key,
-            "context_type": context_type,
-            "context_data": parsed_data,
-        })
+        results.append(
+            {
+                "context_key": context_key,
+                "context_type": context_type,
+                "context_data": parsed_data,
+            }
+        )
 
     return results
+
 
 # def get_session_history(session_id: str):
 #     if DATABASE_URL:
@@ -998,16 +1077,20 @@ def complete_daily_story_phase(session_key, user_id, story_date, phase):
     conn.commit()
     conn.close()
 
+
 def get_daily_session(user_id, story_date):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT *
         FROM daily_story_sessions
         WHERE user_id = %s
         AND story_date = %s
-    """, (user_id, story_date))
+    """,
+        (user_id, story_date),
+    )
 
     row = cursor.fetchone()
 
@@ -1016,17 +1099,21 @@ def get_daily_session(user_id, story_date):
 
     columns = [desc[0] for desc in cursor.description]
     return dict(zip(columns, row))
+
 
 def get_summary(user_id, story_date):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT *
         FROM daily_story_summary
         WHERE user_id = %s
         AND story_date = %s
-    """, (user_id, story_date))
+    """,
+        (user_id, story_date),
+    )
 
     row = cursor.fetchone()
 
@@ -1035,6 +1122,7 @@ def get_summary(user_id, story_date):
 
     columns = [desc[0] for desc in cursor.description]
     return dict(zip(columns, row))
+
 
 import json
 
@@ -1082,6 +1170,7 @@ import json
 
 #     return human_messages
 
+
 def get_human_messages(session_id):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -1109,16 +1198,19 @@ def get_human_messages(session_id):
         try:
             phase = metadata.get("phase") if isinstance(metadata, dict) else None
 
-            human_messages.append({
-                "role": "user",
-                "content": message,
-                "phase": phase,
-            })
+            human_messages.append(
+                {
+                    "role": "user",
+                    "content": message,
+                    "phase": phase,
+                }
+            )
 
         except Exception as e:
             print("Parse error:", e)
 
     return human_messages
+
 
 def save_summary(user_id, story_date, summaries):
     """
@@ -1136,7 +1228,8 @@ def save_summary(user_id, story_date, summaries):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         INSERT INTO daily_story_summary (
             user_id,
             story_date,
@@ -1153,16 +1246,19 @@ def save_summary(user_id, story_date, summaries):
             evening_summary = EXCLUDED.evening_summary,
             night_summary = EXCLUDED.night_summary,
             updated_at = CURRENT_TIMESTAMP
-    """, (
-        user_id,
-        story_date,
-        summaries.get("morning"),
-        summaries.get("afternoon"),
-        summaries.get("evening"),
-        summaries.get("night")
-    ))
+    """,
+        (
+            user_id,
+            story_date,
+            summaries.get("morning"),
+            summaries.get("afternoon"),
+            summaries.get("evening"),
+            summaries.get("night"),
+        ),
+    )
 
     conn.commit()
+
 
 # def get_daily_history(session_prefix):
 #     conn = get_db_connection()
@@ -1207,6 +1303,7 @@ def save_summary(user_id, story_date, summaries):
 
 #     return history
 
+
 def get_daily_history(session_id):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -1231,23 +1328,27 @@ def get_daily_history(session_id):
             phase = metadata.get("phase") if metadata else None
             alternative = metadata.get("alternative") if metadata else None
 
-            history.append({
-                "role": role,
-                "content": message,
-                "phase": phase,
-                "alternative":alternative,
-            })
+            history.append(
+                {
+                    "role": role,
+                    "content": message,
+                    "phase": phase,
+                    "alternative": alternative,
+                }
+            )
 
         except Exception as e:
             print("Parse error:", e)
 
     return history
 
+
 def get_summary(user_id, story_date):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT
             morning_summary,
             afternoon_summary,
@@ -1255,7 +1356,9 @@ def get_summary(user_id, story_date):
             night_summary
         FROM daily_story_summary
         WHERE user_id = %s AND story_date = %s
-    """, (user_id, story_date))
+    """,
+        (user_id, story_date),
+    )
 
     row = cursor.fetchone()
 
@@ -1269,20 +1372,25 @@ def get_summary(user_id, story_date):
         "night_summary": row[3],
     }
 
+
 def get_available_dates(user_id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT story_date
         FROM daily_story_summary
         WHERE user_id = %s
         ORDER BY story_date DESC
-    """, (user_id,))
+    """,
+        (user_id,),
+    )
 
     rows = cursor.fetchall()
 
     return [row[0].strftime("%Y-%m-%d") for row in rows]
+
 
 def get_user_for_login(username_or_email: str):
 
@@ -1365,39 +1473,38 @@ def get_all_vocab():
                 "meaning": row[2],
                 "type": row[3],
                 "level": row[4],
-                "examples": []
+                "examples": [],
             }
 
         example = row[5]
         translation = row[6]
 
         if example:
-            vocab_map[vocab_id]["examples"].append({
-                "en": example,
-                "id": translation if translation else ""
-            })
+            vocab_map[vocab_id]["examples"].append(
+                {"en": example, "id": translation if translation else ""}
+            )
 
     return list(vocab_map.values())
+
 
 def mark_vocab(user_id: str, vocab_id: int, status: str = "completed"):
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO user_completed_vocab (user_id, vocab_id, status)
             VALUES (%s, %s, %s)
             ON CONFLICT (user_id, vocab_id)
             DO UPDATE SET status = EXCLUDED.status
-        """, (user_id, vocab_id, status))
+        """,
+            (user_id, vocab_id, status),
+        )
 
         conn.commit()
 
-        return {
-            "user_id": user_id,
-            "vocab_id": vocab_id,
-            "status": status
-        }
+        return {"user_id": user_id, "vocab_id": vocab_id, "status": status}
 
     except Exception as e:
         conn.rollback()
@@ -1406,11 +1513,13 @@ def mark_vocab(user_id: str, vocab_id: int, status: str = "completed"):
     finally:
         conn.close()
 
+
 def get_user_vocab(user_id: str):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT
             v.id,
             v.word,
@@ -1428,7 +1537,9 @@ def get_user_vocab(user_id: str):
         WHERE ucv.user_id = %s
           AND ucv.status IN ('completed', 'known')
         ORDER BY v.id
-    """, (user_id,))
+    """,
+        (user_id,),
+    )
 
     rows = cursor.fetchall()
     conn.close()
@@ -1446,40 +1557,36 @@ def get_user_vocab(user_id: str):
                 "type": row[3],
                 "level": row[4],
                 "status": row[5],
-                "examples": []
+                "examples": [],
             }
 
         if row[6]:
-            vocab_map[vocab_id]["examples"].append({
-                "en": row[6],
-                "id": row[7] or ""
-            })
+            vocab_map[vocab_id]["examples"].append({"en": row[6], "id": row[7] or ""})
 
     return list(vocab_map.values())
+
 
 def get_completed_vocab_ids(user_id: str):
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT vocab_id, status
             FROM user_completed_vocab
             WHERE user_id = %s
-        """, (user_id,))
+        """,
+            (user_id,),
+        )
 
         rows = cursor.fetchall()
 
-        return [
-            {
-                "vocab_id": r[0],
-                "status": r[1]
-            }
-            for r in rows
-        ]
+        return [{"vocab_id": r[0], "status": r[1]} for r in rows]
 
     finally:
         conn.close()
+
 
 # =========================
 # save_translation_history
@@ -1489,13 +1596,14 @@ def save_translation_history(
     source_text: str,
     translated_text: str,
     source_lang: str,
-    target_lang: str
+    target_lang: str,
 ):
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO translation_history (
                 user_id,
                 source_text,
@@ -1505,13 +1613,15 @@ def save_translation_history(
             )
             VALUES (%s, %s, %s, %s, %s)
             RETURNING id;
-        """, (
-            user_id,
-            source_text,
-            translated_text,
-            source_lang,
-            target_lang,
-        ))
+        """,
+            (
+                user_id,
+                source_text,
+                translated_text,
+                source_lang,
+                target_lang,
+            ),
+        )
 
         row = cursor.fetchone()
         conn.commit()
@@ -1533,7 +1643,8 @@ def get_translation_history(user_id: str, limit: int = 20, offset: int = 0):
     cursor = conn.cursor()
 
     try:
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 id,
                 source_text,
@@ -1544,7 +1655,9 @@ def get_translation_history(user_id: str, limit: int = 20, offset: int = 0):
             WHERE user_id = %s
             ORDER BY created_at DESC
             LIMIT %s OFFSET %s;
-        """, (user_id, limit, offset))
+        """,
+            (user_id, limit, offset),
+        )
 
         rows = cursor.fetchall()
 
@@ -1569,12 +1682,15 @@ def update_translation_favorite(history_id: str, is_favorite: bool):
     cursor = conn.cursor()
 
     try:
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE translation_history
             SET is_favorite = %s
             WHERE id = %s
             RETURNING id
-        """, (is_favorite, history_id))
+        """,
+            (is_favorite, history_id),
+        )
 
         result = cursor.fetchone()
         conn.commit()
@@ -1589,6 +1705,7 @@ def update_translation_favorite(history_id: str, is_favorite: bool):
     finally:
         cursor.close()
         conn.close()
+
 
 def save_message(session_id, user_id, mode, role, message, metadata=None):
     conn = get_db_connection()
@@ -1605,6 +1722,7 @@ def save_message(session_id, user_id, mode, role, message, metadata=None):
 
     conn.commit()
     conn.close()
+
 
 def get_messages(session_id):
     conn = get_db_connection()
@@ -1626,6 +1744,7 @@ def get_messages(session_id):
 
     return rows[::-1]  # balik urutan
 
+
 def clear_session_messages(session_id):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -1640,6 +1759,7 @@ def clear_session_messages(session_id):
 
     conn.commit()
     conn.close()
+
 
 def insert_api_log(data):
     conn = get_db_connection()
@@ -1673,16 +1793,12 @@ def insert_api_log(data):
             data.get("method"),
             data.get("status_code"),
             data.get("duration_ms"),
-
             data.get("tokens_input", 0),
             data.get("tokens_output", 0),
-
             data.get("characters", 0),
-
             data.get("stt_cost", 0),
             data.get("llm_cost", 0),
             data.get("tts_cost", 0),
-
             data.get("total_cost", 0),
         ),
     )
@@ -1690,7 +1806,8 @@ def insert_api_log(data):
     conn.commit()
     conn.close()
 
-def get_user_cost_summary(): 
+
+def get_user_cost_summary():
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -1726,10 +1843,8 @@ def get_user_cost_summary():
         for r in rows
     ]
 
-def get_random_uncompleted_lesson(
-    user_id,
-    function_type=None
-):
+
+def get_random_uncompleted_lesson(user_id, function_type=None):
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -1792,33 +1907,35 @@ def get_random_uncompleted_lesson(
         "tags": row[10],
     }
 
+
 def mark_lesson_completed(user_id, lesson_id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         INSERT INTO user_lesson_progress (user_id, lesson_id, is_completed)
         VALUES (%s, %s, TRUE)
         ON CONFLICT (user_id, lesson_id)
         DO UPDATE SET
             is_completed = TRUE,
             updated_at = CURRENT_TIMESTAMP
-    """, (user_id, lesson_id))
+    """,
+        (user_id, lesson_id),
+    )
 
     conn.commit()
     conn.close()
 
-    return {
-        "user_id": user_id,
-        "lesson_id": lesson_id,
-        "status": "completed"
-    }
+    return {"user_id": user_id, "lesson_id": lesson_id, "status": "completed"}
+
 
 def get_completed_lessons(user_id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT 
             sl.id,
             sl.context,
@@ -1831,7 +1948,9 @@ def get_completed_lessons(user_id):
         JOIN sentence_lessons sl ON sl.id = ulp.lesson_id
         WHERE ulp.user_id = %s
         AND ulp.is_completed = TRUE
-    """, (user_id,))
+    """,
+        (user_id,),
+    )
 
     rows = cursor.fetchall()
     conn.close()
@@ -1849,6 +1968,7 @@ def get_completed_lessons(user_id):
         for r in rows
     ]
 
+
 def get_all_chapters():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -1860,11 +1980,13 @@ def get_all_chapters():
     """)
     return cursor.fetchall()
 
+
 def get_vocab_by_chapter(chapter_id: int):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT
             v.id,
             v.word,
@@ -1879,7 +2001,9 @@ def get_vocab_by_chapter(chapter_id: int):
         LEFT JOIN vocab_examples ve ON ve.vocab_id = v.id
         WHERE cv.chapter_id = %s
         ORDER BY cv.position ASC
-    """, (chapter_id,))
+    """,
+        (chapter_id,),
+    )
 
     rows = cursor.fetchall()
     conn.close()
@@ -1896,23 +2020,22 @@ def get_vocab_by_chapter(chapter_id: int):
                 "meaning": row[2],
                 "type": row[3],
                 "level": row[4],
-                "examples": []
+                "examples": [],
             }
 
         if row[5]:
-            vocab_map[vocab_id]["examples"].append({
-                "en": row[5],
-                "id": row[6] or ""
-            })
+            vocab_map[vocab_id]["examples"].append({"en": row[5], "id": row[6] or ""})
 
     return list(vocab_map.values())
+
 
 def get_user_chapter_progress(user_id: str):
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 chapter_id,
                 completed_vocab_count,
@@ -1921,22 +2044,20 @@ def get_user_chapter_progress(user_id: str):
             FROM user_chapter_progress
             WHERE user_id = %s
             ORDER BY chapter_id;
-        """, (user_id,))
+        """,
+            (user_id,),
+        )
 
         rows = cursor.fetchall()
 
         return [
-            {
-                "chapter_id": r[0],
-                "completed": r[1],
-                "total": r[2],
-                "status": r[3]
-            }
+            {"chapter_id": r[0], "completed": r[1], "total": r[2], "status": r[3]}
             for r in rows
         ]
 
     finally:
         conn.close()
+
 
 def update_user_chapter_progress(user_id: str, chapter_id: int):
     conn = get_db_connection()
@@ -1944,22 +2065,28 @@ def update_user_chapter_progress(user_id: str, chapter_id: int):
 
     try:
         # 1. total vocab dalam chapter
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT COUNT(*)
             FROM chapter_vocab
             WHERE chapter_id = %s
-        """, (chapter_id,))
+        """,
+            (chapter_id,),
+        )
         total = cursor.fetchone()[0]
 
         # 2. completed vocab user di chapter itu
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT COUNT(*)
             FROM user_completed_vocab ucv
             JOIN chapter_vocab cv ON cv.vocab_id = ucv.vocab_id
             WHERE ucv.user_id = %s
               AND cv.chapter_id = %s
               AND ucv.status IN ('completed','known')
-        """, (user_id, chapter_id))
+        """,
+            (user_id, chapter_id),
+        )
         completed = cursor.fetchone()[0]
 
         # 3. status logic
@@ -1971,7 +2098,8 @@ def update_user_chapter_progress(user_id: str, chapter_id: int):
             status = "completed"
 
         # 4. upsert ke tabel progress
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO user_chapter_progress (
                 user_id,
                 chapter_id,
@@ -1986,7 +2114,9 @@ def update_user_chapter_progress(user_id: str, chapter_id: int):
                 total_vocab_count = EXCLUDED.total_vocab_count,
                 status = EXCLUDED.status,
                 updated_at = CURRENT_TIMESTAMP
-        """, (user_id, chapter_id, completed, total, status))
+        """,
+            (user_id, chapter_id, completed, total, status),
+        )
 
         conn.commit()
 
@@ -1994,7 +2124,7 @@ def update_user_chapter_progress(user_id: str, chapter_id: int):
             "chapter_id": chapter_id,
             "completed": completed,
             "total": total,
-            "status": status
+            "status": status,
         }
 
     finally:
@@ -2006,25 +2136,24 @@ def get_user_progress(user_id: str):
     cursor = conn.cursor()
 
     try:
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 level,
                 xp,
                 title_level
             FROM user_progress
             WHERE user_id = %s;
-        """, (user_id,))
+        """,
+            (user_id,),
+        )
 
         row = cursor.fetchone()
 
         if not row:
             return None
 
-        return {
-            "level": row[0],
-            "xp": row[1],
-            "title_level": row[2]
-        }
+        return {"level": row[0], "xp": row[1], "title_level": row[2]}
 
     finally:
         conn.close()
@@ -2116,13 +2245,9 @@ def add_user_xp(user_id: str, xp_gain: int, mode: str = None):
             "level": new_level,
             "title_level": new_title_level,
             "xp_gain": actual_xp,
-
             # informasi FreeTalk
             "freetalk_xp_today": new_freetalk_xp_today,
-            "daily_limit_reached": (
-                mode == "freetalk"
-                and new_freetalk_xp_today >= 50
-            ),
+            "daily_limit_reached": (mode == "freetalk" and new_freetalk_xp_today >= 50),
         }
 
     finally:
@@ -2170,3 +2295,133 @@ def update_user_avatar(user_id: str, avatar_id: int):
         }
 
     return user
+
+
+def get_conversation_topics():
+
+    conn = get_db_connection()
+
+    if DATABASE_URL:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+    else:
+        cursor = conn.cursor()
+
+    query = """
+        SELECT
+            id,
+            title,
+            description,
+            cefr_level,
+            estimated_minutes,
+            total_sentences
+        FROM conversation_topics
+        WHERE is_active = TRUE
+        ORDER BY id;
+    """
+
+    cursor.execute(query)
+
+    topics = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    if topics and not isinstance(topics[0], dict):
+        topics = [
+            {
+                "id": row[0],
+                "title": row[1],
+                "description": row[2],
+                "cefr_level": row[3],
+                "estimated_minutes": row[4],
+                "total_sentences": row[5],
+            }
+            for row in topics
+        ]
+
+    return topics
+
+
+def get_conversation(topic_id: int):
+
+    conn = get_db_connection()
+
+    if DATABASE_URL:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+    else:
+        cursor = conn.cursor()
+
+    # Topic
+    cursor.execute(
+        """
+        SELECT
+            id,
+            title,
+            description,
+            cefr_level,
+            estimated_minutes,
+            total_sentences
+        FROM conversation_topics
+        WHERE id = %s
+          AND is_active = TRUE;
+    """,
+        (topic_id,),
+    )
+
+    topic = cursor.fetchone()
+
+    if not topic:
+        cursor.close()
+        conn.close()
+        return None
+
+    # Sentences
+    cursor.execute(
+        """
+        SELECT
+            id,
+            sentence_order,
+            speaker,
+            speaker_name,
+            text,
+            translation,
+            audio_url
+        FROM conversation_sentences
+        WHERE topic_id = %s
+        ORDER BY sentence_order;
+    """,
+        (topic_id,),
+    )
+
+    sentences = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    # SQLite normalization
+    if not isinstance(topic, dict):
+        topic = {
+            "id": topic[0],
+            "title": topic[1],
+            "description": topic[2],
+            "cefr_level": topic[3],
+            "estimated_minutes": topic[4],
+            "total_sentences": topic[5],
+        }
+
+        sentences = [
+            {
+                "id": row[0],
+                "sentence_order": row[1],
+                "speaker": row[2],
+                "speaker_name": row[3],
+                "text": row[4],
+                "translation": row[5],
+                "audio_url": row[6],
+            }
+            for row in sentences
+        ]
+
+    topic["sentences"] = sentences
+
+    return topic

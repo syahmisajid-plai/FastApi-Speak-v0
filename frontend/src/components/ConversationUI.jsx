@@ -6,45 +6,101 @@ export default function ConversationUI({ setConversationStage }) {
 
   const bottomRef = useRef(null);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
-  }, [visibleCount]);
+  // useEffect(() => {
+  //   bottomRef.current?.scrollIntoView({
+  //     behavior: "smooth",
+  //   });
+  // }, [visibleCount]);
 
   const conversation = [
     {
       id: 1,
-      speaker: "Emma",
+      speaker: "A",
       avatar: "🟦",
       side: "left",
-      text: "Hi, how are you doing today?",
-      active: true,
+      text: "Hi, how are you doing?",
     },
     {
       id: 2,
-      speaker: "John",
+      speaker: "B",
       avatar: "🟨",
       side: "right",
-      text: "I'm doing great! How about yourself?",
+      text: "I'm fine. How about yourself?",
     },
     {
       id: 3,
-      speaker: "Emma",
+      speaker: "A",
       avatar: "🟦",
       side: "left",
-      text: "I'm pretty good, thank you.",
+      text: "I'm pretty good. Thanks for asking.",
     },
     {
       id: 4,
-      speaker: "John",
+      speaker: "B",
       avatar: "🟨",
       side: "right",
-      text: "Good luck with your English study!",
+      text: "No problem. So how have you been?",
+    },
+    {
+      id: 5,
+      speaker: "A",
+      avatar: "🟦",
+      side: "left",
+      text: "I've been great. What about you?",
+    },
+    {
+      id: 6,
+      speaker: "B",
+      avatar: "🟨",
+      side: "right",
+      text: "I've been good. I'm in school right now.",
+    },
+    {
+      id: 7,
+      speaker: "A",
+      avatar: "🟦",
+      side: "left",
+      text: "What school do you go to?",
+    },
+    {
+      id: 8,
+      speaker: "B",
+      avatar: "🟨",
+      side: "right",
+      text: "I go to PCC.",
+    },
+    {
+      id: 9,
+      speaker: "A",
+      avatar: "🟦",
+      side: "left",
+      text: "Do you like it there?",
+    },
+    {
+      id: 10,
+      speaker: "B",
+      avatar: "🟨",
+      side: "right",
+      text: "It's okay. It's a really big campus.",
+    },
+    {
+      id: 11,
+      speaker: "A",
+      avatar: "🟦",
+      side: "left",
+      text: "Good luck with school.",
+    },
+    {
+      id: 12,
+      speaker: "B",
+      avatar: "🟨",
+      side: "right",
+      text: "Thank you very much.",
     },
   ];
+
   return (
-    <section className="max-w-md mx-auto mt-20 text-white rounded-3xl border border-white/10 bg-gradient-to-b from-slate-900/80 to-indigo-900/70 backdrop-blur-xl shadow-xl overflow-hidden">
+    <section className="max-w-md mx-auto mt-32 text-white rounded-3xl border border-white/10 bg-gradient-to-b from-slate-900/80 to-indigo-900/70 backdrop-blur-xl shadow-xl overflow-hidden">
       <div className="p-6">
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -70,10 +126,6 @@ export default function ConversationUI({ setConversationStage }) {
           <p className="text-xs text-white/60 mt-2">
             Listen to the whole conversation once.
           </p>
-
-          <button className="mt-5 px-5! py-3! rounded-xl bg-indigo-500! hover:bg-indigo-400! transition font-medium">
-            ▶ Play Full Conversation
-          </button>
         </div>
 
         {/* Progress */}
@@ -92,72 +144,97 @@ export default function ConversationUI({ setConversationStage }) {
         <div className="mt-8 space-y-4">
           {conversation.slice(0, visibleCount).map((item) => {
             const isExpanded = expandedId === item.id;
+            const isActive = item.id === visibleCount;
 
             return (
               <div
                 key={item.id}
-                className={`w-full max-w-[70%] rounded-xl border transition-all duration-500 animate-in fade-in slide-in-from-bottom-2 ${
-                  item.side === "right" ? "ml-auto" : ""
-                } ${
-                  item.active
-                    ? "border-indigo-400 bg-indigo-500/10"
-                    : "border-white/10 bg-white/5"
-                }`}
+                className={`flex ${
+                  item.side === "right" ? "justify-end" : "justify-start"
+                } animate-in fade-in slide-in-from-bottom-2 duration-500`}
               >
-                <div className="p-3">
-                  {/* Speaker */}
-                  <div
-                    className={`flex items-center gap-2 ${
-                      item.side === "right" ? "flex-row-reverse" : ""
-                    }`}
-                  >
-                    <div className="text-xl">{item.avatar}</div>
-
+                <div
+                  className={`w-full ${
+                    isActive ? "max-w-[72%]" : "max-w-[60%]"
+                  } rounded-2xl transition-all duration-300 ${
+                    isActive
+                      ? "border border-indigo-400 bg-indigo-500/10 shadow-lg shadow-indigo-500/10"
+                      : "bg-white/5"
+                  }`}
+                >
+                  <div className={`${isActive ? "p-3" : "px-3 py-2"}`}>
+                    {/* Speaker */}
                     <div
-                      className={`flex-1 ${item.side === "right" ? "text-right" : ""}`}
+                      className={`flex items-center gap-2 ${
+                        item.side === "right" ? "flex-row-reverse" : ""
+                      }`}
                     >
-                      <p className="font-semibold text-sm">{item.speaker}</p>
-                      <p className="text-[11px] text-white/40">
-                        {item.active ? "Now Practicing" : "Conversation"}
-                      </p>
+                      <div className={isActive ? "text-xl" : "text-base"}>
+                        {item.avatar}
+                      </div>
+
+                      <div
+                        className={`flex-1 ${
+                          item.side === "right" ? "text-right" : ""
+                        }`}
+                      >
+                        <p
+                          className={`font-medium ${
+                            isActive ? "text-sm" : "text-xs"
+                          }`}
+                        >
+                          {item.speaker}
+                        </p>
+
+                        <p className="text-[11px] text-white/45">
+                          {isActive ? "🎤 Now Practicing" : "✓ Completed"}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          setExpandedId(isExpanded ? null : item.id)
+                        }
+                        className={`rounded-md bg-white/10! hover:bg-white/20! transition ${
+                          isActive ? "w-7 h-7 text-xs!" : "w-6 h-6 text-[10px]!"
+                        }`}
+                      >
+                        {isExpanded ? "▲" : "▼"}
+                      </button>
                     </div>
 
-                    <button
-                      onClick={() => setExpandedId(isExpanded ? null : item.id)}
-                      className="w-7 h-7 rounded-md bg-white/10! hover:bg-white/20! transition text-xs"
+                    {/* Bubble */}
+                    <div
+                      className={`rounded-xl text-sm transition-all ${
+                        isActive
+                          ? "mt-3 p-3 bg-indigo-400/10 border border-indigo-400/30 leading-6"
+                          : "mt-2 px-3 py-2 bg-white/5 text-white/75 leading-5"
+                      }`}
                     >
-                      {isExpanded ? "▲" : "▼"}
-                    </button>
-                  </div>
+                      {item.text}
+                    </div>
 
-                  {/* Bubble */}
-                  <div
-                    className={`mt-3 rounded-lg p-3 text-sm leading-6 transition-all ${
-                      item.active
-                        ? "bg-indigo-400/10 border border-indigo-400/30"
-                        : "bg-white/5"
-                    }`}
-                  >
-                    {item.text}
-                  </div>
-
-                  {/* Expand Content */}
-                  <div
-                    className={`transition-all duration-300 overflow-hidden ${
-                      isExpanded
-                        ? "max-h-48 opacity-100 mt-3"
-                        : "max-h-0 opacity-0"
-                    }`}
-                  >
-                    <div className="space-y-3">
-                      {/* Buttons */}
-                      <div className="flex gap-2 mt-2">
-                        <button className="flex-1 rounded-lg bg-white/10! hover:bg-white/20 h-9 text-sm! transition">
-                          🔊 Listen
+                    {/* Expand */}
+                    <div
+                      className={`overflow-hidden transition-all duration-300 ${
+                        isExpanded
+                          ? "max-h-56 opacity-100 mt-3"
+                          : "max-h-0 opacity-0"
+                      }`}
+                    >
+                      <div className="flex gap-2">
+                        <button className="flex-1 h-9 rounded-lg bg-white/10! hover:bg-white/20! transition text-sm!">
+                          🔊 {isActive ? "Listen" : ""}
                         </button>
 
-                        <button className="flex-1 rounded-lg bg-emerald-500! hover:bg-emerald-400 h-9 text-sm! transition font-medium">
-                          🎤 Try Speaking
+                        <button
+                          className={`flex-1 h-9 rounded-lg transition text-sm! font-medium ${
+                            isActive
+                              ? "bg-emerald-500! hover:bg-emerald-400!"
+                              : "bg-indigo-500! hover:bg-indigo-400!"
+                          }`}
+                        >
+                          🎤 {isActive ? "Try" : ""}
                         </button>
                       </div>
                     </div>
@@ -179,7 +256,7 @@ export default function ConversationUI({ setConversationStage }) {
             }}
             className="w-full mt-8 py-3! rounded-2xl bg-white/10! hover:bg-white/20! transition font-medium"
           >
-            💬 Show Next Message
+            Continue Conversation →
           </button>
         ) : (
           <button className="w-full mt-8 py-3! rounded-2xl bg-indigo-500! hover:bg-indigo-400! transition font-semibold">
@@ -189,7 +266,7 @@ export default function ConversationUI({ setConversationStage }) {
 
         {/* Vocabulary */}
 
-        {/* <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-5">
+        <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-5">
           <h3 className="font-semibold">📚 New Vocabulary</h3>
 
           <div className="flex flex-wrap gap-2 mt-4">
@@ -202,7 +279,7 @@ export default function ConversationUI({ setConversationStage }) {
               </span>
             ))}
           </div>
-        </div> */}
+        </div>
 
         {/* Continue */}
 
