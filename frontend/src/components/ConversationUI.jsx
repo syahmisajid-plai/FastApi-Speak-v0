@@ -29,8 +29,6 @@ export default function ConversationUI({
 
   const sentences = conversation.sentences;
 
-  const isRight = item.speaker === "B";
-
   return (
     <section className="max-w-md mx-auto mt-32 text-white rounded-3xl border border-white/10 bg-gradient-to-b from-slate-900/80 to-indigo-900/70 backdrop-blur-xl shadow-xl overflow-hidden">
       <div className="p-6">
@@ -84,9 +82,10 @@ export default function ConversationUI({
 
         {/* Conversation */}
         <div className="mt-8 space-y-4">
-          {sentences.slice(0, visibleCount).map((item) => {
+          {sentences.slice(0, visibleCount).map((item, index) => {
             const isExpanded = expandedId === item.id;
-            const isActive = item.id === visibleCount;
+            const isActive = index === visibleCount - 1;
+            const isRight = item.speaker === "B";
 
             return (
               <div
