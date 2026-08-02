@@ -2,10 +2,12 @@ export default function ConversationChoice({
   conversationProps,
   setModeLearn,
   setConversationStage,
+  setSelectedTopicConversationId,
 }) {
   const { loading, topics, getConversation } = conversationProps;
 
   const handleSelect = async (topicId) => {
+    setSelectedTopicConversationId(topicId);
     const result = await getConversation(topicId);
 
     if (result) {
@@ -52,24 +54,29 @@ export default function ConversationChoice({
               p-4! hover:border-orange-400/40 hover:bg-white/10
               transition-all duration-300 active:scale-[0.98]"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
                   <div
-                    className="w-12 h-12 rounded-xl
-                    bg-orange-500/20 border border-orange-400/20
-                    flex items-center justify-center text-2xl"
+                    className="
+        w-12 h-12 shrink-0
+        rounded-xl
+        bg-orange-500/20
+        border border-orange-400/20
+        flex items-center justify-center
+        text-2xl
+      "
                   >
                     🎧
                   </div>
 
-                  <div className="text-left">
+                  <div className="text-left min-w-0 flex-1">
                     <p className="text-sm font-semibold">{topic.title}</p>
 
                     <p className="text-xs text-white/50 mt-1">
                       {topic.description}
                     </p>
 
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex flex-wrap gap-2 mt-2">
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10">
                         {topic.cefr_level}
                       </span>
@@ -85,7 +92,7 @@ export default function ConversationChoice({
                   </div>
                 </div>
 
-                <span className="text-white/30 text-lg group-hover:translate-x-1 transition">
+                <span className="shrink-0 text-white/30 text-lg group-hover:translate-x-1 transition">
                   →
                 </span>
               </div>

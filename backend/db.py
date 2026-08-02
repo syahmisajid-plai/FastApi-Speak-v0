@@ -6,8 +6,9 @@ from psycopg2.extras import RealDictCursor
 
 from psycopg2.extras import Json
 
-
 import time
+
+from utils.audio_storage import get_public_audio_url
 
 # from langchain_community.chat_message_histories import SQLChatMessageHistory
 
@@ -599,7 +600,7 @@ def init_db():
 
             translation TEXT,
 
-            audio_url TEXT,
+            audio_path TEXT,
 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
@@ -2385,7 +2386,7 @@ def get_conversation(topic_id: int):
             speaker_name,
             text,
             translation,
-            audio_url
+            audio_path
         FROM conversation_sentences
         WHERE topic_id = %s
         ORDER BY sentence_order;
@@ -2417,10 +2418,13 @@ def get_conversation(topic_id: int):
                 "speaker_name": row[3],
                 "text": row[4],
                 "translation": row[5],
-                "audio_url": row[6],
+                "audio_path": row[6],
             }
             for row in sentences
         ]
+
+    for sentence in sentences:
+        sentence["audio_url"] = get_public_audio_url(sentence["audio_path"])
 
     topic["sentences"] = sentences
 

@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
+import cross from "../assets/children-cross-road.webp";
+
 export default function ConversationUI({
   conversationProps,
   setConversationStage,
+  selectedTopicConversationId,
 }) {
-  const [expandedId, setExpandedId] = useState(1);
+  const [expandedId, setExpandedId] = useState(null);
   const [visibleCount, setVisibleCount] = useState(1);
 
   const bottomRef = useRef(null);
@@ -15,8 +18,18 @@ export default function ConversationUI({
   //   });
   // }, [visibleCount]);
 
-  const { loading, conversation } = conversationProps;
+  const { loading, topics, conversation } = conversationProps;
 
+  const idTopic = selectedTopicConversationId - 1;
+
+  useEffect(() => {
+    if (sentences.length > 0) {
+      setExpandedId(sentences[0].id);
+    }
+  }, [conversation]);
+  // console.log(topics[idTopic]?.title);
+
+  // console.log("topics", topics);
   if (loading) {
     return (
       <div className="text-center text-white mt-32">
@@ -52,12 +65,18 @@ export default function ConversationUI({
 
         {/* Listen Full */}
         <div className="mt-6 rounded-2xl border border-indigo-400/20 bg-indigo-500/10 p-5 text-center">
-          <div className="text-5xl">🎧</div>
+          <img
+            src={cross}
+            alt="Children crossing the road"
+            className="mx-auto h-44 w-auto object-contain"
+          />
 
-          <h3 className="mt-3 font-semibold">Listen First</h3>
+          <h3 className="mt-4 text-lg font-semibold">
+            {topics[idTopic]?.title}
+          </h3>
 
-          <p className="text-xs text-white/60 mt-2">
-            Listen to the whole conversation once.
+          <p className="mt-2 text-xs text-white/60 max-w-xs mx-auto">
+            {topics[idTopic]?.description}
           </p>
         </div>
 
@@ -188,8 +207,13 @@ export default function ConversationUI({
         {visibleCount < sentences.length ? (
           <button
             onClick={() => {
-              setVisibleCount((v) => v + 1);
-              setExpandedId(visibleCount + 1);
+              const nextVisible = visibleCount + 1;
+
+              setVisibleCount(nextVisible);
+
+              if (sentences[nextVisible - 1]) {
+                setExpandedId(sentences[nextVisible - 1].id);
+              }
             }}
             className="w-full mt-8 py-3! rounded-2xl bg-white/10! hover:bg-white/20! transition font-medium"
           >
@@ -203,7 +227,7 @@ export default function ConversationUI({
 
         {/* Vocabulary */}
 
-        <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-5">
+        {/* <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-5">
           <h3 className="font-semibold">📚 New Vocabulary</h3>
 
           <div className="flex flex-wrap gap-2 mt-4">
@@ -216,7 +240,7 @@ export default function ConversationUI({
               </span>
             ))}
           </div>
-        </div>
+        </div> */}
 
         {/* Continue */}
 

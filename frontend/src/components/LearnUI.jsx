@@ -61,6 +61,9 @@ export default function LearnUI({
   const conversationStage = conversationProps.conversationStage;
   const setConversationStage = conversationProps.setConversationStage;
 
+  const [selectedTopicConversationId, setSelectedTopicConversationId] =
+    useState(null);
+
   // idle || choice || session
 
   // const [showVocab, setShowVocab] = useState(false);
@@ -377,6 +380,7 @@ export default function LearnUI({
             conversationProps={conversationProps}
             setModeLearn={setModeLearn}
             setConversationStage={setConversationStage}
+            setSelectedTopicConversationId={setSelectedTopicConversationId}
           />
         )}
 
@@ -384,6 +388,7 @@ export default function LearnUI({
         {modeLearn === "conversation" && conversationStage === "session" && (
           <ConversationUI
             conversationProps={conversationProps}
+            selectedTopicConversationId={selectedTopicConversationId}
             setModeLearn={setModeLearn}
             setConversationStage={setConversationStage}
           />
