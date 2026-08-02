@@ -394,7 +394,13 @@ Feature tambahan:
 
     conversationStage,
     setConversationStage,
-  } = useConversation();
+
+    feedback: feedbackConversation,
+    resetFeedback: resetFeedbackConversation,
+
+    checkAnswer: checkAnswerConversation,
+    finishConversation,
+  } = useConversation(userIdRef, updateUserProgress);
 
   useEffect(() => {
     getConversationTopics();
@@ -864,7 +870,7 @@ Feature tambahan:
       if (!text) return;
 
       if (modeRef.current === "learn") {
-        console.log("🧠 Vocab mode → handle locally");
+        console.log("🧠 Learn mode → handle locally");
         handleSpeech(text); // 🔥 kirim ke vocab engine
         return;
       }
@@ -1354,6 +1360,18 @@ Feature tambahan:
 
                 conversationStage,
                 setConversationStage,
+
+                startRecording: startRecording,
+                stopRecording: stopRecording,
+                isRecording: isRecording,
+                liveTranscript: liveTranscript,
+
+                feedback: feedbackConversation,
+                resetFeedback: resetFeedbackConversation,
+
+                checkAnswer: checkAnswerConversation,
+                finishConversation: finishConversation,
+                supportSTTWeb: supportSTTWeb,
               }}
               modeLearn={modeLearn}
               setModeLearn={setModeLearn}

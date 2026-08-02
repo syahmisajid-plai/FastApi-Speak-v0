@@ -13,6 +13,10 @@ export default function ConversationUI({
 
   const [visibleCount, setVisibleCount] = useState(1);
 
+  const [currentSentence, setCurrentSentence] = useState(null);
+
+  const [lastTranscript, setLastTranscript] = useState("");
+
   const bottomRef = useRef(null);
 
   const handleListen = async (item) => {
@@ -49,7 +53,72 @@ export default function ConversationUI({
     audioRef.current.play();
   };
 
-  const { loading, topics, conversation } = conversationProps;
+  const {
+    loading,
+    topics,
+    conversation,
+
+    startRecording,
+    stopRecording,
+    isRecording,
+    liveTranscript,
+
+    feedback,
+    resetFeedback,
+
+    checkAnswer,
+    finishConversation,
+
+    supportSTTWeb,
+  } = conversationProps;
+
+  // console.log("🚀 supportSTTWeb", {
+  //   supportSTTWeb,
+  // });
+
+  useEffect(() => {
+    if (!supportSTTWeb && isRecording && liveTranscript.trim()) {
+      stopRecording();
+    }
+  }, [supportSTTWeb, isRecording, liveTranscript]);
+
+  const handleTry = (item) => {
+    if (!isRecording) {
+      setCurrentSentence(item);
+      startRecording();
+
+      resetFeedback();
+      setLastTranscript("");
+
+      return;
+    }
+
+    stopRecording();
+
+    setTimeout(() => {
+      if (lastTranscript) {
+        checkAnswer(item.text, lastTranscript);
+      }
+    }, 300);
+  };
+
+  useEffect(() => {
+    if (!isRecording && currentSentence && lastTranscript) {
+      checkAnswer(currentSentence.text, lastTranscript);
+      setCurrentSentence(null);
+    }
+  }, [isRecording, lastTranscript]);
+
+  useEffect(() => {
+    if (liveTranscript.trim()) {
+      setLastTranscript(liveTranscript);
+    }
+  }, [liveTranscript]);
+
+  // liveTranscript && console.log("🎙 liveTranscript:", liveTranscript);
+  // console.log({
+  //   liveTranscript,
+  // });
 
   const idTopic = selectedTopicConversationId - 1;
 
@@ -209,82 +278,129 @@ export default function ConversationUI({
                     <div
                       className={`overflow-hidden transition-all duration-300 ${
                         isExpanded
-                          ? "max-h-56 opacity-100 mt-3"
+                          ? "max-h-96 opacity-100 mt-3"
                           : "max-h-0 opacity-0"
                       }`}
                     >
                       {isActive ? (
-                        <>
-                          {/* Active sentence belum listen */}
-                          {!hasListened ? (
-                            <button
-                              onClick={() => handleListen(item)}
-                              className="w-full h-9 rounded-lg bg-white/10! hover:bg-white/20! transition text-sm!"
-                            >
-                              🔊 Listen
-                            </button>
-                          ) : (
-                            <>
-                              {/* Active sentence sudah listen */}
-                              <button
-                                onClick={() => handleListen(item)}
-                                className="w-full h-9 rounded-lg bg-white/10! hover:bg-white/20! transition text-sm!"
-                              >
-                                🔊 Replay
-                              </button>
-
-                              <div className="flex gap-2 mt-2">
-                                <button className="flex-1 h-9 rounded-lg bg-emerald-500! hover:bg-emerald-400! transition text-sm! font-medium">
-                                  🎤 Try
-                                </button>
-
-                                {hasNextSentence ? (
-                                  <button
-                                    onClick={() => {
-                                      const nextVisible = visibleCount + 1;
-
-                                      setVisibleCount(nextVisible);
-
-                                      const nextSentence =
-                                        sentences[nextVisible - 1];
-
-                                      if (nextSentence) {
-                                        setExpandedId(nextSentence.id);
-
-                                        setTimeout(() => {
-                                          playAudio(nextSentence.audio_url);
-
-                                          setListenedIds((prev) =>
-                                            prev.includes(nextSentence.id)
-                                              ? prev
-                                              : [...prev, nextSentence.id],
-                                          );
-                                        }, 300);
-                                      }
-                                    }}
-                                    className="flex-1 h-9 rounded-lg bg-indigo-500! hover:bg-indigo-400! transition text-sm! font-medium"
-                                  >
-                                    Continue →
-                                  </button>
-                                ) : (
-                                  <div className="flex-1 flex items-center justify-center text-emerald-300 text-sm font-medium">
-                                    ✓ Done
-                                  </div>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          {/* History sentence hanya Replay */}
+                        !hasListened ? (
+                          /* Belum listen */
                           <button
                             onClick={() => handleListen(item)}
                             className="w-full h-9 rounded-lg bg-white/10! hover:bg-white/20! transition text-sm!"
                           >
-                            🔊 Replay
+                            🔊 Listen
                           </button>
-                        </>
+                        ) : (
+                          <>
+                            {/* Replay */}
+                            <button
+                              onClick={() => handleListen(item)}
+                              className="w-full h-9 rounded-lg bg-white/10! hover:bg-white/20! transition text-sm!"
+                            >
+                              🔊 Replay
+                            </button>
+
+                            {/* Try + Continue */}
+                            <div className="flex gap-2 mt-2">
+                              <button
+                                onClick={() => handleTry(item)}
+                                className={`flex-1 h-9 rounded-lg transition text-sm! font-medium ${
+                                  isRecording
+                                    ? "bg-red-500! hover:bg-red-400!"
+                                    : "bg-emerald-500! hover:bg-emerald-400!"
+                                }`}
+                              >
+                                {isRecording ? "⏹ Stop" : "🎤 Try"}
+                              </button>
+
+                              {hasNextSentence ? (
+                                <button
+                                  onClick={() => {
+                                    const nextVisible = visibleCount + 1;
+
+                                    setVisibleCount(nextVisible);
+                                    resetFeedback();
+                                    setLastTranscript("");
+
+                                    const nextSentence =
+                                      sentences[nextVisible - 1];
+
+                                    if (nextSentence) {
+                                      setExpandedId(nextSentence.id);
+
+                                      setTimeout(() => {
+                                        playAudio(nextSentence.audio_url);
+
+                                        setListenedIds((prev) =>
+                                          prev.includes(nextSentence.id)
+                                            ? prev
+                                            : [...prev, nextSentence.id],
+                                        );
+                                      }, 300);
+                                    }
+                                  }}
+                                  className="flex-1 h-9 rounded-lg bg-indigo-500! hover:bg-indigo-400! transition text-sm! font-medium"
+                                >
+                                  Continue →
+                                </button>
+                              ) : (
+                                <div className="flex-1 flex items-center justify-center text-emerald-300 text-sm font-medium">
+                                  ✓ Done
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Recording Status */}
+                            {isRecording && (
+                              <div className="mt-3 text-center text-xs text-emerald-300 animate-pulse">
+                                🎙 Listening...
+                              </div>
+                            )}
+
+                            {/* Transcript */}
+                            {lastTranscript && (
+                              <div className="mt-3 rounded-xl bg-white/5 border border-white/10 p-3">
+                                <p className="text-[11px] text-white/50">
+                                  You said
+                                </p>
+
+                                <p className="mt-1 text-sm">
+                                  "{lastTranscript}"
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Feedback (nanti) */}
+                            {feedback && (
+                              <div
+                                className={`mt-3 rounded-xl border p-3 ${
+                                  feedback.correct
+                                    ? "bg-emerald-500/10 border-emerald-400/30"
+                                    : "bg-red-500/10 border-red-400/30"
+                                }`}
+                              >
+                                <p
+                                  className={`text-sm font-medium ${
+                                    feedback.correct
+                                      ? "text-emerald-300"
+                                      : "text-red-300"
+                                  }`}
+                                >
+                                  {feedback.message}
+                                </p>
+                              </div>
+                            )}
+                          </>
+                        )
+                      ) : (
+                        /* History sentence */
+                        <button
+                          onClick={() => handleListen(item)}
+                          className="w-full h-9 rounded-lg bg-white/10! hover:bg-white/20! transition text-sm!"
+                        >
+                          🔊 Replay
+                        </button>
                       )}
                     </div>
                   </div>
@@ -308,7 +424,11 @@ export default function ConversationUI({
           <button
             onClick={() => {
               // lanjut ke halaman selesai / summary
-              console.log("Conversation finished");
+              resetFeedback();
+              setLastTranscript("");
+
+              finishConversation();
+              // console.log("Conversation finished");
             }}
             className="w-full mt-8 py-3! rounded-2xl bg-indigo-500! hover:bg-indigo-400! transition font-semibold"
           >
