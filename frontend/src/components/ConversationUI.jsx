@@ -8,15 +8,46 @@ export default function ConversationUI({
   selectedTopicConversationId,
 }) {
   const [expandedId, setExpandedId] = useState(null);
+
+  const [listenedIds, setListenedIds] = useState([]);
+
   const [visibleCount, setVisibleCount] = useState(1);
 
   const bottomRef = useRef(null);
+
+  const handleListen = async (item) => {
+    await playAudio(item.audio_url);
+
+    setListenedIds((prev) =>
+      prev.includes(item.id) ? prev : [...prev, item.id],
+    );
+  };
 
   // useEffect(() => {
   //   bottomRef.current?.scrollIntoView({
   //     behavior: "smooth",
   //   });
   // }, [visibleCount]);
+
+  // AUDIO CONVERSATION
+  const audioRef = useRef(null);
+  useEffect(() => {
+    audioRef.current = new Audio();
+
+    return () => {
+      audioRef.current.pause();
+    };
+  }, []);
+
+  const playAudio = (url) => {
+    if (!url) return;
+
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+
+    audioRef.current.src = url;
+    audioRef.current.play();
+  };
 
   const { loading, topics, conversation } = conversationProps;
 
@@ -106,6 +137,10 @@ export default function ConversationUI({
             const isActive = index === visibleCount - 1;
             const isRight = item.speaker === "B";
 
+            const hasListened = listenedIds.includes(item.id);
+
+            const hasNextSentence = visibleCount < sentences.length;
+
             return (
               <div
                 key={item.id}
@@ -178,21 +213,82 @@ export default function ConversationUI({
                           : "max-h-0 opacity-0"
                       }`}
                     >
-                      <div className="flex gap-2">
-                        <button className="flex-1 h-9 rounded-lg bg-white/10! hover:bg-white/20! transition text-sm!">
-                          🔊 {isActive ? "Listen" : ""}
-                        </button>
+                      {isActive ? (
+                        <>
+                          {/* Active sentence belum listen */}
+                          {!hasListened ? (
+                            <button
+                              onClick={() => handleListen(item)}
+                              className="w-full h-9 rounded-lg bg-white/10! hover:bg-white/20! transition text-sm!"
+                            >
+                              🔊 Listen
+                            </button>
+                          ) : (
+                            <>
+                              {/* Active sentence sudah listen */}
+                              <button
+                                onClick={() => handleListen(item)}
+                                className="w-full h-9 rounded-lg bg-white/10! hover:bg-white/20! transition text-sm!"
+                              >
+                                🔊 Replay
+                              </button>
 
-                        <button
-                          className={`flex-1 h-9 rounded-lg transition text-sm! font-medium ${
-                            isActive
-                              ? "bg-emerald-500! hover:bg-emerald-400!"
-                              : "bg-indigo-500! hover:bg-indigo-400!"
-                          }`}
-                        >
-                          🎤 {isActive ? "Try" : ""}
-                        </button>
-                      </div>
+                              <div className="flex gap-2 mt-2">
+                                <button className="flex-1 h-9 rounded-lg bg-emerald-500! hover:bg-emerald-400! transition text-sm! font-medium">
+                                  🎤 Try
+                                </button>
+
+                                {hasNextSentence ? (
+                                  <button
+                                    onClick={() => {
+                                      const nextVisible = visibleCount + 1;
+
+                                      setVisibleCount(nextVisible);
+
+                                      const nextSentence =
+                                        sentences[nextVisible - 1];
+
+                                      if (nextSentence) {
+                                        setExpandedId(nextSentence.id);
+
+                                        setTimeout(() => {
+                                          playAudio(nextSentence.audio_url);
+
+                                          setListenedIds((prev) =>
+                                            prev.includes(nextSentence.id)
+                                              ? prev
+                                              : [...prev, nextSentence.id],
+                                          );
+                                        }, 300);
+                                      }
+                                    }}
+                                    className="flex-1 h-9 rounded-lg bg-indigo-500! hover:bg-indigo-400! transition text-sm! font-medium"
+                                  >
+                                    Continue →
+                                  </button>
+                                ) : (
+                                  <button
+                                    disabled
+                                    className="flex-1 h-9 rounded-lg bg-white/10! text-white/60! cursor-default text-sm! font-medium"
+                                  >
+                                    Completed
+                                  </button>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {/* History sentence hanya Replay */}
+                          <button
+                            onClick={() => handleListen(item)}
+                            className="w-full h-9 rounded-lg bg-white/10! hover:bg-white/20! transition text-sm!"
+                          >
+                            🔊 Replay
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -203,25 +299,23 @@ export default function ConversationUI({
 
         <div ref={bottomRef} />
 
-        {/* Next */}
+        {/* Finish */}
         {visibleCount < sentences.length ? (
           <button
-            onClick={() => {
-              const nextVisible = visibleCount + 1;
-
-              setVisibleCount(nextVisible);
-
-              if (sentences[nextVisible - 1]) {
-                setExpandedId(sentences[nextVisible - 1].id);
-              }
-            }}
-            className="w-full mt-8 py-3! rounded-2xl bg-white/10! hover:bg-white/20! transition font-medium"
+            disabled
+            className="w-full mt-8 py-3! rounded-2xl bg-white/10! text-white/40! cursor-not-allowed transition font-medium"
           >
-            Continue Conversation →
+            🔒 Finish
           </button>
         ) : (
-          <button className="w-full mt-8 py-3! rounded-2xl bg-indigo-500! hover:bg-indigo-400! transition font-semibold">
-            Continue →
+          <button
+            onClick={() => {
+              // lanjut ke halaman selesai / summary
+              console.log("Conversation finished");
+            }}
+            className="w-full mt-8 py-3! rounded-2xl bg-indigo-500! hover:bg-indigo-400! transition font-semibold"
+          >
+            Finish ✓
           </button>
         )}
 
