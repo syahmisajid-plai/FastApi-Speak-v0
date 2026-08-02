@@ -2425,6 +2425,7 @@ def get_conversation(topic_id: int):
 
     for sentence in sentences:
         sentence["audio_url"] = get_public_audio_url(sentence["audio_path"])
+        sentence.pop("audio_path", None)
 
     topic["sentences"] = sentences
 
