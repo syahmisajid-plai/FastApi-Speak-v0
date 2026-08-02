@@ -267,12 +267,9 @@ export default function ConversationUI({
                                     Continue →
                                   </button>
                                 ) : (
-                                  <button
-                                    disabled
-                                    className="flex-1 h-9 rounded-lg bg-white/10! text-white/60! cursor-default text-sm! font-medium"
-                                  >
-                                    Completed
-                                  </button>
+                                  <div className="flex-1 flex items-center justify-center text-emerald-300 text-sm font-medium">
+                                    ✓ Done
+                                  </div>
                                 )}
                               </div>
                             </>
