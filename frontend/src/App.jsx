@@ -39,6 +39,8 @@ import PWADebug from "./components/PWADebug";
 import XpRewardPopup from "./components/XpRewardPopup";
 import OnBoarding from "./components/OnBoarding";
 
+import AvatarAIOverlay from "./components/AvatarAIOverlay";
+
 // ================== STYLES ==================
 import "./App.css";
 
@@ -146,6 +148,8 @@ Feature tambahan:
 
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState(9);
+
+  const [showAvatarAIModal, setShowAvatarAIModal] = useState(false);
 
   // ================== Tambahkan state ==================
   const [pendingMode, setPendingMode] = useState(null);
@@ -1040,7 +1044,6 @@ Feature tambahan:
               setSelectedAvatar={setSelectedAvatar}
             />
           )}
-
           <OverlayFeedback message={overlayFavoritTranslated} />
           {/* VOCAB LIST */}
           {showVocab && (
@@ -1095,7 +1098,6 @@ Feature tambahan:
               }}
             />
           )}
-
           {/* 🔥 Not Yet Onboarding */}
           {mode === "onBoarding" && (
             <OnBoarding
@@ -1398,6 +1400,18 @@ Feature tambahan:
           {mode === "games" && <GamesUI />}
           {/* {mode === "games" && <ComingSoonMultiplayerGames />} */}
 
+          {/* Tombol Avatar AI */}
+          <button
+            className=" fixed left-8 bottom-24 z-51 w-9 h-9 flex items-center 
+            justify-center rounded-full bg-gray-100 text-gray-600 shadow-sm 
+            transition-all duration-200 hover:bg-violet-100 hover:text-violet-600 
+            hover:scale-105 active:scale-95 "
+            onClick={() => setShowAvatarAIModal(true)}
+            title="Buka Avatar AI"
+          >
+            <span className="text-lg leading-none">⌃</span>
+          </button>
+
           {/* {mode === "vocab" && <LearnUI />} */}
           {mode !== "onBoarding" && (
             <ModeSelector
@@ -1411,7 +1425,6 @@ Feature tambahan:
               forceStop={forceStop}
             />
           )}
-
           <ModeConfirmModal
             open={showModeConfirm}
             onCancel={() => {
@@ -1531,7 +1544,14 @@ Feature tambahan:
           }}
           isBackendConnected={isBackendConnected}
           user={user}
+          setShowAvatarAIModal={setShowAvatarAIModal}
+          setFreeTalkStarted={setFreeTalkStarted}
         />
+      )}
+
+      {/* 🧱 OVERLAY — AVATAR AI FREETALK */}
+      {showAvatarAIModal && (
+        <AvatarAIOverlay onClose={() => setShowAvatarAIModal(false)} />
       )}
 
       {/* 🧱 OVERLAY — showDiary */}

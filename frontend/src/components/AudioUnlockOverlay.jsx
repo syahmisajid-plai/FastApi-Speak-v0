@@ -5,6 +5,9 @@ export default function AudioUnlockOverlay({
   onFinish,
   isBackendConnected,
   user,
+
+  setShowAvatarAIModal,
+  setFreeTalkStarted,
 }) {
   const [opening, setOpening] = useState(false);
 
@@ -24,6 +27,11 @@ export default function AudioUnlockOverlay({
     setTimeout(() => {
       console.log("4. calling onFinish");
       onFinish();
+    }, 700);
+
+    setTimeout(() => {
+      setShowAvatarAIModal(true);
+      setFreeTalkStarted(true);
     }, 700);
   };
 

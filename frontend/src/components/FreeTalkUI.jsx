@@ -66,6 +66,7 @@ export default function FreeTalkUI({
       md:w-[420px]
       transition-all duration-500
       ${started ? "top-28" : "top-64 md:top-40"}
+      
     `}
     >
       <div
