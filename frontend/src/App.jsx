@@ -960,6 +960,9 @@ Feature tambahan:
       setMode("onBoarding");
     }
   }, [dummyUser]);
+
+  // console.log("APP - isSpeaking : ", isSpeaking);
+
   // =
   return (
     <>
@@ -1406,7 +1409,10 @@ Feature tambahan:
             justify-center rounded-full bg-gray-100 text-gray-600 shadow-sm 
             transition-all duration-200 hover:bg-violet-100 hover:text-violet-600 
             hover:scale-105 active:scale-95 "
-            onClick={() => setShowAvatarAIModal(true)}
+            onClick={() => {
+              setShowAvatarAIModal(true);
+              startRecording();
+            }}
             title="Buka Avatar AI"
           >
             <span className="text-lg leading-none">⌃</span>
@@ -1549,9 +1555,19 @@ Feature tambahan:
         />
       )}
 
-      {/* 🧱 OVERLAY — AVATAR AI FREETALK */}
+      {/* 🤖 OVERLAY — AVATAR AI FREETALK */}
       {showAvatarAIModal && (
-        <AvatarAIOverlay onClose={() => setShowAvatarAIModal(false)} />
+        <AvatarAIOverlay
+          onClose={() => setShowAvatarAIModal(false)}
+          isRecording={isRecording}
+          startRecording={startRecording}
+          stopRecording={stopRecording}
+          cancelRecording={cancelRecording}
+          unlockAudio={unlockAudio}
+          isWaitingForAI={isWaitingForAI}
+          isSpeaking={isSpeaking}
+          user={user}
+        />
       )}
 
       {/* 🧱 OVERLAY — showDiary */}
