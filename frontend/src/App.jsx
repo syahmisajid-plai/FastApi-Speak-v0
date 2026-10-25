@@ -1408,20 +1408,22 @@ Feature tambahan:
           {mode === "games" && <GamesUI />}
           {/* {mode === "games" && <ComingSoonMultiplayerGames />} */}
 
-          {/* Tombol Avatar AI */}
-          <button
-            className=" fixed left-8 bottom-24 z-51 w-9 h-9 flex items-center 
-            justify-center rounded-full bg-gray-100 text-gray-600 shadow-sm 
-            transition-all duration-200 hover:bg-violet-100 hover:text-violet-600 
-            hover:scale-105 active:scale-95 "
-            onClick={() => {
-              setShowAvatarAIModal(true);
-              startRecording();
-            }}
-            title="Buka Avatar AI"
-          >
-            <span className="text-lg leading-none">⌃</span>
-          </button>
+          {/* Tombol Avatar AI — hanya tampil di mode freeTalk */}
+          {mode === "freeTalk" && (
+            <button
+              className="fixed left-8 bottom-24 z-51 w-9 h-9 flex items-center
+    justify-center rounded-full bg-gray-100 text-gray-600 shadow-sm
+    transition-all duration-200 hover:bg-violet-100 hover:text-violet-600
+    hover:scale-105 active:scale-95"
+              onClick={() => {
+                setShowAvatarAIModal(true);
+                startRecording();
+              }}
+              title="Buka Avatar AI"
+            >
+              <span className="text-lg leading-none">⌃</span>
+            </button>
+          )}
 
           {/* {mode === "vocab" && <LearnUI />} */}
           {mode !== "onBoarding" && (
