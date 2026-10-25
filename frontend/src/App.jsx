@@ -568,10 +568,15 @@ Feature tambahan:
   const { volume, showPopup } = useMicMonitor();
 
   // ================== HOOKS ==================
-  const { speakText, isSpeaking, forceStop, unlockAudio } = useTTS_Google(
-    userIdRef,
-    modeRef,
-  ); // 🗣️ Text-to-Speech
+  const {
+    speakText,
+    isSpeaking,
+    ttsError,
+    clearTtsError,
+    forceStop,
+    unlockAudio,
+    replayLastAudio,
+  } = useTTS_Google(userIdRef, modeRef); // 🗣️ Text-to-Speech
 
   // ================== RolePlay ==================
   // const [checklistProgress, setChecklistProgress] = useState({
@@ -1556,7 +1561,7 @@ Feature tambahan:
       )}
 
       {/* 🤖 OVERLAY — AVATAR AI FREETALK */}
-      {showAvatarAIModal && (
+      {showAvatarAIModal && user && (
         <AvatarAIOverlay
           onClose={() => setShowAvatarAIModal(false)}
           isRecording={isRecording}
@@ -1565,8 +1570,11 @@ Feature tambahan:
           cancelRecording={cancelRecording}
           unlockAudio={unlockAudio}
           isWaitingForAI={isWaitingForAI}
-          isSpeaking={isSpeaking}
           user={user}
+          isSpeaking={isSpeaking}
+          ttsError={ttsError}
+          clearTtsError={clearTtsError}
+          replayLastAudio={replayLastAudio}
         />
       )}
 

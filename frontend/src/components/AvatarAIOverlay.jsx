@@ -121,9 +121,12 @@ export default function AvatarAIOverlay({
   startRecording,
   stopRecording,
   cancelRecording,
-
-  isSpeaking,
   user,
+  isSpeaking,
+  ttsError,
+  clearTtsError,
+
+  replayLastAudio,
 }) {
   const [visible, setVisible] = useState(false);
 
@@ -143,6 +146,22 @@ export default function AvatarAIOverlay({
 
   const userAvatar = avatarData.avatar;
 
+  const [isReplaying, setIsReplaying] = useState(false);
+  const handleReplayLastAudio = async () => {
+    if (!replayLastAudio || isReplaying) return;
+
+    setIsReplaying(true);
+    clearTtsError?.();
+
+    try {
+      await replayLastAudio();
+    } catch (error) {
+      console.error("❌ Replay TTS gagal:", error);
+    } finally {
+      setIsReplaying(false);
+    }
+  };
+
   /*
    * FLOW:
    *
@@ -156,18 +175,21 @@ export default function AvatarAIOverlay({
    */
 
   useEffect(() => {
-    // AI mulai bicara
+    if (ttsError) {
+      setTurn("disconnected");
+      return;
+    }
+
     if (isSpeaking) {
       setTurn("ai");
       return;
     }
 
-    // AI selesai → kembali ke user dan langsung mulai recording
-    if (!isSpeaking && turn === "ai") {
+    if (turn === "ai") {
       startRecording();
       setTurn("user");
     }
-  }, [isSpeaking]);
+  }, [isSpeaking, ttsError, turn, startRecording]);
 
   useEffect(() => {
     // Hanya berlaku ketika memang sedang berada di turn user
@@ -191,28 +213,28 @@ export default function AvatarAIOverlay({
   };
 
   const handleUserClick = () => {
-    // ==============================
-    // DISCONNECTED → START RECORDING
-    // ==============================
-    if (turn === "disconnected") {
-      console.log("🎤 Recording terputus, mulai lagi...");
-
-      startRecording();
-      setTurn("user");
-
+    // AUDIO GAGAL → PUTAR ULANG AUDIO
+    if (ttsError) {
+      handleReplayLastAudio();
       return;
     }
 
-    // ==============================
+    // DISCONNECTED → START RECORDING
+    if (turn === "disconnected") {
+      console.log("🎤 Memulai kembali setelah berhenti");
+
+      clearTtsError?.();
+      startRecording();
+      setTurn("user");
+      return;
+    }
+
     // USER → FINISH SPEAKING
-    // ==============================
     if (turn !== "user") return;
 
     console.log("🛑 User selesai, menunggu AI...");
 
     stopRecording();
-
-    // Langsung ubah UI menjadi loading
     setTurn("loading");
   };
 
@@ -303,15 +325,23 @@ export default function AvatarAIOverlay({
           /* ================= USER BUTTON ================= */
           <button
             onClick={handleUserClick}
+            disabled={isReplaying}
             className={`
-      relative
-      flex items-center justify-center
-      transition-all duration-500
-      hover:scale-105
-      active:scale-95
-      ${visible ? "opacity-100 scale-100" : "opacity-0 scale-50"}
-    `}
-            aria-label="Finish speaking"
+    relative
+    flex items-center justify-center
+    transition-all duration-500
+    hover:scale-105
+    active:scale-95
+    disabled:cursor-wait
+    ${visible ? "opacity-100 scale-100" : "opacity-0 scale-50"}
+  `}
+            aria-label={
+              ttsError
+                ? "Putar ulang audio"
+                : isDisconnected
+                  ? "Mulai merekam kembali"
+                  : "Selesai berbicara"
+            }
           >
             {/* OUTER GLOW */}
             <div
@@ -333,11 +363,13 @@ export default function AvatarAIOverlay({
                 border
                 transition-all duration-500
 
-                ${
-                  isDisconnected
-                    ? "border-slate-500/30"
-                    : "border-emerald-400/40 animate-pulse"
-                }
+            ${
+              ttsError
+                ? "border-red-400/50 animate-pulse"
+                : isDisconnected
+                  ? "border-slate-500/30"
+                  : "border-emerald-400/40 animate-pulse"
+            }
   `}
             />
 
@@ -352,21 +384,25 @@ export default function AvatarAIOverlay({
     shadow-2xl
     transition-all duration-500
 
+
     ${
-      isDisconnected
-        ? "bg-gradient-to-br from-slate-500 to-slate-700 shadow-slate-500/20"
-        : "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/30"
+      ttsError
+        ? "bg-gradient-to-br from-red-500 to-rose-700 shadow-red-500/30"
+        : isDisconnected
+          ? "bg-gradient-to-br from-slate-500 to-slate-700 shadow-slate-500/20"
+          : "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/30"
     }
+
   `}
             >
               <span
                 className={`
-      text-7xl
-      transition-all duration-500
-      ${isDisconnected ? "opacity-50 grayscale" : ""}
-    `}
+    text-7xl
+    transition-all duration-500
+    ${isDisconnected && !ttsError ? "opacity-50 grayscale" : ""}
+  `}
               >
-                {userAvatar}
+                {ttsError ? (isReplaying ? "⏳" : "🔊") : userAvatar}
               </span>
             </div>
 
@@ -422,11 +458,13 @@ export default function AvatarAIOverlay({
                 shadow-2xl
                 transition-all duration-500
 
-                ${
-                  isAI
-                    ? "bg-gradient-to-br from-violet-500 to-indigo-600 shadow-violet-500/40"
-                    : "bg-gradient-to-br from-blue-500 to-cyan-600 shadow-blue-500/30"
-                }
+            ${
+              ttsError
+                ? "bg-gradient-to-br from-red-500 to-rose-700 shadow-red-500/30"
+                : isAI
+                  ? "bg-gradient-to-br from-violet-500 to-indigo-600 shadow-violet-500/40"
+                  : "bg-gradient-to-br from-blue-500 to-cyan-600 shadow-blue-500/30"
+            }
               `}
             >
               {isLoading ? (
@@ -456,30 +494,36 @@ export default function AvatarAIOverlay({
         <div
           key={turn}
           className={`
-            mt-10
-            text-center
-            transition-all duration-500
-            ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"}
-          `}
+    mt-10
+    text-center
+    transition-all duration-500
+    ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"}
+  `}
         >
           <h2 className="text-2xl font-semibold">
-            {isDisconnected
-              ? "Microphone Paused"
-              : isUser
-                ? "Your Turn"
-                : isLoading
-                  ? "Thinking..."
-                  : "Avatar AI"}
+            {ttsError
+              ? "Audio Gagal Diputar"
+              : isDisconnected
+                ? "Microphone Paused"
+                : isUser
+                  ? "Your Turn"
+                  : isLoading
+                    ? "Thinking..."
+                    : "Avatar AI"}
           </h2>
 
           <p className="mt-2 text-sm text-white/50">
-            {isDisconnected
-              ? "Tap the avatar to start speaking again"
-              : isUser
-                ? "Tap avatar when you're finished speaking"
-                : isLoading
-                  ? "AI is preparing a response..."
-                  : "AI is speaking..."}
+            {ttsError
+              ? isReplaying
+                ? "Sedang mencoba memutar ulang audio..."
+                : "Ketuk avatar di tengah untuk memutar audio secara manual."
+              : isDisconnected
+                ? "Tap avatar to start speaking again"
+                : isUser
+                  ? "Tap avatar when you're finished speaking"
+                  : isLoading
+                    ? "AI is preparing a response..."
+                    : "AI is speaking..."}
           </p>
         </div>
 
@@ -497,14 +541,81 @@ export default function AvatarAIOverlay({
             ${visible ? "opacity-100" : "opacity-0"}
           `}
         >
-          {isDisconnected
-            ? "Tap avatar to resume"
-            : isUser
-              ? "Tap avatar when you're done"
-              : isLoading
-                ? "Please wait..."
-                : "AI is speaking"}
+          {ttsError
+            ? isReplaying
+              ? "Memutar ulang audio..."
+              : "🔊 Tap avatar to replay audio"
+            : isDisconnected
+              ? "Tap avatar to resume"
+              : isUser
+                ? "Tap avatar when you're done"
+                : isLoading
+                  ? "Please wait..."
+                  : "AI is speaking"}
         </div>
+
+        {/* TTS ERROR ACTIONS */}
+        {ttsError && (
+          <div
+            className={`
+      mt-6 flex flex-col items-center gap-3
+      transition-all duration-500
+      ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}
+    `}
+          >
+            {/* REPLAY */}
+            {/* <button
+              type="button"
+              onClick={handleReplayLastAudio}
+              disabled={!replayLastAudio || isReplaying}
+              className="
+        flex items-center justify-center gap-2
+        rounded-full
+        border border-violet-300/30
+        bg-violet-500/15
+        px-6 py-3
+        text-sm font-medium text-white
+        shadow-lg shadow-violet-950/20
+        backdrop-blur-xl
+        transition-all duration-300
+        hover:bg-violet-500/25
+        hover:border-violet-300/50
+        active:scale-95
+        disabled:cursor-not-allowed
+        disabled:opacity-40
+      "
+            >
+              {isReplaying ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  <span>Mencoba memutar...</span>
+                </>
+              ) : (
+                <>
+                  <span aria-hidden="true">🔊</span>
+                  <span>Coba putar ulang</span>
+                </>
+              )}
+            </button> */}
+
+            {/* RETRY MICROPHONE
+            <button
+              type="button"
+              onClick={handleUserClick}
+              disabled={isReplaying}
+              className="
+                rounded-full
+                px-5 py-2
+                text-sm text-white/60
+                transition-colors duration-300
+                hover:text-white
+                disabled:opacity-40
+              "
+            >
+              🎤 Coba lagi dengan mikrofon
+            </button> */}
+          </div>
+        )}
       </div>
     </div>
   );

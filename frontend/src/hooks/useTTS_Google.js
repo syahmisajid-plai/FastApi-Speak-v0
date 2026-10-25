@@ -5,7 +5,12 @@ import { linkBackend } from "../config";
 export default function useTTS_Google(userIdRef, modeRef) {
   const audioCache = useRef(new Map());
   const currentAudioRef = useRef(null);
+  const lastTextRef = useRef("");
+
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [ttsError, setTtsError] = useState(null);
+
+  const clearTtsError = () => setTtsError(null);
 
   const MUTE_TTS = false; // 👈 ganti false kalau mau hidupkan lagi
 
@@ -76,6 +81,9 @@ export default function useTTS_Google(userIdRef, modeRef) {
   const speakText = async (text) => {
     if (!text) return;
 
+    lastTextRef.current = text;
+    setTtsError(null);
+
     console.log("🔊 speakText called");
     console.log("Current speaking state:", isSpeaking);
     console.log("Existing audio ref:", currentAudioRef.current);
@@ -133,8 +141,19 @@ export default function useTTS_Google(userIdRef, modeRef) {
         setIsSpeaking(false);
       };
 
-      audio.onerror = (e) => {
-        console.error("🔥 audio error:", e);
+      audio.onerror = () => {
+        const mediaError = audio.error;
+
+        console.error("❌ AUDIO ERROR", mediaError);
+
+        setTtsError({
+          name: "AudioError",
+          message: mediaError
+            ? `Audio gagal dimuat (kode ${mediaError.code})`
+            : "Audio gagal dimuat atau diputar",
+          timestamp: Date.now(),
+        });
+
         setIsSpeaking(false);
       };
 
@@ -154,12 +173,39 @@ export default function useTTS_Google(userIdRef, modeRef) {
       await audio.play();
       console.log("✅ audio.play resolved");
     } catch (err) {
-      console.error("❌ PLAY ERROR");
+      console.error("❌ PLAY ERROR", err);
       console.error("name:", err.name);
       console.error("message:", err.message);
       console.error(err);
+
+      setTtsError({
+        name: err.name || "Error",
+        message: err.message || "TTS gagal diputar",
+        timestamp: Date.now(),
+      });
+
       setIsSpeaking(false);
     }
+  };
+
+  const replayLastAudio = async () => {
+    const text = lastTextRef.current;
+
+    if (!text) {
+      console.warn("Belum ada teks untuk diputar ulang.");
+
+      setTtsError({
+        name: "ReplayError",
+        message: "Belum ada audio AI yang bisa diputar ulang.",
+        timestamp: Date.now(),
+      });
+
+      return;
+    }
+
+    console.log("🔁 Replay teks terakhir");
+
+    await speakText(text);
   };
 
   const forceStop = () => {
@@ -179,5 +225,13 @@ export default function useTTS_Google(userIdRef, modeRef) {
     console.log("🛑 forceStop finished");
   };
 
-  return { speakText, isSpeaking, forceStop, unlockAudio };
+  return {
+    speakText,
+    isSpeaking,
+    ttsError,
+    clearTtsError,
+    forceStop,
+    unlockAudio,
+    replayLastAudio,
+  };
 }
