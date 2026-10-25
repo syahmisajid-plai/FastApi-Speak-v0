@@ -116,7 +116,9 @@ app.add_middleware(
         "https://172.16.10.178:5173",  # testing local hp PLAI
         "https://172.16.0.134:5173",
         "https://192.168.10.201:5173",  # testing local hp Tomoro
-        "http://172.16.40.41:5173" # plai cafe
+        "http://172.16.40.41:5173", # plai cafe
+        "https://172.16.40.41:5173", # plai cafe 2
+        # 
     ],
     allow_credentials=True,
     allow_methods=["*"],
